@@ -39,7 +39,7 @@ const char *reply_types[] = {
   NULL
 };
 
-#define logprintf(Fmt,...) do { fprintf(stderr, "%s:%d: " Fmt, __FILE__, __LINE__, \
+#define logprintf(Fmt,...) do { fprintf(stderr, "#%s:%d: " Fmt "\n", __FILE__, __LINE__, \
 					##__VA_ARGS__); } while(0)
 int
 main (int argc, char **argv)
@@ -73,31 +73,31 @@ main (int argc, char **argv)
     {
       if (redc)
 	{
-	  logprintf ("Connection error to %s:%d : %s\n", servhostname, port,
+	  logprintf ("Connection error to %s:%d : %s", servhostname, port,
 		     redc->errstr);
 	  redisFree (redc);
 	}
       else
 	{
 	  logprintf
-	    ("Connection to %s:%d: can't allocate redis context (%m)\n",
+	    ("Connection to %s:%d: can't allocate redis context (%m)",
 	     servhostname, port);
 	}
       exit (EXIT_FAILURE);
     }
-  logprintf ("Connected to REDIS at %s:%d\n", servhostname, port);
+  logprintf ("Connected to REDIS at %s:%d", servhostname, port);
   /* PING server */
   reply = redisCommand (redc, "PING");
-  logprintf ("PING: %s\n", reply ? (reply->str) : "**none**");
+  logprintf ("PING: %s", reply ? (reply->str) : "**none**");
   freeReplyObject (reply);
   /* Set a few keys */
   reply = redisCommand (redc, "SET %s %s", "foo", "hello world");
-  logprintf ("SET foo: %s\n", reply ? (reply->str) : "**none**");
+  logprintf ("SET foo: %s", reply ? (reply->str) : "**none**");
   freeReplyObject (reply);
   /* we set $CLIENTPID before $CLIENTHOSTNAME, even if their
      alphanumerical order is the other way round... */
   reply = redisCommand (redc, "SET $CLIENTPID %d", (int) getpid ());
-  logprintf ("SET $CLIENTPID %d: %s\n", (int) getpid (),
+  logprintf ("SET $CLIENTPID %d: %s", (int) getpid (),
 	     reply ? (reply->str) : "**none**");
   freeReplyObject (reply);
   {
@@ -105,48 +105,99 @@ main (int argc, char **argv)
     memset (myhostname, 0, sizeof (myhostname));
     gethostname (myhostname, sizeof (myhostname) - 1);
     reply = redisCommand (redc, "SET $CLIENTHOSTNAME %s", myhostname);
-    logprintf ("SET $CLIENTHOSTNAME %s: %s\n", myhostname,
+    logprintf ("SET $CLIENTHOSTNAME %s: %s", myhostname,
 	       reply ? (reply->str) : "**none**");
     freeReplyObject (reply);
   }
   long count = 0;
   long cursor = 0;
+  long nbkeys = 0;
   do
     {
+      count++;
       reply = redisCommand (redc, "SCAN %ld", cursor);
       int type = reply ? (reply->type) : 0;
-      logprintf ("SCAN %ld: type %d (%s)\n", cursor, type,
+      logprintf ("#%ld; SCAN %ld: type %d (%s)", count, cursor, type,
 		 (type > 0
 		  && type <
 		  sizeof (reply_types) /
 		  sizeof (reply_types[0])) ? (reply_types[type] ? : "??") :
 		 "???");
       if (type == REDIS_REPLY_STRING || type == REDIS_REPLY_ERROR)
-	logprintf ("SCAN reply str %s\n", reply->str);
+	logprintf ("SCAN reply str %s", reply->str);
       else if (type == REDIS_REPLY_ARRAY)
 	{
 	  size_t nbelem = reply->elements;
-	  logprintf ("SCAN reply array size %zd\n", nbelem);
+	  logprintf ("SCAN reply array size %zd", nbelem);
 	  for (size_t ix = 0; ix < nbelem; ix++)
 	    {
 	      struct redisReply *replelem = reply->element[ix];
 	      assert (replelem != NULL);
 	      int eltype = replelem->type;
-	      logprintf ("SCAN reply [%zd] type %d (%s)\n",
+	      logprintf ("SCAN reply [%zd] type %d (%s)",
 			 ix, eltype,
 			 (eltype > 0
 			  && eltype <
 			  sizeof (reply_types) /
 			  sizeof (reply_types[0])) ? (reply_types[eltype] ? :
 						      "??") : "???");
+	      if (eltype == REDIS_REPLY_STRING || type == REDIS_REPLY_ERROR)
+		logprintf ("SCAN reply [%zd] str %s", ix, replelem->str);
+	      else if (eltype == REDIS_REPLY_ARRAY)
+		{
+		  size_t nbsubelem = replelem->elements;
+		  logprintf ("SCAN reply [%zd] array size %zd", ix,
+			     nbsubelem);
+		}
+	    }
+	  if (nbelem > 1 && reply->element[1]->type == REDIS_REPLY_ARRAY)
+	    {
+	      struct redisReply *replseqkeys = reply->element[1];
+	      assert (replseqkeys != NULL);
+	      size_t nbcurkeys = replseqkeys->elements;
+	      logprintf ("#%ld; SCAN nbcurkeys %zd", count, nbcurkeys);
+	      for (size_t ik = 0; ik < nbcurkeys; ik++)
+		{
+		  struct redisReply *replcurkey = replseqkeys->element[ik];
+		  assert (replcurkey != NULL);
+		  int curkeytype = replcurkey->type;
+		  logprintf ("SCAN replkey key#%zd keytype %d (%s)",
+			     ik, curkeytype,
+			     (curkeytype > 0
+			      && curkeytype <
+			      sizeof (reply_types) /
+			      sizeof (reply_types[0]))
+			     ? (reply_types[curkeytype] ? : "??") : "???");
+		  if (curkeytype == REDIS_REPLY_STRING)
+		    {
+		      nbkeys++;
+		      logprintf ("got key#%ld : %s", nbkeys, replcurkey->str);
+		      printf ("%s\n", replcurkey->str);
+		      if (nbkeys % 32 == 0)
+			fflush (NULL);
+		    }
+		}
+	    };
+	  if (nbelem > 0 && reply->element[0]->type == REDIS_REPLY_STRING)
+	    {
+	      cursor = atol (reply->element[0]->str);
+	      logprintf ("#%ld; SCAN updated cursor %ld", count, cursor);
+	    }
+	  else
+	    {
+	      cursor = -1;
+	      logprintf ("#%ld; SCAN nocursor", count);
 	    }
 	}
       freeReplyObject (reply);
-      count++;
+      reply = NULL;
     }
   while (cursor > 0);
-  logprintf ("did %ld SCAN loops\n", count);
-  logprintf ("done %s in %.4f CPU seconds\n", argv[0], 1.0e-6 * clock ());
+  redisFree (redc);
+  redc = NULL;
+  logprintf ("did %ld SCAN loops got %ld keys", count, nbkeys);
+  logprintf ("done %s (%ld loops) in %.4f CPU seconds (%.3f µs/loop)\n",
+	     argv[0], count, 1.0e-6 * clock (), (1.0 / count) * clock ());
   return EXIT_SUCCESS;
 }				/* end main */
 
