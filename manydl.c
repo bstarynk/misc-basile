@@ -1,4 +1,4 @@
-/* file manydl.c 
+/* file manydl.c from https://github.com/bstarynk/misc-basile/
    generating lots of C functions, and dynamically compiling and loading them
    this is completely useless, except for testing & benchmarking 
    
@@ -524,6 +524,6 @@ main (int argc, char **argv)
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
- ** compile-command: "gcc -o manydl -Wall -rdynamic -O manydl.c -ldl" ;;
+ ** compile-command: "gcc -o manydl -Wall -rdynamic -O -g manydl.c -ldl" ;;
  ** End: ;;
  ****************/
