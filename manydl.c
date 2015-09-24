@@ -2,7 +2,7 @@
    generating lots of C functions, and dynamically compiling and loading them
    this is completely useless, except for testing & benchmarking 
    
-   © copyright Basile Starynkevitch 2004- 2015
+   © Copyright Basile Starynkevitch 2004- 2015
    program released under GNU general public license
 
    this is free software; you can redistribute it and/or modify it under
@@ -14,9 +14,6 @@
    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
    License for more details.
-
-   compile with 
-      gcc -o manydl -Wall -rdynamic -O manydl.c -ldl 
 */
 
 #include <stdio.h>
@@ -59,15 +56,17 @@ generate_file (const char *name, int meanlen)
   int i = 0;
   int prevjmpix = 0;
 #define MAXLAB 8
-  enum labstate { LAB_NONE = 0, LAB_JUMPED, LAB_DEFINED } lab[MAXLAB];
+  enum labstate
+  { LAB_NONE = 0, LAB_JUMPED, LAB_DEFINED } lab[MAXLAB];
   memset (path, 0, sizeof (path));
   memset (lab, 0, sizeof (lab));
   snprintf (path, sizeof (path) - 1, "%s.c", name);
   f = fopen (path, "w");
-  if (!f) {
-    perror (path);
-    exit (1);
-  };
+  if (!f)
+    {
+      perror (path);
+      exit (EXIT_FAILURE);
+    };
   snprintf (path, sizeof (path) - 1, "%s.so", name);
   remove (path);
   if (meanlen < 20)
@@ -84,103 +83,111 @@ generate_file (const char *name, int meanlen)
   fprintf (f, "int %s(int a, int b) {\n", name);
   fputs ("  int c=0, d=1, e=2, f=3, g=4, h=5;\n", f);
 #define RANVAR ('a'+DICE(8))
-  for (i = 0; i < l; i++) {
-    switch (DICE (16)) {
-    case 0:
-      fprintf (f, " %c = (%c * %d + %c * %d + %d) & 0xffffff;\n",
-	       RANVAR, RANVAR, 2 + DICE (8), RANVAR, 3 + 2 * DICE (8),
-	       DICE (32));
-      break;
-    case 1:
-      fprintf (f,
-	       " %c = (%c * %d + tab[%c & %d] - %c) & 0xffffff; tab[%d]++;\n",
-	       RANVAR, RANVAR, 1 + DICE (16), RANVAR, MAXTAB - 1, RANVAR,
-	       DICE (MAXTAB));
-      break;
-    case 2:
-      ;
-      fprintf (f,
-	       " if (%c > %c + %d) %c++; else %c=(tab[%d] + %c) & 0xffffff;\n",
-	       RANVAR, RANVAR, DICE (8), RANVAR, RANVAR, DICE (MAXTAB),
-	       RANVAR);
-      break;
-    case 3:
-      fprintf (f, " tab[%c & %d] += %d + ((%c - %c) & 0xf); %c++;\n",
-	       RANVAR, MAXTAB - 1, DICE (8) + 2, RANVAR, RANVAR, RANVAR);
-      break;
-    case 4:
-      {
-	char lvar = RANVAR;
-	fprintf (f,
-		 " while (%c>0) { dynstep++; %c -= (%c/3) + %d; }; %c=%d+%c;\n",
-		 lvar, lvar, lvar, DICE (16) + 10, lvar, DICE (8), RANVAR);
-      }
-      break;
-    case 5:
-      fprintf (f, " %c++, %c++;\n", RANVAR, RANVAR);
-      break;
-    case 6:
-      {
-	int labrank = DICE (MAXLAB);
-	fprintf (f, " dynstep+=%d;\n", i - prevjmpix);
-	prevjmpix = i;
-	switch (lab[labrank]) {
-	case LAB_NONE:
-	  fprintf (f, " if (%d*%c<%d+%c) {%c++; goto lab%d;};\n",
-		   DICE (8) + 2, RANVAR, DICE (10), RANVAR, RANVAR, labrank);
-	  lab[labrank] = LAB_JUMPED;
+  for (i = 0; i < l; i++)
+    {
+      switch (DICE (16))
+	{
+	case 0:
+	  fprintf (f, " %c = (%c * %d + %c * %d + %d) & 0xffffff;\n",
+		   RANVAR, RANVAR, 2 + DICE (8), RANVAR, 3 + 2 * DICE (8),
+		   DICE (32));
 	  break;
-	case LAB_JUMPED:
-	  fprintf (f, "lab%d: %c++;\n", labrank, RANVAR);
-	  lab[labrank] = LAB_DEFINED;
+	case 1:
+	  fprintf (f,
+		   " %c = (%c * %d + tab[%c & %d] - %c) & 0xffffff; tab[%d]++;\n",
+		   RANVAR, RANVAR, 1 + DICE (16), RANVAR, MAXTAB - 1, RANVAR,
+		   DICE (MAXTAB));
 	  break;
-	default:;
-	};
-      }
-      break;
-    case 7:
-      fprintf (f, " %c = (%c / ((%c & 0xffff) + 2) + %c * %d) & 0xffffff;\n",
-	       RANVAR, RANVAR, RANVAR, RANVAR, DICE (10) + 3);
-      break;
-    case 8:
-      fprintf (f, " %c = (%d + ((%c << (1+ (%c & 0x7))) + %c)) & 0xffffff;\n",
-	       RANVAR, DICE (32) + 5, RANVAR, RANVAR, RANVAR);
-      break;
-    case 9:
-      fprintf (f, " %c = (%c * %d + %d) & 0xffffff;\n",
-	       RANVAR, RANVAR, DICE (100) + 7, DICE (200) + 12);
-      break;
-    case 10:
-      fprintf (f, " tab[%d]++, tab[%c & %d] += (%c & 0xff) + %d;\n",
-	       DICE (MAXTAB), RANVAR, MAXTAB - 1, RANVAR, DICE (8) + 2);
-      break;
-    case 11:
-      fprintf (f, " %c = %c;\n", RANVAR, RANVAR);
-      break;
-    case 12:
-      fprintf (f, " %c = %d;\n", RANVAR, 5 + DICE (20));
-      break;
-    case 13:
-      {
-	char fvar = RANVAR;
-	fprintf (f,
-		 " for (%c &= %d; %c>0; %c--) {dynstep++;tab[%c] += (1+(%c&0x1f));};\n",
-		 fvar, MAXTAB - 1, fvar, fvar, fvar, RANVAR);
-	break;
-    case 14:{
-	  char lvar = RANVAR, rvar = RANVAR;
-	  if (lvar != rvar)
-	    fprintf (f, " %c = %c;\n", lvar, rvar);
-	  else
-	    fprintf (f, " %c++;\n", lvar);
-	};
-	break;
-    case 15:
-	fprintf (f, " %c = %c + %d;\n", RANVAR, RANVAR, 2 + DICE (5));
-	break;
-      };
-    }
-  };
+	case 2:
+	  ;
+	  fprintf (f,
+		   " if (%c > %c + %d) %c++; else %c=(tab[%d] + %c) & 0xffffff;\n",
+		   RANVAR, RANVAR, DICE (8), RANVAR, RANVAR, DICE (MAXTAB),
+		   RANVAR);
+	  break;
+	case 3:
+	  fprintf (f, " tab[%c & %d] += %d + ((%c - %c) & 0xf); %c++;\n",
+		   RANVAR, MAXTAB - 1, DICE (8) + 2, RANVAR, RANVAR, RANVAR);
+	  break;
+	case 4:
+	  {
+	    char lvar = RANVAR;
+	    fprintf (f,
+		     " while (%c>0) { dynstep++; %c -= (%c/3) + %d; }; %c=%d+%c;\n",
+		     lvar, lvar, lvar, DICE (16) + 10, lvar, DICE (8),
+		     RANVAR);
+	  }
+	  break;
+	case 5:
+	  fprintf (f, " %c++, %c++;\n", RANVAR, RANVAR);
+	  break;
+	case 6:
+	  {
+	    int labrank = DICE (MAXLAB);
+	    fprintf (f, " dynstep+=%d;\n", i - prevjmpix);
+	    prevjmpix = i;
+	    switch (lab[labrank])
+	      {
+	      case LAB_NONE:
+		fprintf (f, " if (%d*%c<%d+%c) {%c++; goto lab%d;};\n",
+			 DICE (8) + 2, RANVAR, DICE (10), RANVAR, RANVAR,
+			 labrank);
+		lab[labrank] = LAB_JUMPED;
+		break;
+	      case LAB_JUMPED:
+		fprintf (f, "lab%d: %c++;\n", labrank, RANVAR);
+		lab[labrank] = LAB_DEFINED;
+		break;
+	      default:;
+	      };
+	  }
+	  break;
+	case 7:
+	  fprintf (f,
+		   " %c = (%c / ((%c & 0xffff) + 2) + %c * %d) & 0xffffff;\n",
+		   RANVAR, RANVAR, RANVAR, RANVAR, DICE (10) + 3);
+	  break;
+	case 8:
+	  fprintf (f,
+		   " %c = (%d + ((%c << (1+ (%c & 0x7))) + %c)) & 0xffffff;\n",
+		   RANVAR, DICE (32) + 5, RANVAR, RANVAR, RANVAR);
+	  break;
+	case 9:
+	  fprintf (f, " %c = (%c * %d + %d) & 0xffffff;\n",
+		   RANVAR, RANVAR, DICE (100) + 7, DICE (200) + 12);
+	  break;
+	case 10:
+	  fprintf (f, " tab[%d]++, tab[%c & %d] += (%c & 0xff) + %d;\n",
+		   DICE (MAXTAB), RANVAR, MAXTAB - 1, RANVAR, DICE (8) + 2);
+	  break;
+	case 11:
+	  fprintf (f, " %c = %c;\n", RANVAR, RANVAR);
+	  break;
+	case 12:
+	  fprintf (f, " %c = %d;\n", RANVAR, 5 + DICE (20));
+	  break;
+	case 13:
+	  {
+	    char fvar = RANVAR;
+	    fprintf (f,
+		     " for (%c &= %d; %c>0; %c--) {dynstep++;tab[%c] += (1+(%c&0x1f));};\n",
+		     fvar, MAXTAB - 1, fvar, fvar, fvar, RANVAR);
+	    break;
+	case 14:
+	    {
+	      char lvar = RANVAR, rvar = RANVAR;
+	      if (lvar != rvar)
+		fprintf (f, " %c = %c;\n", lvar, rvar);
+	      else
+		fprintf (f, " %c++;\n", lvar);
+	    };
+	    break;
+	case 15:
+	    fprintf (f, " %c = %c + %d;\n", RANVAR, RANVAR, 2 + DICE (5));
+	    break;
+	  };
+	}
+    };
   fprintf (f, " dynstep+=%d;\n", i - prevjmpix);
   for (i = 0; i < MAXLAB; i++)
     if (lab[i] == LAB_JUMPED)
@@ -216,16 +223,16 @@ main (int argc, char **argv)
 {
   int maxcnt = 100;
   int meanlen = 300;
-  int k, l;
+  int k = 0, l = 0;
   long suml;
-  int r, s;
-  long nbcall, n;
-  FILE *map;			/* the /proc/self/maps pseudofile (Linux) */
+  int r = 0, s = 0;
+  long nbcall = 0, n = 0;
+  FILE *map = NULL;			/* the /proc/self/maps pseudofile (Linux) */
   char buf[100];		/* buffer for name */
   char cmd[400];		/* buffer for command */
   char linbuf[500];		/* line buffer for map */
-  char *cc;			/* the CC command or gcc (from environment) */
-  char *cflags;			/* the CFLAGS option or -O (from environment)  */
+  char *cc = NULL;			/* the CC command or gcc (from environment) */
+  char *cflags = NULL;			/* the CFLAGS option or -O (from environment)  */
   typedef int (*funptr_t) (int, int);	/* tpye of function pointers */
   void **hdlarr;		/* array of dlopened handles */
   funptr_t *funarr;		/* array of function pointers */
@@ -236,24 +243,39 @@ main (int argc, char **argv)
   double tim_cpu_generate, tim_real_generate;
   double tim_cpu_load, tim_real_load;
   double tim_cpu_run, tim_real_run;
+  if (argc > 1 && !strcmp (argv[1], "--help"))
+    {
+      printf ("usage: %s [maxcnt [meanlen]]\n"
+	      "\t\t (a program generating many plugins for dlopen on Linux)\n"
+	      "\t where maxcnt (default %d) is the count of generated functions and plugins.\n"
+	      "\t where meanlen (default %d) is related to the mean length of generated functions",
+	      argv[0], maxcnt, meanlen);
+      exit (EXIT_SUCCESS);
+    }
+  else if (argc > 1 && !strcmp (argv[1], "--version"))
+    {
+      printf ("No version info for %s, %s\n",
+	      argv[0], __FILE__ " " __DATE__ "@" __TIME__);
+      exit (EXIT_FAILURE);
+    }
   /* initialize the clock */
   secpertick = 1.0 / (double) sysconf (_SC_CLK_TCK);
   memset (&t_init, 0, sizeof (t_init));
   firstclock = cl_init = times (&t_init);
   nice (2);
-  /* if we have a program argument, it is the number of gneerated functions */
+  /* If we have a program argument, it is the number of generated functions */
   if (argc > 1)
     maxcnt = atoi (argv[1]);
   if (maxcnt < 4)
     maxcnt = 4;
-  else if (maxcnt > 200000)
-    maxcnt = 200000;
+  else if (maxcnt > 500000)
+    maxcnt = 500000;
   if (argc > 2)
     meanlen = atoi (argv[2]);
-  if (meanlen < 100)
-    meanlen = 100;
-  else if (meanlen > 100000)
-    meanlen = 100000;
+  if (meanlen < 50)
+    meanlen = 50;
+  else if (meanlen > 200000)
+    meanlen = 200000;
   /* ask for system information */
   memset (&uts, 0, sizeof (uts));
   uname (&uts);			/* don't bother checking success */
@@ -265,30 +287,34 @@ main (int argc, char **argv)
      uts.release, uts.version);
   /* allocate the array of handles (for dlopen) */
   hdlarr = (void **) calloc (maxcnt + 1, sizeof (*hdlarr));
-  if (!hdlarr) {
-    perror ("allocate hdlarr");
-    exit (1);
-  };
+  if (!hdlarr)
+    {
+      perror ("allocate hdlarr");
+      exit (EXIT_FAILURE);
+    };
   /* allocate the array of functions pointers */
   funarr = (funptr_t *) calloc (maxcnt + 1, sizeof (*funarr));
-  if (!funarr) {
-    perror ("allocate funarr");
-    exit (1);
-  };
+  if (!funarr)
+    {
+      perror ("allocate funarr");
+      exit (EXIT_FAILURE);
+    };
   /* allocate the array of function (& file) names */
   namarr = (char **) calloc (maxcnt + 1, sizeof (*funarr));
-  if (!namarr) {
-    perror ("allocate namarr");
-    exit (1);
-  };
+  if (!namarr)
+    {
+      perror ("allocate namarr");
+      exit (EXIT_FAILURE);
+    };
   /* initialise the sum of functions' length */
   suml = 0;
   /* open the memory map */
   map = fopen ("/proc/self/maps", "r");
-  if (!map) {
-    perror ("/proc/self/maps");
-    exit (0);
-  };
+  if (!map)
+    {
+      perror ("/proc/self/maps");
+      exit (EXIT_SUCCESS);
+    };
   /* get the compiler - default is gcc */
   cc = getenv ("CC");
   if (!cc)
@@ -300,39 +326,51 @@ main (int argc, char **argv)
   printf (" before generation of %d files with CC=%s and CFLAGS=%s\n",
 	  maxcnt, cc, cflags);
   /* the generating and compiling loop */
-  for (k = 0; k < maxcnt; k++) {
-    /* generate a name like genf_C9 or genf_A0 and duplicate it */
-    memset (buf, 0, sizeof (buf));
-    snprintf (buf, sizeof (buf) - 1, "genf_%c%d", "ABCDEFGHIJ"[k % 10],
-	      k / 10);
-    namarr[k] = strdup (buf);
-    if (!namarr[k]) {
-      perror ("strdup");
-      exit (1);
+  for (k = 0; k < maxcnt; k++)
+    {
+      /* generate a name like genf_C9 or genf_A0 and duplicate it */
+      memset (buf, 0, sizeof (buf));
+      snprintf (buf, sizeof (buf) - 1, "genf_%c%d", "ABCDEFGHIJ"[k % 10],
+		k / 10);
+      namarr[k] = strdup (buf);
+      if (!namarr[k])
+	{
+	  perror ("strdup");
+	  exit (EXIT_FAILURE);
+	};
+      printf ("generating %s (#%d); ", namarr[k], k + 1);
+      fflush (stdout);
+      /* generate and compile the file */
+      l = generate_file (namarr[k], meanlen);
+      printf ("compiling %d instructions ", l);
+      fflush (stdout);
+      memset (cmd, 0, sizeof (cmd));
+      snprintf (cmd, sizeof (cmd) - 1,
+		"%s -fPIC -shared %s %s.c -o %s.so",
+		cc, cflags, namarr[k], namarr[k]);
+      if (system (cmd))
+	{
+	  fprintf (stderr, "\ncompilation %s #%d failed\n", cmd, k + 1);
+	  exit (EXIT_FAILURE);
+	};
+      putchar ('.');
+      putchar ('\n');
+      fflush (stdout);
+      suml += l;
+      if (k % 32 == 16)
+	printf
+	  ("after %d generated & compiled files (%ld instrs) time\n .. %s [sec]\n",
+	   k + 1, suml, timestring ());
     };
-    printf ("generating %s (#%d); ", namarr[k], k + 1);
-    fflush (stdout);
-    /* generate and compile the file */
-    l = generate_file (namarr[k], meanlen);
-    printf ("compiling %d instructions ", l);
-    fflush (stdout);
-    memset (cmd, 0, sizeof (cmd));
-    snprintf (cmd, sizeof (cmd) - 1,
-	      "%s -fPIC -shared %s %s.c -o %s.so",
-	      cc, cflags, namarr[k], namarr[k]);
-    if (system (cmd)) {
-      fprintf (stderr, "\ncompilation %s #%d failed\n", cmd, k + 1);
-      exit (1);
-    };
-    putchar ('.');
-    putchar ('\n');
-    fflush (stdout);
-    suml += l;
-    if (k % 32 == 16)
-      printf
-	("after %d generated & compiled files (%ld instrs) time\n .. %s [sec]\n",
-	 k + 1, suml, timestring ());
-  };
+  putchar ('.');
+  putchar ('\n');
+  fflush (stdout);
+  suml += l;
+  if (k % 32 == 16)
+    printf
+      ("after %d generated & compiled files (%ld instrs) time\n .. %s [sec]\n",
+       k + 1, suml, timestring ());
+
   memset (&t_generate, 0, sizeof (t_generate));
   cl_generate = times (&t_generate);
   tim_cpu_generate =
@@ -355,35 +393,39 @@ main (int argc, char **argv)
   /* now all files are generated, and compiled, each into a shared
      library *.so; we load all the libraries with dlopen */
   printf ("\n generated %ld instructions in %d files\n", suml, k);
-  for (k = 0; k < maxcnt; k++) {
-    printf ("dynloading #%d %s", k + 1, namarr[k]);
-    fflush (stdout);
-    snprintf (cmd, sizeof (cmd) - 1, "./%s.so", namarr[k]);
-    hdlarr[k] = dlopen (cmd, RTLD_NOW);
-    /* if the dynamic load failed we display an error message and the
-       memory map */
-    if (!hdlarr[k]) {
-      fprintf (stderr, "\n dlopen %s failed %s\n", cmd, dlerror ());
-      /* display the memory map */
-      rewind (map);
-      while (!feof (map)) {
-	memset (linbuf, 0, sizeof (linbuf));
-	fgets (linbuf, sizeof (linbuf) - 1, map);
-	fputs (linbuf, stderr);
-      };
+  for (k = 0; k < maxcnt; k++)
+    {
+      printf ("dynloading #%d %s", k + 1, namarr[k]);
+      fflush (stdout);
+      snprintf (cmd, sizeof (cmd) - 1, "./%s.so", namarr[k]);
+      hdlarr[k] = dlopen (cmd, RTLD_NOW);
+      /* if the dynamic load failed we display an error message and the
+         memory map */
+      if (!hdlarr[k])
+	{
+	  fprintf (stderr, "\n dlopen %s failed %s\n", cmd, dlerror ());
+	  /* display the memory map */
+	  rewind (map);
+	  while (!feof (map))
+	    {
+	      memset (linbuf, 0, sizeof (linbuf));
+	      fgets (linbuf, sizeof (linbuf) - 1, map);
+	      fputs (linbuf, stderr);
+	    };
+	  fflush (stderr);
+	  exit (EXIT_FAILURE);
+	};
+      funarr[k] = (funptr_t) dlsym (hdlarr[k], namarr[k]);
+      if (!funarr[k])
+	fprintf (stderr, "\n dlsym %s failed %s\n", namarr[k], dlerror ());
+      printf ("@%p\n", (void *) funarr[k]);
+      if (k % 32 == 16)
+	printf ("after %d dlopened files time\n .. %s [sec]\n",
+		k + 1, timestring ());
+      fflush (stdout);
       fflush (stderr);
-      exit (1);
     };
-    funarr[k] = (funptr_t) dlsym (hdlarr[k], namarr[k]);
-    if (!funarr[k])
-      fprintf (stderr, "\n dlsym %s failed %s\n", namarr[k], dlerror ());
-    printf ("@%p\n", (void *) funarr[k]);
-    if (k % 32 == 16)
-      printf ("after %d dlopened files time\n .. %s [sec]\n",
-	      k + 1, timestring ());
-    fflush (stdout);
-    fflush (stderr);
-  };
+
   memset (&t_load, 0, sizeof (t_load));
   cl_load = times (&t_load);
   tim_cpu_load =
@@ -408,26 +450,30 @@ main (int argc, char **argv)
   /* display the memory map */
   printf ("\n\n**** memory map of process %ld ****\n", (long) getpid ());
   rewind (map);
-  while (!feof (map)) {
-    memset (linbuf, 0, sizeof (linbuf));
-    fgets (linbuf, sizeof (linbuf) - 1, map);
-    fputs (linbuf, stdout);
-  };
+  while (!feof (map))
+    {
+      memset (linbuf, 0, sizeof (linbuf));
+      fgets (linbuf, sizeof (linbuf) - 1, map);
+      fputs (linbuf, stdout);
+    };
+
   putchar ('\n');
   fflush (stdout);
   /* call randomly the functions */
   r = 0;
   s = maxcnt;
   nbcall = (maxcnt * meanlen) / 16 + 1000;
-  for (n = 0; n < nbcall; n++) {
-    k = DICE (maxcnt);
-    s = DICE (meanlen);
-    printf ("calling #%d: ", k);
-    fflush (stdout);
-    r = (*funarr[k]) (n / 16, s);
-    if (n % 64 == 32)
-      printf ("after %ld calls time\n .. %s [sec]\n", n + 1, timestring ());
-  };
+  for (n = 0; n < nbcall; n++)
+    {
+      k = DICE (maxcnt);
+      s = DICE (meanlen);
+      printf ("calling #%d: ", k);
+      fflush (stdout);
+      r = (*funarr[k]) (n / 16, s);
+      if (n % 64 == 32)
+	printf ("after %ld calls time\n .. %s [sec]\n", n + 1, timestring ());
+    };
+
   memset (&t_run, 0, sizeof (t_run));
   cl_run = times (&t_run);
   tim_cpu_run =
@@ -453,23 +499,31 @@ main (int argc, char **argv)
   fprintf (stderr, "run time per step: %g cpu %g real microseconds/step\n",
 	   1.0e6 * tim_cpu_run / dynstep, 1.0e6 * tim_real_run / dynstep);
   /* cleaning up */
-  for (k = 0; k < maxcnt; k++) {
-    funarr[k] = 0;
-    if (hdlarr[k] && dlclose (hdlarr[k]))
-      fprintf (stderr, "failed to dlclose %s - %s\n", namarr[k], dlerror ());
-    if (namarr[k])
-      free (namarr[k]);
-    namarr[k] = 0;
-  };
+  for (k = 0; k < maxcnt; k++)
+    {
+      funarr[k] = 0;
+      if (hdlarr[k] && dlclose (hdlarr[k]))
+	fprintf (stderr, "failed to dlclose %s - %s\n", namarr[k],
+		 dlerror ());
+      if (namarr[k])
+	free (namarr[k]);
+      namarr[k] = 0;
+    };
+
   free (funarr);
   free (namarr);
   free (hdlarr);
   printf
     ("\n total time for %d files %ld instructions %ld executed steps %ld calls:\n ... %s sec\n id %s\n",
      maxcnt, suml, dynstep, nbcall, timestring (),
-     "$Id: manydl.c 1.3.1.5 Mon, 20 Dec 2004 07:23:12 +0100 basile $");
+     __FILE__ " " __DATE__ "@" __TIME__);
   return 0;
 }
 
-/** prcsproj $ProjectHeader: Misc 0.19 Mon, 20 Dec 2004 07:23:12 +0100 basile $ */
-/* eof $Id: manydl.c 1.3.1.5 Mon, 20 Dec 2004 07:23:12 +0100 basile $ */
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "gcc -o manydl -Wall -rdynamic -O manydl.c -ldl" ;;
+ ** End: ;;
+ ****************/

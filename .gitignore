@@ -26,3 +26,13 @@
 *.exe
 *.out
 *.app
+
+### generated files
+genf_*
+
+## backup files
+*~
+
+### binary executables
+manydl
+redis-scan
