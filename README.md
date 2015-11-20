@@ -12,3 +12,5 @@ as a comment inside the source code.
 
 * `redis-scan.c` is a program which scans all the keys in a REDIS database
   (see http://redis.io/ for more) and prints them on stdout.
+
+* `execicar.c` is a shell-like program interpreting commands on pipes, etc.
