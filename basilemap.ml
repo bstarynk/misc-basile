@@ -1,4 +1,7 @@
 #!/usr/bin/ocaml
+(*** a typical test would be
+   ./basilemap.ml basilemap.ml manydl.c
+ ***)
 (***********************************************************************)
 (*                                                                     *)
 (*                                OCaml                                *)
@@ -345,8 +348,8 @@ end
 (************ below test code added by Basile Starynkevitch ****************)
                                   
 #load "str.cma";;
-  
-let maintest () =
+
+let basilemaintest () =
   let module StringMap = Make(String) in
   let
     inputname = ref "*stdin*"
@@ -357,29 +360,29 @@ let maintest () =
   and
     outp = ref stdout
   in
-  let runtest () =
+  let runtest () = begin
     let mapref = ref (StringMap.empty : int StringMap.t) in
-    let idregex = Str.regexp "\\b[a-zA-Z][a-zA-Z0-9_]*" in
+    let idregex = Str.regexp "[a-zA-Z][a-zA-Z0-9_]*" in
     let processline line =
       List.iter
         (function
-           Str.Text w ->
+           Str.Delim w ->
            let cnt = try StringMap.find w !mapref with Not_found -> 0 in
            mapref := StringMap.add w (cnt+1) !mapref
-         | Str.Delim _ -> ())
+         | Str.Text _ -> ())
         (Str.full_split idregex line)
     in
     let process () =
       let rec dolines count =
-        let (line , eof) =
+        let (line , more) =
           try (input_line !inp, true) with End_of_file -> ("", false)
         in
-        if not eof then begin
+        if more then begin
             processline line;
-            dolines count+1
+            dolines (count+1)
           end
-        else if (String.length line) > 0 then (processline line; count + 1)
-        else count
+        else
+          count
       in
       Printf.printf "#reading from %s\n" !inputname;
       flush_all ();
@@ -387,10 +390,10 @@ let maintest () =
       Printf.printf "#read %d lines from %s\n" linecount !inputname;
       flush_all ()
     in
-    let output () =
+    let do_output () =
       let curmap = !mapref in
       Printf.fprintf !outp "** %d words\n" (StringMap.cardinal curmap);
-      StringMap.iter (fun w c -> Printf.fprintf !outp "%s: %d\n" w c) curmap;
+      StringMap.iter (fun w c -> Printf.fprintf !outp " %s: %d\n" w c) curmap;
       flush_all ()
     in
     Arg.parse
@@ -423,19 +426,19 @@ let maintest () =
                 outp := open_out argout;
                 outputname := argout
               end;
-            output ()
+            do_output ()
           ),
         "set the output file and give output"
       ;
         "-run",
-        Arg.Unit output,
+        Arg.Unit do_output,
         "run and give output"
       ;
         "-reset",
         Arg.Unit (fun () -> mapref := (StringMap.empty : int StringMap.t)),
         "reset the word count map"
       ]
-      begin
+      begin (* the anon_fun for Arg.parse *)
         fun argstr ->
         close_in !inp;
         if argstr = "-" then
@@ -449,12 +452,18 @@ let maintest () =
             inputname := argstr
           end;
         process ();
-        output ()
+        do_output ()
       end
       "basilemap test"
-    in
-    if (Array.length (Sys.argv)) > 1 then
-      runtest ()
+    end (*runtest*)
+  in
+   runtest ()
+in
+if (Array.length (Sys.argv)) >= 1 then
+  begin
+    basilemaintest ();
+    flush_all ()
+  end
 ;;
 
-  (** end of file map.ml **)
+  (** end of file basilemap.ml **)
