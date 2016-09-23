@@ -14,3 +14,6 @@ as a comment inside the source code.
   (see http://redis.io/ for more) and prints them on stdout.
 
 * `execicar.c` is a shell-like program interpreting commands on pipes, etc.
+
+* `basilemap.ml` is a simple exercise to understand the balanced binary trees
+of the Ocaml stdlib/map.ml file, which I might simplify a bit.
