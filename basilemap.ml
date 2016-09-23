@@ -1,6 +1,6 @@
 #!/usr/bin/ocaml
 (*** a typical test would be
-   ./basilemap.ml basilemap.ml manydl.c
+   ./basilemap.ml *.ml *.c 
  ***)
 (***********************************************************************)
 (*                                                                     *)
