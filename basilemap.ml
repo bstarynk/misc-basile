@@ -73,8 +73,8 @@ module Make(Ord: OrderedType) = struct
   let singleton x d = Node(Empty, x, d, Empty, 1)
 
   let bal l x d r =
-    let hl = match l with Empty -> 0 | Node(_,_,_,_,h) -> h in
-    let hr = match r with Empty -> 0 | Node(_,_,_,_,h) -> h in
+    let hl = height l in
+    let hr = height r in
     if hl > hr + 2 then begin
         match l with
           Empty -> invalid_arg "Map.bal"
@@ -100,7 +100,7 @@ module Make(Ord: OrderedType) = struct
                   create (create l x d rll) rlv rld (create rlr rv rd rr)
              end
       end else
-      Node(l, x, d, r, (if hl >= hr then hl + 1 else hr + 1))
+      create l x d r
 
   let empty = Empty
 
@@ -108,11 +108,11 @@ module Make(Ord: OrderedType) = struct
 
   let rec add x data = function
       Empty ->
-      Node(Empty, x, data, Empty, 1)
+      create Empty x data Empty
     | Node(l, v, d, r, h) ->
        let c = Ord.compare x v in
        if c = 0 then
-         Node(l, x, data, r, h)
+         create l x data r
        else if c < 0 then
          bal (add x data l) v d r
        else
