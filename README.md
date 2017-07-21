@@ -17,3 +17,5 @@ as a comment inside the source code.
 
 * `basilemap.ml` is a simple exercise to understand the balanced binary trees
 of the Ocaml stdlib/map.ml file, which I might simplify a bit.
+
+* `bwc.c`  is a crude `wc -l` like program using getline; for performance benchmarking.
