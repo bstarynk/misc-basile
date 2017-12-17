@@ -21,3 +21,7 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
 * `bwc.c`  is a crude `wc -l` like program using getline; for performance benchmarking.
 
 * `half.c` is a program to stop/cont-inue a command, running it at half load
+
+* `microbenchlist.c`  is a useless microbenchmark on linked lists
+  use `gcc -Wall -O2 -march=native microbenchlist.c -o microbenchlist`
+  to compile it.
