@@ -46,7 +46,7 @@ timestamp2.c: | Makefile2timestamp
 -include $(wildcard *.mkd)
 
 %.o: %.c
-	$(COMPILE.c) -M -MF $(*F).mkd $^ -o $@
+	$(COMPILE.c) -MD -MF $(*F).mkd $< -o $@
 clean:
 	$(RM) *.o *~ *.mkd
 

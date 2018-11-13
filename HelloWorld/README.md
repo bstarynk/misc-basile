@@ -6,7 +6,31 @@ a two files `hello2.c` and `world2.c` with a common header
 `Makefile2plain` and `Makefile2timestamp` (the later showing a
 generated `timestamp2.c` file with auto-dependencies).
 
+Read wikipages on
+[make](https://en.wikipedia.org/wiki/Make_(software)) and on
+[Makefile](https://en.wikipedia.org/wiki/Makefile)-s. Remember that
+the *tab* character is significant in these *Makefile*-s (some editors
+may require special configuration for that, but most source editors
+are clever enough).
+
+Read of course the [documentation of GNU
+make](https://www.gnu.org/software/make/manual/html_node/index.html)
+and of [GCC](https://gcc.gnu.org/onlinedocs/gcc/), notably the first
+sections of [§3 GCC Command
+Options](https://gcc.gnu.org/onlinedocs/gcc/Invoking-GCC.html).
+
 I am not sure if it is correct to use the GPLv3+ license for such a
 trivial example.
 
 See discussion on https://opensource.stackexchange.com/q/7597/910
+
+To use the first *Makefile*, type `make -f Makefile1` (it builds the `helloworld1` executable from source `helloworld1.c`).
+
+To clean after that, type `make -f Makefile1 clean`
+
+To use the second *Makefile* type `make -f Makefile2plain` (it builds
+the `helloworld2` executable from `hello2.c` and `world2.c`, and they
+both include `helloworld2.h`) then later clean the mess with `make -f
+Makefile2plain clean`.
+
+To use the third *Makefile* type `make -f Makefile2timestamp` (it generates a `timestamp2.c` and build 
