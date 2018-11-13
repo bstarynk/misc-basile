@@ -25,3 +25,5 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
 * `microbenchlist.c`  is a useless microbenchmark on linked lists
   use `gcc -Wall -O2 -march=native microbenchlist.c -o microbenchlist`
   to compile it.
+
+* `HelloWorld/` contains a small set of files and its [README](HelloWorld/README.md), for a tutorial about GNU make (done on the phone). Perhaps the GPLv3+ license does not fit for such a trivial work.
