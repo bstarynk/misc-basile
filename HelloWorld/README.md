@@ -33,4 +33,9 @@ the `helloworld2` executable from `hello2.c` and `world2.c`, and they
 both include `helloworld2.h`) then later clean the mess with `make -f
 Makefile2plain clean`.
 
-To use the third *Makefile* type `make -f Makefile2timestamp` (it generates a `timestamp2.c` and build 
+To use the third *Makefile* type `make -f Makefile2timestamp` (it
+generates a `timestamp2.c` and build the `helloworld2timestamp`; it
+also autogenerate make dependencies).
+
+You can symlink one of the `Makefile`-s above to your `Makefile` and
+then just run `make` (or `make clean`).
