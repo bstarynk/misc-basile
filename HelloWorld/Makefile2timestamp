@@ -1,0 +1,56 @@
+# file Makefile2timestamp -*- Makefile -*-
+# use it with: make -f Makefile2timestamp on Linux
+#
+#    Copyright © 2018 Basile Starynkevitch.
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+CC=gcc
+CFLAGS= -O1 -g -Wall -DHAVE_TIMESTAMP
+INDENT= indent
+INDENTFLAGS= -gnu
+RM= rm -vf
+HELLOT_SOURCES= hello2.c world2.c timestamp2.c
+HELLOT_OBJECTS:= $(patsubst %.c, %.o, $(HELLOT_SOURCES))
+HELLOT_PROGRAM= helloworld2timestamp
+
+.PHONY: all clean indent
+
+all: $(HELLOT_PROGRAM)
+
+helloworld2timestamp: $(HELLOT_OBJECTS)
+	$(LINK.c) $^ -o $@
+	mv -v timestamp2.c timestamp2.c~
+	$(RM) timestamp2.o timestamp2.c
+
+timestamp2.c: | Makefile2timestamp
+	printf '// generated file %s\n' $@ > $@
+	date +'const char timestamp[] = "%c";%n' >> $@
+	@(echo -n 'const char gitcommit[]="' ; \
+ git log --format=oneline --abbrev=12 --abbrev-commit -q  \
+     | head -1 | tr -d '\n\r\f\"\\\\' ; \
+ echo '";') >> $@
+
+## automatic dependencies
+-include $(wildcard *.mkd)
+
+%.o: %.c
+	$(COMPILE.c) -M -MF $(*F).mkd $^ -o $@
+clean:
+	$(RM) *.o *~ *.mkd
+
+
+## since we use wildcard, timestamp2.c won't be indented if it does not exist
+indent:
+	for f in $(wildcard $(HELLOT_SOURCES)) ; do $(INDENT) $(INDENTFLAGS) $$f ; done

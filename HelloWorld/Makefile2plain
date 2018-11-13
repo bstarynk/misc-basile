@@ -1,0 +1,42 @@
+# file Makefile2plain -*- Makefile -*-
+# use it with: make -f Makefile2plain on Linux
+#
+#    Copyright © 2018 Basile Starynkevitch.
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+CC=gcc
+CFLAGS= -O1 -g -Wall
+INDENT= indent
+INDENTFLAGS= -gnu
+RM= rm -vf
+HELLO_SOURCES= hello2.c world2.c
+HELLO_OBJECTS:= $(patsubst %.c, %.o, $(HELLO_SOURCES))
+HELLO_PROGRAM= helloworld2
+
+.PHONY: all clean indent
+
+all: $(HELLO_PROGRAM)
+
+helloworld2: $(HELLO_OBJECTS)
+	$(LINK.c) $^ -o $@
+
+hello2.o: hello2.c helloworld2.h
+world2.o: world2.c helloworld2.h
+
+clean:
+	$(RM) *.o *~
+
+indent:
+	for f in $(HELLO_SOURCES) ; do $(INDENT) $(INDENTFLAGS) $$f ; done

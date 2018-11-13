@@ -38,3 +38,14 @@ manydl
 redis-scan
 half
 microbenchlist
+
+## HelloWorld
+
+HelloWorld/helloworld1
+HelloWorld/helloworld2
+HelloWorld/helloworld2timestamp
+HelloWorld/*.o
+HelloWorld/timestamp2*
+HelloWorld/*~
+HelloWorld/*.mkd
+
