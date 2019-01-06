@@ -1,0 +1,38 @@
+# file Makefile1 -*- Makefile -*-
+# use it with: make -f Makefile1 on Linux
+#
+#    Copyright © 2018 Basile Starynkevitch.
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# make variables configuring the build
+# so to compile with gcc-6 just run: make -f Makefile1 CC=gcc-6
+
+CC=gcc
+CFLAGS= -O1 -g -Wall
+INDENT= indent
+INDENTFLAGS= -gnu
+RM= rm -vf
+.PHONY: all clean indent
+
+all: helloworld1
+
+helloworld1: helloworld1.c
+	$(LINK.c) $< -o $@
+
+clean:
+	$(RM) *.o helloworld1
+
+indent:
+	$(INDENT) $(INDENTFLAGS) helloworld1.c
