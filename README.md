@@ -10,6 +10,9 @@ as a comment inside the source code.
   millions). It works by generating some pseudo-random C file, compiling it
   into a plugin, which is later dlopen-ed, and repeat.
 
+* `forniklas.c` is a trivial C program generating then using one single plugin
+ in C. Read its comments for more details.
+
 * `redis-scan.c` is a program which scans all the keys in a REDIS database
   (see http://redis.io/ for more) and prints them on stdout.
 
