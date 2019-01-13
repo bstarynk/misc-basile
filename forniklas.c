@@ -3,7 +3,7 @@
 
 /***
  compile that file on Linux/x86-64 as 
-    gcc -Wall -g -rdynamic forniklas.c -ldl forniklas
+    gcc -Wall -g -rdynamic forniklas.c -ldl -o forniklas
 
  then run it as
     ./forniklas SUM 'return x+y;' 3 5
