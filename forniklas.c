@@ -2,6 +2,12 @@
 // in the public domain
 
 /***
+This small program for Linux generates the C code of some tiny plugin
+containing a single function (of two integer arguments and of integer
+result), compiles it as a plugin, loads that plugin and its function,
+and apply that dynamically provided function to two given numbers.  It
+illustrates that a C program can extend itself on Linux.
+
  compile that file on Linux/x86-64 as 
     gcc -Wall -g -rdynamic forniklas.c -ldl -o forniklas
 
@@ -24,6 +30,7 @@ result 8.
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <dlfcn.h>
 
 #define MAXFUNAME_LEN 64
@@ -95,7 +102,7 @@ main (int argc, char **argv)
   char pluginpath[2 * MAXFUNAME_LEN];
   snprintf (pluginpath, sizeof (pluginpath), "/tmp/plugin_%s.so", funame);
   char cmdbuf[2 * MAXFUNAME_LEN + 200];
-  snprintf (cmdbuf, sizeof(cmdbuf), "gcc -fPIC -shared -Wall -g %s -o %s",
+  snprintf (cmdbuf, sizeof (cmdbuf), "gcc -fPIC -shared -Wall -g %s -o %s",
 	    srcpath, pluginpath);
   printf ("running %s\n", cmdbuf);
   fflush (NULL);
@@ -124,6 +131,9 @@ main (int argc, char **argv)
   fflush (NULL);
   int res = (*funptr) (xx, yy);
   printf ("result of %s (%d, %d) is %d\n", funame, xx, yy, res);
+  snprintf (cmdbuf, sizeof (cmdbuf), "pmap %d", (int) getpid ());
+  fflush (NULL);
+  system (cmdbuf);
   printf ("(don't forget to remove generated source %s and plugin %s)\n",
 	  srcpath, pluginpath);
   return 0;
