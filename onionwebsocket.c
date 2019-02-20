@@ -27,12 +27,20 @@
   <http://www.apache.org/licenses/LICENSE-2.0>.
 */
 
+#include <features.h>
 #include <onion/log.h>
 #include <onion/onion.h>
 #include <onion/websocket.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <time.h>
+
+#ifndef HAVE_GNUTLS
+// on Debian, install libcurl4-gnutls-dev & gnutls-dev pacakges before
+// building libonion
+#error without HAVE_GNUTLS but onion needs it
+#endif
 
 onion_connection_status websocket_example_cont (void *data,
 						onion_websocket * ws,
@@ -44,8 +52,18 @@ websocket_example (void *data, onion_request * req, onion_response * res)
   onion_websocket *ws = onion_websocket_new (req, res);
   if (!ws)
     {
+      time_t nowtim = time (NULL);
+      char timbuf[80];
+      static int cnt;
+      cnt++;
+      memset (timbuf, 0, sizeof (timbuf));
+      strftime (timbuf, sizeof (timbuf), "%c", localtime (&nowtim));
       onion_response_write0 (res,
-			     "<html><body><h1 id='h1id'>Easy echo</h1>\n"
+			     "<html><body><h1 id='h1id'>Easy echo</h1>\n");
+      onion_response_printf (res,
+			     "<p>Generated <small><tt>%s</tt></small>, count %d, pid %d.</p>\n",
+			     timbuf, cnt, (int) getpid ());
+      onion_response_write0 (res,
 			     "<pre id=\"chat\"></pre>"
 			     " <script>\ninit = function(){\n"
 			     "msg=document.getElementById('msg');\n"
@@ -97,8 +115,8 @@ int
 main ()
 {
   onion *o = onion_new (O_THREADED);
-  onion_set_port(o, "8087");
-  onion_set_hostname(o, "localhost");
+  onion_set_port (o, "8087");
+  onion_set_hostname (o, "localhost");
 
   onion_url *urls = onion_root_url (o);
 
@@ -114,6 +132,6 @@ main ()
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
- ** compile-command: "gcc -o onionwebsocket -Wall -rdynamic -I/usr/local/include/ -O -g onionwebsocket.c -L /usr/local/lib -lonion" ;;
+ ** compile-command: "gcc -o onionwebsocket -Wall -rdynamic -I/usr/local/include/ -O -g -DHAVE_GNUTLS onionwebsocket.c -L /usr/local/lib $(pkg-config --cflags --libs gnutls) -lonion" ;;
  ** End: ;;
  ****************/
