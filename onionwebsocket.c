@@ -35,6 +35,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <time.h>
+#include <stdatomic.h>
+#include <stdio.h>
 
 #ifndef HAVE_GNUTLS
 // on Debian, install libcurl4-gnutls-dev & gnutls-dev pacakges before
@@ -54,15 +56,15 @@ websocket_example (void *data, onion_request * req, onion_response * res)
     {
       time_t nowtim = time (NULL);
       char timbuf[80];
-      static int cnt;
-      cnt++;
+      static atomic_int acnt;
+      atomic_fetch_add (&acnt, 1);
       memset (timbuf, 0, sizeof (timbuf));
       strftime (timbuf, sizeof (timbuf), "%c", localtime (&nowtim));
       onion_response_write0 (res,
 			     "<html><body><h1 id='h1id'>Easy echo</h1>\n");
       onion_response_printf (res,
 			     "<p>Generated <small><tt>%s</tt></small>, count %d, pid %d.</p>\n",
-			     timbuf, cnt, (int) getpid ());
+			     timbuf, acnt, (int) getpid ());
       onion_response_write0 (res,
 			     "<pre id=\"chat\"></pre>"
 			     " <script>\ninit = function(){\n"
@@ -77,7 +79,8 @@ websocket_example (void *data, onion_request * req, onion_response * res)
 			     "<p>To <a href='#h1id'>top</a>.\n"
 			     "Try to <i>open in new tab</i> that link</p>\n"
 			     "</body></html>");
-
+      printf ("websocket created acnt=%d timbuf=%s\n", acnt, timbuf);
+      fflush (NULL);
       return OCS_PROCESSED;
     }
 
