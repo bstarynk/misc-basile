@@ -97,7 +97,7 @@ int
 main ()
 {
   onion *o = onion_new (O_THREADED);
-  onion_set_port(o, ":8087");
+  onion_set_port(o, "8087");
   onion_set_hostname(o, "localhost");
 
   onion_url *urls = onion_root_url (o);
