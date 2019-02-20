@@ -63,7 +63,7 @@ websocket_example (void *data, onion_request * req, onion_response * res)
       onion_response_write0 (res,
 			     "<html><body><h1 id='h1id'>Easy echo</h1>\n");
       onion_response_printf (res,
-			     "<p>Generated <small><tt>%s</tt></small>, count %d, pid %d.</p>\n",
+			     "<p>Generated <small><tt>%s</tt></small>, count %d, pid %d</p>\n",
 			     timbuf, acnt, (int) getpid ());
       onion_response_write0 (res,
 			     "<pre id=\"chat\"></pre>"
@@ -73,7 +73,7 @@ websocket_example (void *data, onion_request * req, onion_response * res)
 			     "ws=new WebSocket('ws://'+window.location.host);\n"
 			     "ws.onmessage=function(ev){\n document.getElementById('chat').textContent+=ev.data+'\\n';\n"
 			     "};}\n"
-			     "window.addEventListener('load', init, false);\n</script>"
+			     "window.addEventListener('load', init, false);\n</script>\n"
 			     "<input type=\"text\" id=\"msg\" onchange=\"javascript:ws.send(msg.value); msg.select(); msg.focus();\"/><br/>\n"
 			     "<button onclick='ws.close(1000);'>Close connection</button>\n"
 			     "<p>To <a href='#h1id'>top</a>.\n"
@@ -85,7 +85,8 @@ websocket_example (void *data, onion_request * req, onion_response * res)
     }
 
   onion_websocket_printf (ws,
-			  "Hello from server. Write something to echo it");
+			  "Hello from server. Write something to echo it. ws@%p",
+			  ws);
   onion_websocket_set_callback (ws, websocket_example_cont);
 
   return OCS_WEBSOCKET;
@@ -107,9 +108,9 @@ websocket_example_cont (void *data, onion_websocket * ws,
       return OCS_NEED_MORE_DATA;
     }
   tmp[len] = 0;
-  onion_websocket_printf (ws, "Echo: %s", tmp);
+  onion_websocket_printf (ws, "Echo: %s (ws@%p)", tmp, ws);
 
-  ONION_INFO ("Read from websocket: %d: %s", len, tmp);
+  ONION_INFO ("Read from websocket ws@%p: %d: %s", ws, len, tmp);
 
   return OCS_NEED_MORE_DATA;
 }
