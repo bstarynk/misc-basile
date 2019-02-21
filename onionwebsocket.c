@@ -71,23 +71,26 @@ websocket_example (void *data, onion_request * req, onion_response * res)
       onion_response_printf (res,
 			     "<p>Generated <small><tt>%s</tt></small>, count %d, pid %d</p>\n",
 			     timbuf, acnt, (int) getpid ());
-      onion_response_write0 (res,
-			     "<pre id=\"chat\"></pre>"
-			     " <script>\ninit = function(){\n"
-			     "console.group('chatinit');\n"
-			     "msg=document.getElementById('msg');\n"
-			     "msg.focus();\n\n"
-			     "ws=new WebSocket('ws://'+window.location.host);\n"
-			     "console.log('init... msg=', msg, ' ws=', ws);\n"
-			     "console.trace();\n" "console.groupEnd();\n"
-			     "ws.onmessage=function(ev){\n document.getElementById('chat').textContent+=ev.data+'\\n';\n"
-			     "};}\n"
-			     "window.addEventListener('load', init, false);\n</script>\n"
-			     "<input type=\"text\" id=\"msg\" onchange=\"javascript:ws.send(msg.value); msg.select(); msg.focus();\"/><br/>\n"
-			     "<button onclick='ws.close(1000);'>Close connection</button>\n"
-			     "<p>To <a href='#h1id'>top</a>.\n"
-			     "Try to <i>open in new tab</i> that link</p>\n"
-			     "</body></html>");
+      onion_response_write0 (res, "<pre id=\"chat\"></pre>"	//
+			     " <script>\ninit = function(){\n"	//
+			     "console.group('chatinit');\n"	//
+			     "msg=document.getElementById('msg');\n"	//
+			     "msg.focus();\n\n"	//
+			     "ws=new WebSocket('ws://'+window.location.host);\n"	//
+			     "console.log('init... msg=', msg, ' ws=', ws, ' window=', window);\n"	//
+			     "console.trace();\n"	//
+			     "console.groupEnd();\n"	//
+			     "ws.onmessage=function(ev){\n"	//
+			     "   document.getElementById('chat').textContent+=ev.data+'\\n';\n"	//
+			     "};}\n"	//
+			     "window.addEventListener('load', init, false);\n</script>\n"	//
+			     "<input type=\"text\" id=\"msg\"\n"	//
+			     "     onchange=\"javascript:ws.send(msg.value);"	//
+			     "     msg.select(); msg.focus();\"/><br/>\n"	//
+			     "<button onclick='ws.close(1000);'>Close connection</button>\n"	//
+			     "<p>To <a href='#h1id'>top</a>.\n"	//
+			     "Try to <i>open in new tab</i> that link</p>\n"	//
+			     "</body></html>");	//
       ONION_INFO ("%s: websocket created ws@%p acnt=%d timbuf=%s", __func__,
 		  ws, acnt, timbuf);
       fflush (NULL);
