@@ -51,6 +51,10 @@ onion_connection_status websocket_example_cont (void *data,
 onion_connection_status
 websocket_example (void *data, onion_request * req, onion_response * res)
 {
+  ONION_INFO ("%s: start req method %s path '%s' fullpath '%s'",
+	      __func__,
+	      onion_request_methods[onion_request_get_flags (req) & 0xf],
+	      onion_request_get_path (req), onion_request_get_fullpath (req));
   onion_websocket *ws = onion_websocket_new (req, res);
   if (!ws)
     {
@@ -60,6 +64,8 @@ websocket_example (void *data, onion_request * req, onion_response * res)
       atomic_fetch_add (&acnt, 1);
       memset (timbuf, 0, sizeof (timbuf));
       strftime (timbuf, sizeof (timbuf), "%c", localtime (&nowtim));
+      onion_response_set_header (res, "Content-Type",
+				 "text/html; charset=utf-8");
       onion_response_write0 (res,
 			     "<html><body><h1 id='h1id'>Easy echo</h1>\n");
       onion_response_printf (res,
@@ -68,9 +74,12 @@ websocket_example (void *data, onion_request * req, onion_response * res)
       onion_response_write0 (res,
 			     "<pre id=\"chat\"></pre>"
 			     " <script>\ninit = function(){\n"
+			     "console.group('chatinit');\n"
 			     "msg=document.getElementById('msg');\n"
 			     "msg.focus();\n\n"
 			     "ws=new WebSocket('ws://'+window.location.host);\n"
+			     "console.log('init... msg=', msg, ' ws=', ws);\n"
+			     "console.trace();\n" "console.groupEnd();\n"
 			     "ws.onmessage=function(ev){\n document.getElementById('chat').textContent+=ev.data+'\\n';\n"
 			     "};}\n"
 			     "window.addEventListener('load', init, false);\n</script>\n"
@@ -79,10 +88,13 @@ websocket_example (void *data, onion_request * req, onion_response * res)
 			     "<p>To <a href='#h1id'>top</a>.\n"
 			     "Try to <i>open in new tab</i> that link</p>\n"
 			     "</body></html>");
-      printf ("websocket created acnt=%d timbuf=%s\n", acnt, timbuf);
+      ONION_INFO ("%s: websocket created ws@%p acnt=%d timbuf=%s", __func__,
+		  ws, acnt, timbuf);
       fflush (NULL);
       return OCS_PROCESSED;
     }
+  else
+    ONION_INFO ("%s: got ws@%p", __func__, ws);
 
   onion_websocket_printf (ws,
 			  "Hello from server. Write something to echo it. ws@%p",
@@ -90,12 +102,17 @@ websocket_example (void *data, onion_request * req, onion_response * res)
   onion_websocket_set_callback (ws, websocket_example_cont);
 
   return OCS_WEBSOCKET;
-}
+}				/* end websocket_example */
+
+
+
 
 onion_connection_status
 websocket_example_cont (void *data, onion_websocket * ws,
 			ssize_t data_ready_len)
 {
+  ONION_INFO ("%s: ws@%p data_ready_len=%ld", __func__, ws,
+	      (long) data_ready_len);
   char tmp[256];
   if (data_ready_len > sizeof (tmp))
     data_ready_len = sizeof (tmp) - 1;
