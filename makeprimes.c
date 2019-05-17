@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define BSD_PRIMES_PROG "/usr/games/primes"
 
@@ -72,7 +73,7 @@ main (int argc, char **argv)
       if (n > prevn + prevn / fra)
 	{
 	  printf (" %ld,", n);
-1	  outcnt++;
+	  outcnt++;
 	  if (outcnt % 4 == 0)
 	    {
 	      putchar ('\n');
@@ -84,11 +85,19 @@ main (int argc, char **argv)
 	      if (outcnt < 100 || outcnt % 64 == 0)
 		fflush (NULL);
 	    }
-	}
+	  prevn = n;
+	};
     }
   if (pclose (pcmd))
     perror ("pclose");
-  printf ("/// end, read %d primes, printed %d primes, so %.3f%%\n",
-	  incnt, outcnt, (100.0*outcnt)/incnt);
+  printf ("\n/// end, read %d primes, printed %d primes, so %.5f%%\n",
+	  incnt, outcnt, (100.0 * outcnt) / incnt);
   fflush (NULL);
 }
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "gcc -Wall -O2 -g makeprimes.c -o makeprimes" ;;
+ ** End: ;;
+ ****************/
