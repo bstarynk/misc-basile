@@ -13,6 +13,8 @@
  * /usr/games/primes 3 $LIM |  awk '($1>p+p/FRA){print $1, ","; p=$1}'
  ***/
 
+/// FIXME: should maybe use https://github.com/kimwalisch/primesieve
+
 /** Copyright (C)  2019  Basile Starynkevitch
     makeprimes is showing some prime numbers, using the BSD primes program
 
