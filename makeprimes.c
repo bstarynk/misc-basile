@@ -37,6 +37,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define BSD_PRIMES_PROG "/usr/games/primes"
 
@@ -56,7 +57,7 @@ main (int argc, char **argv)
     lim = 1000;
   if (fra < 3)
     fra = 3;
-  printf ("// primes up to %ld, growing with %d, using %s\n", lim, fra, cmd);
+  printf ("// primes up to %ld, growing with %d, using %s, pid %d\n", lim, fra, cmd, (int)getpid());
   char cmdbuf[100];
   memset (cmdbuf, 0, sizeof (cmdbuf));
   snprintf (cmdbuf, sizeof (cmdbuf), "%s 2 %ld", cmd, lim);
