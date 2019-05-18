@@ -36,11 +36,24 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
+#include <signal.h>
 
 #define BSD_PRIMES_PROG "/usr/games/primes"
 
+volatile bool showstat;
+
+void
+sigint_handler (int s)
+{
+  if (s > 0)
+    showstat = true;
+}
+
+#define MILLION 1000000
 int
 main (int argc, char **argv)
 {
@@ -57,7 +70,8 @@ main (int argc, char **argv)
     lim = 1000;
   if (fra < 3)
     fra = 3;
-  printf ("// primes up to %ld, growing with %d, using %s, pid %d\n", lim, fra, cmd, (int)getpid());
+  printf ("// primes up to %ld, growing with %d, using %s, pid %d\n", lim,
+	  fra, cmd, (int) getpid ());
   char cmdbuf[100];
   memset (cmdbuf, 0, sizeof (cmdbuf));
   snprintf (cmdbuf, sizeof (cmdbuf), "%s 2 %ld", cmd, lim);
@@ -68,6 +82,7 @@ main (int argc, char **argv)
       exit (EXIT_FAILURE);
     };
   printf ("//// piping %s\n", cmdbuf);
+  signal (SIGINT, sigint_handler);
   int incnt = 0;
   int outcnt = 0;
   long n = 0;
@@ -92,6 +107,16 @@ main (int argc, char **argv)
 	    }
 	  prevn = n;
 	};
+      if (incnt % (10 * MILLION) == 0
+	  || (outcnt % 100 == 0 && incnt % MILLION == 0) || showstat)
+	{
+	  struct timespec ts = { 0, 0 };
+	  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &ts);
+	  fprintf (stderr, "# incnt=%d outcnt=%d n=%ld cpu %.2f s\n",
+		   incnt, outcnt, n, 1.0 * ts.tv_sec + 1.0e-9 * ts.tv_nsec);
+	  fflush (NULL);
+	  showstat = false;
+	}
     }
   if (pclose (pcmd))
     perror ("pclose");
