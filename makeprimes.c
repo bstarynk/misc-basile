@@ -83,7 +83,7 @@ main (int argc, char **argv)
     };
   printf ("//// piping %s\n", cmdbuf);
   signal (SIGINT, sigint_handler);
-  int incnt = 0;
+  long incnt = 0;
   int outcnt = 0;
   long n = 0;
   long prevn = 0;
@@ -99,7 +99,7 @@ main (int argc, char **argv)
 	      putchar ('\n');
 	      if (outcnt % 100 == 0)
 		{
-		  printf ("//#%d of %d\n", outcnt, incnt);
+		  printf ("//#%d of %ld\n", outcnt, incnt);
 		  fflush (NULL);
 		};
 	      if (outcnt < 100 || outcnt % 64 == 0)
@@ -107,12 +107,12 @@ main (int argc, char **argv)
 	    }
 	  prevn = n;
 	};
-      if (incnt % (10 * MILLION) == 0
-	  || (outcnt % 100 == 0 && incnt % MILLION == 0) || showstat)
+      if (incnt % (20 * MILLION) == 0
+	  || (outcnt % 100 == 0 && incnt % (2 * MILLION) == 0) || showstat)
 	{
 	  struct timespec ts = { 0, 0 };
 	  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &ts);
-	  fprintf (stderr, "# incnt=%d outcnt=%d n=%ld cpu %.2f s\n",
+	  fprintf (stderr, "\n# incnt=%ld outcnt=%d n=%ld cpu %.2f s\n",
 		   incnt, outcnt, n, 1.0 * ts.tv_sec + 1.0e-9 * ts.tv_nsec);
 	  fflush (NULL);
 	  showstat = false;
@@ -120,8 +120,12 @@ main (int argc, char **argv)
     }
   if (pclose (pcmd))
     perror ("pclose");
-  printf ("\n/// end, read %d primes, printed %d primes, so %.5f%%\n",
-	  incnt, outcnt, (100.0 * outcnt) / incnt);
+  struct timespec ts = { 0, 0 };
+  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &ts);
+  printf
+    ("\n/// end, read %ld primes, printed %d primes, so %.5f%% cpu %.2f s\n",
+     incnt, outcnt, (100.0 * outcnt) / incnt,
+     1.0 * ts.tv_sec + 1.0e-9 * ts.tv_nsec);
   fflush (NULL);
 }
 
