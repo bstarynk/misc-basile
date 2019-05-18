@@ -3,6 +3,7 @@
  * it uses /usr/games/primes (which is a clever program)
  *
  * it takes two arguments LIM and FRA
+ * the optional third CMD is a replacement for /usr/games/primes
  *
  * it prints prime numbers, with a comma after each of them, from 2 to
  * LIM
@@ -44,20 +45,21 @@ main (int argc, char **argv)
 {
   if (argc < 3)
     {
-      fprintf (stderr, "usage: %s LIM FRA; see comments in %s\n",
+      fprintf (stderr, "usage: %s LIM FRA [CMD]; see comments in %s\n",
 	       argv[0], __FILE__);
       exit (EXIT_FAILURE);
     };
   long lim = atol (argv[1]);
   int fra = atoi (argv[2]);
+  char *cmd = (argc == 4) ? argv[3] : BSD_PRIMES_PROG;
   if (lim < 1000)
     lim = 1000;
   if (fra < 3)
     fra = 3;
-  printf ("// primes up to %ld, growing with %d\n", lim, fra);
+  printf ("// primes up to %ld, growing with %d, using %s\n", lim, fra, cmd);
   char cmdbuf[100];
   memset (cmdbuf, 0, sizeof (cmdbuf));
-  snprintf (cmdbuf, sizeof (cmdbuf), BSD_PRIMES_PROG " 2 %ld", lim);
+  snprintf (cmdbuf, sizeof (cmdbuf), "%s 2 %ld", cmd, lim);
   FILE *pcmd = popen (cmdbuf, "r");
   if (!pcmd)
     {
