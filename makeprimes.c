@@ -42,7 +42,7 @@
 #include <time.h>
 #include <signal.h>
 
-#define BSD_PRIMES_PROG "/usr/games/primes"
+#define PRIMES_PROG "primes"
 
 volatile bool showstat;
 
@@ -65,7 +65,7 @@ main (int argc, char **argv)
     };
   long lim = atol (argv[1]);
   int fra = atoi (argv[2]);
-  char *cmd = (argc == 4) ? argv[3] : BSD_PRIMES_PROG;
+  char *cmd = (argc == 4) ? argv[3] : PRIMES_PROG;
   if (lim < 1000)
     lim = 1000;
   if (fra < 3)
@@ -99,7 +99,7 @@ main (int argc, char **argv)
 	      putchar ('\n');
 	      if (outcnt % 100 == 0)
 		{
-		  printf ("//#%d of %ld\n", outcnt, incnt);
+		  printf ("//#%d of %ld (p:%g)\n", outcnt, incnt, (double)n);
 		  fflush (NULL);
 		};
 	      if (outcnt < 100 || outcnt % 64 == 0)
@@ -107,13 +107,13 @@ main (int argc, char **argv)
 	    }
 	  prevn = n;
 	};
-      if (incnt % (20 * MILLION) == 0
-	  || (outcnt % 100 == 0 && incnt % (2 * MILLION) == 0) || showstat)
+      if (incnt % (32 * MILLION) == 0
+	  || (outcnt % 16 == 0 && incnt % (2 * MILLION) == 0) || showstat)
 	{
 	  struct timespec ts = { 0, 0 };
 	  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &ts);
-	  fprintf (stderr, "\n# incnt=%ld outcnt=%d n=%ld cpu %.2f s\n",
-		   incnt, outcnt, n, 1.0 * ts.tv_sec + 1.0e-9 * ts.tv_nsec);
+	  fprintf (stderr, "## incnt=%ldM outcnt=%d n=%ld=%g cpu %.2f s\n",
+		   incnt/MILLION, outcnt, n, (double)n, 1.0 * ts.tv_sec + 1.0e-9 * ts.tv_nsec);
 	  fflush (NULL);
 	  showstat = false;
 	}
