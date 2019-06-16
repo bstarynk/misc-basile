@@ -40,3 +40,5 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
 * `onionwebsocket.c` is a slighty improved example of websockets from
   [libonion](https://www.coralbits.com/libonion/). Most of the code is
   not mine.
+
+* `foldexample.cc` is interesting, since it shows how recent C++ compilers are capable of very deep optimizations
