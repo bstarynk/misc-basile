@@ -1,0 +1,132 @@
+% file desc-ctrl-1987.tex
+%
+% a LaTeX version of the old paper on
+% https://inis.iaea.org/collection/NCLCollectionStore/_Public/19/059/19059867.pdf
+\documentclass[11pt,a4paper,svgnames]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{alltt}
+\usepackage{xcolor}
+\usepackage{relsize}
+\usepackage{hyperref}
+
+ % see https://tex.stackexchange.com/a/51349/42406
+\hypersetup{
+  colorlinks   = true, %Colours links instead of ugly boxes
+  urlcolor     = NavyBlue, %Colour for external hyperlinks
+  linkcolor    = DarkGreen, %Colour of internal links
+  citecolor   = DarkMagenta, %Colour of citations
+  frenchlinks = true,
+}
+
+\input{generated-git-commit.tex}
+\begin{document}
+
+\bibliographystyle{abbrvnat}
+
+\date{august, 1987}
+
+\title{Describing Control}
+
+\author{Jean-Marc \textsc{Fouet}\thanks{Jean-Marc Fouet passed away
+    around $\approx 2000$; at time of writing was at \emph{Laboratoire de
+      Mécanique et Technologie; ENS Cachan / Univ. Paris VI / CNRS;
+      94340 Cachan; France}}
+\and
+Basile \textsc{Starynkevitch}\thanks{current email in 2019:
+    \href{mailto:basile@starynkevitch.net}{\texttt{basile@starynkevitch.net}};
+    web:
+    \href{http://starynkevitch.net/Basile/}{\texttt{starynkevitch.net/Basile/}};
+    at time of writing was employed at \emph{Commissariat à l'Energie
+      Atomique; IRDI/DEDR/DEMT/SERMA/LETR; CEN Saclay bat 70; 91191
+      GIF/YVETTE CEDEX}}}
+
+  \begin{titlepage}
+    \maketitle
+  \end{titlepage}
+
+  \begin{center}
+    \emph{(short paper submitted to 10\textsuperscript{th} IJCAI)}\\
+      {\relsize{-1.5}{(This was originally published as
+    \href{https://inis.iaea.org/collection/NCLCollectionStore/\_Public/19/059/19059867.pdf}{\texttt{inis.iaea.org/collection/NCLCollectionStore/\_Public/19/059/19059867.pdf}}
+    and retyped with {\LaTeX} in 2019)}}\\ 
+    \textbf{Keywords:} \emph{Metaknowledge} - \emph{Control} - \emph{Heuristics}
+  \end{center}
+  
+  \begin{abstract}
+    Incremental development and
+    %% TODO-1
+    {\textcolor{red}{\textbf{TODO-1}}}
+  \end{abstract}
+
+  \section{Introduction: Control is needed and cannot be programmed}
+  \label{sec:intro}
+
+  ``Logic must be supplemented by some kind of control structure'' \cite{Simon-Search-1983}
+    %% TODO-2
+  {\textcolor{red}{\textbf{TODO-2}}}
+  
+    %% TODO-3
+  {\textcolor{red}{\textbf{TODO-3}}}
+  Algorithms have been proposed \cite{Forgy-Rete-1982}.
+    %% TODO-4
+  {\textcolor{red}{\textbf{TODO-4}}}
+
+  
+    %% TODO-5
+  {\textcolor{red}{\textbf{TODO-5}}}
+  This involves semantical information
+    %% TODO-6
+  {\textcolor{red}{\textbf{TODO-6}}}
+  and control heuristics \cite{Lenat-Heuristics-1982,Lenat-Eurisko-1983}
+    %% TODO-7
+  {\textcolor{red}{\textbf{TODO-7}}}
+
+  \section{Local control, global control}
+  \label{sec:loc-glob-control}
+
+  Control can be seen as
+    %% TODO-8
+  {\textcolor{red}{\textbf{... TODO-8}}}
+
+  
+  \section{\textit{A posteriori} control, \textit{a priori} control}
+  \label{sec:posteriori-priori-control}
+When an item reaches a fork
+    %% TODO-9
+  {\textcolor{red}{\textbf{... TODO-9}}}
+  
+  \section{Changing representations}
+  \label{sec:changing-repr}
+  When spying upon the system
+    %% TODO-10
+  {\textcolor{red}{\textbf{... TODO-10}}}
+  
+  \section{Conclusion: bootstrapping}
+  \label{sec:concl-bootstrap}
+  We need good heuristics 
+    %% TODO-11
+  {\textcolor{red}{\textbf{... TODO-11}}}
+
+  \section*{examples}
+
+  \begin{enumerate}
+  \item if $x$ does not contain \texttt{if-then}, then $x$ is not a rule
+    \item  
+    %% TODO-12
+      {\textcolor{red}{\textbf{... TODO-12}}}
+      
+  \end{enumerate}
+  
+\clearpage
+\addcontentsline{toc}{section}{References}
+
+
+\bibliography{bib-desc-ctrl-1987}
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Local Variables: ;;
+%% compile-command: " ./build-pdf.sh" ;;
+%% End: ;;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

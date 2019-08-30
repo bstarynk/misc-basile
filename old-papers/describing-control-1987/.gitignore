@@ -1,0 +1,9 @@
+# file .gitignore
+*~
+*.aux
+*.bbl
+*.blg
+*.pdf
+*.log
+*.out
+generated*
