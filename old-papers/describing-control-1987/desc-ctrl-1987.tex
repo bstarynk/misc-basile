@@ -68,7 +68,38 @@ Basile \textsc{Starynkevitch}\thanks{current email in 2019:
   \section{Introduction: Control is needed and cannot be programmed}
   \label{sec:intro}
 
-  ``Logic must be supplemented by some kind of control structure'' \cite{Simon-Search-1983}
+  ``Logic must be supplemented by some kind of control structure''
+  \cite{Simon-Search-1983}. Not only because it would otherwise be too slow and
+  space consuming, but also in most cases to avoid iterative or recursive
+  explosions. For instance, the rule of example 1 (please refer to the table at
+  the end of this paper) will generate an infinity of facts when applied to any
+  fact. Control is all the more needed if, instead of dealing with pure logic,
+  one considers incomplete and incoherent knowledge bases, rules including
+  programmed predicates (for instance ``less than'') and actions (for instance
+  ``read'') with non monotonic side effects (see for instance example 2).
+
+  Attempts were made, since Emycin \cite{}, to draw essential, general purpose
+  inference engines. Algorithms have been proposed \cite{}. But none is really
+  satisfactory: people still write and sell new inference engines, for special
+  purposes, even in propositional logic. In the case of full first order logic,
+  instantiating a variable by a term gives rise to undecidable problems; in
+  other words, any algorithm is a bad algorithm, too heavy for simple cases and
+  too frail for complicated cases.
+
+  To be efficient, it seems obvious that control should be event-driven, that it
+  should make the most of properties attached to the objects it handles
+  (constants, predicates, and rules), and of its own state (available time and
+  space). This involves semantical information (for instance: ``evaluating this
+  predicate costs 10 units'') and control heuristics \cite{}. BUT: (1) a program
+  based on heuristics (a huge number of yet unknown hueristics) will necessarily
+  have to be often modified; (2) giving heuristics i a prescriptive form implies
+  losing information, in comparison with a possible descriptive form (see how
+  many rules can be derived from example 3); and (3), a program cannot easily
+  modify itself. We are therefore developing - each along slightly different
+  principles - EUM \cite{} and the Gosseyn Machine \cite{} to study the
+  possiblity of delcarative control; both researches are inspired by the works
+  of D. Lenat and of J. Pitrat \cite{}.
+
     %% TODO-2
   {\textcolor{red}{\textbf{TODO-2}}}
 
