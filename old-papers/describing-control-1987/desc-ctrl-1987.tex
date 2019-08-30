@@ -78,27 +78,29 @@ Basile \textsc{Starynkevitch}\thanks{current email in 2019:
   programmed predicates (for instance ``less than'') and actions (for instance
   ``read'') with non monotonic side effects (see for instance example 2).
 
-  Attempts were made, since Emycin \cite{}, to draw essential, general purpose
-  inference engines. Algorithms have been proposed \cite{}. But none is really
-  satisfactory: people still write and sell new inference engines, for special
-  purposes, even in propositional logic. In the case of full first order logic,
-  instantiating a variable by a term gives rise to undecidable problems; in
-  other words, any algorithm is a bad algorithm, too heavy for simple cases and
-  too frail for complicated cases.
+  Attempts were made, since Emycin \cite{VanMelle-Emycin-1980}, to draw
+  essential, general purpose inference engines. Algorithms have been proposed
+  \cite{Forgy-Rete-1982}. But none is really satisfactory: people still write
+  and sell new inference engines, for special  purposes, even in propositional
+  logic. In the case of full first order logic, instantiating a variable by a
+  term gives rise to undecidable problems; in other words, any algorithm is a
+  bad algorithm, too heavy for simple cases and too frail for complicated cases.
 
   To be efficient, it seems obvious that control should be event-driven, that it
   should make the most of properties attached to the objects it handles
   (constants, predicates, and rules), and of its own state (available time and
   space). This involves semantical information (for instance: ``evaluating this
-  predicate costs 10 units'') and control heuristics \cite{}. BUT: (1) a program
-  based on heuristics (a huge number of yet unknown hueristics) will necessarily
-  have to be often modified; (2) giving heuristics i a prescriptive form implies
-  losing information, in comparison with a possible descriptive form (see how
-  many rules can be derived from example 3); and (3), a program cannot easily
-  modify itself. We are therefore developing - each along slightly different
-  principles - EUM \cite{} and the Gosseyn Machine \cite{} to study the
-  possiblity of delcarative control; both researches are inspired by the works
-  of D. Lenat and of J. Pitrat \cite{}.
+  predicate costs 10 units'') and control heuristics \cite{Lenat-Heuristics-1982}.
+  BUT: (1) a program based on heuristics (a huge
+  number of yet unknown heuristics) will necessarily have to be often modified;
+  (2) giving heuristics in a prescriptive form implies losing information, in
+  comparison with a possible descriptive form (see how many rules can be derived
+  from example 3); and (3), a program cannot easily modify itself. We are
+  therefore developing - each along slightly different principles -
+  EUM \cite{Starynkevitch-EUM-1986} and the Gosseyn
+  Machine \cite{Fouet-CompRules-1987} to study the possiblity of delcarative
+  control; both researches are inspired by the works of D. Lenat and of J.
+  Pitrat \cite{Pitrat-Maciste-1985}.
 
     %% TODO-2
   {\textcolor{red}{\textbf{TODO-2}}}
