@@ -19,7 +19,7 @@
   frenchlinks = true,
 }
 
-\input{generated-git-commit.tex}
+\input{generated-git-commit}
 \begin{document}
 
 \bibliographystyle{abbrvnat}
@@ -43,6 +43,15 @@ Basile \textsc{Starynkevitch}\thanks{current email in 2019:
 
   \begin{titlepage}
     \maketitle
+
+    \bigskip
+
+    \begin{center}
+      \begin{relsize}{-1.5}
+        git commit \texttt{\gitcommit}
+      \end{relsize}
+    \end{center}
+    
   \end{titlepage}
 
   \begin{center}
@@ -75,8 +84,8 @@ Basile \textsc{Starynkevitch}\thanks{current email in 2019:
   the end of this paper) will generate an infinity of facts when applied to any
   fact. Control is all the more needed if, instead of dealing with pure logic,
   one considers incomplete and incoherent knowledge bases, rules including
-  programmed predicates (for instance ``less than'') and actions (for instance
-  ``read'') with non monotonic side effects (see for instance example 2).
+  programmed predicates (for instance ``\texttt{less than}'') and actions (for instance
+  ``\texttt{read}'') with non monotonic side effects (see for instance example 2).
 
   Attempts were made, since Emycin \cite{VanMelle-Emycin-1980}, to draw
   essential, general purpose inference engines. Algorithms have been proposed
@@ -89,8 +98,8 @@ Basile \textsc{Starynkevitch}\thanks{current email in 2019:
   To be efficient, it seems obvious that control should be event-driven, that it
   should make the most of properties attached to the objects it handles
   (constants, predicates, and rules), and of its own state (available time and
-  space). This involves semantical information (for instance: ``evaluating this
-  predicate costs 10 units'') and control heuristics \cite{Lenat-Heuristics-1982}.
+  space). This involves semantical information (for instance: ``\texttt{evaluating this
+  predicate costs 10 units}'') and control heuristics \cite{Lenat-Heuristics-1982}.
   BUT: (1) a program based on heuristics (a huge
   number of yet unknown heuristics) will necessarily have to be often modified;
   (2) giving heuristics in a prescriptive form implies losing information, in
@@ -148,6 +157,7 @@ When an item reaches a fork
   {\textcolor{red}{\textbf{... TODO-11}}}
 
   \section*{examples}
+  \label{sec:examples}
 
   \begin{enumerate}
   \item if $x$ does not contain \texttt{if-then}, then $x$ is not a rule

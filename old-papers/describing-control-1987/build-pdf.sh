@@ -11,3 +11,9 @@ bibtex desc-ctrl-1987 < /dev/null
 
 # run LaTeX the second time
 pdflatex -halt-on-error  desc-ctrl-1987 < /dev/null
+
+# run bibtex again
+bibtex desc-ctrl-1987 < /dev/null
+
+# run LaTeX the last time
+pdflatex -halt-on-error  desc-ctrl-1987 < /dev/null
