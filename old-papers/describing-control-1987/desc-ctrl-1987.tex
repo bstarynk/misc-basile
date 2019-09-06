@@ -211,15 +211,24 @@ Basile \textsc{Starynkevitch}\thanks{current email in 2019:
   improving, we intend to add dynamic introspection (observing one's reactions)
   to the actual static ability to observe and modify one's structure.
 
-  \section*{examples}
+  \section*{Examples}
   \label{sec:examples}
 
   \begin{enumerate}
-  \item if $x$ does not contain \texttt{if-then}, then $x$ is not a rule
-    \item
-    %% TODO-12
-      {\textcolor{red}{\textbf{... TODO-12}}}
-
+  \item if $x$ does not contain \texttt{if-then}, then $x$ is not a rule.
+  \item if $x$ is a task, and $x$ is in the agenda, and $x$ has been satisfied,
+        then remove $x$ from the agenda.
+  \item if $x$ is a rule, and $y$ is a premise of $x$, and $y$ is false, then
+        $x$ cannot be fired.
+  \item if $x$ is an integer, and $x$ > 5, and $x$ < 10\ldots
+  \item if you need an integer, then try 0 and 1 first.
+  \item if you are looking for elements of a set $E$, if the cardinality of $E$
+        is more than 100, try and reduce $E$ first.
+  \item if you are looking for elements of a set $e$, if the cardinality of $E$
+        is infinite, never generate more than one element at a time.
+  \item if $x$ is a method, if the time spent to find $x$ was more than 10
+          units, then file $x$ for future needs.
+  \item if $x$ is a functional predicate, and\ldots, then create a slot for $x$.
   \end{enumerate}
 
 \clearpage
