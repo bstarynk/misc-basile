@@ -51,7 +51,7 @@ Basile \textsc{Starynkevitch}\thanks{current email in 2019:
         git commit \texttt{\gitcommit}
       \end{relsize}
     \end{center}
-    
+
   \end{titlepage}
 
   \begin{center}
@@ -133,10 +133,27 @@ Basile \textsc{Starynkevitch}\thanks{current email in 2019:
   \section{Local control, global control}
   \label{sec:loc-glob-control}
 
-  Control can be seen as
-    %% TODO-8
-  {\textcolor{red}{\textbf{... TODO-8}}}
+  Control can be seen as the way to answer the question: ``what should I do
+  next?''. Depending on the level at which the question is asked, possible
+  answers might be: ``get a value for that slot'', ``see if you can match
+  Rule47 with Fact12'', or ``commit suicide''. But control should not only be
+  seen as the way to decide when facing a choice: it also means discovering that
+  there is a choice, planning so as to have no choice, or deciding not to do
+  something even though it was the only possibility.
 
+  For each task, two classes of questions arise: why am I doing this (global
+  questions, in relationship with the final goal), and how can I do it (local
+  questions). Every time one meets a tree of possible actions, one has to decide
+  not only which son of a node to consider first (local), but also whether the
+  tree should be developed depth first or breadth first (global). When evaluating
+  a conjunction, the local problem of evaluating each predicate must not hide the
+  global problem: should the predicates be evaluated one at a time, and in which
+  order, or should the whole conjunction be considered. For instance, the first
+  strategy will fail if one tries to find all x's satisfying example 5, since any
+  of the trhee predicates generates an infinite set. Once it has been globally
+  decided to iterate over a set, local methods should decide whether to iterate
+  from 1 to n, from n to 1, for all even ranks first, etc (see examples 6, 7 and
+  8).
 
   \section{\textit{A posteriori} control, \textit{a priori} control}
   \label{sec:posteriori-priori-control}
