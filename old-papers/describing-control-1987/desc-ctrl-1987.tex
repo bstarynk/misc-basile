@@ -157,9 +157,25 @@ Basile \textsc{Starynkevitch}\thanks{current email in 2019:
 
   \section{\textit{A posteriori} control, \textit{a priori} control}
   \label{sec:posteriori-priori-control}
-When an item reaches a fork
-    %% TODO-9
-  {\textcolor{red}{\textbf{... TODO-9}}}
+
+  When an item reaches a fork, the decision to send it in one direction rather
+  than the others can be made either by asking for advice or by following a
+  pre-imposed plan. The first method is rather easily implemented: each time a
+  possible choice occurs, the procedure which should (but doesn't want to) choose
+  manufactures a message describing the choice and waits for the reply; the
+  inference engine is called recursively, applying rules (like the one of example
+  4) to the message.
+
+  On the other hand, the time needed to match the message with the available
+  rules may soon become so prohibitive that this method cannot reasonably be
+  contemplated, at least on the local levels. Each time knowledge permits, we
+  rather like to spend some time analysing the task before launching it; this
+  results in hints, associated with each item, and aimed at the procedures
+  through which the item should travel. These hints can take a simple form
+  (``when building the conflict set, you should only find two possibilities:
+  discard the one dealing with P\ldots'') or can really look like a small program.
+  Of course, when that method fails (the plan cannot be applied), the first one
+  (call for help) is still available.
 
   \section{Changing representations}
   \label{sec:changing-repr}
