@@ -26,7 +26,7 @@ overheated so much that kernel compilation failed.
 
 Today that program might be perhaps used to simulate bugs, e.g. by
 sending SIGSEGV signals to a process group. Just compile it with
--DSTOP_SIGNAL=SIGSEGV for example; see the comments near end of file
+-DMY_STOP_SIGNAL=SIGSEGV for example; see the comments near end of file
 for more.
 
 */
