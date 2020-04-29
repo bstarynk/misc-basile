@@ -38,7 +38,11 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
 
 * `sync-periodically.c` runs periodically the
   [sync(2)](http://man7.org/linux/man-pages/man2/sync.2.html). Please
-  glance inside the source code.
+  glance inside the source code. Our `/etc/crontab` has a line
+
+```
+@reboot         sync    test -x /usr/local/bin/sync-periodically && (cd / ; sleep 10 ; /usr/bin/nohup /usr/local/bin/sync-periodically 3 2000 &)
+```
 
 * `HelloWorld/` contains a small set of files and its
   [README](HelloWorld/README.md), for a tutorial about GNU make (done
