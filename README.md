@@ -36,6 +36,10 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
 * `makeprimes.c` uses the very clever BSD `/usr/games/primes` program
   and extract some primes from the stream of primes producing it.
 
+* `sync-periodically.c` runs periodically the
+  [sync(2)](http://man7.org/linux/man-pages/man2/sync.2.html). Please
+  glance inside the source code.
+
 * `HelloWorld/` contains a small set of files and its
   [README](HelloWorld/README.md), for a tutorial about GNU make (done
   on the phone). Perhaps the GPLv3+ license does not fit for such a
