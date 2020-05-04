@@ -40,6 +40,8 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
   [sync(2)](http://man7.org/linux/man-pages/man2/sync.2.html). Please
   glance inside the source code. Our `/etc/crontab` has a line
 
+* `qfontdialog-example.cc` is a tiny improvement over [this `QFontDialog` example](http://www.codebind.com/cpp-tutorial/qt-tutorial/qt-tutorials-for-beginners-qfontdialog-example/)
+
 ```
 @reboot         sync    test -x /usr/local/bin/sync-periodically && (cd / ; sleep 10 ; /usr/bin/nohup /usr/local/bin/sync-periodically 3 2000 &)
 ```
