@@ -117,6 +117,7 @@ synper_parse_opt(int key, char*arg, struct argp_state*state)
       printf("%s built on %s\n",  synper_progname, __DATE__);
 #endif
       printf("\t run as: '%s --help' to get help.\n",  synper_progname);
+      printf("\t see also https://github.com/bstarynk/misc-basile/\n");
       fflush (NULL);
       exit(EXIT_SUCCESS);
     }
