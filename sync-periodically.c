@@ -28,6 +28,8 @@ for more details.
 #include <argp.h>
 
 char *synper_progname;
+char *synper_pidfile;
+
 /// see http://man7.org/linux/man-pages/man2/sync.2.html
 int synper_period;		// period for sync(2) in seconds
 int synper_logperiod = 2000;	// period for syslog(3) in seconds;,
@@ -100,12 +102,7 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
       break;
     case 'P':			// --pid-file
       {
-	FILE *pidfil = fopen (arg, "w");
-	if (!pidfil)
-	  SYNPER_FATAL ("failed to open pid file %s : %m", arg);
-	fprintf (pidfil, "%ld\n", (long) getpid ());
-	if (fclose (pidfil))
-	  SYNPER_FATAL ("failed to close pid file %s : %m", arg);
+	synper_pidfile = arg;
       }
       return 0;
     case 'Y':			// --sync-period
@@ -184,7 +181,18 @@ main (int argc, char **argv)
       "See www.gnu.org/licenses/ for details.\n"
       "Source " __FILE__ " on https://github.com/bstarynk/misc-basile/\n"
   };
-  argp_parse (&argp, argc, argv, 0, 0, NULL);
+  argp_parse (&argp, argc, argv, 0, 0, NULL);	// could run daemon(3)
+  if (synper_pidfile)
+    {
+      FILE *pidfil = fopen (synper_pidfile, "w");
+      if (!pidfil)
+	SYNPER_FATAL ("%s failed to open pid file %s : %m",
+		      synper_progname, synper_pidfile);
+      fprintf (pidfil, "%ld\n", (long) getpid ());
+      if (fclose (pidfil))
+	SYNPER_FATAL ("%s failed to close pid file %s : %m",
+		      synper_progname, synper_pidfile);
+    }
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
   if (synper_period < SYNPER_MIN_PERIOD)
     synper_period = SYNPER_MIN_PERIOD;
