@@ -189,6 +189,7 @@ main (int argc, char **argv)
       "Source " __FILE__ " on https://github.com/bstarynk/misc-basile/\n"
   };
   argp_parse (&argp, argc, argv, 0, 0, NULL);	// could run daemon(3)
+  openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
   if (synper_pidfile)
     {
       FILE *pidfil = fopen (synper_pidfile, "w");
@@ -199,8 +200,8 @@ main (int argc, char **argv)
       if (fclose (pidfil))
 	SYNPER_FATAL ("%s failed to close pid file %s : %m",
 		      synper_progname, synper_pidfile);
+      syslog(LOG_INFO, "%s wrote pid-file %s", synper_progname, synper_pidfile);
     }
-  openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
   usleep (10*1024);
   if (synper_period < SYNPER_MIN_PERIOD)
     synper_period = SYNPER_MIN_PERIOD;
