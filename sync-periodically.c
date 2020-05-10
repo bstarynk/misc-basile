@@ -209,8 +209,6 @@ main (int argc, char **argv)
       if (fclose (pidfil))
 	SYNPER_FATAL ("%s failed to close pid file %s : %m",
 		      synper_progname, synper_pidfile);
-      syslog (LOG_INFO, "%s wrote pid-file %s as uid#%d", synper_progname,
-	      synper_pidfile, (int) getuid ());
     }
   usleep (10 * 1024);
   if (synper_period < SYNPER_MIN_PERIOD)
@@ -224,6 +222,10 @@ main (int argc, char **argv)
   if (synper_logperiod > SYNPER_MAX_LOGPERIOD)
     synper_logperiod = SYNPER_MAX_LOGPERIOD;
   synper_syslog_begin ();
+  if (synper_pidfile) {    
+      syslog (LOG_INFO, "%s wrote pid-file %s as uid#%d", synper_progname,
+	      synper_pidfile, (int) getuid ());
+  };
   sleep (synper_period / 3);
   time_t lastlogtime = 0;
   long loopcnt = 0;
