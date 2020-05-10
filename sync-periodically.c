@@ -192,6 +192,13 @@ main (int argc, char **argv)
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
   if (synper_pidfile)
     {
+      {
+	char backup[256];
+	memset (backup, 0, sizeof(backup));
+	snprintf(backup, sizeof(backup)-1, "%s~", synper_pidfile);
+	if (strcmp(backup, synper_pidfile) && !access(synper_pidfile, F_OK))
+	  (void) rename (synper_pidfile, backup);
+      };
       FILE *pidfil = fopen (synper_pidfile, "w");
       if (!pidfil)
 	SYNPER_FATAL ("%s failed to open pid file %s : %m",
