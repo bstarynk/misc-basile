@@ -200,7 +200,7 @@ main (int argc, char **argv)
       if (fclose (pidfil))
 	SYNPER_FATAL ("%s failed to close pid file %s : %m",
 		      synper_progname, synper_pidfile);
-      syslog(LOG_INFO, "%s wrote pid-file %s", synper_progname, synper_pidfile);
+      syslog(LOG_INFO, "%s wrote pid-file %s as uid#%d", synper_progname, synper_pidfile, (int)getuid());
     }
   usleep (10*1024);
   if (synper_period < SYNPER_MIN_PERIOD)
