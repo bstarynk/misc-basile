@@ -54,16 +54,18 @@ void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
 #define SYNPER_STRINGIFY_BIS(Arg) #Arg
 #define SYNPER_STRINGIFY(Arg) SYNPER_STRINGIFY_BIS(Arg)
 
-struct argp_option synper_options[] =
-  {
-   {"pid-file", 'P', "FILE", 0, "write pid to file"},
-   {"sync-period", 'Y', "SYNC-PERIOD", 0, "call sync(2) every SYNC-PERIOD seconds"},
-   {"log-period", 'L', "LOG-PERIOD", 0, "do a syslog(3) every LOG-PERIOD seconds"},
-   {"version", 'V', NULL, 0, "show version info"},
-   {NULL, 0, NULL, 0, NULL}
-  };
+struct argp_option synper_options[] = {
+  {"pid-file", 'P', "FILE", 0, "write pid to file"},
+  {"sync-period", 'Y', "SYNC-PERIOD", 0,
+   "call sync(2) every SYNC-PERIOD seconds"},
+  {"log-period", 'L', "LOG-PERIOD", 0,
+   "do a syslog(3) every LOG-PERIOD seconds"},
+  {"daemon", 'd', NULL, 0, "run as a daemon(3)"},
+  {"version", 'V', NULL, 0, "show version info"},
+  {NULL, 0, NULL, 0, NULL}
+};
 
-error_t synper_parse_opt(int key, char*arg, struct argp_state*state);
+error_t synper_parse_opt (int key, char *arg, struct argp_state *state);
 
 void synper_signal_handler (int signum __attribute__((unused)));
 void synper_syslog_begin (void);
@@ -83,48 +85,56 @@ synper_fatal_at (const char *file, int lin)
 }				/* end synper_fatal_at */
 
 error_t
-synper_parse_opt(int key, char*arg, struct argp_state*state)
+synper_parse_opt (int key, char *arg, struct argp_state *state)
 {
   if (state == NULL)
-    SYNPER_FATAL("null arpg_state key:%c=%d arg=%s", (char)key, key, arg?arg:"??");
-  switch (key) {
-  case 'P': // --pid-file
+    SYNPER_FATAL ("null arpg_state key:%c=%d arg=%s", (char) key, key,
+		  arg ? arg : "??");
+  switch (key)
     {
-      FILE *pidfil = fopen(arg, "w");
-      if (!pidfil) 
-	SYNPER_FATAL ("failed to open pid file %s : %m", arg);
-      fprintf(pidfil,  "%ld\n", (long)getpid());
-      if (fclose(pidfil))
-	SYNPER_FATAL ("failed to close pid file %s : %m", arg);
-    }
-    return 0;
-  case 'Y': // --sync-period
-    {
-      synper_period = atoi(arg?:"");
-    }
-    return 0;
-  case 'L': // --log-period
-    {
-      synper_logperiod = atoi(arg?:"");
-    }
-    return 0;
-  case 'V': // --version
-    {
+    case 'd':			// --daemon
+      {
+	if (daemon (0, 0))
+	  SYNPER_FATAL ("failed to daemon(3) : %m");
+      };
+      break;
+    case 'P':			// --pid-file
+      {
+	FILE *pidfil = fopen (arg, "w");
+	if (!pidfil)
+	  SYNPER_FATAL ("failed to open pid file %s : %m", arg);
+	fprintf (pidfil, "%ld\n", (long) getpid ());
+	if (fclose (pidfil))
+	  SYNPER_FATAL ("failed to close pid file %s : %m", arg);
+      }
+      return 0;
+    case 'Y':			// --sync-period
+      {
+	synper_period = atoi (arg ? : "");
+      }
+      return 0;
+    case 'L':			// --log-period
+      {
+	synper_logperiod = atoi (arg ? : "");
+      }
+      return 0;
+    case 'V':			// --version
+      {
 #ifdef SYNPER_GITID
-      printf("%s gitid %s built on %s\n", synper_progname,
-	     SYNPER_STRINGIFY(SYNPER_GITID), __DATE__);
+	printf ("%s gitid %s built on %s\n", synper_progname,
+		SYNPER_STRINGIFY (SYNPER_GITID), __DATE__);
 #else
-      printf("%s built on %s\n",  synper_progname, __DATE__);
+	printf ("%s built on %s\n", synper_progname, __DATE__);
 #endif
-      printf("\t run as: '%s --help' to get help.\n",  synper_progname);
-      printf("\t see also https://github.com/bstarynk/misc-basile/\n");
-      fflush (NULL);
-      exit(EXIT_SUCCESS);
+	printf ("\t run as: '%s --help' to get help.\n", synper_progname);
+	printf ("\t see also https://github.com/bstarynk/misc-basile/\n");
+	fflush (NULL);
+	exit (EXIT_SUCCESS);
+      }
+      return -1;
     }
-    return -1;
-  }
   return ARGP_ERR_UNKNOWN;
-} /* end synper_parse_opt */
+}				/* end synper_parse_opt */
 
 
 void
@@ -152,9 +162,16 @@ synper_syslog_begin (void)
   memset (nowbuf, 0, sizeof (nowbuf));
   if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm) < 0)
     SYNPER_FATAL ("failed to strftime");
+#ifdef SYNPER_GITID
   syslog (LOG_INFO,
-	  "start of %s with sync period %d seconds and log period %d seconds at %s\n",
-	  synper_progname, synper_period, synper_logperiod, nowbuf);
+	  "start of %s git %s build %s with sync period %d seconds and log period %d seconds at %s\n",
+	  synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), __DATE__,
+	  synper_period, synper_logperiod, nowbuf);
+#else
+  syslog (LOG_INFO,
+	  "start of %s built %s with sync period %d seconds and log period %d seconds at %s\n",
+	  synper_progname, __DATE__, synper_period, synper_logperiod, nowbuf);
+#endif /*SYNPER_GITID */
 }				/* end synper_syslog_begin */
 
 
@@ -162,12 +179,11 @@ int
 main (int argc, char **argv)
 {
   synper_progname = argv[0];
-  struct argp argp =
-    { synper_options, synper_parse_opt, "",
-      "Utility to call sync(2) periodically. GPLv3+ licensed.\n"
+  struct argp argp = { synper_options, synper_parse_opt, "",
+    "Utility to call sync(2) periodically. GPLv3+ licensed.\n"
       "See www.gnu.org/licenses/ for details.\n"
       "Source " __FILE__ " on https://github.com/bstarynk/misc-basile/\n"
-    };
+  };
   argp_parse (&argp, argc, argv, 0, 0, NULL);
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
   if (synper_period < SYNPER_MIN_PERIOD)
