@@ -25,6 +25,7 @@ for more details.
 #include <stdlib.h>
 #include <time.h>
 #include <stdatomic.h>
+#include <argp.h>
 
 char *synper_progname;
 /// see http://man7.org/linux/man-pages/man2/sync.2.html
@@ -38,6 +39,7 @@ volatile atomic_bool synper_stop;
 #define SYNPER_MIN_LOGPERIOD 100	/*minimal log period, in seconds */
 #define SYNPER_MAX_LOGPERIOD 7200	/*maximal log period, in seconds */
 
+
 void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
 
 #define SYNPER_FATAL_AT_BIS(Fil,Lin,Fmt,...) do {			\
@@ -48,6 +50,20 @@ void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
 #define SYNPER_FATAL_AT(Fil,Lin,Fmt,...)  SYNPER_FATAL_AT_BIS(Fil,Lin,Fmt,##__VA_ARGS__)
 
 #define SYNPER_FATAL(Fmt,...) SYNPER_FATAL_AT(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+
+#define SYNPER_STRINGIFY_BIS(Arg) #Arg
+#define SYNPER_STRINGIFY(Arg) SYNPER_STRINGIFY_BIS(Arg)
+
+struct argp_option synper_options[] =
+  {
+   {"pid-file", 'P', "FILE", 0, "write pid to file"},
+   {"sync-period", 'Y', "SYNC-PERIOD", 0, "call sync(2) every SYNC-PERIOD seconds"},
+   {"log-period", 'L', "LOG-PERIOD", 0, "do a sysloc(3) every LOG-PERIOD seconds"},
+   {"version", 'V', NULL, 0, "show version info"},
+   {NULL, 0, NULL, 0, NULL}
+  };
+
+error_t synper_parse_opt(int key, char*arg, struct argp_state*state);
 
 void synper_signal_handler (int signum __attribute__((unused)));
 void synper_syslog_begin (void);
@@ -65,6 +81,49 @@ synper_fatal_at (const char *file, int lin)
   syslog (LOG_CRIT, "SYNPER FATAL %s:%d", file, lin);
   abort ();
 }				/* end synper_fatal_at */
+
+error_t
+synper_parse_opt(int key, char*arg, struct argp_state*state)
+{
+  if (state == NULL)
+    SYNPER_FATAL("null arpg_state key:%c=%d arg=%s", (char)key, key, arg?arg:"??");
+  switch (key) {
+  case 'P': // --pid-file
+    {
+      FILE *pidfil = fopen(arg, "w");
+      if (!pidfil) 
+	SYNPER_FATAL ("failed to open pid file %s : %m", arg);
+      fprintf(pidfil,  "%ld\n", (long)getpid());
+      if (fclose(pidfil))
+	SYNPER_FATAL ("failed to close pid file %s : %m", arg);
+    }
+    return 0;
+  case 'Y': // --sync-period
+    {
+      synper_period = atoi(arg?:"");
+    }
+    return 0;
+  case 'L': // --log-period
+    {
+      synper_logperiod = atoi(arg?:"");
+    }
+    return 0;
+  case 'V': // --version
+    {
+#ifdef SYNPER_GITID
+      printf("%s gitid %s built on %s\n", synper_progname,
+	     SYNPER_STRINGIFY(SYNPER_GITID), __DATE__);
+#else
+      printf("%s built on %s\n",  synper_progname, __DATE__);
+#endif
+      printf("\t run as: '%s --help' to get help.\n",  synper_progname);
+      fflush (NULL);
+      exit(EXIT_SUCCESS);
+    }
+    return -1;
+  }
+  return ARGP_ERR_UNKNOWN;
+} /* end synper_parse_opt */
 
 
 void
@@ -102,32 +161,14 @@ int
 main (int argc, char **argv)
 {
   synper_progname = argv[0];
-  if (argc > 1 && !strcmp (argv[1], "--help"))
-    {
-      fprintf (stderr, "usage: %s [sync-period [log-period]]\n"
-	       "\t the sync-period is in seconds between calls to sync(2) between %d and %d\n"
-	       "\t the log-period is in seconds between calls to syslog(3) between %d and %d\n"
-	       "*** this utility runs sync(2) to flush disk cache buffers periodically\n"
-	       "*** NO WARRANTY, since GPLv3+ licensed\n"
-	       "See http://man7.org/linux/man-pages/man2/sync.2.html\n"
-	       "and github.com/bstarynk/misc-basile/\n"
-	       "and https://www.gnu.org/licenses/gpl-3.0.en.html\n"
-	       "By <basile@starynkevitch.net>, see http://starynkevitch.net/Basile/\n",
-	       argv[0],
-	       SYNPER_MIN_PERIOD, SYNPER_MAX_PERIOD,
-	       SYNPER_MIN_LOGPERIOD, SYNPER_MAX_LOGPERIOD);
-      fflush (NULL);
-      exit (EXIT_FAILURE);
-    };
+  struct argp argp =
+    { synper_options, synper_parse_opt, "", "utility to call sync(2) periodically" };
+  argp_parse (&argp, argc, argv, 0, 0, NULL);
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
-  if (argc > 1)
-    synper_period = atoi (argv[1]);
   if (synper_period < SYNPER_MIN_PERIOD)
     synper_period = SYNPER_MIN_PERIOD;
   if (synper_period > SYNPER_MAX_PERIOD)
     synper_period = SYNPER_MAX_PERIOD;
-  if (argc > 2)
-    synper_logperiod = atoi (argv[2]);
   if (synper_logperiod < SYNPER_MIN_LOGPERIOD)
     synper_logperiod = SYNPER_MIN_LOGPERIOD;
   if (synper_logperiod < 3 * synper_period)
@@ -188,6 +229,6 @@ main (int argc, char **argv)
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
- ** compile-command: "gcc -o sync-periodically -Wall -Bstatic -O -g sync-periodically.c" ;;
+ ** compile-command: "gcc -v -o sync-periodically -Wall -Bstatic -O -g -DSYNPER_GITID=\"$(git log --format=oneline -q -1 | awk '{print $1}')\" sync-periodically.c" ;;
  ** End: ;;
  ****************/
