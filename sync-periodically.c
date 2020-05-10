@@ -167,14 +167,16 @@ synper_syslog_begin (void)
 	  synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), __DATE__,
 	  synper_period, synper_logperiod, nowbuf);
   if (synper_daemonized)
-    syslog (LOG_NOTICE,  "%s git %s daemonized as pid %ld",
-	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), (long)getpid());
+    syslog (LOG_NOTICE, "%s git %s daemonized as pid %ld",
+	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID),
+	    (long) getpid ());
 #else
   syslog (LOG_INFO,
 	  "start of %s built %s with sync period %d seconds and log period %d seconds at %s\n",
 	  synper_progname, __DATE__, synper_period, synper_logperiod, nowbuf);
   if (synper_daemonized)
-    syslog (LOG_NOTICE,  "%s daemonized as pid %ld",  synper_progname, (long)getpid());
+    syslog (LOG_NOTICE, "%s daemonized as pid %ld", synper_progname,
+	    (long) getpid ());
 #endif /*SYNPER_GITID */
 }				/* end synper_syslog_begin */
 
@@ -194,9 +196,9 @@ main (int argc, char **argv)
     {
       {
 	char backup[256];
-	memset (backup, 0, sizeof(backup));
-	snprintf(backup, sizeof(backup)-1, "%s~", synper_pidfile);
-	if (strcmp(backup, synper_pidfile) && !access(synper_pidfile, F_OK))
+	memset (backup, 0, sizeof (backup));
+	snprintf (backup, sizeof (backup) - 1, "%s~", synper_pidfile);
+	if (strcmp (backup, synper_pidfile) && !access (synper_pidfile, F_OK))
 	  (void) rename (synper_pidfile, backup);
       };
       FILE *pidfil = fopen (synper_pidfile, "w");
@@ -207,9 +209,10 @@ main (int argc, char **argv)
       if (fclose (pidfil))
 	SYNPER_FATAL ("%s failed to close pid file %s : %m",
 		      synper_progname, synper_pidfile);
-      syslog(LOG_INFO, "%s wrote pid-file %s as uid#%d", synper_progname, synper_pidfile, (int)getuid());
+      syslog (LOG_INFO, "%s wrote pid-file %s as uid#%d", synper_progname,
+	      synper_pidfile, (int) getuid ());
     }
-  usleep (10*1024);
+  usleep (10 * 1024);
   if (synper_period < SYNPER_MIN_PERIOD)
     synper_period = SYNPER_MIN_PERIOD;
   if (synper_period > SYNPER_MAX_PERIOD)
@@ -221,7 +224,7 @@ main (int argc, char **argv)
   if (synper_logperiod > SYNPER_MAX_LOGPERIOD)
     synper_logperiod = SYNPER_MAX_LOGPERIOD;
   synper_syslog_begin ();
-  sleep (synper_period/3);
+  sleep (synper_period / 3);
   time_t lastlogtime = 0;
   long loopcnt = 0;
   while (true)
