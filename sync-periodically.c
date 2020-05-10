@@ -34,6 +34,7 @@ char *synper_pidfile;
 int synper_period;		// period for sync(2) in seconds
 int synper_logperiod = 2000;	// period for syslog(3) in seconds;,
 volatile atomic_bool synper_stop;
+bool synper_daemonized;
 
 #define SYNPER_MIN_PERIOD 2	/*minimal sync period, in seconds */
 #define SYNPER_MAX_PERIOD 30	/*maximal sync period, in seconds */
@@ -98,6 +99,7 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
       {
 	if (daemon (0, 0))
 	  SYNPER_FATAL ("failed to daemon(3) : %m");
+	synper_daemonized = true;
       };
       break;
     case 'P':			// --pid-file
@@ -164,10 +166,15 @@ synper_syslog_begin (void)
 	  "start of %s git %s build %s with sync period %d seconds and log period %d seconds at %s\n",
 	  synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), __DATE__,
 	  synper_period, synper_logperiod, nowbuf);
+  if (synper_daemonized)
+    syslog (LOG_NOTICE,  "%s git %s daemonized as pid %ld",
+	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), (long)getpid());
 #else
   syslog (LOG_INFO,
 	  "start of %s built %s with sync period %d seconds and log period %d seconds at %s\n",
 	  synper_progname, __DATE__, synper_period, synper_logperiod, nowbuf);
+  if (synper_daemonized)
+    syslog (LOG_NOTICE,  "%s daemonized as pid %ld",  synper_progname, (long)getpid());
 #endif /*SYNPER_GITID */
 }				/* end synper_syslog_begin */
 
@@ -194,6 +201,7 @@ main (int argc, char **argv)
 		      synper_progname, synper_pidfile);
     }
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
+  usleep (10*1024);
   if (synper_period < SYNPER_MIN_PERIOD)
     synper_period = SYNPER_MIN_PERIOD;
   if (synper_period > SYNPER_MAX_PERIOD)
@@ -205,11 +213,13 @@ main (int argc, char **argv)
   if (synper_logperiod > SYNPER_MAX_LOGPERIOD)
     synper_logperiod = SYNPER_MAX_LOGPERIOD;
   synper_syslog_begin ();
+  sleep (synper_period/3);
   time_t lastlogtime = 0;
   long loopcnt = 0;
   while (true)
     {
       time_t nowt = 0;
+      usleep (2000);
       sync ();
       (void) sleep (synper_period);
       if (atomic_load (&synper_stop))
