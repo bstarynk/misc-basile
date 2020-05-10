@@ -58,7 +58,7 @@ struct argp_option synper_options[] =
   {
    {"pid-file", 'P', "FILE", 0, "write pid to file"},
    {"sync-period", 'Y', "SYNC-PERIOD", 0, "call sync(2) every SYNC-PERIOD seconds"},
-   {"log-period", 'L', "LOG-PERIOD", 0, "do a sysloc(3) every LOG-PERIOD seconds"},
+   {"log-period", 'L', "LOG-PERIOD", 0, "do a syslog(3) every LOG-PERIOD seconds"},
    {"version", 'V', NULL, 0, "show version info"},
    {NULL, 0, NULL, 0, NULL}
   };
@@ -163,7 +163,11 @@ main (int argc, char **argv)
 {
   synper_progname = argv[0];
   struct argp argp =
-    { synper_options, synper_parse_opt, "", "utility to call sync(2) periodically" };
+    { synper_options, synper_parse_opt, "",
+      "Utility to call sync(2) periodically. GPLv3+ licensed.\n"
+      "See www.gnu.org/licenses/ for details.\n"
+      "Source " __FILE__ " on https://github.com/bstarynk/misc-basile/\n"
+    };
   argp_parse (&argp, argc, argv, 0, 0, NULL);
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
   if (synper_period < SYNPER_MIN_PERIOD)
