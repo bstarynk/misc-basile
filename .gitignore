@@ -52,3 +52,6 @@ HelloWorld/timestamp2*
 HelloWorld/*~
 HelloWorld/*.mkd
 
+
+logged-gcc
+logged-g++
