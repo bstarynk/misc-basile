@@ -57,8 +57,10 @@ int main(int argc, char**argv)
       mygxx=argv[ix]+strlen("--gxx=");
     else if (!strcmp(argv[ix], "--help")) {
       std::clog << argv[0]
-		<< " is a logging wrapper to gcc or g++ compilers." << std::endl
+		<< " is a logging wrapper to gcc or g++ compilers for Linux." << std::endl
 		<< "  (see http://gcc.gnu.org/ and file " __FILE__ " on https://github.com/bstarynk/misc-basile/ for more)" << std::endl;
+      std::clog << "A GPLv3+ licensed free software, see https://www.gnu.org/licenses/ for more" << std::endl;
+      std::clog << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl;
       std::clog << " Acceptable options include:" << std::endl
 		<< " --gcc=<some-executable> #e.g. --gcc=/usr/bin/gcc-9, overridding $LOGGER_GCC" << std::endl
 		<< " --g++=<some-executable> #e.g. --g++=/usr/bin/g++-9, overridding $LOGGER_GXX" << std::endl
@@ -72,8 +74,11 @@ int main(int argc, char**argv)
       std::clog << argv[0] << " version " << GITID
 	       <<  " of " << __FILE__ << " compiled on "
 	       << __DATE__ "@" __TIME__ << std::endl
-	       << "see https://github.com/bstarynk/misc-basile/ for more"
-	       << std::endl;
+	       << "See https://github.com/bstarynk/misc-basile/ for more"
+	       << std::endl
+		<< " (a logging wrapper to GCC compiler on Linux)" << std::endl
+		<< " so pass --help to get some help and usage." << std::endl
+		<< " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl;
       syslog(LOG_INFO, "version %s of %s from https://github.com/bstarynk/misc-basile/ compiled on %s@%s running %s",
 	     GITID, argv[0], __DATE__, __TIME__, cmdstr.c_str());
       exit(EXIT_SUCCESS);
