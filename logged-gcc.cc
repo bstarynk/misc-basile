@@ -88,7 +88,8 @@ parse_logged_program_options(int &argc, char**argv,
                     << " When provided, the $LOGGED_CXXFLAGS may contain space-separated initial program options passed just after the C++ compiler $LOGGED_GXX." << std::endl
                     << " When provided, the $LOGGED_LINKFLAGS may contain space-separated final program options passed just after the C or C++ compiler above." << std::endl;
         }
-      else if (!strcmp(argv[ix], "--version"))
+      else if (!strcmp(argv[ix], "--version")
+	       && (strcmp(argv[0], "gcc") || strcmp(argv[0], "g++")))
         {
           std::clog << argv[0] << " version " << GITID
                     <<  " of " << __FILE__ << " compiled on "
