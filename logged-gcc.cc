@@ -315,7 +315,8 @@ int main(int argc, char**argv)
   if (argc==2 && !strcmp(argv[1], "--version"))
     {
       openlog(argv[0], LOG_PID, LOG_USER);
-      syslog(LOG_INFO, "%s running version query: %s --version", __FILE__, argv[0]);
+      syslog(LOG_INFO, "%s (git %s) running version query: %s --version",
+	     __FILE__, GITID, argv[0]);
       if (mygcc && !for_cxx)
         {
           syslog(LOG_INFO, "running version for gcc: %s", mygcc);
