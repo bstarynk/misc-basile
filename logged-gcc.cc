@@ -24,8 +24,14 @@
 
 #include <unistd.h>
 #include <syslog.h>
+#include <sysexits.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
+#include <math.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
 
 #ifndef GCC_EXEC
 #define GCC_EXEC "/usr/bin/gcc-10"
@@ -37,6 +43,15 @@
 
 const char* mygcc;
 const char* mygxx;
+
+double get_float_time(clockid_t cid)
+{
+  struct timespec ts= {0,0};
+  if (!clock_gettime(cid, &ts))
+    return ts.tv_sec*1.0 + ts.tv_nsec*1.0e-9;
+  else
+    return NAN;
+}
 
 std::vector<const char*>
 parse_logged_program_options(int &argc, char**argv,
@@ -94,16 +109,84 @@ parse_logged_program_options(int &argc, char**argv,
 } // end parse_logged_program_options
 
 
+void fork_log_child_process(const char*cmdname, std::string progcmd, double startelapsedtime, std::vector<const char*>progargvec)
+{
+  auto pid = fork();
+  if (pid<0)
+    {
+      syslog(LOG_ALERT, "fork failed for %s - %m", progcmd.c_str());
+      exit(EX_OSERR);
+    }
+  else if (pid==0)
+    {
+      // child process
+      execv(cmdname, (char* const*) (progargvec.data()));
+      perror(cmdname);
+      syslog(LOG_ALERT, "exec of %s failed for %s - %m", cmdname, progcmd.c_str());
+      exit (EX_SOFTWARE);
+    }
+  else   // father process
+    {
+      struct rusage rus = {};
+      int wst = 0;
+      memset (&rus, 0, sizeof(rus));
+      /// the below loop is likely to run once
+      for(;;)
+        {
+          auto wpid = wait4(pid, &wst, WUNTRACED, &rus);
+          if (wpid == pid)
+            break;
+          if (wpid < 0)
+            {
+              syslog(LOG_ALERT,
+                     "wait of pid %d for %s failed for %s - %m",
+                     (int)pid, cmdname, progcmd.c_str());
+              exit(EX_OSERR);
+            };
+        };
+      double endelapsedtime= get_float_time(CLOCK_MONOTONIC);
+      double usertime = 1.0*rus.ru_utime.tv_sec + 1.0e-6*rus.ru_utime.tv_usec;
+      double systime = 1.0*rus.ru_stime.tv_sec + 1.0e-6*rus.ru_stime.tv_usec;
+      long maxrss = rus.ru_maxrss; //kilobtes
+      long pageflt = rus.ru_minflt + rus.ru_majflt;
+      if (wst==0)
+        {
+          syslog(LOG_INFO, "%s completed successfully compilation %s in %.4g elapsed seconds, %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d)",
+                 cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
+                 usertime, systime, maxrss, pageflt,
+                 (int)pid);
+        }
+      else if (WIFEXITED(wst))
+        {
+          syslog(LOG_WARNING, "%s failed compilation %s in %.4g elapsed seconds, %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, exited %d)",
+                 cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
+                 usertime, systime, maxrss, pageflt, WEXITSTATUS(wst),
+                 (int)pid);
+        }
+      else if (WIFSIGNALED(wst))
+        {
+          syslog(LOG_ERR, "%s crashed compilation %s in %.4g elapsed seconds, %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, signal %d=%s)",
+                 cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
+                 usertime, systime, maxrss, pageflt,
+                 (int)pid,
+                 WTERMSIG(wst),
+                 strsignal(WTERMSIG(wst)));
+        }
+    }
+} // end fork_log_child_process
 
 void
 do_c_compilation(std::vector<const char*>argvec, std::string cmdstr, const char*linkflags)
 {
+  double startelapsedtime= get_float_time(CLOCK_MONOTONIC);
   auto cflags= getenv("LOGGED_CFLAGS");
+  std::vector<const char*> progargvec;
+  std::vector<const char*> cflagvec;
+  std::vector<const char*> linkflagvec;
   if (cflags)
     {
       char*space=nullptr;
-      std::vector<const char*> flagvec;
-      flagvec.reserve(strlen(cflags)/3);
+      cflagvec.reserve(strlen(cflags)/3);
       for (auto pc = cflags; pc; pc = space?space+1:nullptr)
         {
           std::string curarg;
@@ -112,15 +195,98 @@ do_c_compilation(std::vector<const char*>argvec, std::string cmdstr, const char*
             curarg = std::string(pc, space-pc-1);
           else
             curarg = std::string(pc);
-          flagvec.push_back(curarg.c_str());
+          cflagvec.push_back(curarg.c_str());
+        }
+    };
+  if (linkflags)
+    {
+      char*space=nullptr;
+      linkflagvec.reserve(strlen(cflags)/3);
+      for (auto pc = linkflags; pc; pc = space?space+1:nullptr)
+        {
+          std::string curarg;
+          space = strchr((char*)pc, ' ');
+          if (space)
+            curarg = std::string(pc, space-pc-1);
+          else
+            curarg = std::string(pc);
+          linkflagvec.push_back(curarg.c_str());
         }
     }
+  progargvec.reserve(cflagvec.size()
+                     + linkflagvec.size() + argvec.size() + 2);
+  assert (mygcc != nullptr && mygcc[0] != (char)0);
+  progargvec.push_back(mygcc);
+  for (auto itcfla : cflagvec)
+    progargvec.push_back(itcfla);
+  for (int ix=1; ix<(int)argvec.size(); ix++)
+    progargvec.push_back(argvec[ix]);
+  for (auto itlfla : linkflagvec)
+    progargvec.push_back(itlfla);
+  std::string progcmd;
+  for (auto itarg: progargvec)
+    progcmd += *itarg;
+  progargvec.push_back(nullptr);
+  syslog (LOG_INFO, "%s running C compilation %s for %s",
+          argvec[0], progcmd.c_str(), cmdstr.c_str());
+  fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec);
 } // end do_c_compilation
 
 void
 do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const char*linkflags)
 {
   auto cxxflags= getenv("LOGGED_CXXFLAGS");
+  double startelapsedtime= get_float_time(CLOCK_MONOTONIC);
+  std::vector<const char*> progargvec;
+  std::vector<const char*> cflagvec;
+  std::vector<const char*> linkflagvec;
+  if (cxxflags)
+    {
+      char*space=nullptr;
+      cflagvec.reserve(strlen(cxxflags)/3);
+      for (auto pc = cxxflags; pc; pc = space?space+1:nullptr)
+        {
+          std::string curarg;
+          space = strchr(pc, ' ');
+          if (space)
+            curarg = std::string(pc, space-pc-1);
+          else
+            curarg = std::string(pc);
+          cflagvec.push_back(curarg.c_str());
+        }
+    };
+  if (linkflags)
+    {
+      char*space=nullptr;
+      linkflagvec.reserve(strlen(cxxflags)/3);
+      for (auto pc = linkflags; pc; pc = space?space+1:nullptr)
+        {
+          std::string curarg;
+          space = strchr((char*)pc, ' ');
+          if (space)
+            curarg = std::string(pc, space-pc-1);
+          else
+            curarg = std::string(pc);
+          linkflagvec.push_back(curarg.c_str());
+        }
+    }
+  progargvec.reserve(cflagvec.size()
+                     + linkflagvec.size() + argvec.size() + 2);
+  assert (mygcc != nullptr && mygcc[0] != (char)0);
+  progargvec.push_back(mygcc);
+  for (auto itcfla : cflagvec)
+    progargvec.push_back(itcfla);
+  for (int ix=1; ix<(int)argvec.size(); ix++)
+    progargvec.push_back(argvec[ix]);
+  for (auto itlfla : linkflagvec)
+    progargvec.push_back(itlfla);
+  std::string progcmd;
+  for (auto itarg: progargvec)
+    progcmd += *itarg;
+  progargvec.push_back(nullptr);
+  syslog (LOG_INFO, "%s running C compilation %s - %s", argvec[0], progcmd.c_str(),
+          cmdstr.c_str());
+  fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec);
 } // end do_cxx_compilation
 
 int main(int argc, char**argv)
