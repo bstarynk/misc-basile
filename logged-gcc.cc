@@ -284,13 +284,19 @@ do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const ch
   for (auto itarg: progargvec)
     progcmd += *itarg;
   progargvec.push_back(nullptr);
-  syslog (LOG_INFO, "%s running C compilation %s - %s", argvec[0], progcmd.c_str(),
+  syslog (LOG_INFO, "%s running C++ compilation %s - %s", progargvec[0], progcmd.c_str(),
           cmdstr.c_str());
   fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec);
 } // end do_cxx_compilation
 
 int main(int argc, char**argv)
 {
+  if (argc <= 1)
+    {
+      std::clog << argv[0] << " requires at least one argument. Try "
+                << argv[0] << " --help" << std::endl;
+      exit(EXIT_FAILURE);
+    }
   openlog(argv[0], LOG_PERROR|LOG_PID, LOG_USER);
   std::string argstr;
   std::vector<const char*> argvec
