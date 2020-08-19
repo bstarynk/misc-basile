@@ -311,23 +311,32 @@ int main(int argc, char**argv)
     mygxx= getenv("LOGGED_GXX");
   if (!mygxx)
     mygxx = GXX_EXEC;
+  bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (argc==2 && !strcmp(argv[1], "--version"))
     {
-      syslog(LOG_INFO, "running version query: %s --version", argv[0]);
-      if (!strcmp(argv[0], "gcc") && mygcc)
+      openlog(argv[0], LOG_PID, LOG_USER);
+      syslog(LOG_INFO, "%s running version query: %s --version", __FILE__, argv[0]);
+      if (mygcc && !for_cxx)
         {
+          syslog(LOG_INFO, "running version for gcc: %s", mygcc);
+          argv[0] = (char*)mygcc;
           execv(mygcc, argv);
           perror(mygcc);
+          exit(EX_OSERR);
         }
-      else if (!strcmp(argv[0], "g++") && mygxx)
+      else if (mygxx && for_cxx)
         {
+          syslog(LOG_INFO, "running version for g++: %s", mygxx);
+          argv[0] = (char*)mygxx;
           execv(mygxx, argv);
           perror(mygxx);
+          exit(EX_OSERR);
         }
+      else
+        syslog(LOG_INFO, "running native version for %s", argv[0]);
     };
   std::vector<const char*> argvec
     = parse_logged_program_options(argc, argv, argstr);
-  bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (!for_cxx && access(mygcc, X_OK))
     {
       syslog (LOG_WARNING, "%s is not executable - %m - for %s", mygcc,
