@@ -56,3 +56,10 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
   not mine.
 
 * `foldexample.cc` is interesting, since it shows how recent C++ compilers are capable of very deep optimizations
+
+* `logged-gcc.cc` is a (GPLv3 licensed) wrapper (coded in C++) around
+  compilation commands by [GCC](http://gcc.gnu.org/) to log them (and
+  their time) with
+  [syslog(3)](https://man7.org/linux/man-pages/man3/syslog.3.html). You will
+  compile it using `compile-logged-gcc.sh`.  See also
+  [this](https://opensource.stackexchange.com/q/10319/910).
