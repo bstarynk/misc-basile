@@ -55,3 +55,4 @@ HelloWorld/*.mkd
 
 logged-gcc
 logged-g++
+*.orig

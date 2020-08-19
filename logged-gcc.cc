@@ -89,7 +89,7 @@ parse_logged_program_options(int &argc, char**argv,
                     << " When provided, the $LOGGED_LINKFLAGS may contain space-separated final program options passed just after the C or C++ compiler above." << std::endl;
         }
       else if (!strcmp(argv[ix], "--version")
-	       && (strcmp(argv[0], "gcc") || strcmp(argv[0], "g++")))
+               && strstr(argv[0], "logged"))
         {
           std::clog << argv[0] << " version " << GITID
                     <<  " of " << __FILE__ << " compiled on "
@@ -300,15 +300,34 @@ int main(int argc, char**argv)
     }
   openlog(argv[0], LOG_PERROR|LOG_PID, LOG_USER);
   std::string argstr;
-  std::vector<const char*> argvec
-    = parse_logged_program_options(argc, argv, argstr);
-  bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (!mygcc)
     mygcc = getenv("GCC");
   if (!mygcc)
     mygcc = getenv("LOGGED_GCC");
   if (!mygcc)
     mygcc = GCC_EXEC;
+  mygxx = getenv("GXX");
+  if (!mygxx)
+    mygxx= getenv("LOGGED_GXX");
+  if (!mygxx)
+    mygxx = GXX_EXEC;
+  if (argc==2 && !strcmp(argv[1], "--version"))
+    {
+      syslog(LOG_INFO, "running version query: %s --version", argv[0]);
+      if (!strcmp(argv[0], "gcc") && mygcc)
+        {
+          execv(mygcc, argv);
+          perror(mygcc);
+        }
+      else if (!strcmp(argv[0], "g++") && mygxx)
+        {
+          execv(mygxx, argv);
+          perror(mygxx);
+        }
+    };
+  std::vector<const char*> argvec
+    = parse_logged_program_options(argc, argv, argstr);
+  bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (!for_cxx && access(mygcc, X_OK))
     {
       syslog (LOG_WARNING, "%s is not executable - %m - for %s", mygcc,
@@ -323,11 +342,6 @@ int main(int argc, char**argv)
       mygcc = defgcc;
     };
   ///
-  mygxx = getenv("GXX");
-  if (!mygxx)
-    mygxx= getenv("LOGGED_GXX");
-  if (!mygxx)
-    mygxx = GXX_EXEC;
   if (for_cxx && access(mygxx, X_OK))
     {
       syslog (LOG_WARNING, "%s is not executable - %m - for %s", mygxx,
