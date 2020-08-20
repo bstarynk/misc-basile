@@ -34,6 +34,7 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <openssl/md5.h>
 
 #ifndef GCC_EXEC
 #define GCC_EXEC "/usr/bin/gcc-10"
@@ -111,6 +112,60 @@ parse_logged_program_options(int &argc, char**argv,
   return argvec;
 } // end parse_logged_program_options
 
+void show_md5(const char*path)
+{
+  FILE* fil = fopen(path, "rm");
+  if (!fil)
+    {
+      syslog(LOG_WARNING, "show_md5 cannot open %s - %m", path);
+      return;
+    };
+  MD5_CTX ctx;
+  memset (&ctx, 0, sizeof(ctx));
+  if (!MD5_Init(&ctx))
+    {
+      syslog(LOG_WARNING, "show_md5 failed to MD5_Init @%p for %s - %m", (void*)&ctx, path);
+      return;
+    };
+  char buf[1024];
+  unsigned char md5dig[MD5_DIGEST_LENGTH+4];
+  char md5buf[2*sizeof(md5dig)];
+  memset (md5dig, 0, sizeof(md5dig));
+  memset (md5buf, 0, sizeof(md5buf));
+  long off = 0;
+  do
+    {
+      memset(buf, 0, sizeof(buf));
+      off= ftell(fil);
+      ssize_t nb = fread(buf, 1, sizeof(buf), fil);
+      long newoff = ftell(fil);
+      if (nb < 0)
+        {
+          syslog(LOG_ALERT, "show_md5 failed to fread %s at offset %ld - %m",
+                 path, off);
+          return;
+        };
+      if (nb==0) break;
+      if (!MD5_Update(&ctx, buf, nb))
+        {
+          syslog(LOG_ALERT, "show_md5 failed to MD5_Update %s at offset %ld - %m",
+                 path, off);
+          return;
+        };
+      off = newoff;
+    }
+  while (!feof(fil));
+  fclose(fil);
+  if (!MD5_Final(md5dig, &ctx))
+    {
+      syslog(LOG_ALERT, "show_md5 failed to MD5_Final %s at offset %ld - %m",
+             path, off);
+      return;
+    };
+  for (int ix=0; ix<MD5_DIGEST_LENGTH; ix++)
+    snprintf(md5buf+(2*ix), 3, "%02x", (unsigned)md5dig[ix]);
+  syslog(LOG_INFO, "source file %s has %ld bytes; of md5 %s", path, off, md5buf);
+} // end show_md5
 
 void stat_input_files(const std::vector<const char*>&progargvec)
 {
@@ -180,6 +235,7 @@ void stat_input_files(const std::vector<const char*>&progargvec)
                   else
                     {
                       syslog(LOG_INFO, "source %s, real %s, has %ld bytes, modified %s", curarg, rp, (long)st.st_size, mtimbuf);
+                      show_md5(rp);
                       free(rp);
                     }
                 }
