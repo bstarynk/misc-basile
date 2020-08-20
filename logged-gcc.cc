@@ -95,11 +95,12 @@ parse_logged_program_options(int &argc, char**argv,
         }
       else if (!strncmp(argv[ix],"--dosql=", strlen ("--dosql=")))
         {
-	  if (mysqliterequest != nullptr) {
-	    std::clog << argv[0] << " can get only one --dosql=<request> but got " << mysqliterequest
-		      << " and " << argv[ix] << std::endl;
-	    exit (EXIT_FAILURE);
-	  };
+          if (mysqliterequest != nullptr)
+            {
+              std::clog << argv[0] << " can get only one --dosql=<request> but got " << mysqliterequest
+                        << " and " << argv[ix] << std::endl;
+              exit (EXIT_FAILURE);
+            };
           mysqliterequest=argv[ix]+strlen("--dosql=");
           continue;
         }
@@ -146,6 +147,46 @@ parse_logged_program_options(int &argc, char**argv,
     }
   return argvec;
 } // end parse_logged_program_options
+
+
+#warning we need to use register_sqlite_source_data later
+/// return a serial in tb_sourcepath or 0 on failure
+std::int64_t
+register_sqlite_source_data(const char*realpath, const char*md5, long mtime, long size)
+{
+  char*msgerr = nullptr;
+  std::int64_t serialid= 0;
+  char *sqlreq= nullptr;
+  sqlite3_str* str = sqlite3_str_new(mysqlitedb);
+  sqlite3_str_appendf(str, "BEGIN TRANSACTION;");
+  sqlite3_str_appendf(str, "INSERT OR IGNORE INTO tb_sourcepath(srcp_realpath) VALUES(%q);", realpath);
+  sqlreq = sqlite3_str_value(str);
+  int r1 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
+  if (r1 != SQLITE_OK)
+    {
+      syslog(LOG_ALERT, "register_sqlite_source_data (l%d) %s failure #%d: %s", __LINE__,
+             sqlreq, r1, msgerr?msgerr:"???");
+      return 0;
+    };
+  serialid = sqlite3_last_insert_rowid(mysqlitedb);
+  sqlite3_str_reset(str);
+  sqlreq = nullptr;
+  sqlite3_str_appendf(str, "INSERT OR REPLACE INTO tb_sourcedata(srcd_path_serial, srcd_path_mtime, srcd_path_md5, srcd_path_size)"
+                      " VALUES (%lld, %ld, %q, %ld);\n"
+                      "END TRANSACTION;",
+                      serialid, mtime, md5, size);
+  sqlreq = sqlite3_str_value(str);
+  int r2 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
+  if (r2 != SQLITE_OK)
+    {
+      syslog(LOG_ALERT, "register_sqlite_source_data (l%d)  %s failure #%d: %s", __LINE__,
+             sqlreq, r2,  msgerr?msgerr:"???");
+      return 0;
+    };
+  char*fbuf = sqlite3_str_finish(str);
+  sqlite3_free(fbuf);
+  return serialid;
+} // end register_sqlite_source_data
 
 void show_md5(const char*path)
 {
@@ -449,38 +490,103 @@ do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const ch
 } // end do_cxx_compilation
 
 
-struct Sql_request_data {
+struct Sql_request_data
+{
   static int callback(void*data, int nbcol, char**colname, char**colval);
-  long _data_count;
+  static constexpr long _rdata_magic_ = 60433327;
+  long _rdata_magicnum;
+  long _rdata_count;
+  const char* _rdata_sql;
 public:
-  Sql_request_data() : _data_count(0) {};
-};
+  Sql_request_data(const char*sql)
+    : _rdata_magicnum(_rdata_magic_), _rdata_count(0), _rdata_sql(sql) {};
+  ~Sql_request_data()
+  {
+    _rdata_magicnum = 0;
+    _rdata_count = -1;
+    _rdata_sql = nullptr;
+  };
+  bool valid() const
+  {
+    return _rdata_magicnum == _rdata_magic_;
+  };
+  long count() const
+  {
+    return _rdata_count;
+  };
+  const char*sql() const
+  {
+    return _rdata_sql;
+  };
+};				// end Sql_request_data
 
 int
 Sql_request_data::callback(void*data, int nbcol, char**colname, char**colval)
 {
   Sql_request_data* thisdata = (Sql_request_data*)data;
-  assert (thisdata != nullptr);
-  thisdata->_data_count++;
-#warning Sql_request_data::callback should do something
+  assert (thisdata != nullptr && thisdata->_rdata_magicnum == _rdata_magic_);
+  long cnt = thisdata->_rdata_count++;
+  FILE* fout = stdout;
+  if (cnt == 0)
+    {
+      // output commented request, line by line
+      const char*reqsql = thisdata->sql();
+      const char*eol = nullptr;
+      for (const char*pc=reqsql; pc && *pc; pc = eol)
+        {
+          eol = strchr(pc, '\n');
+          if (eol)
+            {
+              fprintf(fout, "#-%*s\n", (int)(eol-pc), pc);
+              eol++;
+            }
+          else
+            fprintf(fout, "#-%s\n", pc);
+        };
+      // output column names
+      fputs("#|", fout);
+      for (int cix=0; cix<nbcol; cix++)
+        {
+          if (cix>0)
+            putc('\t', fout);
+          fputs(colname[cix], fout);
+        };
+      putc('\n', fout);
+    };
+  for (int cix=0; cix<nbcol; cix++)
+    {
+      if (cix>0)
+        putc('\t', fout);
+      fputs(colval[cix], fout);
+    };
+  putc('\n', fout);
+  fflush(fout);
+  return 0;
 } // end Sql_request_data::callback
 
 void
 run_sqlite_request(const char*sqlreq)
 {
   char*msgerr=nullptr;
-  Sql_request_data reqdata;
+  Sql_request_data reqdata(sqlreq);
   int r = sqlite3_exec(mysqlitedb,
-		       sqlreq,
-		       Sql_request_data::callback,
-		       &reqdata,
-		       &msgerr);
-  if (r != SQLITE_OK) {
-    syslog(LOG_ALERT, "run_sqlite_request (path %s) failure #%d for request %s: %s",
-	   mysqlitepath, r, sqlreq, msgerr?msgerr:"???");
-    exit(EXIT_FAILURE);	   
-  } else
-    syslog(LOG_INFO, "run_sqlite_request did %s", sqlreq);
+                       sqlreq,
+                       Sql_request_data::callback,
+                       &reqdata,
+                       &msgerr);
+  if (r != SQLITE_OK)
+    {
+      syslog(LOG_ALERT, "run_sqlite_request (path %s) failure #%d for request %s: %s",
+             mysqlitepath, r, sqlreq, msgerr?msgerr:"???");
+      exit(EXIT_FAILURE);
+    }
+  else
+    {
+      fprintf(stdout, "#- %ld rows\n\n", (long) reqdata.count());
+      fflush(stdout);
+      syslog(LOG_INFO, "run_sqlite_request did %s with %ld rows", sqlreq,
+             reqdata.count());
+    }
 } // end of run_sqlite_request
 
 void
@@ -494,15 +600,23 @@ PRAGMA encoding = 'UTF-8';
 BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS tb_sourcepath (
   srcp_serial INTEGER PRIMARY KEY ASC AUTOINCREMENT,
-  srcp_realpath VARCHAR(512) NOT NULL,
+  srcp_realpath VARCHAR(512) NOT NULL UNIQUE,
   srcp_last_compil_id INTEGER NOT NULL,
   srcp_last_compil_time DATETIME NOT NULL
 );
+CREATE UNIQUE INDEX IF NOT EXISTS ix_sourcepath_realpath ON tb_sourcepath (srcp_realpath);
+CREATE INDEX IF NOT EXISTS ix_sourcepath_compilid ON tb_sourcepath (srcp_last_compil_id);
+CREATE INDEX IF NOT EXISTS ix_sourcepath_compiltime ON tb_sourcepath (srcp_last_compil_time);
+
 CREATE TABLE IF NOT EXISTS tb_sourcedata (
-  srcd_path_serial INTEGER NOT NULL, 
+  srcd_path_serial INTEGER NOT NULL PRIMARY KEY ASC, 
   srcd_path_mtime DATETIME NOT NULL,
-  srcd_path_md5 CHAR(32) NOT NULL
+  srcd_path_md5 CHAR(32) NOT NULL,
+  srcd_path_size INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS ix_sourcedata_serial ON tb_sourcedata(srcd_path_serial);
+CREATE INDEX IF NOT EXISTS ix_sourcedata_mtime ON tb_sourcedata(srcd_path_mtime);
+
 CREATE TABLE IF NOT EXISTS tb_compilation (
   compil_serial INTEGER PRIMARY KEY ASC AUTOINCREMENT,
   compil_firstsrc_id INTEGER NOT NULL,
@@ -516,6 +630,8 @@ CREATE TABLE IF NOT EXISTS tb_compilation (
   compil_usercpu_time DOUBLE NOT NULL,
   compil_syscpu_time  DOUBLE NOT NULL
 );
+CREATE INDEX IF NOT EXISTS ix_compilation_id ON tb_compilation(compil_firstsrc_id);
+
 END TRANSACTION;
 )!*";
   int r = sqlite3_exec(mysqlitedb,
@@ -553,8 +669,6 @@ initialize_sqlite(void)
   if (mysqliterequest)
     run_sqlite_request(mysqliterequest);
 } // end of initialize_sqlite
-
-
 
 ////////////////////////////////////////////////////////////////
 int
