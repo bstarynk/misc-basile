@@ -180,6 +180,24 @@ void fork_log_child_process(const char*cmdname, std::string progcmd, double star
 } // end fork_log_child_process
 
 void
+split_flags(std::vector<const char*>&flagvec, const char*flags)
+{
+  assert (flags != nullptr);
+  const char*space=nullptr;
+  flagvec.reserve(strlen(flags)/3);
+  for (const char* pc = flags; pc; pc = space?space+1:nullptr)
+    {
+      std::string curarg;
+      space = strchr(pc, ' ');
+      if (space)
+        curarg = std::string(pc, space-pc-1);
+      else
+        curarg = std::string(pc);
+      flagvec.push_back(curarg.c_str());
+    }
+} // end split_flags
+
+void
 do_c_compilation(std::vector<const char*>argvec, std::string cmdstr, const char*linkflags)
 {
   double startelapsedtime= get_float_time(CLOCK_MONOTONIC);
@@ -188,35 +206,9 @@ do_c_compilation(std::vector<const char*>argvec, std::string cmdstr, const char*
   std::vector<const char*> cflagvec;
   std::vector<const char*> linkflagvec;
   if (cflags)
-    {
-      char*space=nullptr;
-      cflagvec.reserve(strlen(cflags)/3);
-      for (auto pc = cflags; pc; pc = space?space+1:nullptr)
-        {
-          std::string curarg;
-          space = strchr(pc, ' ');
-          if (space)
-            curarg = std::string(pc, space-pc-1);
-          else
-            curarg = std::string(pc);
-          cflagvec.push_back(curarg.c_str());
-        }
-    };
+    split_flags(cflagvec, cflags);
   if (linkflags)
-    {
-      char*space=nullptr;
-      linkflagvec.reserve(strlen(cflags)/3);
-      for (auto pc = linkflags; pc; pc = space?space+1:nullptr)
-        {
-          std::string curarg;
-          space = strchr((char*)pc, ' ');
-          if (space)
-            curarg = std::string(pc, space-pc-1);
-          else
-            curarg = std::string(pc);
-          linkflagvec.push_back(curarg.c_str());
-        }
-    }
+    split_flags(linkflagvec, linkflags);
   progargvec.reserve(cflagvec.size()
                      + linkflagvec.size() + argvec.size() + 2);
   assert (mygcc != nullptr && mygcc[0] != (char)0);
@@ -251,35 +243,9 @@ do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const ch
   std::vector<const char*> cflagvec;
   std::vector<const char*> linkflagvec;
   if (cxxflags)
-    {
-      char*space=nullptr;
-      cflagvec.reserve(strlen(cxxflags)/3);
-      for (auto pc = cxxflags; pc; pc = space?space+1:nullptr)
-        {
-          std::string curarg;
-          space = strchr(pc, ' ');
-          if (space)
-            curarg = std::string(pc, space-pc-1);
-          else
-            curarg = std::string(pc);
-          cflagvec.push_back(curarg.c_str());
-        }
-    };
+    split_flags(cflagvec, cxxflags);
   if (linkflags)
-    {
-      char*space=nullptr;
-      linkflagvec.reserve(strlen(cxxflags)/3);
-      for (auto pc = linkflags; pc; pc = space?space+1:nullptr)
-        {
-          std::string curarg;
-          space = strchr((char*)pc, ' ');
-          if (space)
-            curarg = std::string(pc, space-pc-1);
-          else
-            curarg = std::string(pc);
-          linkflagvec.push_back(curarg.c_str());
-        }
-    }
+    split_flags(linkflagvec, linkflags);
   progargvec.reserve(cflagvec.size()
                      + linkflagvec.size() + argvec.size() + 2);
   assert (mygcc != nullptr && mygcc[0] != (char)0);
