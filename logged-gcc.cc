@@ -112,6 +112,9 @@ parse_logged_program_options(int &argc, char**argv,
 
 void fork_log_child_process(const char*cmdname, std::string progcmd, double startelapsedtime, std::vector<const char*>progargvec)
 {
+  syslog(LOG_INFO,
+         "/%d starting compilation %s of command %s", __LINE__,
+         cmdname, progcmd.c_str());
   auto pid = fork();
   if (pid<0)
     {
@@ -225,8 +228,14 @@ do_c_compilation(std::vector<const char*>argvec, std::string cmdstr, const char*
   for (auto itlfla : linkflagvec)
     progargvec.push_back(itlfla);
   std::string progcmd;
+  int cnt=0;
   for (auto itarg: progargvec)
-    progcmd += *itarg;
+    {
+      if (cnt>0)
+        progcmd.append(" ");
+      progcmd.append(itarg);
+      cnt++;
+    };
   progargvec.push_back(nullptr);
   syslog (LOG_INFO, "%s running C compilation %s for %s",
           argvec[0], progcmd.c_str(), cmdstr.c_str());
@@ -282,13 +291,21 @@ do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const ch
   for (auto itlfla : linkflagvec)
     progargvec.push_back(itlfla);
   std::string progcmd;
+  int cnt = 0;
   for (auto itarg: progargvec)
-    progcmd += *itarg;
+    {
+      if (cnt>0)
+        progcmd.append(" ");
+      progcmd.append(itarg);
+      cnt++;
+    }
   progargvec.push_back(nullptr);
   syslog (LOG_INFO, "%s running C++ compilation %s - %s", progargvec[0], progcmd.c_str(),
           cmdstr.c_str());
   fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec);
 } // end do_cxx_compilation
+
+
 
 int main(int argc, char**argv)
 {
@@ -316,7 +333,7 @@ int main(int argc, char**argv)
     {
       openlog(argv[0], LOG_PID, LOG_USER);
       syslog(LOG_INFO, "%s (git %s) running version query: %s --version",
-	     __FILE__, GITID, argv[0]);
+             __FILE__, GITID, argv[0]);
       if (mygcc && !for_cxx)
         {
           syslog(LOG_INFO, "running version for gcc: %s", mygcc);
@@ -367,9 +384,9 @@ int main(int argc, char**argv)
     };
   auto linkflags = getenv("LOGGED_LINKFLAGS");
   if (for_cxx)
-    do_c_compilation (argvec, argstr, linkflags);
-  else
     do_cxx_compilation (argvec, argstr, linkflags);
+  else
+    do_c_compilation (argvec, argstr, linkflags);
 } /* end main */
 
 /****************
