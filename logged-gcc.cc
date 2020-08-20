@@ -61,11 +61,14 @@ double get_float_time(clockid_t cid)
 
 std::vector<const char*>
 parse_logged_program_options(int &argc, char**argv,
-                             std::string& cmdstr)
+                             std::string& cmdstr,
+                             int& nbgccargs)
 {
   std::vector<const char*> argvec;
   cmdstr.reserve(1+((argc*20+100)|0xff));
   argvec.reserve(argc+10);
+  argvec.push_back(argv[0]);
+  nbgccargs = 0;
   for (int ix=0; ix<argc; ix++)
     {
       if (ix>0) cmdstr += ' ';
@@ -75,11 +78,20 @@ parse_logged_program_options(int &argc, char**argv,
   for (int ix=1; ix<argc; ix++)
     {
       if (!strncmp(argv[ix],"--gcc=", strlen ("--gcc=")))
-        mygcc=argv[ix]+strlen("--gcc=");
+        {
+          mygcc=argv[ix]+strlen("--gcc=");
+          continue;
+        }
       else if (!strncmp(argv[ix],"--gxx=", strlen ("--gxx=")))
-        mygxx=argv[ix]+strlen("--gxx=");
+        {
+          mygxx=argv[ix]+strlen("--gxx=");
+          continue;
+        }
       else if (!strncmp(argv[ix],"--sqlite=", strlen ("--sqlite=")))
-        mysqlitepath=argv[ix]+strlen("--sqlite=");
+        {
+          mysqlitepath=argv[ix]+strlen("--sqlite=");
+          continue;
+        }
       else if (!strcmp(argv[ix], "--help"))
         {
           std::clog << argv[0]
@@ -96,6 +108,8 @@ parse_logged_program_options(int &argc, char**argv,
                     << " When provided, the $LOGGED_CFLAGS may contain space-separated initial program options passed just after the C compiler $LOGGED_GCC." << std::endl
                     << " When provided, the $LOGGED_CXXFLAGS may contain space-separated initial program options passed just after the C++ compiler $LOGGED_GXX." << std::endl
                     << " When provided, the $LOGGED_LINKFLAGS may contain space-separated final program options passed just after the C or C++ compiler above." << std::endl;
+          std::clog << " When provided, the $LOGGED_SQLITE should give some initialized Sqlite database, with a previous run " << argv[0] << " --sqlite=<sqlite-database-file>" << std::endl;
+          continue;
         }
       else if (!strcmp(argv[ix], "--version")
                && strstr(argv[0], "logged"))
@@ -113,7 +127,10 @@ parse_logged_program_options(int &argc, char**argv,
           exit(EXIT_SUCCESS);
         }
       else
-        argvec.push_back(argv[ix]);
+        {
+          nbgccargs++;
+          argvec.push_back(argv[ix]);
+        }
     }
   return argvec;
 } // end parse_logged_program_options
@@ -254,9 +271,14 @@ void stat_input_files(const std::vector<const char*>&progargvec)
 
 void fork_log_child_process(const char*cmdname, std::string progcmd, double startelapsedtime, std::vector<const char*>progargvec)
 {
+  if (progargvec.size() <= 1)
+    {
+      syslog(LOG_WARNING, "no arguments given to command %s (prog %s)", cmdname, progcmd.c_str());
+      return;
+    }
   syslog(LOG_INFO,
-         "/%d starting compilation %s of command %s", __LINE__,
-         cmdname, progcmd.c_str());
+         "(/%d) starting compilation %s of command %s with %d prog.arg", __LINE__,
+         cmdname, progcmd.c_str(), (int)(progargvec.size()));
   stat_input_files(progargvec);
   auto pid = fork();
   if (pid<0)
@@ -483,6 +505,9 @@ initialize_sqlite(void)
     create_sqlite_database();
 } // end of initialize_sqlite
 
+
+
+////////////////////////////////////////////////////////////////
 int
 main(int argc, char**argv)
 {
@@ -531,8 +556,10 @@ main(int argc, char**argv)
       else
         syslog(LOG_INFO, "running native version for %s", argv[0]);
     };
+  int nbgccarg=0;
   std::vector<const char*> argvec
-    = parse_logged_program_options(argc, argv, argstr);
+    = parse_logged_program_options(argc, argv, argstr, nbgccarg);
+  assert (argvec.size() > 0);
   if (!for_cxx && access(mygcc, X_OK))
     {
       syslog (LOG_WARNING, "%s is not executable - %m - for %s", mygcc,
@@ -563,9 +590,9 @@ main(int argc, char**argv)
       mygxx = defgxx;
     };
   auto linkflags = getenv("LOGGED_LINKFLAGS");
-  if (for_cxx)
+  if (for_cxx && nbgccarg>0)
     do_cxx_compilation (argvec, argstr, linkflags);
-  else
+  else if (!for_cxx && nbgccarg>0)
     do_c_compilation (argvec, argstr, linkflags);
 } /* end main */
 
