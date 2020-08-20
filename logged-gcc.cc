@@ -29,9 +29,11 @@
 #include <time.h>
 #include <assert.h>
 #include <math.h>
+#include <ctype.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 #ifndef GCC_EXEC
 #define GCC_EXEC "/usr/bin/gcc-10"
@@ -110,11 +112,90 @@ parse_logged_program_options(int &argc, char**argv,
 } // end parse_logged_program_options
 
 
+void stat_input_files(const std::vector<const char*>&progargvec)
+{
+  int nbargs = progargvec.size();
+  for (int ix=1; ix<nbargs && progargvec[ix]; ix++)
+    {
+      // skip -o outputfile...
+      if (!strcmp (progargvec [ix], "-o"))
+        {
+          ix++;
+          continue;
+        }
+      else
+        {
+          /// check for source files like *.c *.i *.S *.C *.cc *.cxx *.cpp
+          const char*curarg = progargvec[ix];
+          if (curarg [0] == '-')
+            continue;
+          if (!isalnum(curarg[0]) && curarg[0] != '_')
+            continue;
+          int lenarg = strlen(curarg);
+          if (lenarg<3) continue;
+          char lastc = curarg[lenarg-1];
+          bool isasrc = false;
+          if (curarg[lenarg-2]=='.')
+            {
+              if (lastc == 'c' || lastc == 'S' || lastc == 'i' || lastc == 'C')
+                isasrc = true;
+            }
+          else if (lenarg>=4 && curarg[lenarg-3]=='.')
+            {
+              char prevc = curarg[lenarg-2];
+              if (lastc == 'c' && prevc == 'c')
+                isasrc = true;
+            }
+          else if (lenarg>=4 && curarg[lenarg-4]=='.')
+            {
+              if (!strcmp(curarg+lenarg-3, "cxx")
+                  || !strcmp(curarg+lenarg-3, "cpp"))
+                isasrc = true;
+            }
+          if (isasrc)
+            {
+              if (access(curarg, R_OK))
+                {
+                  syslog(LOG_WARNING, "cannot read access source %s: %m", curarg);
+                  continue;
+                }
+              struct stat st;
+              memset(&st, 0, sizeof(st));
+              if (stat (curarg, &st))
+                syslog(LOG_WARNING, "cannot stat source %s: %m", curarg);
+              else if ((st.st_mode & S_IFMT) != S_IFREG)
+                syslog(LOG_WARNING, "source %s is not a regular file", curarg);
+              else
+                {
+                  time_t mtim = st.st_mtime;
+                  struct tm mtimtm;
+                  memset(&mtimtm, 0, sizeof(mtimtm));
+                  localtime_r(&mtim, &mtimtm);
+                  char mtimbuf[64];
+                  memset(mtimbuf, 0, sizeof(mtimbuf));
+                  strftime(mtimbuf, sizeof(mtimbuf), "%c", &mtimtm);
+                  char*rp = realpath(curarg, nullptr);
+                  if (!rp)
+                    syslog(LOG_WARNING, "source %s failed realpath", curarg);
+                  else
+                    {
+                      syslog(LOG_INFO, "source %s, real %s, has %ld bytes, modified %s", curarg, rp, (long)st.st_size, mtimbuf);
+                      free(rp);
+                    }
+                }
+            }
+        }
+    }
+} // end stat_input_files
+
+
+
 void fork_log_child_process(const char*cmdname, std::string progcmd, double startelapsedtime, std::vector<const char*>progargvec)
 {
   syslog(LOG_INFO,
          "/%d starting compilation %s of command %s", __LINE__,
          cmdname, progcmd.c_str());
+  stat_input_files(progargvec);
   auto pid = fork();
   if (pid<0)
     {
