@@ -35,6 +35,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <openssl/md5.h>
+#include <sqlite3.h>
 
 #ifndef GCC_EXEC
 #define GCC_EXEC "/usr/bin/gcc-10"
@@ -46,6 +47,8 @@
 
 const char* mygcc;
 const char* mygxx;
+const char* mysqlitepath;
+sqlite3* mysqlitedb;
 
 double get_float_time(clockid_t cid)
 {
@@ -75,6 +78,8 @@ parse_logged_program_options(int &argc, char**argv,
         mygcc=argv[ix]+strlen("--gcc=");
       else if (!strncmp(argv[ix],"--gxx=", strlen ("--gxx=")))
         mygxx=argv[ix]+strlen("--gxx=");
+      else if (!strncmp(argv[ix],"--sqlite=", strlen ("--sqlite=")))
+        mysqlitepath=argv[ix]+strlen("--sqlite=");
       else if (!strcmp(argv[ix], "--help"))
         {
           std::clog << argv[0]
@@ -85,6 +90,7 @@ parse_logged_program_options(int &argc, char**argv,
           std::clog << " Acceptable options include:" << std::endl
                     << " --gcc=<some-executable> #e.g. --gcc=/usr/bin/gcc-9, overridding $LOGGED_GCC" << std::endl
                     << " --g++=<some-executable> #e.g. --g++=/usr/bin/g++-9, overridding $LOGGED_GXX" << std::endl
+                    << " --sqlite=<some-sqlite-file> #e.g. --sqlite=$HOME/tmp/loggedgcc.sqlite, overridding $LOGGED_SQLITE" << std::endl
                     <<  "followed by program options passed to the GCC compiler..." << std::endl;
           std::clog << " Relevant environment variables are $LOGGED_GCC and $LOGGED_GXX for the compilers (when --gcc=... or --g++=... is not given)." << std::endl
                     << " When provided, the $LOGGED_CFLAGS may contain space-separated initial program options passed just after the C compiler $LOGGED_GCC." << std::endl
@@ -408,9 +414,77 @@ do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const ch
   fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec);
 } // end do_cxx_compilation
 
+void
+create_sqlite_database(void)
+{
+  assert (mysqlitedb);
+  assert (mysqlitepath);
+  char *msgerr = nullptr;
+  const char* inireq= R"!*(
+PRAGMA encoding = 'UTF-8';
+BEGIN TRANSACTION;
+CREATE TABLE IF NOT EXISTS tb_sourcepath (
+  srcp_serial INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+  srcp_realpath VARCHAR(512) NOT NULL,
+  srcp_last_compil_id INTEGER NOT NULL,
+  srcp_last_compil_time DATETIME NOT NULL
+);
+CREATE TABLE IF NOT EXISTS tb_sourcedata (
+  srcd_path_serial INTEGER NOT NULL, 
+  srcd_path_mtime DATETIME NOT NULL,
+  srcd_path_md5 CHAR(32) NOT NULL
+);
+CREATE TABLE IF NOT EXISTS tb_compilation (
+  compil_serial INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+  compil_firstsrc_id INTEGER NOT NULL,
+  compil_firstsrc_md5 CHAR(32) NOT NULL,
+  compil_other_source_ids VARCHAR(512),
+  compil_command TEXT NOT NULL,
+  compil_raw_status INT NOT NULL,
+  compil_status_str VARCHAR(32) NOT NULL,
+  compil_start_time DATETIME NOT NULL,
+  compil_elapsed_time DOUBLE NOT NULL,
+  compil_usercpu_time DOUBLE NOT NULL,
+  compil_syscpu_time  DOUBLE NOT NULL
+);
+END TRANSACTION;
+)!*";
+  int r = sqlite3_exec(mysqlitedb,
+		       inireq,
+		       nullptr,
+		       nullptr,
+		       &msgerr);
+  if (r != SQLITE_OK) {
+    syslog(LOG_ALERT, "create_sqlite_database (path %s) failure #%d : %s",
+	   mysqlitepath, r, msgerr?msgerr:"???");
+    exit(EXIT_FAILURE);	   
+  } else
+    syslog(LOG_INFO, "create_sqlite_database initialized database %s", mysqlitepath);
+} // end create_sqlite_database
 
+void
+initialize_sqlite(void)
+{
+  assert (mysqlitepath != nullptr);
+  bool oldsqlite = !access(mysqlitepath, F_OK);
+  int err = sqlite3_open_v2(mysqlitepath,
+			    &mysqlitedb,
+			    SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX,
+			    nullptr);
+  if (err != SQLITE_OK) {
+    char errbuf[16];
+    memset(errbuf, 0, sizeof(errbuf));
+    snprintf(errbuf, sizeof(errbuf), "sqlerr#%d", err);
+    syslog(LOG_ALERT, "sqlite3_open_v2 failed on %s - %s (%m)",
+	   mysqlitepath, mysqlitedb?sqlite3_errmsg(mysqlitedb):errbuf);
+    exit(EXIT_FAILURE);
+  }
+  if (!oldsqlite)
+    create_sqlite_database();
+} // end of initialize_sqlite
 
-int main(int argc, char**argv)
+int
+main(int argc, char**argv)
 {
   if (argc <= 1)
     {
@@ -431,6 +505,7 @@ int main(int argc, char**argv)
     mygxx= getenv("LOGGED_GXX");
   if (!mygxx)
     mygxx = GXX_EXEC;
+  mysqlitepath = getenv("LOGGED_SQLITE");
   bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (argc==2 && !strcmp(argv[1], "--version"))
     {
@@ -472,6 +547,8 @@ int main(int argc, char**argv)
       mygcc = defgcc;
     };
   ///
+  if (mysqlitepath)
+    initialize_sqlite();
   if (for_cxx && access(mygxx, X_OK))
     {
       syslog (LOG_WARNING, "%s is not executable - %m - for %s", mygxx,
