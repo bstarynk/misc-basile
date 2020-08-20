@@ -48,6 +48,7 @@
 const char* mygcc;
 const char* mygxx;
 const char* mysqlitepath;
+const char* mysqliterequest;
 sqlite3* mysqlitedb;
 
 double get_float_time(clockid_t cid)
@@ -92,6 +93,16 @@ parse_logged_program_options(int &argc, char**argv,
           mysqlitepath=argv[ix]+strlen("--sqlite=");
           continue;
         }
+      else if (!strncmp(argv[ix],"--dosql=", strlen ("--dosql=")))
+        {
+	  if (mysqliterequest != nullptr) {
+	    std::clog << argv[0] << " can get only one --dosql=<request> but got " << mysqliterequest
+		      << " and " << argv[ix] << std::endl;
+	    exit (EXIT_FAILURE);
+	  };
+          mysqliterequest=argv[ix]+strlen("--dosql=");
+          continue;
+        }
       else if (!strcmp(argv[ix], "--help"))
         {
           std::clog << argv[0]
@@ -103,6 +114,7 @@ parse_logged_program_options(int &argc, char**argv,
                     << " --gcc=<some-executable> #e.g. --gcc=/usr/bin/gcc-9, overridding $LOGGED_GCC" << std::endl
                     << " --g++=<some-executable> #e.g. --g++=/usr/bin/g++-9, overridding $LOGGED_GXX" << std::endl
                     << " --sqlite=<some-sqlite-file> #e.g. --sqlite=$HOME/tmp/loggedgcc.sqlite, overridding $LOGGED_SQLITE" << std::endl
+                    << " --dosql=<some-sqlite-request> #e.g. --dosql='SELECT * FROM tb_sourcepath' for advanced users." << std::endl
                     <<  "followed by program options passed to the GCC compiler..." << std::endl;
           std::clog << " Relevant environment variables are $LOGGED_GCC and $LOGGED_GXX for the compilers (when --gcc=... or --g++=... is not given)." << std::endl
                     << " When provided, the $LOGGED_CFLAGS may contain space-separated initial program options passed just after the C compiler $LOGGED_GCC." << std::endl
@@ -436,6 +448,41 @@ do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const ch
   fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec);
 } // end do_cxx_compilation
 
+
+struct Sql_request_data {
+  static int callback(void*data, int nbcol, char**colname, char**colval);
+  long _data_count;
+public:
+  Sql_request_data() : _data_count(0) {};
+};
+
+int
+Sql_request_data::callback(void*data, int nbcol, char**colname, char**colval)
+{
+  Sql_request_data* thisdata = (Sql_request_data*)data;
+  assert (thisdata != nullptr);
+  thisdata->_data_count++;
+#warning Sql_request_data::callback should do something
+} // end Sql_request_data::callback
+
+void
+run_sqlite_request(const char*sqlreq)
+{
+  char*msgerr=nullptr;
+  Sql_request_data reqdata;
+  int r = sqlite3_exec(mysqlitedb,
+		       sqlreq,
+		       Sql_request_data::callback,
+		       &reqdata,
+		       &msgerr);
+  if (r != SQLITE_OK) {
+    syslog(LOG_ALERT, "run_sqlite_request (path %s) failure #%d for request %s: %s",
+	   mysqlitepath, r, sqlreq, msgerr?msgerr:"???");
+    exit(EXIT_FAILURE);	   
+  } else
+    syslog(LOG_INFO, "run_sqlite_request did %s", sqlreq);
+} // end of run_sqlite_request
+
 void
 create_sqlite_database(void)
 {
@@ -503,6 +550,8 @@ initialize_sqlite(void)
   }
   if (!oldsqlite)
     create_sqlite_database();
+  if (mysqliterequest)
+    run_sqlite_request(mysqliterequest);
 } // end of initialize_sqlite
 
 
