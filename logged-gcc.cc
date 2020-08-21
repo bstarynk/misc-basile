@@ -222,7 +222,7 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
                       "END TRANSACTION;",
                       serialid, mtime, md5, size);
   sqlreq = sqlite3_str_value(str);
-  DEBUGLOG("register_sqlite_source_data sqlreq=" << sqlreq);
+  DEBUGLOG("register_sqlite_source_data r2 sqlreq=" << sqlreq);
   int r2 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
   if (r2 != SQLITE_OK)
     {
@@ -259,13 +259,13 @@ register_sqlite_compilation (std::int64_t firstserial, const char*firstmd5, cons
                       firstserial, firstmd5, progstr, startime, elapsedtime, usertime, systime, pageflt, maxrss);
   sqlite3_str_appendf(str, "END TRANSACTION;\n");
   sqlreq = sqlite3_str_value(str);
+  DEBUGLOG("register_sqlite_compilation successful r1 sqlreq:" << sqlreq);
   int r1 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
   if (r1 != SQLITE_OK)
     {
       syslog(LOG_ALERT, "register_sqlite_compilation (l¤%d) %s failure #%d: %s", __LINE__,
              sqlreq, r1, msgerr?msgerr:"???");
     };
-  DEBUGLOG("register_sqlite_compilation successful sqlreq:" << sqlreq);
   char*fbuf = sqlite3_str_finish(str);
   sqlite3_free(fbuf);
 } // end register_sqlite_compilation
@@ -330,8 +330,9 @@ show_md5_mtime(const char*path, time_t mtime, char*firstmd5)
   for (int ix=0; ix<MD5_DIGEST_LENGTH; ix++)
     snprintf(md5buf+(2*ix), 3, "%02x", (unsigned)md5dig[ix]);
   if (firstmd5)
-    strncpy(firstmd5, md5buf, 2*MD5_DIGEST_LENGTH);
+    strncpy(firstmd5, md5buf, 2*MD5_DIGEST_LENGTH);  
   syslog(LOG_INFO, "source file %s has %ld bytes; of md5 %s", path, off, md5buf);
+  DEBUGLOG("show_md5_mtime path=" << path << " off=" << off << " mtime=" << mtime << " md5buf=" << md5buf);
   if (mysqlitedb)
     {
       std::int64_t serial = register_sqlite_source_data(path, md5buf, mtime, off);
@@ -785,6 +786,7 @@ run_sqlite_request(const char*sqlreq)
 {
   char*msgerr=nullptr;
   Sql_request_data reqdata(sqlreq);
+  DEBUGLOG("run_sqlite_request sqlreq=" << sqlreq);
   int r = sqlite3_exec(mysqlitedb,
                        sqlreq,
                        Sql_request_data::callback,
