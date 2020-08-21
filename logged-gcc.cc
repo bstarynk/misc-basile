@@ -158,12 +158,12 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
   char *sqlreq= nullptr;
   sqlite3_str* str = sqlite3_str_new(mysqlitedb);
   sqlite3_str_appendf(str, "BEGIN TRANSACTION;");
-  sqlite3_str_appendf(str, "INSERT OR IGNORE INTO tb_sourcepath(srcp_realpath) VALUES(%q);", realpath);
+  sqlite3_str_appendf(str, "INSERT OR IGNORE INTO tb_sourcepath(srcp_realpath) VALUES(%Q);", realpath);
   sqlreq = sqlite3_str_value(str);
   int r1 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
   if (r1 != SQLITE_OK)
     {
-      syslog(LOG_ALERT, "register_sqlite_source_data (l%d) %s failure #%d: %s", __LINE__,
+      syslog(LOG_ALERT, "register_sqlite_source_data (l¤%d) %s failure #%d: %s", __LINE__,
              sqlreq, r1, msgerr?msgerr:"???");
       return 0;
     };
@@ -171,14 +171,14 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
   sqlite3_str_reset(str);
   sqlreq = nullptr;
   sqlite3_str_appendf(str, "INSERT OR REPLACE INTO tb_sourcedata(srcd_path_serial, srcd_path_mtime, srcd_path_md5, srcd_path_size)"
-                      " VALUES (%lld, %ld, %q, %ld);\n"
+                      " VALUES (%lld, %ld, %Q, %ld);\n"
                       "END TRANSACTION;",
                       serialid, mtime, md5, size);
   sqlreq = sqlite3_str_value(str);
   int r2 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
   if (r2 != SQLITE_OK)
     {
-      syslog(LOG_ALERT, "register_sqlite_source_data (l%d)  %s failure #%d: %s", __LINE__,
+      syslog(LOG_ALERT, "register_sqlite_source_data (l¤%d)  %s failure #%d: %s", __LINE__,
              sqlreq, r2,  msgerr?msgerr:"???");
       return 0;
     };
@@ -212,7 +212,7 @@ register_sqlite_compilation (std::int64_t firstserial, const char*firstmd5, cons
   int r1 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
   if (r1 != SQLITE_OK)
     {
-      syslog(LOG_ALERT, "register_sqlite_compilation (l%d) %s failure #%d: %s", __LINE__,
+      syslog(LOG_ALERT, "register_sqlite_compilation (l¤%d) %s failure #%d: %s", __LINE__,
              sqlreq, r1, msgerr?msgerr:"???");
     };
 } // end register_sqlite_compilation
@@ -382,7 +382,7 @@ fork_log_child_process(const char*cmdname, std::string progcmd, double startelap
       return;
     }
   syslog(LOG_INFO,
-         "(/%d) starting compilation %s of command %s with %d prog.arg", __LINE__,
+         "(L¤%d) starting compilation %s of command %s with %d prog.arg", __LINE__,
          cmdname, progcmd.c_str(), (int)(progargvec.size()));
   char firstmd5[MD5_DIGEST_LENGTH+4];
   memset(firstmd5, 0, sizeof(firstmd5));
@@ -438,7 +438,9 @@ fork_log_child_process(const char*cmdname, std::string progcmd, double startelap
         }
       else if (WIFEXITED(wst))
         {
-          syslog(LOG_WARNING, "%s failed compilation %s in %.4g elapsed seconds, %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, exited %d)",
+          syslog(LOG_WARNING, "(l¤%d) %s failed compilation %s in %.4g elapsed seconds,"
+		 " %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, exited %d)",
+		 __LINE__,
                  cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
                  usertime, systime, maxrss, pageflt, WEXITSTATUS(wst),
                  (int)pid);
@@ -505,7 +507,7 @@ do_c_compilation(std::vector<const char*>argvec, std::string cmdstr, const char*
       cnt++;
     };
   progargvec.push_back(nullptr);
-  syslog (LOG_INFO, "%s running C compilation %s for %s",
+  syslog (LOG_INFO, "(l¤%d) %s running C compilation %s for %s", __LINE__,
           argvec[0], progcmd.c_str(), cmdstr.c_str());
   fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec);
 } // end do_c_compilation
@@ -670,7 +672,7 @@ CREATE TABLE IF NOT EXISTS tb_sourcepath (
 			  nullptr,
 			  &msgerr);
     if (r1 != SQLITE_OK) {
-      syslog(LOG_ALERT, "create_sqlite_database @L%d (path %s) failure #%d : %s\n request was %s", __LINE__,
+      syslog(LOG_ALERT, "create_sqlite_database L¤%d (path %s) failure #%d : %s\n request was %s", __LINE__,
 	     mysqlitepath, r1, msgerr?msgerr:"???", inireq1);
       exit(EXIT_FAILURE);
     };
@@ -689,7 +691,7 @@ CREATE INDEX IF NOT EXISTS ix_sourcepath_compiltime ON tb_sourcepath (srcp_last_
 			  nullptr,
 			  &msgerr);
     if (r2 != SQLITE_OK) {
-      syslog(LOG_ALERT, "create_sqlite_database @L%d (path %s) failure #%d : %s\n request was %s", __LINE__,
+      syslog(LOG_ALERT, "create_sqlite_database L¤%d (path %s) failure #%d : %s\n request was %s", __LINE__,
 	     mysqlitepath, r2, msgerr?msgerr:"???", inireq2);
       exit(EXIT_FAILURE);
     };
@@ -713,7 +715,7 @@ CREATE INDEX IF NOT EXISTS ix_sourcedata_mtime ON tb_sourcedata(srcd_path_mtime)
 			  nullptr,
 			  &msgerr);
     if (r3 != SQLITE_OK) {
-      syslog(LOG_ALERT, "create_sqlite_database @L%d (path %s) failure #%d : %s\n request was %s", __LINE__,
+      syslog(LOG_ALERT, "create_sqlite_database L¤%d (path %s) failure #%d : %s\n request was %s", __LINE__,
 	     mysqlitepath, r3, msgerr?msgerr:"???", inireq3);
       exit(EXIT_FAILURE);
     };
@@ -744,7 +746,7 @@ END TRANSACTION;
 			  nullptr,
 			  &msgerr);
     if (r4 != SQLITE_OK) {
-      syslog(LOG_ALERT, "create_sqlite_database @L%d  (path %s) failure #%d : %s\n request was %s", __LINE__,
+      syslog(LOG_ALERT, "create_sqlite_database L¤%d  (path %s) failure #%d : %s\n request was %s", __LINE__,
 	     mysqlitepath, r4, msgerr?msgerr:"???", inireq4);
       exit(EXIT_FAILURE);	   
     }
