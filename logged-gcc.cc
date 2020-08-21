@@ -731,7 +731,7 @@ CREATE TABLE IF NOT EXISTS tb_successful_compilation (
   compil_usercpu_time DOUBLE NOT NULL,
   compil_syscpu_time  DOUBLE NOT NULL,
   compil_page_faults INTEGER NOT NULL,
-  compil_max_rss INTEGER NOT NULL,
+  compil_max_rss INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_compilation_id ON tb_successful_compilation(compil_firstsrc_id);
 
