@@ -653,7 +653,8 @@ create_sqlite_database(void)
   assert (mysqlitedb);
   assert (mysqlitepath);
   char *msgerr = nullptr;
-  const char* inireq= R"!*(
+  {
+    const char* inireq1= R"!*(
 PRAGMA encoding = 'UTF-8';
 BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS tb_sourcepath (
@@ -662,10 +663,40 @@ CREATE TABLE IF NOT EXISTS tb_sourcepath (
   srcp_last_compil_id INTEGER NOT NULL,
   srcp_last_compil_time DATETIME NOT NULL
 );
+)!*";
+    int r1 = sqlite3_exec(mysqlitedb,
+			  inireq1,
+			  nullptr,
+			  nullptr,
+			  &msgerr);
+    if (r1 != SQLITE_OK) {
+      syslog(LOG_ALERT, "create_sqlite_database @L%d (path %s) failure #%d : %s\n request was %s", __LINE__,
+	     mysqlitepath, r1, msgerr?msgerr:"???", inireq1);
+      exit(EXIT_FAILURE);
+    };
+  }
+  //
+  {
+    const char* inireq2= R"!*(
 CREATE UNIQUE INDEX IF NOT EXISTS ix_sourcepath_realpath ON tb_sourcepath (srcp_realpath);
 CREATE INDEX IF NOT EXISTS ix_sourcepath_compilid ON tb_sourcepath (srcp_last_compil_id);
 CREATE INDEX IF NOT EXISTS ix_sourcepath_compiltime ON tb_sourcepath (srcp_last_compil_time);
-
+)!*";
+  
+    int r2 = sqlite3_exec(mysqlitedb,
+			  inireq2,
+			  nullptr,
+			  nullptr,
+			  &msgerr);
+    if (r2 != SQLITE_OK) {
+      syslog(LOG_ALERT, "create_sqlite_database @L%d (path %s) failure #%d : %s\n request was %s", __LINE__,
+	     mysqlitepath, r2, msgerr?msgerr:"???", inireq2);
+      exit(EXIT_FAILURE);
+    };
+  }
+  //
+  {
+    const char* inireq3= R"!*(
 CREATE TABLE IF NOT EXISTS tb_sourcedata (
   srcd_path_serial INTEGER NOT NULL PRIMARY KEY ASC, 
   srcd_path_mtime DATETIME NOT NULL,
@@ -674,7 +705,22 @@ CREATE TABLE IF NOT EXISTS tb_sourcedata (
 );
 CREATE INDEX IF NOT EXISTS ix_sourcedata_serial ON tb_sourcedata(srcd_path_serial);
 CREATE INDEX IF NOT EXISTS ix_sourcedata_mtime ON tb_sourcedata(srcd_path_mtime);
+)!*";
+  
+    int r3 = sqlite3_exec(mysqlitedb,
+			  inireq3,
+			  nullptr,
+			  nullptr,
+			  &msgerr);
+    if (r3 != SQLITE_OK) {
+      syslog(LOG_ALERT, "create_sqlite_database @L%d (path %s) failure #%d : %s\n request was %s", __LINE__,
+	     mysqlitepath, r3, msgerr?msgerr:"???", inireq3);
+      exit(EXIT_FAILURE);
+    };
+  }
 
+  {
+    const char* inireq4= R"!*(
 CREATE TABLE IF NOT EXISTS tb_successful_compilation (
   compil_serial INTEGER PRIMARY KEY ASC AUTOINCREMENT,
   compil_firstsrc_id INTEGER NOT NULL,
@@ -691,17 +737,19 @@ CREATE INDEX IF NOT EXISTS ix_compilation_id ON tb_successful_compilation(compil
 
 END TRANSACTION;
 )!*";
-  int r = sqlite3_exec(mysqlitedb,
-		       inireq,
-		       nullptr,
-		       nullptr,
-		       &msgerr);
-  if (r != SQLITE_OK) {
-    syslog(LOG_ALERT, "create_sqlite_database (path %s) failure #%d : %s",
-	   mysqlitepath, r, msgerr?msgerr:"???");
-    exit(EXIT_FAILURE);	   
-  } else
-    syslog(LOG_INFO, "create_sqlite_database initialized database %s", mysqlitepath);
+  
+    int r4 = sqlite3_exec(mysqlitedb,
+			  inireq4,
+			  nullptr,
+			  nullptr,
+			  &msgerr);
+    if (r4 != SQLITE_OK) {
+      syslog(LOG_ALERT, "create_sqlite_database @L%d  (path %s) failure #%d : %s\n request was %s", __LINE__,
+	     mysqlitepath, r4, msgerr?msgerr:"???", inireq4);
+      exit(EXIT_FAILURE);	   
+    }
+  }
+  syslog(LOG_INFO, "create_sqlite_database initialized database %s", mysqlitepath);
 } // end create_sqlite_database
 
 void
