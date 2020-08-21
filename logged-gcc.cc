@@ -187,7 +187,39 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
   return serialid;
 } // end register_sqlite_source_data
 
-void show_md5_mtime(const char*path, time_t mtime)
+void
+register_sqlite_compilation (std::int64_t firstserial, const char*firstmd5, const char*progstr,
+			     time_t startime, double elapsedtime,
+			     double usertime, double systime, long maxrss, long pageflt)
+{
+  assert(mysqlitedb);
+  assert(firstserial>0);
+  assert(firstmd5!=nullptr);
+  assert(progstr!=nullptr);
+  assert(startime>0);
+  char *sqlreq= nullptr;
+  char*msgerr=nullptr;
+  sqlite3_str* str = sqlite3_str_new(mysqlitedb);
+  sqlite3_str_appendf(str, "BEGIN TRANSACTION;");
+  sqlite3_str_appendf(str, "INSERT INTO tb_successful_compilation\n"
+		      " (compil_firstsrc_id, compil_firstsrc_md5, compil_command,\n"
+		      "  compil_start_time, compil_elapsed_time, compil_usercpu_time, compil_syscpu_time,\n"
+		      "  compil_page_faults, compil_max_rss)\n"
+		      " VALUES(%lld, %ld, %q, %q, %ld, %f, %f, %f, %ld, %d);\n",
+		      firstserial, firstmd5, progstr, startime, elapsedtime, usertime, systime, pageflt, maxrss);
+  sqlite3_str_appendf(str, "END TRANSACTION;\n");
+  sqlreq = sqlite3_str_value(str);
+  int r1 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
+  if (r1 != SQLITE_OK)
+    {
+      syslog(LOG_ALERT, "register_sqlite_compilation (l%d) %s failure #%d: %s", __LINE__,
+             sqlreq, r1, msgerr?msgerr:"???");
+    };
+} // end register_sqlite_compilation
+
+/// return a serial in sqlite database, or else 0, or -1 on failure
+std::int64_t
+show_md5_mtime(const char*path, time_t mtime, char*firstmd5)
 {
   assert (path != nullptr && path[0] != (char)0);
   assert (mtime != 0);
@@ -195,14 +227,14 @@ void show_md5_mtime(const char*path, time_t mtime)
   if (!fil)
     {
       syslog(LOG_WARNING, "show_md5_mtime cannot open %s - %m", path);
-      return;
+      return -1;
     };
   MD5_CTX ctx;
   memset (&ctx, 0, sizeof(ctx));
   if (!MD5_Init(&ctx))
     {
       syslog(LOG_WARNING, "show_md5_mtime failed to MD5_Init @%p for %s - %m", (void*)&ctx, path);
-      return;
+      return -1;
     };
   char buf[1024];
   unsigned char md5dig[MD5_DIGEST_LENGTH+4];
@@ -220,14 +252,15 @@ void show_md5_mtime(const char*path, time_t mtime)
         {
           syslog(LOG_ALERT, "show_md5_mtime failed to fread %s at offset %ld - %m",
                  path, off);
-          return;
+          return -1;
         };
-      if (nb==0) break;
+      if (nb==0)
+	break;
       if (!MD5_Update(&ctx, buf, nb))
         {
           syslog(LOG_ALERT, "show_md5_mtime failed to MD5_Update %s at offset %ld - %m",
                  path, off);
-          return;
+          return -1;
         };
       off = newoff;
     }
@@ -237,20 +270,30 @@ void show_md5_mtime(const char*path, time_t mtime)
     {
       syslog(LOG_ALERT, "show_md5_mtime failed to MD5_Final %s at offset %ld - %m",
              path, off);
-      return;
+      return -1;
     };
   for (int ix=0; ix<MD5_DIGEST_LENGTH; ix++)
     snprintf(md5buf+(2*ix), 3, "%02x", (unsigned)md5dig[ix]);
+  if (firstmd5)
+    strncpy(firstmd5, md5buf, 2*MD5_DIGEST_LENGTH);
   syslog(LOG_INFO, "source file %s has %ld bytes; of md5 %s", path, off, md5buf);
   if (mysqlitedb)
     {
       std::int64_t serial = register_sqlite_source_data(path, md5buf, mtime, off);
+      return serial;
     }
+  else
+    return 0;
 } // end show_md5_mtime
 
-void stat_input_files(const std::vector<const char*>&progargvec)
+
+/// measure with stat(2) the input source files. Return the serial (for sqlite) of the first one.
+std::int64_t
+stat_input_files(const std::vector<const char*>&progargvec, char*firstmd5)
 {
+  std::int64_t firstserial = 0;
   int nbargs = progargvec.size();
+  int nbsrcfiles = 0;
   for (int ix=1; ix<nbargs && progargvec[ix]; ix++)
     {
       // skip -o outputfile...
@@ -316,18 +359,22 @@ void stat_input_files(const std::vector<const char*>&progargvec)
                   else
                     {
                       syslog(LOG_INFO, "source %s, real %s, has %ld bytes, modified %s", curarg, rp, (long)st.st_size, mtimbuf);
-                      show_md5_mtime(rp, mtim);
+		      std::int64_t serial = show_md5_mtime(rp, mtim, firstmd5);
+		      if (nbsrcfiles++ == 0) 
+		        firstserial = serial;
                       free(rp);
                     }
                 }
             }
         }
     }
+  return firstserial;
 } // end stat_input_files
 
 
 
-void fork_log_child_process(const char*cmdname, std::string progcmd, double startelapsedtime, std::vector<const char*>progargvec)
+void
+fork_log_child_process(const char*cmdname, std::string progcmd, double startelapsedtime, std::vector<const char*>progargvec)
 {
   if (progargvec.size() <= 1)
     {
@@ -337,7 +384,10 @@ void fork_log_child_process(const char*cmdname, std::string progcmd, double star
   syslog(LOG_INFO,
          "(/%d) starting compilation %s of command %s with %d prog.arg", __LINE__,
          cmdname, progcmd.c_str(), (int)(progargvec.size()));
-  stat_input_files(progargvec);
+  char firstmd5[MD5_DIGEST_LENGTH+4];
+  memset(firstmd5, 0, sizeof(firstmd5));
+  std::int64_t firstserial = stat_input_files(progargvec, firstmd5);
+  time_t startime = time(nullptr);
   auto pid = fork();
   if (pid<0)
     {
@@ -374,7 +424,7 @@ void fork_log_child_process(const char*cmdname, std::string progcmd, double star
       double endelapsedtime= get_float_time(CLOCK_MONOTONIC);
       double usertime = 1.0*rus.ru_utime.tv_sec + 1.0e-6*rus.ru_utime.tv_usec;
       double systime = 1.0*rus.ru_stime.tv_sec + 1.0e-6*rus.ru_stime.tv_usec;
-      long maxrss = rus.ru_maxrss; //kilobtes
+      long maxrss = rus.ru_maxrss; //kilobytes
       long pageflt = rus.ru_minflt + rus.ru_majflt;
       if (wst==0)
         {
@@ -382,6 +432,9 @@ void fork_log_child_process(const char*cmdname, std::string progcmd, double star
                  cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
                  usertime, systime, maxrss, pageflt,
                  (int)pid);
+	  if (mysqlitedb && firstserial>0)
+	    register_sqlite_compilation (firstserial, firstmd5, progcmd.c_str(), startime, endelapsedtime-startelapsedtime,
+					 usertime, systime, maxrss, pageflt);
         }
       else if (WIFEXITED(wst))
         {
@@ -622,20 +675,19 @@ CREATE TABLE IF NOT EXISTS tb_sourcedata (
 CREATE INDEX IF NOT EXISTS ix_sourcedata_serial ON tb_sourcedata(srcd_path_serial);
 CREATE INDEX IF NOT EXISTS ix_sourcedata_mtime ON tb_sourcedata(srcd_path_mtime);
 
-CREATE TABLE IF NOT EXISTS tb_compilation (
+CREATE TABLE IF NOT EXISTS tb_successful_compilation (
   compil_serial INTEGER PRIMARY KEY ASC AUTOINCREMENT,
   compil_firstsrc_id INTEGER NOT NULL,
   compil_firstsrc_md5 CHAR(32) NOT NULL,
-  compil_other_source_ids VARCHAR(512),
   compil_command TEXT NOT NULL,
-  compil_raw_status INT NOT NULL,
-  compil_status_str VARCHAR(32) NOT NULL,
   compil_start_time DATETIME NOT NULL,
   compil_elapsed_time DOUBLE NOT NULL,
   compil_usercpu_time DOUBLE NOT NULL,
-  compil_syscpu_time  DOUBLE NOT NULL
+  compil_syscpu_time  DOUBLE NOT NULL,
+  compil_page_faults INTEGER NOT NULL,
+  compil_max_rss INTEGER NOT NULL,
 );
-CREATE INDEX IF NOT EXISTS ix_compilation_id ON tb_compilation(compil_firstsrc_id);
+CREATE INDEX IF NOT EXISTS ix_compilation_id ON tb_successful_compilation(compil_firstsrc_id);
 
 END TRANSACTION;
 )!*";
