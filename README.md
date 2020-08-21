@@ -6,7 +6,8 @@ Email me to
 feedback and questions. See
 [starynkevitch.net/Basile](http://starynkevitch.net/Basile/) for more
 about me, with [this](http://starynkevitch.net/Basile/index_en.html)
-being in English.
+being in English. My pet project is
+[RefPerSys](http://refpersys.org/).
 
 Several single source file programs usually for
 GNU/Linux/Debian/x86-64. Their compilation command is generally given
