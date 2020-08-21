@@ -149,7 +149,6 @@ parse_logged_program_options(int &argc, char**argv,
 } // end parse_logged_program_options
 
 
-#warning we need to use register_sqlite_source_data later
 /// return a serial in tb_sourcepath or 0 on failure
 std::int64_t
 register_sqlite_source_data(const char*realpath, const char*md5, long mtime, long size)
@@ -188,19 +187,21 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
   return serialid;
 } // end register_sqlite_source_data
 
-void show_md5(const char*path)
+void show_md5_mtime(const char*path, time_t mtime)
 {
+  assert (path != nullptr && path[0] != (char)0);
+  assert (mtime != 0);
   FILE* fil = fopen(path, "rm");
   if (!fil)
     {
-      syslog(LOG_WARNING, "show_md5 cannot open %s - %m", path);
+      syslog(LOG_WARNING, "show_md5_mtime cannot open %s - %m", path);
       return;
     };
   MD5_CTX ctx;
   memset (&ctx, 0, sizeof(ctx));
   if (!MD5_Init(&ctx))
     {
-      syslog(LOG_WARNING, "show_md5 failed to MD5_Init @%p for %s - %m", (void*)&ctx, path);
+      syslog(LOG_WARNING, "show_md5_mtime failed to MD5_Init @%p for %s - %m", (void*)&ctx, path);
       return;
     };
   char buf[1024];
@@ -217,14 +218,14 @@ void show_md5(const char*path)
       long newoff = ftell(fil);
       if (nb < 0)
         {
-          syslog(LOG_ALERT, "show_md5 failed to fread %s at offset %ld - %m",
+          syslog(LOG_ALERT, "show_md5_mtime failed to fread %s at offset %ld - %m",
                  path, off);
           return;
         };
       if (nb==0) break;
       if (!MD5_Update(&ctx, buf, nb))
         {
-          syslog(LOG_ALERT, "show_md5 failed to MD5_Update %s at offset %ld - %m",
+          syslog(LOG_ALERT, "show_md5_mtime failed to MD5_Update %s at offset %ld - %m",
                  path, off);
           return;
         };
@@ -234,14 +235,18 @@ void show_md5(const char*path)
   fclose(fil);
   if (!MD5_Final(md5dig, &ctx))
     {
-      syslog(LOG_ALERT, "show_md5 failed to MD5_Final %s at offset %ld - %m",
+      syslog(LOG_ALERT, "show_md5_mtime failed to MD5_Final %s at offset %ld - %m",
              path, off);
       return;
     };
   for (int ix=0; ix<MD5_DIGEST_LENGTH; ix++)
     snprintf(md5buf+(2*ix), 3, "%02x", (unsigned)md5dig[ix]);
   syslog(LOG_INFO, "source file %s has %ld bytes; of md5 %s", path, off, md5buf);
-} // end show_md5
+  if (mysqlitedb)
+    {
+      std::int64_t serial = register_sqlite_source_data(path, md5buf, mtime, off);
+    }
+} // end show_md5_mtime
 
 void stat_input_files(const std::vector<const char*>&progargvec)
 {
@@ -311,7 +316,7 @@ void stat_input_files(const std::vector<const char*>&progargvec)
                   else
                     {
                       syslog(LOG_INFO, "source %s, real %s, has %ld bytes, modified %s", curarg, rp, (long)st.st_size, mtimbuf);
-                      show_md5(rp);
+                      show_md5_mtime(rp, mtim);
                       free(rp);
                     }
                 }
