@@ -21,6 +21,7 @@
 #include <vector>
 #include <iostream>
 #include <chrono>
+#include <functional>
 
 #include <unistd.h>
 #include <syslog.h>
@@ -50,6 +51,32 @@ const char* mygxx;
 const char* mysqlitepath;
 const char* mysqliterequest;
 sqlite3* mysqlitedb;
+bool debug_enabled;
+
+#define DEBUGLOG_AT(Lin,Log) do {if (debug_enabled) \
+      std::clog << "¤¤" <<__FILE__<< ":" << Lin << " " << Log << std::endl; } while(0)
+#define DEBUGLOG_AT_BIS(Lin,Log) DEBUGLOG_AT(Lin,Log)
+#define DEBUGLOG(Log) DEBUGLOG_AT_BIS(__LINE__,Log)
+
+class Do_Output
+{
+  std::function<void(std::ostream&)> _outfun;
+public:
+  Do_Output(std::function<void(std::ostream&)> f) : _outfun(f) {};
+  ~Do_Output() = default;
+  Do_Output(const Do_Output&) = delete;
+  Do_Output(Do_Output&&) = delete;
+  void out(std::ostream&out) const
+  {
+    _outfun(out);
+  };
+};
+
+std::ostream& operator << (std::ostream&out, const Do_Output&d)
+{
+  d.out(out);
+  return out;
+};
 
 double get_float_time(clockid_t cid)
 {
@@ -83,6 +110,11 @@ parse_logged_program_options(int &argc, char**argv,
           mygcc=argv[ix]+strlen("--gcc=");
           continue;
         }
+      if (!strncmp(argv[ix],"--debug", strlen ("--debug")))
+        {
+          debug_enabled = true;
+          continue;
+        }
       else if (!strncmp(argv[ix],"--gxx=", strlen ("--gxx=")))
         {
           mygxx=argv[ix]+strlen("--gxx=");
@@ -112,6 +144,7 @@ parse_logged_program_options(int &argc, char**argv,
           std::clog << "A GPLv3+ licensed free software, see https://www.gnu.org/licenses/ for more" << std::endl;
           std::clog << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl;
           std::clog << " Acceptable options include:" << std::endl
+                    << " --debug #output debug messages to std::clog" << std::endl
                     << " --gcc=<some-executable> #e.g. --gcc=/usr/bin/gcc-9, overridding $LOGGED_GCC" << std::endl
                     << " --g++=<some-executable> #e.g. --g++=/usr/bin/g++-9, overridding $LOGGED_GXX" << std::endl
                     << " --sqlite=<some-sqlite-file> #e.g. --sqlite=$HOME/tmp/loggedgcc.sqlite, overridding $LOGGED_SQLITE" << std::endl
@@ -145,6 +178,18 @@ parse_logged_program_options(int &argc, char**argv,
           argvec.push_back(argv[ix]);
         }
     }
+  DEBUGLOG("parse_logged_program_options argvec. siz" << (argvec.size()) << ":"
+           << Do_Output([&](std::ostream&out)
+  {
+    int sz = (int)argvec.size();
+    for (int ix=0; ix<sz; ix++)
+      {
+        const char* curarg=argvec[ix];
+        if (ix>0) out << ", ";
+        if (curarg) out << "[" << ix << "]='" << curarg << "' ";
+        else out <<  "[" << ix << "]*nul*";
+      }
+  }));
   return argvec;
 } // end parse_logged_program_options
 
@@ -160,6 +205,8 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
   sqlite3_str_appendf(str, "BEGIN TRANSACTION;");
   sqlite3_str_appendf(str, "INSERT OR IGNORE INTO tb_sourcepath(srcp_realpath) VALUES(%Q);", realpath);
   sqlreq = sqlite3_str_value(str);
+  DEBUGLOG("register_sqlite_source_data realpath=" << realpath << " md5=" << md5
+           << " mtime=" << mtime << " size=" << size << " sqlreq=" << sqlreq);
   int r1 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
   if (r1 != SQLITE_OK)
     {
@@ -175,6 +222,7 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
                       "END TRANSACTION;",
                       serialid, mtime, md5, size);
   sqlreq = sqlite3_str_value(str);
+  DEBUGLOG("register_sqlite_source_data sqlreq=" << sqlreq);
   int r2 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
   if (r2 != SQLITE_OK)
     {
@@ -184,13 +232,15 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
     };
   char*fbuf = sqlite3_str_finish(str);
   sqlite3_free(fbuf);
+  DEBUGLOG("register_sqlite_source_data ending serialid=" << serialid
+           << " realpath=" << realpath << " md5=" << md5 << " mtime=" << mtime << " size=" << size);
   return serialid;
 } // end register_sqlite_source_data
 
 void
 register_sqlite_compilation (std::int64_t firstserial, const char*firstmd5, const char*progstr,
-			     time_t startime, double elapsedtime,
-			     double usertime, double systime, long maxrss, long pageflt)
+                             time_t startime, double elapsedtime,
+                             double usertime, double systime, long maxrss, long pageflt)
 {
   assert(mysqlitedb);
   assert(firstserial>0);
@@ -202,11 +252,11 @@ register_sqlite_compilation (std::int64_t firstserial, const char*firstmd5, cons
   sqlite3_str* str = sqlite3_str_new(mysqlitedb);
   sqlite3_str_appendf(str, "BEGIN TRANSACTION;");
   sqlite3_str_appendf(str, "INSERT INTO tb_successful_compilation\n"
-		      " (compil_firstsrc_id, compil_firstsrc_md5, compil_command,\n"
-		      "  compil_start_time, compil_elapsed_time, compil_usercpu_time, compil_syscpu_time,\n"
-		      "  compil_page_faults, compil_max_rss)\n"
-		      " VALUES(%lld, %ld, %q, %q, %ld, %f, %f, %f, %ld, %d);\n",
-		      firstserial, firstmd5, progstr, startime, elapsedtime, usertime, systime, pageflt, maxrss);
+                      " (compil_firstsrc_id, compil_firstsrc_md5, compil_command,\n"
+                      "  compil_start_time, compil_elapsed_time, compil_usercpu_time, compil_syscpu_time,\n"
+                      "  compil_page_faults, compil_max_rss)\n"
+                      " VALUES(%lld, %ld, %q, %q, %ld, %f, %f, %f, %ld, %d);\n",
+                      firstserial, firstmd5, progstr, startime, elapsedtime, usertime, systime, pageflt, maxrss);
   sqlite3_str_appendf(str, "END TRANSACTION;\n");
   sqlreq = sqlite3_str_value(str);
   int r1 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
@@ -215,7 +265,12 @@ register_sqlite_compilation (std::int64_t firstserial, const char*firstmd5, cons
       syslog(LOG_ALERT, "register_sqlite_compilation (l¤%d) %s failure #%d: %s", __LINE__,
              sqlreq, r1, msgerr?msgerr:"???");
     };
+  DEBUGLOG("register_sqlite_compilation successful sqlreq:" << sqlreq);
+  char*fbuf = sqlite3_str_finish(str);
+  sqlite3_free(fbuf);
 } // end register_sqlite_compilation
+
+
 
 /// return a serial in sqlite database, or else 0, or -1 on failure
 std::int64_t
@@ -255,7 +310,7 @@ show_md5_mtime(const char*path, time_t mtime, char*firstmd5)
           return -1;
         };
       if (nb==0)
-	break;
+        break;
       if (!MD5_Update(&ctx, buf, nb))
         {
           syslog(LOG_ALERT, "show_md5_mtime failed to MD5_Update %s at offset %ld - %m",
@@ -280,10 +335,16 @@ show_md5_mtime(const char*path, time_t mtime, char*firstmd5)
   if (mysqlitedb)
     {
       std::int64_t serial = register_sqlite_source_data(path, md5buf, mtime, off);
+      DEBUGLOG("show_md5_mtime path=" << path << " mtime=" << mtime << " firstmd5=" << firstmd5
+               << " gives serial=" << serial);
       return serial;
     }
   else
-    return 0;
+    {
+      DEBUGLOG("show_md5_mtime path=" << path << " mtime=" << mtime << " firstmd5=" << firstmd5
+               << " done");
+      return 0;
+    }
 } // end show_md5_mtime
 
 
@@ -294,6 +355,21 @@ stat_input_files(const std::vector<const char*>&progargvec, char*firstmd5)
   std::int64_t firstserial = 0;
   int nbargs = progargvec.size();
   int nbsrcfiles = 0;
+  DEBUGLOG("stat_input_files start progargvec.siz=" << (progargvec.size()) <<" firstmd5=" << firstmd5
+           << std::endl
+           << "... progargvec="
+           << Do_Output([&](std::ostream&out)
+  {
+    int sz = (int)progargvec.size();
+    for (int ix=0; ix<sz; ix++)
+      {
+        const char* curarg=progargvec[ix];
+        if (ix>0) out << ", ";
+        if (curarg) out << "[" << ix << "]='" << curarg << "' ";
+        else out <<  "[" << ix << "]*nul*";
+      }
+  })
+          );
   for (int ix=1; ix<nbargs && progargvec[ix]; ix++)
     {
       // skip -o outputfile...
@@ -359,15 +435,16 @@ stat_input_files(const std::vector<const char*>&progargvec, char*firstmd5)
                   else
                     {
                       syslog(LOG_INFO, "source %s, real %s, has %ld bytes, modified %s", curarg, rp, (long)st.st_size, mtimbuf);
-		      std::int64_t serial = show_md5_mtime(rp, mtim, firstmd5);
-		      if (nbsrcfiles++ == 0) 
-		        firstserial = serial;
+                      std::int64_t serial = show_md5_mtime(rp, mtim, firstmd5);
+                      if (nbsrcfiles++ == 0)
+                        firstserial = serial;
                       free(rp);
                     }
                 }
             }
         }
     }
+  DEBUGLOG("stat_input_files ending firstserial=" << firstserial);
   return firstserial;
 } // end stat_input_files
 
@@ -376,6 +453,23 @@ stat_input_files(const std::vector<const char*>&progargvec, char*firstmd5)
 void
 fork_log_child_process(const char*cmdname, std::string progcmd, double startelapsedtime, std::vector<const char*>progargvec)
 {
+  DEBUGLOG("fork_log_child_process start cmdname=" << cmdname
+           << " progcmd=" << progcmd
+           << " startelapsedtime=" << startelapsedtime
+           << " progargvec.siz=" << (progargvec.size())
+           << ":"
+           << Do_Output([&](std::ostream&out)
+  {
+    int sz = (int)progargvec.size();
+    for (int ix=0; ix<sz; ix++)
+      {
+        const char* curarg=progargvec[ix];
+        if (ix>0) out << ", ";
+        if (curarg) out << "[" << ix << "]='" << curarg << "' ";
+        else out <<  "[" << ix << "]*nul*";
+      }
+  })
+          );
   if (progargvec.size() <= 1)
     {
       syslog(LOG_WARNING, "no arguments given to command %s (prog %s)", cmdname, progcmd.c_str());
@@ -388,6 +482,11 @@ fork_log_child_process(const char*cmdname, std::string progcmd, double startelap
   memset(firstmd5, 0, sizeof(firstmd5));
   std::int64_t firstserial = stat_input_files(progargvec, firstmd5);
   time_t startime = time(nullptr);
+  DEBUGLOG("fork_log_child_process startime=" << (long) startime << " before fork");
+  std::clog << std::flush;
+  std::cerr << std::flush;
+  std::cout << std::flush;
+  fflush(nullptr);
   auto pid = fork();
   if (pid<0)
     {
@@ -426,21 +525,42 @@ fork_log_child_process(const char*cmdname, std::string progcmd, double startelap
       double systime = 1.0*rus.ru_stime.tv_sec + 1.0e-6*rus.ru_stime.tv_usec;
       long maxrss = rus.ru_maxrss; //kilobytes
       long pageflt = rus.ru_minflt + rus.ru_majflt;
+      DEBUGLOG("fork_log_child_process wst=" << wst
+               << " endelapsedtime=" << endelapsedtime
+               << " usertime=" << usertime
+               << " systime=" << systime
+               << " maxrss=" << maxrss
+               << " pageflt=" << pageflt);
       if (wst==0)
         {
           syslog(LOG_INFO, "%s completed successfully compilation %s in %.4g elapsed seconds, %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d)",
                  cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
                  usertime, systime, maxrss, pageflt,
                  (int)pid);
-	  if (mysqlitedb && firstserial>0)
-	    register_sqlite_compilation (firstserial, firstmd5, progcmd.c_str(), startime, endelapsedtime-startelapsedtime,
-					 usertime, systime, maxrss, pageflt);
+          if (mysqlitedb && firstserial>0)
+            register_sqlite_compilation (firstserial, firstmd5, progcmd.c_str(), startime, endelapsedtime-startelapsedtime,
+                                         usertime, systime, maxrss, pageflt);
+          return;
         }
-      else if (WIFEXITED(wst))
+      /// GCC compilation failed somehow.....
+      {
+        std::clog << __FILE__ ": failed compilation (l¤" << __LINE__ << "):" << std::endl;
+        int nbarg = (int)(progargvec.size());
+        for (int ix=0; ix<nbarg; ix++)
+          {
+            auto curarg = progargvec[ix];
+            if (curarg)
+              std::clog << " [" << ix << "]: '" << curarg << '\'' << std::endl;
+            else
+              std::clog << " [" << ix << "] *nul*" << std::endl;
+          };
+        std::clog << std::flush;
+      }
+      if (WIFEXITED(wst))
         {
           syslog(LOG_WARNING, "(l¤%d) %s failed compilation %s in %.4g elapsed seconds,"
-		 " %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, exited %d)",
-		 __LINE__,
+                 " %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, exited %d)",
+                 __LINE__,
                  cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
                  usertime, systime, maxrss, pageflt, WEXITSTATUS(wst),
                  (int)pid);
@@ -480,6 +600,24 @@ do_c_compilation(std::vector<const char*>argvec, std::string cmdstr, const char*
 {
   double startelapsedtime= get_float_time(CLOCK_MONOTONIC);
   auto cflags= getenv("LOGGED_CFLAGS");
+  DEBUGLOG("do_c_compilation startelapsedtime=" << startelapsedtime
+           << " cflags=" << cflags
+           << " linkflags=" << linkflags
+           << " cmdstr=" << cmdstr
+           << " argvec.siz=" << (argvec.size()) << std::endl
+           << "... argvec:" << ":"
+           << Do_Output([&](std::ostream&out)
+  {
+    int sz = (int)argvec.size();
+    for (int ix=0; ix<sz; ix++)
+      {
+        const char* curarg=argvec[ix];
+        if (ix>0) out << ", ";
+        if (curarg) out << "[" << ix << "]='" << curarg << "' ";
+        else out <<  "[" << ix << "]*nul*";
+      }
+  })
+          );
   std::vector<const char*> progargvec;
   std::vector<const char*> cflagvec;
   std::vector<const char*> linkflagvec;
@@ -517,6 +655,24 @@ do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const ch
 {
   auto cxxflags= getenv("LOGGED_CXXFLAGS");
   double startelapsedtime= get_float_time(CLOCK_MONOTONIC);
+  DEBUGLOG("do_cxx_compilation startelapsedtime=" << startelapsedtime
+           << " cxxflags=" << cxxflags
+           << " linkflags=" << linkflags
+           << " cmdstr=" << cmdstr
+           << " argvec.siz=" << (argvec.size()) << std::endl
+           << "... argvec:" << ":"
+           << Do_Output([&](std::ostream&out)
+  {
+    int sz = (int)argvec.size();
+    for (int ix=0; ix<sz; ix++)
+      {
+        const char* curarg=argvec[ix];
+        if (ix>0) out << ", ";
+        if (curarg) out << "[" << ix << "]='" << curarg << "' ";
+        else out <<  "[" << ix << "]*nul*";
+      }
+  })
+          );
   std::vector<const char*> progargvec;
   std::vector<const char*> cflagvec;
   std::vector<const char*> linkflagvec;
@@ -666,6 +822,7 @@ CREATE TABLE IF NOT EXISTS tb_sourcepath (
   srcp_last_compil_time DATETIME NOT NULL
 );
 )!*";
+    DEBUGLOG("create_sqlite_database inireq1=" << inireq1);
     int r1 = sqlite3_exec(mysqlitedb,
 			  inireq1,
 			  nullptr,
@@ -684,7 +841,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_sourcepath_realpath ON tb_sourcepath (srcp_
 CREATE INDEX IF NOT EXISTS ix_sourcepath_compilid ON tb_sourcepath (srcp_last_compil_id);
 CREATE INDEX IF NOT EXISTS ix_sourcepath_compiltime ON tb_sourcepath (srcp_last_compil_time);
 )!*";
-  
+    DEBUGLOG("create_sqlite_database inireq2=" << inireq2);
     int r2 = sqlite3_exec(mysqlitedb,
 			  inireq2,
 			  nullptr,
@@ -708,7 +865,7 @@ CREATE TABLE IF NOT EXISTS tb_sourcedata (
 CREATE INDEX IF NOT EXISTS ix_sourcedata_serial ON tb_sourcedata(srcd_path_serial);
 CREATE INDEX IF NOT EXISTS ix_sourcedata_mtime ON tb_sourcedata(srcd_path_mtime);
 )!*";
-  
+    DEBUGLOG("create_sqlite_database inireq3=" << inireq3);
     int r3 = sqlite3_exec(mysqlitedb,
 			  inireq3,
 			  nullptr,
@@ -739,7 +896,7 @@ CREATE INDEX IF NOT EXISTS ix_compilation_id ON tb_successful_compilation(compil
 
 END TRANSACTION;
 )!*";
-  
+    DEBUGLOG("create_sqlite_database inireq4=" << inireq4);
     int r4 = sqlite3_exec(mysqlitedb,
 			  inireq4,
 			  nullptr,
@@ -752,6 +909,7 @@ END TRANSACTION;
     }
   }
   syslog(LOG_INFO, "create_sqlite_database initialized database %s", mysqlitepath);
+  DEBUGLOG("create_sqlite_database initialized database " << mysqlitepath);
 } // end create_sqlite_database
 
 void
@@ -773,8 +931,11 @@ initialize_sqlite(void)
   }
   if (!oldsqlite)
     create_sqlite_database();
-  if (mysqliterequest)
+  if (mysqliterequest) {
+    DEBUGLOG("initialize_sqlite mysqliterequest=" << mysqliterequest);
     run_sqlite_request(mysqliterequest);
+  }
+  DEBUGLOG("initialize_sqlite done mysqlitepath=" << mysqlitepath);
 } // end of initialize_sqlite
 
 ////////////////////////////////////////////////////////////////
@@ -786,7 +947,9 @@ main(int argc, char**argv)
       std::clog << argv[0] << " requires at least one argument. Try "
                 << argv[0] << " --help" << std::endl;
       exit(EXIT_FAILURE);
-    }
+    };
+  if (argc >= 2 && !strcmp(argv[1], "--debug"))
+    debug_enabled = true;
   openlog(argv[0], LOG_PERROR|LOG_PID, LOG_USER);
   std::string argstr;
   if (!mygcc)
@@ -801,6 +964,7 @@ main(int argc, char**argv)
   if (!mygxx)
     mygxx = GXX_EXEC;
   mysqlitepath = getenv("LOGGED_SQLITE");
+  DEBUGLOG("main mygcc=" << (mygcc?:"*nul*") << " mygxx=" << (mygxx?:"*nul*") << " mysqlitepath=" << (mysqlitepath?:"*nul*"));
   bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (argc==2 && !strcmp(argv[1], "--version"))
     {
@@ -864,6 +1028,8 @@ main(int argc, char**argv)
     do_cxx_compilation (argvec, argstr, linkflags);
   else if (!for_cxx && nbgccarg>0)
     do_c_compilation (argvec, argstr, linkflags);
+  DEBUGLOG("end of main argc=" << argc);
+  return 0;
 } /* end main */
 
 /****************
