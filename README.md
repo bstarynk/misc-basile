@@ -1,6 +1,13 @@
 # misc-basile
 Miscellaneous stuff, mostly single-file tiny programs
 
+Email me to
+[basile@starynkevitch.net](mailto:basile@starynkevitch.net) for
+feedback and questions. See
+[starynkevitch.net/Basile](http://starynkevitch.net/Basile/) for more
+about me, with [this](http://starynkevitch.net/Basile/index_en.html)
+being in English.
+
 Several single source file programs usually for
 GNU/Linux/Debian/x86-64. Their compilation command is generally given
 as a comment inside the source code.
@@ -60,6 +67,43 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
 * `logged-gcc.cc` is a (GPLv3 licensed) wrapper (coded in C++) around
   compilation commands by [GCC](http://gcc.gnu.org/) to log them (and
   their time) with
-  [syslog(3)](https://man7.org/linux/man-pages/man3/syslog.3.html). You will
-  compile it using `compile-logged-gcc.sh`.  See also
-  [this](https://opensource.stackexchange.com/q/10319/910).
+  [syslog(3)](https://man7.org/linux/man-pages/man3/syslog.3.html)
+  and/or some [Sqlite](http://sqlite.org/) database. You will compile
+  it using `compile-logged-gcc.sh`.  See also
+  [this](https://unix.stackexchange.com/questions/605505/how-to-log-compilation-commands-on-linux-with-gcc).
+
+## Using `logged-gcc`
+
+You first need to compile `logged-gcc.cc` with the
+`compile-logged-gcc.sh` shell script. You might want to edit that
+script. It produces a `logged-gcc` executable which you could put into
+your `$HOME/bin/` directory.
+
+You then should change your [`$PATH`
+variable](https://en.wikipedia.org/wiki/PATH_(variable)) in such a way
+that `$HOME/bin/` is in front of the directory containing your system
+`gcc`, usually `/usr/bin/`. You might have something like `export
+PATH=$HOME/bin:/usr/bin:/bin` in some shell initialization file
+(e.g. `$HOME/.bashrc` or `$HOME/.zshrc` for [zsh](http://zsh.org/)
+users).
+
+You could run `logged-gcc --help` to get some help, and `logged-gcc
+--version` for version information.
+
+You then add *symbolic links* with `ln -sv $HOME/bin/logged-gcc $HOME/bin/gcc` and  `ln -sv $HOME/bin/logged-gcc $HOME/bin/g++`
+
+You could set environment variables `$LOGGED_GCC` to
+e.g. `/usr/bin/gcc-10` and `$LOGGED_GXX` to
+e.g. `/usr/bin/g++-10`. See also
+[environ(7)](https://man7.org/linux/man-pages/man7/environ.7.html).
+
+If you want to use `logged-gcc` with just
+[syslog(3)](https://man7.org/linux/man-pages/man3/syslog.3.html), you
+don't need to do anything more.
+
+If you want to use `logged-gcc` with some *Sqlite* database such as
+`/tmp/logged-gcc.sqlite`, you need first to initialize it using
+`logged-gcc --sqlite=/tmp/logged-gcc.sqlite` (before any
+`/tmp/logged-gcc.sqlite` file exists), and then set the environment
+variable `$LOGGED_SQLITE` to `/tmp/logged-gcc.sqlite`. Only successful
+[GCC](http://gcc.gnu.org/) compilations go into that database.
