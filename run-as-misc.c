@@ -21,9 +21,10 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include <syslog.h>
 #include <sys/types.h>
-#include <sys/sysexits.h>
+#include <sysexits.h>
 #include <errno.h>
 #include <pwd.h>
 
@@ -69,7 +70,7 @@ int main(int argc, char**argv)
   if (miscuser) {
     struct passwd* pwd = getpwnam(miscuser);
     if (!pwd) {
-      syslog(LOG_WARN, "%s/%d: getpwnam failed on %s - %m",
+      syslog(LOG_ERR, "%s/%d: getpwnam failed on %s - %m",
 	     __FILE__, __LINE__, miscuser);
       exit(EX_OSERR);
     }
@@ -78,7 +79,7 @@ int main(int argc, char**argv)
   };
   time_t nowt = time(NULL);
   if (seteuid(miscuid)) {
-    syslog(LOG_WARN, "%s: setuid(%d) failed at %s - %m", argv[0], miscuid, ctime(&nowt));
+    syslog(LOG_WARNING, "%s: setuid(%d) failed at %s - %m", argv[0], miscuid, ctime(&nowt));
     exit(EX_OSERR);
   };
   execvp(argv[1], argv+1); /// usually does not return
