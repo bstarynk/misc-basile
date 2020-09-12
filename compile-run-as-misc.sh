@@ -23,6 +23,6 @@ else
     exit 1
 fi
 
-sudo -E "chown $RUN_MISC_USER run-as-misc && chmod u+s run-as-misc"
+sudo -E /bin/bash -c "chown $RUN_MISC_USER $PWD/run-as-misc && chmod u+s $PWD/run-as-misc"
 ls -l run-as-misc
 # eof compile-run-as-misc.sh
