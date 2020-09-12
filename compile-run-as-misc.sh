@@ -22,4 +22,8 @@ else
     printf "%s: COMPILATION of %s failed\n" $0 run-as-misc.c >& /dev/stderr
     exit 1
 fi
+
+sudo chown $RUN_MISC_USER run-as-misc
+sudo chmod u+s run-as-misc
+ls -l run-as-misc
 # eof compile-run-as-misc.sh
