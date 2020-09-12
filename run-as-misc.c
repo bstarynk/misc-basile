@@ -92,10 +92,18 @@ main (int argc, char **argv)
   time_t nowt = time (NULL);
   if (seteuid (miscuid))
     {
-      syslog (LOG_WARNING, "%s: setuid(%d) failed at %s - %m", argv[0],
+      syslog (LOG_WARNING, "%s: seteuid(%d) failed at %s - %m", argv[0],
 	      miscuid, ctime (&nowt));
       exit (EX_OSERR);
     };
+  if (setuid(miscuid))
+    {
+      syslog (LOG_WARNING, "%s: setuid(%d) failed at %s - %m", argv[0],
+	      miscuid, ctime (&nowt));
+      exit (EX_OSERR);
+    }
+  syslog(LOG_INFO, "%s: miscuid=%d, uid#%d, euid#%d", argv[0],
+	 miscuid, getuid(), geteuid());
   execvp (argv[1], argv + 1);	/// usually does not return
   int er = errno;
   static char buf[1024];
