@@ -38,6 +38,7 @@ core*
 
 ### binary executables
 manydl
+run-as-misc
 redis-scan
 half
 microbenchlist
