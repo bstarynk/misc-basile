@@ -1,0 +1,42 @@
+# file misc-basile/sync-periodically.service
+# on https:///github.com/bstarynk/misc-basile.git
+# for Linux Debian/Buster systemd, encoded in UTF-8
+# see https://wiki.debian.org/systemd/Services
+# it should be installed as /etc/systemd/system/sync-perioadically.service
+#
+# © Copyright 2020 Basile Starynkevitch    <basile@starynkevitch.net>
+# (near Paris, France)
+#
+# This sync-periodically.service script is free software; you can
+# redistribute it and/or modify it under the terms of the GNU General
+# Public License as published by the Free Software Foundation; either
+# version 2, or (at your option) any later version.
+#
+# this sync-periodically.service script is distributed in the hope that
+# it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+# the GNU General Public License for more details.
+#
+# Also see the sync-periodically.c program in same repository.
+
+[Unit]
+Description=a service to sync(2) periodially our disks on Debian
+Documentation=See https:///github.com/bstarynk/misc-basile.git files sync-periodically.{c,service}
+After=network.target sshd.service
+ConditionPathExists=!/etc/local/sync-periodically-dont-run
+
+[Service]
+ExecStartPre=/bin/bash -c "[ -x /usr/local/bin/sync-periodically ]"
+ExecStart=/usr/local/bin/sync-periodically --daemon --pid-file=/var/run/sync-periodically.pid --sync-period=3 --log-period=300
+ExecReload=/usr/bin/ldd /usr/local/bin/sync-periodically
+RestartSec= 500ms
+Restart=on-failure
+RestartPreventExitStatus=254
+Type=notify
+KillMode=process
+RuntimeDirectory=sync-periodically-dir
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target
+Alias=sync-periodically.service
