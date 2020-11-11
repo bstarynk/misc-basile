@@ -58,14 +58,15 @@ void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
 #define SYNPER_STRINGIFY(Arg) SYNPER_STRINGIFY_BIS(Arg)
 
 struct argp_option synper_options[] = {
-  {"pid-file", 'P', "FILE", 0, "write pid to file"},
+  /*name, key, arg, flag, doc, group */
+  {"pid-file", 'P', "FILE", 0, "write pid to file", 0},
   {"sync-period", 'Y', "SYNC-PERIOD", 0,
-   "call sync(2) every SYNC-PERIOD seconds"},
+   "call sync(2) every SYNC-PERIOD seconds", 0},
   {"log-period", 'L', "LOG-PERIOD", 0,
-   "do a syslog(3) every LOG-PERIOD seconds"},
-  {"daemon", 'd', NULL, 0, "run as a daemon(3)"},
-  {"version", 'V', NULL, 0, "show version info"},
-  {NULL, 0, NULL, 0, NULL}
+   "do a syslog(3) every LOG-PERIOD seconds", 0},
+  {"daemon", 'd', NULL, 0, "run as a daemon(3)", 0},
+  {"version", 'V', NULL, 0, "show version info", 0},
+  {NULL, 0, NULL, 0, NULL, 0}
 };
 
 error_t synper_parse_opt (int key, char *arg, struct argp_state *state);
@@ -159,7 +160,7 @@ synper_syslog_begin (void)
     SYNPER_FATAL ("failed to get localtime");
   char nowbuf[80];
   memset (nowbuf, 0, sizeof (nowbuf));
-  if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm) < 0)
+  if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm) <= 0)
     SYNPER_FATAL ("failed to strftime");
 #ifdef SYNPER_GITID
   syslog (LOG_INFO,
@@ -188,7 +189,10 @@ main (int argc, char **argv)
   struct argp argp = { synper_options, synper_parse_opt, "",
     "Utility to call sync(2) periodically. GPLv3+ licensed.\n"
       "See www.gnu.org/licenses/ for details.\n"
-      "Source " __FILE__ " on https://github.com/bstarynk/misc-basile/\n"
+      "Source " __FILE__ " on github.com/bstarynk/misc-basile/\n",
+    /*children: */ NULL,
+    /*help_filter: */ NULL,
+    /*argp_domain: */ NULL
   };
   argp_parse (&argp, argc, argv, 0, 0, NULL);	// could run daemon(3)
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
@@ -222,10 +226,11 @@ main (int argc, char **argv)
   if (synper_logperiod > SYNPER_MAX_LOGPERIOD)
     synper_logperiod = SYNPER_MAX_LOGPERIOD;
   synper_syslog_begin ();
-  if (synper_pidfile) {    
+  if (synper_pidfile)
+    {
       syslog (LOG_INFO, "%s wrote pid-file %s as uid#%d", synper_progname,
 	      synper_pidfile, (int) getuid ());
-  };
+    };
   sleep (synper_period / 3);
   time_t lastlogtime = 0;
   long loopcnt = 0;
@@ -248,8 +253,8 @@ main (int argc, char **argv)
 	  memset (&nowtm, 0, sizeof (nowtm));
 	  if (localtime_r (&nowt, &nowtm) == NULL)
 	    SYNPER_FATAL ("failed to get localtime");
-	  if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm) <
-	      0)
+	  if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm)
+	      <= 0)
 	    SYNPER_FATAL ("failed to strftime");
 	  syslog (LOG_INFO,
 		  "%s with sync period %d seconds done #%ld at %s\n", argv[0],
@@ -267,7 +272,7 @@ main (int argc, char **argv)
     memset (&nowtm, 0, sizeof (nowtm));
     if (localtime_r (&nowt, &nowtm) == NULL)
       SYNPER_FATAL ("failed to get localtime");
-    if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm) < 0)
+    if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm) <= 0)
       SYNPER_FATAL ("failed to strftime");
     syslog (LOG_NOTICE,
 	    "%s with sync period %d seconds terminating loop #%ld at %s\n",
@@ -281,6 +286,6 @@ main (int argc, char **argv)
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
- ** compile-command: "gcc -v -o sync-periodically -Wall -Bstatic -O -g -DSYNPER_GITID=\"$(git log --format=oneline -q -1 | awk '{print $1}')\" sync-periodically.c" ;;
+ ** compile-command: "gcc -o sync-periodically -Wall -Wextra -O -g -DSYNPER_GITID=\"$(git log --format=oneline -q -1 | awk '{print $1}')\" sync-periodically.c" ;;
  ** End: ;;
  ****************/
