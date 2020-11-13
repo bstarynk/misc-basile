@@ -98,7 +98,7 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
     {
     case 'd':			// --daemon
       {
-	if (daemon (0, 0))
+	if (daemon (0, /*no-close:*/1))
 	  SYNPER_FATAL ("failed to daemon(3) : %m");
 	synper_daemonized = true;
       };
