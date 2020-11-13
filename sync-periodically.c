@@ -102,7 +102,7 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
 	  SYNPER_FATAL ("failed to daemon(3) : %m");
 	synper_daemonized = true;
       };
-      break;
+      return 0;
     case 'P':			// --pid-file
       {
 	synper_pidfile = arg;
