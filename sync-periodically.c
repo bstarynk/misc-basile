@@ -1,4 +1,4 @@
-// fichier sync-periodically.c
+// file sync-periodically.c in github.com/bstarynk/misc-basile/
 
 /* Copyright 2020 Basile Starynkevitch
    <basile@starynkevitch.net>
@@ -196,6 +196,9 @@ main (int argc, char **argv)
   };
   argp_parse (&argp, argc, argv, 0, 0, NULL);	// could run daemon(3)
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
+  if (synper_daemonized)
+    syslog (LOG_INFO, "%s is daemonized as pid %ld. See daemon(3)",
+	    synper_progname, (long) getpid);
   if (synper_pidfile)
     {
       {
