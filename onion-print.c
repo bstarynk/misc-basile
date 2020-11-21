@@ -53,6 +53,13 @@ enum rps_progoption_en
 };
 
 onion *OP_onion = NULL;
+const char* OP_webhost;
+const char* OP_dirname;
+const char* OP_port;
+
+
+
+
 struct argp_option OP_progoptions[] =
 {
   /* ======= web server host ======= */
@@ -96,6 +103,50 @@ struct argp_option OP_progoptions[] =
     /*group:*/0 ///
   }
 };				/* end OP_progoptions */
+
+
+// Parse a single program option, skipping side effects when state is empty.
+error_t
+OP_parse1opt (int key, char *arg, struct argp_state *state)
+{
+  bool side_effect = state != NULL;
+  switch (key)
+    {
+      /// --web-host=WEBHOST
+    case OP_PROGOPT_WEB_SERVER_HOST:
+      OP_webhost = arg;
+      return 0;
+    }
+  return ARGP_ERR_UNKNOWN;
+}
+
+void
+OP_parse_program_arguments(int argc,  char**restrict argv)
+{
+  errno = 0;
+  struct argp_state argstate;
+  memset (&argstate, 0, sizeof(argstate));
+  static struct argp argparser;
+  argparser.options = OP_progoptions;
+  argparser.parser = OP_parse1opt;
+  argparser.args_doc = " ; # ";
+  argparser.doc = "onion-printer: A tiny web server to redirect printing of PDF files\n."
+    "GPLv3+ licenses.  You should have received a copy of the GNU General Public License\n"
+    "along with this program.  If not, see https://www.gnu.org/licenses\n"
+    "**NO WARRANTY, not even for FITNESS FOR A PARTICULAR PURPOSE**\n"
+    "+++ use at your own risk +++\n"
+    "\n Accepted program options are:\n";
+  argparser.children = NULL;
+  argparser.help_filter = NULL;
+  argparser.argp_domain = NULL;
+  if (argp_parse(&argparser, argc, argv, 0, NULL, NULL))
+    {
+      fprintf(stderr, "%s: failed to parse program arguments. Try %s --help\n",
+	      argv[0], argv[0]);
+      exit(EXIT_FAILURE);
+    }
+} /* end OP_parse_program_arguments */
+
 
 
 void OP_free_onion(int unused) {
@@ -152,41 +203,14 @@ int show_help() {
   return 0;
 }
 
-int main(int argc, char **argv) {
-  char *port = "8080";
-  char *hostname = "::";
-  const char *dirname = ".";
-  const char *certfile = "cert.pem";
-  const char *pamname = "login";
-  int i;
-  for (i = 1; i < argc; i++) {
-    if ((strcmp(argv[i], "--port") == 0) || (strcmp(argv[i], "-p") == 0)) {
-      port = argv[++i];
-      ONION_INFO("Listening at port %s", port);
-    }
-    if ((strcmp(argv[i], "--listen") == 0) || (strcmp(argv[i], "-l") == 0)) {
-      hostname = argv[++i];
-      ONION_INFO("Listening at hostname %s", hostname);
-    } else if (strcmp(argv[i], "--pem") == 0) {
-      if (argc < i + 1)
-        return show_help();
-      certfile = argv[++i];
-      ONION_INFO("Certificate file set to %s", certfile);
-    } else if (strcmp(argv[i], "--pam") == 0) {
-      if (argc < i + 1)
-        return show_help();
-      pamname = argv[++i];
-      ONION_INFO("Pam name is now %s", pamname);
-    } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
-      return show_help();
-    } else
-      dirname = argv[i];
-  }
+int main(int argc,  char **restrict argv) {
+  
 
+  OP_parse_program_arguments(argc, argv);
+  
   upload_file_data data = {
-    dirname
+    OP_dirname
   };
-
   onion_handler *root =
       onion_handler_new((void *)upload_file, (void *)&data, NULL);
   onion_handler *dir =
@@ -198,8 +222,10 @@ int main(int argc, char **argv) {
   onion_handler_add(root, dir);
   OP_onion = onion_new(O_THREADED);
 
-  onion_set_port(OP_onion, port);
-  onion_set_hostname(OP_onion, hostname);
+  if (OP_port)
+    onion_set_port(OP_onion, OP_port);
+  if (OP_webhost)
+    onion_set_hostname(OP_onion, OP_webhost);
 
   signal(SIGINT, OP_free_onion);
   int error = onion_listen(OP_onion);
