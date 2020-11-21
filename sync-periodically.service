@@ -2,7 +2,8 @@
 # on https:///github.com/bstarynk/misc-basile.git
 # for Linux Debian/Buster systemd, encoded in UTF-8
 # see https://wiki.debian.org/systemd/Services
-# it should be installed as /etc/systemd/system/sync-perioadically.service
+# it should be installed as /etc/systemd/system/sync-periodically.service
+# and then run systemctl enable sync-periodically.service
 #
 # © Copyright 2020 Basile Starynkevitch    <basile@starynkevitch.net>
 # (near Paris, France)
