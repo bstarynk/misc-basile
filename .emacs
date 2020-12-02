@@ -15,6 +15,8 @@
  )
 (add-hook 'c-mode-hook 'linux-c-mode)
 
+(setenv "ESHELL" "/bin/zsh")
+
 (server-start)
 
 (custom-set-variables
