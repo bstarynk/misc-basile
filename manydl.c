@@ -2,7 +2,7 @@
    generating lots of C functions, and dynamically compiling and loading them
    this is completely useless, except for testing & benchmarking 
    
-   © Copyright Basile Starynkevitch 2004- 2015
+   © Copyright Basile Starynkevitch 2004- 2021
    program released under GNU general public license
 
    this is free software; you can redistribute it and/or modify it under
@@ -319,10 +319,10 @@ main (int argc, char **argv)
   cc = getenv ("CC");
   if (!cc)
     cc = "gcc";
-  /* get the compileflags - default is -O */
+  /* get the compileflags - default is -O2 */
   cflags = getenv ("CFLAGS");
   if (!cflags)
-    cflags = "-O";
+    cflags = "-O2";
   printf (" before generation of %d files with CC=%s and CFLAGS=%s\n",
 	  maxcnt, cc, cflags);
   /* the generating and compiling loop */
