@@ -28,10 +28,16 @@
 
 #include <gnu/libc-version.h>
 
+extern long dynstep;
+extern int tab[];
+extern void say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d);
+
 /* dynstep, tab & say_fun_a_b_c_d are used in generated files */
 long dynstep;			/* number of executed lines */
 #define MAXTAB 128		/* length of tab should be a power of two */
 int tab[MAXTAB];		/* a table */
+
+
 void				/* printing function for generated files */
 say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d)
 {
@@ -77,7 +83,7 @@ generate_file (const char *name, int meanlen)
 	   meanlen);
   fprintf (f, "extern long dynstep; extern int tab[];\n");
   fprintf (f,
-	   "void say_fun_a_b_c_d(const char*fun, int a, int b, int c, int d);\n");
+	   "extern void say_fun_a_b_c_d(const char*fun, int a, int b, int c, int d);\n");
   fprintf (f, "const char gentimestamp_%s[] = __DATE__ \"@\" __TIME__;\n",
 	   name);
   fprintf (f, "int %s(int a, int b) {\n", name);
@@ -227,12 +233,12 @@ main (int argc, char **argv)
   long suml;
   int r = 0, s = 0;
   long nbcall = 0, n = 0;
-  FILE *map = NULL;			/* the /proc/self/maps pseudofile (Linux) */
+  FILE *map = NULL;		/* the /proc/self/maps pseudofile (Linux) */
   char buf[100];		/* buffer for name */
   char cmd[400];		/* buffer for command */
   char linbuf[500];		/* line buffer for map */
-  char *cc = NULL;			/* the CC command or gcc (from environment) */
-  char *cflags = NULL;			/* the CFLAGS option or -O (from environment)  */
+  char *cc = NULL;		/* the CC command or gcc (from environment) */
+  char *cflags = NULL;		/* the CFLAGS option or -O (from environment)  */
   typedef int (*funptr_t) (int, int);	/* tpye of function pointers */
   void **hdlarr;		/* array of dlopened handles */
   funptr_t *funarr;		/* array of function pointers */
