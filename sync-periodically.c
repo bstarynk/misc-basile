@@ -1,6 +1,6 @@
 // file sync-periodically.c in github.com/bstarynk/misc-basile/
 
-/* Copyright 2020 Basile Starynkevitch
+/* Copyright 2020, 2021 Basile Starynkevitch
    <basile@starynkevitch.net>
 
 This sync-periodically program is free software; you can redistribute it and/or
@@ -13,6 +13,11 @@ WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
+The purpose of sync-periodically is to regularily call the sync(2)
+system call to avoid losing too much data on a Linux desktop with
+64Gbytes of RAM.
+
+See of course https://man7.org/linux/man-pages/man2/sync.2.html
 --
 
 */
@@ -98,7 +103,7 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
     {
     case 'd':			// --daemon
       {
-	if (daemon (0, /*no-close:*/1))
+	if (daemon (0, /*no-close: */ 1))
 	  SYNPER_FATAL ("failed to daemon(3) : %m");
 	synper_daemonized = true;
       };
