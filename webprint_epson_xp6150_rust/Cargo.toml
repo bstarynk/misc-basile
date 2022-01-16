@@ -1,5 +1,5 @@
 [package]
-name = "Webprint-EpsonXP6150-Rust"
+name = "webprint_epson_xp6150_rust"
 version = "0.1.0"
 edition = "2021"
 
