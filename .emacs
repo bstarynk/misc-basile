@@ -7,6 +7,9 @@
 (global-auto-revert-mode t)
 (global-linum-mode t)
 (mouse-wheel-mode 1)
+;; BASILE: ninja-mode from github.com/ninja-build/ninja/blob/master/misc/ninja-mode.el
+;; for http://ninja-build.org/ tool
+(load-file "~/.emacs.d/ninja-mode.el")
 (defun linux-c-mode()
 ;; set gnu style.
  (c-set-style "gnu")
@@ -14,7 +17,12 @@
  (setq c-basic-offset 2)
  )
 (add-hook 'c-mode-hook 'linux-c-mode)
-
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;; Comment/uncomment this line to enable MELPA Stable if desired.  See `package-archive-priorities`
+;; and `package-pinned-packages`. Most users will not need or want to do this.
+;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(package-initialize)
 (setenv "ESHELL" "/bin/zsh")
 
 (server-start)
@@ -27,7 +35,7 @@
  '(column-number-mode t)
  '(show-paren-mode t)
  '(size-indication-mode t)
- '(compile-command "time make -j 3")
+ '(compile-command "time make -j7")
  )
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
