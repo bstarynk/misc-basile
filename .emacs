@@ -25,6 +25,8 @@
 (package-initialize)
 (setenv "ESHELL" "/bin/zsh")
 
+(load-file "/usr/share/emacs/site-lisp/elpa-src/rust-mode-0.4.0/rust-mode-autoloads.el")
+
 (server-start)
 
 (custom-set-variables
