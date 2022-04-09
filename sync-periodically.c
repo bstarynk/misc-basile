@@ -34,6 +34,7 @@ See of course https://man7.org/linux/man-pages/man2/sync.2.html
 
 char *synper_progname;
 char *synper_pidfile;
+char *synper_name;
 
 /// see http://man7.org/linux/man-pages/man2/sync.2.html
 int synper_period;		// period for sync(2) in seconds
@@ -65,6 +66,7 @@ void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
 struct argp_option synper_options[] = {
   /*name, key, arg, flag, doc, group */
   {"pid-file", 'P', "FILE", 0, "write pid to file", 0},
+  {"name", 'N', "NAME", 0, "set NAME for logging", 0},
   {"sync-period", 'Y', "SYNC-PERIOD", 0,
    "call sync(2) every SYNC-PERIOD seconds", 0},
   {"log-period", 'L', "LOG-PERIOD", 0,
@@ -116,6 +118,11 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
     case 'Y':			// --sync-period
       {
 	synper_period = atoi (arg ? : "");
+      }
+      return 0;
+    case 'N':			// --name
+      {
+	synper_name = arg;;
       }
       return 0;
     case 'L':			// --log-period
@@ -204,6 +211,8 @@ main (int argc, char **argv)
   if (synper_daemonized)
     syslog (LOG_INFO, "%s is daemonized as pid %ld. See daemon(3)",
 	    synper_progname, (long) getpid);
+  if (synper_name)
+    syslog (LOG_INFO, "%s named %s", synper_progname, synper_name);    
   if (synper_pidfile)
     {
       {
