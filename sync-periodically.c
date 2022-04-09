@@ -175,18 +175,31 @@ synper_syslog_begin (void)
   if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm) <= 0)
     SYNPER_FATAL ("failed to strftime");
 #ifdef SYNPER_GITID
-  syslog (LOG_INFO,
-	  "start of %s git %s build %s with sync period %d seconds and log period %d seconds at %s\n",
-	  synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), __DATE__,
-	  synper_period, synper_logperiod, nowbuf);
+  if (synper_name)
+    syslog (LOG_INFO,
+	    "start of %s named %s git %s build %s with sync period %d seconds and log period %d seconds at %s\n",
+	    synper_progname, synper_name, SYNPER_STRINGIFY (SYNPER_GITID),
+	    __DATE__, synper_period, synper_logperiod, nowbuf);
+  else
+    syslog (LOG_INFO,
+	    "start of %s git %s build %s with sync period %d seconds and log period %d seconds at %s\n",
+	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), __DATE__,
+	    synper_period, synper_logperiod, nowbuf);
   if (synper_daemonized)
     syslog (LOG_NOTICE, "%s git %s daemonized as pid %ld",
 	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID),
 	    (long) getpid ());
 #else
-  syslog (LOG_INFO,
-	  "start of %s built %s with sync period %d seconds and log period %d seconds at %s\n",
-	  synper_progname, __DATE__, synper_period, synper_logperiod, nowbuf);
+  if (synper_name)
+    syslog (LOG_INFO,
+	    "start of %s named %s built %s with sync period %d seconds and log period %d seconds at %s\n",
+	    synper_progname, synper_name, __DATE__, synper_period,
+	    synper_logperiod, nowbuf);
+  else
+    syslog (LOG_INFO,
+	    "start of %s built %s with sync period %d seconds and log period %d seconds at %s\n",
+	    synper_progname, __DATE__, synper_period, synper_logperiod,
+	    nowbuf);
   if (synper_daemonized)
     syslog (LOG_NOTICE, "%s daemonized as pid %ld", synper_progname,
 	    (long) getpid ());
@@ -212,7 +225,7 @@ main (int argc, char **argv)
     syslog (LOG_INFO, "%s is daemonized as pid %ld. See daemon(3)",
 	    synper_progname, (long) getpid);
   if (synper_name)
-    syslog (LOG_INFO, "%s named %s", synper_progname, synper_name);    
+    syslog (LOG_INFO, "%s named %s", synper_progname, synper_name);
   if (synper_pidfile)
     {
       {
