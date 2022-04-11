@@ -1,6 +1,6 @@
 // fichier half.c
 
-/* Copyright 2005 - 2019 Basile Starynkevitch
+/* Copyright 2005 - 2022 Basile Starynkevitch
    <basile@starynkevitch.net>
 
 This HALF program is free software; you can redistribute it and/or
@@ -33,8 +33,10 @@ for more.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -43,12 +45,12 @@ for more.
 
 #ifndef MY_STOP_SIGNAL
 #define MY_STOP_SIGNAL SIGSTOP
-#endif /*MY_STOP_SIGNAL*/
+#endif /*MY_STOP_SIGNAL */
 
 pid_t child;
-volatile int running;
+volatile bool running;
 void
-time_handler (int sig)
+time_handler (int sig __attribute__((unused)))
 {
   running = !running;
 }
@@ -72,10 +74,14 @@ main (int argc, char **argv)
     {
     usage:
       fprintf (stderr, "usage: %s [period_millisec] command...\n"
-	       "#this program run at half period the given command..\n",
-	       argv[0]);
+	       "#this program run at half period the given command..\n"
+	       "#default period is %d milliseconds,\n"
+	       "#... it should be less than 900 and more than 10\n",
+	       argv[0], delaymillisec);
       return 1;
     };
+  if (argc == 2 && !strcmp (argv[1], "--help"))
+    goto usage;
   int delarg = atoi (argv[1]);
   if (delarg > 0)
     {
