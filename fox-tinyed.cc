@@ -31,7 +31,8 @@ TinyTextWindow::create()
 } // end TinyTextWindow::create()
 
 TinyTextWindow::TinyTextWindow(FXApp* theapp)
-  : FXMainWindow(theapp,"tiny-text-fox"),
+  : FXMainWindow(theapp,"tiny-text-fox",nullptr, nullptr,
+                 0, 0, 450, 333),
     editorframe(nullptr), editor(nullptr)
 {
   editorframe = //
