@@ -14,11 +14,14 @@ class TinyTextWindow : public FXMainWindow
   FXHorizontalFrame   *editorframe;             // Editor frame
   FXText              *editor;                  // Editor text widget
 protected:
+  TinyTextWindow(): FXMainWindow(), editorframe(nullptr), editor(nullptr) {};
 public:
-  TinyTextWindow(FXApp *app);
+  TinyTextWindow(FXApp *theapp);
   virtual ~TinyTextWindow();
   virtual void create();
 };				// end TinyTextWindow
+
+FXIMPLEMENT(TinyTextWindow,FXMainWindow,nullptr, 0);
 
 void
 TinyTextWindow::create()
@@ -27,21 +30,22 @@ TinyTextWindow::create()
   show(PLACEMENT_SCREEN);
 } // end TinyTextWindow::create()
 
-TinyTextWindow::TinyTextWindow(FXApp* app)
-  : FXMainWindow(app,"tiny-text-fox"), editorframe(nullptr), editor(nullptr)
+TinyTextWindow::TinyTextWindow(FXApp* theapp)
+  : FXMainWindow(theapp,"tiny-text-fox"),
+    editorframe(nullptr), editor(nullptr)
 {
   editorframe = //
     new FXHorizontalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
                           |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH);
   editor = //
     new FXText (this);
-} // end TinyTextWindow::TinyTextWindow
+}; // end TinyTextWindow::TinyTextWindow
 
 TinyTextWindow::~TinyTextWindow()
 {
   delete editorframe;
   delete editor;
-} // end TinyTextWindow::~TinyTextWindow
+}; // end TinyTextWindow::~TinyTextWindow
 
 int
 main(int argc, char*argv[])
