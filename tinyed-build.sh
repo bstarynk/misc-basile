@@ -4,5 +4,5 @@ CXX=g++
 ASTYLE=astyle
 ASTYLEFLAGS='--verbose --indent=spaces=2  --style=gnu'
 $ASTYLE $ASTYLEFLAGS fox-tinyed.cc
-CXXFLAGS='-Wall  -Wextra -O -g'
+CXXFLAGS='-Wall  -Wextra -Woverloaded-virtual -Wshadow -O -g'
 $CXX $CXXFLAGS $(pkg-config --cflags fox17) fox-tinyed.cc $(pkg-config --libs fox17)
