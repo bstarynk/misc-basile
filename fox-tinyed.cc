@@ -56,3 +56,12 @@ main(int argc, char*argv[])
   the_app.create();
   return the_app.run();
 } // end main
+
+
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "./tinyed-build.sh" ;;
+ ** End: ;;
+ ****************/
