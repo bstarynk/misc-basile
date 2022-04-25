@@ -34,6 +34,27 @@
 #include <FL/Fl_Text_Editor.H>
 #include <FL/filename.H>
 
+// Custom class to demonstrate a specialized text editor
+class MyEditor : public Fl_Text_Editor
+{
+
+  Fl_Text_Buffer *tbuff;      // text buffer
+  Fl_Text_Buffer *sbuff;      // style buffer
+public:
+  MyEditor(int X,int Y,int W,int H)
+    : Fl_Text_Editor(X,Y,W,H), tbuff(nullptr), sbuff(nullptr)
+  {
+    tbuff = new Fl_Text_Buffer();    // text buffer
+    sbuff = new Fl_Text_Buffer();    // style buffer
+    buffer(tbuff);
+  };
+  void text(const char* val)
+  {
+    tbuff->text(val);
+  }
+};				// end MyEditor
+
+
 int main(int argc, char **argv)
 {
   std::string tistr = __FILE__;
@@ -42,6 +63,10 @@ int main(int argc, char **argv)
   tistr += "/" GITID;
 #endif
   Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
+  MyEditor  *med = new MyEditor(10,10,win->w()-20,win->h()-20);
+  med->text("Test\n"
+            "Other");
+  win->resizable(med);
   win->show();
   auto textbuf = new Fl_Text_Buffer;
   return Fl::run();
