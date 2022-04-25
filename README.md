@@ -65,6 +65,10 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
 
 * `foldexample.cc` is interesting, since it shows how recent C++ compilers are capable of very deep optimizations
 
+* `fox-tinyed.cc` is for learning the [FOX](https://fox-toolkit.org/) toolkit - a tiny editor (perhaps incomplete).
+
+* `fltk-mini-edit.cc` is for learning the [FLTK](https://fltk-toolkit.org/) toolkit - a tiny editor (perhaps incomplete).
+
 * `logged-gcc.cc` is a (GPLv3 licensed) wrapper (coded in C++) around
   compilation commands by [GCC](http://gcc.gnu.org/) to log them (and
   their time) with

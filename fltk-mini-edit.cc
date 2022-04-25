@@ -18,6 +18,8 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include <string>
+
 #include <FL/Fl.H>
 #include <FL/platform.H> // for fl_open_callback
 #include <FL/Fl_Group.H>
@@ -34,6 +36,13 @@
 
 int main(int argc, char **argv)
 {
+  std::string tistr = __FILE__;
+  tistr.erase(sizeof(__FILE__)-4,3);
+#ifdef GITID
+  tistr += "/" GITID;
+#endif
+  Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
+  win->show();
   auto textbuf = new Fl_Text_Buffer;
   return Fl::run();
 }
