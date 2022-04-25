@@ -37,9 +37,18 @@ TinyTextWindow::TinyTextWindow(FXApp* theapp)
 {
   editorframe = //
     new FXHorizontalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
-                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH);
+                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
+                          1, 1, // x,y
+                          448, 330 //w,h
+                         );
   editor = //
-    new FXText (this);
+    new FXText (editorframe, 0,
+                TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
+                2, 2, //x,y
+                444, 320 //w,h
+               );
+  editor->setText("Text in Tiny ");
+  editor->insertStyledText(editor->lineEnd(0), "XX", FXText::STYLE_BOLD);
 }; // end TinyTextWindow::TinyTextWindow
 
 TinyTextWindow::~TinyTextWindow()
