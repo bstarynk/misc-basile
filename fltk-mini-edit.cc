@@ -19,9 +19,12 @@
 #include <errno.h>
 #include <assert.h>
 
-/// GNU libunistring
+/// GNU libunistring https://www.gnu.org/software/libunistring/
+#include <unistd.h>
 #include <unicase.h>
 #include <unictype.h>
+#include <uniconv.h>
+#include <unistr.h>
 
 #include <string>
 
@@ -119,6 +122,9 @@ MyEditor::decorate(void)
         break;
       unsigned int curch = buf->char_at(curix);
       assert (curch>0);
+      char utfbuf[8];
+      memset (utfbuf, 0, sizeof(utfbuf));
+      u8_uctomb((uint8_t*)utfbuf, (ucs4_t)curch, sizeof(utfbuf));
       enum my_style_en cursty = Style_Plain;
       if (curch < 0x7F)
         {
@@ -138,6 +144,9 @@ MyEditor::decorate(void)
           memset (stychar, 0, sizeof(stychar));
           stychar[0] = 'A' + cursty;
           stybuf->replace(curix, curix+1, stychar);
+          printf("%s: Unicode %s at %d=%#x style#%d (%s:%d)\n",
+                 __PRETTY_FUNCTION__, utfbuf, curix, curix, (int)cursty,
+                 __FILE__,__LINE__);
         }
       previx= curix;
     };
