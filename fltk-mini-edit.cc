@@ -7,7 +7,7 @@
 //
 // Copyright 1998-2022 by Bill Spitzak and Basile Starynkevitch and CEA
 
-
+/// heavily inspired by texteditor-with-dynamic-colors.cxx from FLTK.
 
 // Include necessary headers...
 //
@@ -44,17 +44,28 @@
 class MyEditor : public Fl_Text_Editor
 {
 
-  Fl_Text_Buffer *tbuff;      // text buffer
+  Fl_Text_Buffer *txtbuff;      // text buffer
+  Fl_Text_Buffer *stybuff;	// style buffer
 public:
+  void initialize(void);
   MyEditor(int X,int Y,int W,int H)
-    : Fl_Text_Editor(X,Y,W,H), tbuff(nullptr)
+    : Fl_Text_Editor(X,Y,W,H), txtbuff(nullptr), stybuff(nullptr)
   {
-    tbuff = new Fl_Text_Buffer();    // text buffer
-    buffer(tbuff);
+    txtbuff = new Fl_Text_Buffer();    // text buffer
+    stybuff = new Fl_Text_Buffer();    // style buffer
+    buffer(txtbuff);
+    initialize();
+  };
+  ~MyEditor()
+  {
+    delete txtbuff;
+    delete stybuff;
+    txtbuff = nullptr;
+    stybuff = nullptr;
   };
   void text(const char* val)
   {
-    tbuff->text(val);
+    txtbuff->text(val);
   };
   enum my_style_en
   {
@@ -77,6 +88,19 @@ public:
   };
   void decorate(void);
 };				// end MyEditor
+
+
+
+void
+MyEditor::initialize()
+{
+  assert (txtbuff);
+  assert (stybuff);
+  highlight_data(stybuff, style_table,
+                 (unsigned)Style__LAST-1,
+                 'A', 0, 0);
+} // end MyEditor::initialize
+
 
 void
 MyEditor::decorate(void)
@@ -120,7 +144,6 @@ MyEditor::decorate(void)
 #warning incomplete MyEditor::decorate
 } // end MyEditor::decorate
 
-
 int
 main(int argc, char **argv)
 {
@@ -135,6 +158,7 @@ main(int argc, char **argv)
             "Other\n"
             "0123456789\n"
             "°§ +\n");
+  med->initialize();
   med->decorate();
   win->resizable(med);
   win->show();
