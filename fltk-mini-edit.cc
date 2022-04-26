@@ -39,23 +39,43 @@ class MyEditor : public Fl_Text_Editor
 {
 
   Fl_Text_Buffer *tbuff;      // text buffer
-  Fl_Text_Buffer *sbuff;      // style buffer
 public:
   MyEditor(int X,int Y,int W,int H)
-    : Fl_Text_Editor(X,Y,W,H), tbuff(nullptr), sbuff(nullptr)
+    : Fl_Text_Editor(X,Y,W,H), tbuff(nullptr)
   {
     tbuff = new Fl_Text_Buffer();    // text buffer
-    sbuff = new Fl_Text_Buffer();    // style buffer
     buffer(tbuff);
   };
   void text(const char* val)
   {
     tbuff->text(val);
-  }
+  };
+  enum my_style_en
+  {
+    Style_Plain,
+    Style_Voyel,
+    Style_Letter,
+    Style_Digit,
+    Style_Unicode,
+    Style__LAST
+  };
+  static constexpr Fl_Text_Editor::Style_Table_Entry style_table[(unsigned)Style__LAST] =
+  {
+    // FONT COLOR      FONT FACE           FONT SIZE
+    // --------------- --------------      --------------
+    {  FL_BLACK,       FL_COURIER,         14 }, //:Style_Plain,
+    {  FL_DARK_GREEN,  FL_COURIER_BOLD,    14 }, //:Style_Voyel,
+    {  FL_DARK_BLUE,   FL_COURIER,         14 }, //:Style_Letter,
+    {  FL_CYAN,        FL_COURIER,         14 }, //:Style_Digit,
+    {  FL_DARK_RED,    FL_HELVETICA_BOLD,  14 }, //:Style_Unicode,
+  };
 };				// end MyEditor
 
 
-int main(int argc, char **argv)
+
+
+int
+main(int argc, char **argv)
 {
   std::string tistr = __FILE__;
   tistr.erase(sizeof(__FILE__)-4,3);
@@ -68,9 +88,8 @@ int main(int argc, char **argv)
             "Other");
   win->resizable(med);
   win->show();
-  auto textbuf = new Fl_Text_Buffer;
   return Fl::run();
-}
+}  // end main
 
 /****************
  **                           for Emacs...
