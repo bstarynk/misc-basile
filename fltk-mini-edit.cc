@@ -51,6 +51,23 @@ class MyEditor : public Fl_Text_Editor
   Fl_Text_Buffer *stybuff;	// style buffer
 public:
   void initialize(void);
+  void ModifyCallback(int pos,        // position of update
+                      int nInserted,  // number of inserted chars
+                      int nDeleted,   // number of deleted chars
+                      int,            // number of restyled chars (unused here)
+                      const char*deltxt // deleted text
+                     );
+  static void static_modify_callback(int pos,                 // position of update
+                                     int nInserted,           // number of inserted chars
+                                     int nDeleted,            // number of deleted chars
+                                     int nRestyled,           // number of restyled chars
+                                     const char *deletedText, // text deleted
+                                     void *cbarg)             // callback data
+  {
+    assert (cbarg != nullptr);
+    MyEditor* med = reinterpret_cast<MyEditor*>(cbarg);
+    med->ModifyCallback(pos, nInserted, nDeleted, nRestyled, deletedText);
+  };
   MyEditor(int X,int Y,int W,int H)
     : Fl_Text_Editor(X,Y,W,H), txtbuff(nullptr), stybuff(nullptr)
   {
@@ -102,8 +119,22 @@ MyEditor::initialize()
   highlight_data(stybuff, style_table,
                  (unsigned)Style__LAST-1,
                  'A', 0, 0);
+  txtbuff->add_modify_callback(MyEditor::static_modify_callback, (void*)this);
 } // end MyEditor::initialize
 
+
+void
+MyEditor::ModifyCallback(int pos,        // position of update
+                         int nInserted,  // number of inserted chars
+                         int nDeleted,   // number of deleted chars
+                         int nRestyled,            // number of restyled chars (unused here)
+                         const char*deltxt // deleted text
+                        )
+{
+  printf("MyEditor::ModifyCallback pos=%d ninserted=%d ndeleted=%d nrestyled=%d deltxt=%s",
+         pos, nInserted, nDeleted, nRestyled, deltxt);
+  decorate();
+} // end MyEditor::ModifyCallback
 
 void
 MyEditor::decorate(void)
