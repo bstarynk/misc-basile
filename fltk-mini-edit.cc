@@ -80,10 +80,14 @@ MyEditor::decorate(void)
   assert (buf != nullptr);
   int curix= -1, previx= -1;
   int buflen = buf->length();
-  for (curix=0; curix=buf->next_char(curix); curix>=0 && curix<buflen)
+  for (curix=0;
+       curix>=0 && curix<buflen;
+       curix=buf->next_char(curix))
     {
       if (previx == curix)
         break;
+      unsigned int curch = buf->char_at(curix);
+      assert (curch>0);
       previx= curix;
     };
 #warning incomplete MyEditor::decorate
