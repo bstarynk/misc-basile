@@ -78,6 +78,14 @@ MyEditor::decorate(void)
 {
   Fl_Text_Buffer*buf = buffer();
   assert (buf != nullptr);
+  int curix= -1, previx= -1;
+  int buflen = buf->length();
+  for (curix=0; curix=buf->next_char(curix); curix>=0 && curix<buflen)
+    {
+      if (previx == curix)
+        break;
+      previx= curix;
+    };
 #warning incomplete MyEditor::decorate
 } // end MyEditor::decorate
 
