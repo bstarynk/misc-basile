@@ -19,7 +19,12 @@
 #include <errno.h>
 #include <assert.h>
 
+/// GNU libunistring
+#include <unicase.h>
+#include <unictype.h>
+
 #include <string>
+
 
 #include <FL/Fl.H>
 #include <FL/platform.H> // for fl_open_callback
@@ -77,7 +82,9 @@ void
 MyEditor::decorate(void)
 {
   Fl_Text_Buffer*buf = buffer();
+  Fl_Text_Buffer*stybuf = style_buffer();
   assert (buf != nullptr);
+  assert (stybuf != nullptr);
   int curix= -1, previx= -1;
   int buflen = buf->length();
   for (curix=0;
@@ -88,6 +95,26 @@ MyEditor::decorate(void)
         break;
       unsigned int curch = buf->char_at(curix);
       assert (curch>0);
+      enum my_style_en cursty = Style_Plain;
+      if (curch < 0x7F)
+        {
+          if (strchr("aeiouyAEIOUY", (int)curch))
+            cursty = Style_Voyel;
+          else if (isalpha(curch))
+            cursty = Style_Letter;
+          else if (isdigit(curch))
+            cursty = Style_Digit;
+        }
+      else
+        cursty = Style_Unicode;
+      //Fl_Text_Editor::Style_Table_Entry curstyent = style_table[cursty];
+      if (cursty != Style_Plain)
+        {
+          char stychar[4];
+          memset (stychar, 0, sizeof(stychar));
+          stychar[0] = 'A' + cursty;
+          stybuf->replace(curix, curix+1, stychar);
+        }
       previx= curix;
     };
 #warning incomplete MyEditor::decorate
