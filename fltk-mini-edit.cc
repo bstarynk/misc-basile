@@ -62,13 +62,13 @@ public:
   };
   static constexpr Fl_Text_Editor::Style_Table_Entry style_table[(unsigned)Style__LAST] =
   {
-    // FONT COLOR      FONT FACE           SIZE  BACKGROUND COLOR
-    // --------------- --------------      ----  ---------------------
-    {  FL_BLACK,       FL_COURIER,         14,   FL_WHITE }, //:Style_Plain,
-    {  FL_DARK_GREEN,  FL_COURIER_BOLD,    14,   FL_WHITE }, //:Style_Voyel,
-    {  FL_DARK_BLUE,   FL_COURIER,         14,   FL_WHITE }, //:Style_Letter,
-    {  FL_CYAN,        FL_COURIER,         14,   FL_WHITE }, //:Style_Digit,
-    {  FL_DARK_RED,    FL_HELVETICA_BOLD,  14,   FL_GRAY0 }, //:Style_Unicode,
+    // FONT COLOR      FONT FACE           SIZE  ATTRIBUTE      BACKGROUND COLOR
+    // --------------- --------------      ----  ---------      -----------------
+    {  FL_BLACK,       FL_COURIER,         14,   0,             FL_WHITE }, //:Style_Plain,
+    {  FL_DARK_GREEN,  FL_COURIER_BOLD,    14,   0,             FL_WHITE }, //:Style_Voyel,
+    {  FL_DARK_BLUE,   FL_COURIER,         14,   0,             FL_WHITE }, //:Style_Letter,
+    {  FL_CYAN,        FL_COURIER,         14,   0,             FL_WHITE }, //:Style_Digit,
+    {  FL_DARK_RED,    FL_HELVETICA_BOLD,  14,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Unicode,
   };
   void decorate(void);
 };				// end MyEditor
@@ -78,6 +78,7 @@ MyEditor::decorate(void)
 {
   Fl_Text_Buffer*buf = buffer();
   assert (buf != nullptr);
+#warning incomplete MyEditor::decorate
 } // end MyEditor::decorate
 
 
@@ -92,7 +93,10 @@ main(int argc, char **argv)
   Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
   MyEditor  *med = new MyEditor(10,10,win->w()-20,win->h()-20);
   med->text("Test\n"
-            "Other");
+            "Other\n"
+            "0123456789\n"
+            "°§ +\n");
+  med->decorate();
   win->resizable(med);
   win->show();
   return Fl::run();
