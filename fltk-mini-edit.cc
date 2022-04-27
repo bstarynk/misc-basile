@@ -100,10 +100,15 @@ public:
   {
     // FONT COLOR      FONT FACE           SIZE  ATTRIBUTE      BACKGROUND COLOR
     // --------------- --------------      ----  ---------      -----------------
+    [Style_Plain] = //
     {  FL_BLACK,       FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Plain,
+    [Style_Voyel] = //
     {  FL_DARK_GREEN,  FL_COURIER_BOLD,    17,   0,             FL_WHITE }, //:Style_Voyel,
+    [Style_Letter] = //
     {  FL_DARK_BLUE,   FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Letter,
+    [Style_Digit] =  //
     {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Digit,
+    [Style_Unicode] = //
     {  FL_DARK_RED,    FL_HELVETICA_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Unicode,
   };
   static constexpr const char*stylename_table[(unsigned)Style__LAST+1] =
@@ -191,9 +196,15 @@ MyEditor::decorate(void)
                  __FILE__,__LINE__);
         }
       else
-        printf("MyEditor::decorate Unicode %s at %d=%#x plain_style (%s:%d)\n",
-               utfbuf, curix, curix,
-               __FILE__,__LINE__);
+        {
+          if (curch < ' ')
+            printf("MyEditor::decorate Ctrlchar \\x%02x at %d=%#x plain_style (%s:%d)\n",
+                   (int)curch, curix, curix, __FILE__,__LINE__);
+          else
+            printf("MyEditor::decorate Unicode %s at %d=%#x plain_style (%s:%d)\n",
+                   utfbuf, curix, curix,
+                   __FILE__,__LINE__);
+        }
       previx= curix;
     };
 #warning incomplete MyEditor::decorate
