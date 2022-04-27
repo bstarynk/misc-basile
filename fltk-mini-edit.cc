@@ -100,11 +100,21 @@ public:
   {
     // FONT COLOR      FONT FACE           SIZE  ATTRIBUTE      BACKGROUND COLOR
     // --------------- --------------      ----  ---------      -----------------
-    {  FL_BLACK,       FL_COURIER,         14,   0,             FL_WHITE }, //:Style_Plain,
-    {  FL_DARK_GREEN,  FL_COURIER_BOLD,    14,   0,             FL_WHITE }, //:Style_Voyel,
-    {  FL_DARK_BLUE,   FL_COURIER,         14,   0,             FL_WHITE }, //:Style_Letter,
-    {  FL_CYAN,        FL_COURIER,         14,   0,             FL_WHITE }, //:Style_Digit,
-    {  FL_DARK_RED,    FL_HELVETICA_BOLD,  14,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Unicode,
+    {  FL_BLACK,       FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Plain,
+    {  FL_DARK_GREEN,  FL_COURIER_BOLD,    17,   0,             FL_WHITE }, //:Style_Voyel,
+    {  FL_DARK_BLUE,   FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Letter,
+    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Digit,
+    {  FL_DARK_RED,    FL_HELVETICA_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Unicode,
+  };
+  static constexpr const char*stylename_table[(unsigned)Style__LAST+1] =
+  {
+#define NAME_STYLE(N) [(int)N] = #N
+    NAME_STYLE(Style_Plain),
+    NAME_STYLE(Style_Voyel),
+    NAME_STYLE(Style_Letter),
+    NAME_STYLE(Style_Digit),
+    NAME_STYLE(Style_Unicode),
+    nullptr
   };
   void decorate(void);
 };				// end MyEditor
@@ -131,7 +141,7 @@ MyEditor::ModifyCallback(int pos,        // position of update
                          const char*deltxt // deleted text
                         )
 {
-  printf("MyEditor::ModifyCallback pos=%d ninserted=%d ndeleted=%d nrestyled=%d deltxt=%s",
+  printf("MyEditor::ModifyCallback[L%d] pos=%d ninserted=%d ndeleted=%d nrestyled=%d deltxt=%s\n", __LINE__,
          pos, nInserted, nDeleted, nRestyled, deltxt);
   decorate();
 } // end MyEditor::ModifyCallback
@@ -175,10 +185,15 @@ MyEditor::decorate(void)
           memset (stychar, 0, sizeof(stychar));
           stychar[0] = 'A' + cursty;
           stybuf->replace(curix, curix+1, stychar);
-          printf("%s: Unicode %s at %d=%#x style#%d (%s:%d)\n",
-                 __PRETTY_FUNCTION__, utfbuf, curix, curix, (int)cursty,
+          printf("MyEditor::decorate Unicode %s at %d=%#x style#%d/%s (%s:%d)\n",
+                 utfbuf, curix, curix, (int)cursty,
+                 stylename_table[(int)cursty],
                  __FILE__,__LINE__);
         }
+      else
+        printf("MyEditor::decorate Unicode %s at %d=%#x plain_style (%s:%d)\n",
+               utfbuf, curix, curix,
+               __FILE__,__LINE__);
       previx= curix;
     };
 #warning incomplete MyEditor::decorate
