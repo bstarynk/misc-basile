@@ -96,7 +96,7 @@ public:
     Style_Unicode,
     Style__LAST
   };
-  static constexpr Fl_Text_Editor::Style_Table_Entry style_table[(unsigned)Style__LAST] =
+  static inline constexpr Fl_Text_Editor::Style_Table_Entry style_table[(unsigned)Style__LAST] =
   {
     // FONT COLOR      FONT FACE           SIZE  ATTRIBUTE      BACKGROUND COLOR
     // --------------- --------------      ----  ---------      -----------------
@@ -111,7 +111,7 @@ public:
     [Style_Unicode] = //
     {  FL_DARK_RED,    FL_HELVETICA_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Unicode,
   };
-  static constexpr const char*stylename_table[(unsigned)Style__LAST+1] =
+  static inline constexpr const char*stylename_table[(unsigned)Style__LAST+1] =
   {
 #define NAME_STYLE(N) [(int)N] = #N
     NAME_STYLE(Style_Plain),
