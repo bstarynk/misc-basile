@@ -132,7 +132,7 @@ MyEditor::initialize()
   assert (txtbuff);
   assert (stybuff);
   highlight_data(stybuff, style_table,
-                 (unsigned)Style__LAST-1,
+                 (unsigned)Style__LAST,
                  'A', 0, 0);
   txtbuff->add_modify_callback(MyEditor::static_modify_callback, (void*)this);
 } // end MyEditor::initialize
