@@ -28,6 +28,8 @@
 
 #include <string>
 
+/// https://github.com/ianlancetaylor/libbacktrace/
+#include <backtrace.h>
 
 #include <FL/Fl.H>
 #include <FL/platform.H> // for fl_open_callback
@@ -42,6 +44,10 @@
 #include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Editor.H>
 #include <FL/filename.H>
+struct backtrace_state *my_backtrace_state;
+
+#define MY_BACKTRACE_PRINT(Skip) my_backtrace_print_at(__LINE__, (Skip))
+void my_backtrace_print_at(int line, int skip);
 
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
@@ -135,6 +141,7 @@ MyEditor::initialize()
                  (unsigned)Style__LAST,
                  'A', 0, 0);
   txtbuff->add_modify_callback(MyEditor::static_modify_callback, (void*)this);
+  MY_BACKTRACE_PRINT(1);
 } // end MyEditor::initialize
 
 
@@ -148,6 +155,7 @@ MyEditor::ModifyCallback(int pos,        // position of update
 {
   printf("MyEditor::ModifyCallback[L%d] pos=%d ninserted=%d ndeleted=%d nrestyled=%d deltxt=%s\n", __LINE__,
          pos, nInserted, nDeleted, nRestyled, deltxt);
+  MY_BACKTRACE_PRINT(1);
   decorate();
 } // end MyEditor::ModifyCallback
 
@@ -210,6 +218,23 @@ MyEditor::decorate(void)
 #warning incomplete MyEditor::decorate
 } // end MyEditor::decorate
 
+
+void my_backtrace_error(void*data, const char*msg, int errnum)
+{
+  fprintf(stderr, "backtrace error %s (errnum=%d:%s)", msg,
+          errnum, (errnum>=0)?strerror(errnum):"BUG");
+  fflush(nullptr);
+  exit(EXIT_FAILURE);
+} // end my_backtrace_error
+
+#define MY_BACKTRACE_PRINT(Skip) my_backtrace_print_at(__LINE__, skip)
+void my_backtrace_print_at(int line, int skip)
+{
+  printf("%s:%d backtrace\n", __FILE__, line);
+  backtrace_print(my_backtrace_state, skip, stdout);
+  fflush(NULL);
+} // end my_backtrace_print_at
+
 int
 main(int argc, char **argv)
 {
@@ -218,6 +243,11 @@ main(int argc, char **argv)
 #ifdef GITID
   tistr += "/" GITID;
 #endif
+  my_backtrace_state = //
+    backtrace_create_state
+    (
+      "fltk-mini-edit", /*threaded:*/0,
+      my_backtrace_error, nullptr);
   Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
   MyEditor  *med = new MyEditor(10,10,win->w()-20,win->h()-20);
   med->text("Test\n"

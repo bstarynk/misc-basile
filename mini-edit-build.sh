@@ -10,4 +10,5 @@ $CXX $CXXFLAGS $($FLTKCONFIG --cflags) -DGITID=\"$GITID\" fltk-mini-edit.cc \
      $($FLTKCONFIG --libs) -lunistring -lX11 -lXext -lXinerama \
      -lXcursor -lXrender -lXrandr -lXfixes -lXi -lfreetype \
      -lfontconfig -lXft -lGL -ldl -lpthread -lrt -ljpeg -lpng -ltiff -lz -lGL \
+     -lbacktrace \
    -o fltk-mini-edit
