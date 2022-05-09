@@ -72,6 +72,7 @@ public:
   {
     assert (cbarg != nullptr);
     MyEditor* med = reinterpret_cast<MyEditor*>(cbarg);
+    MY_BACKTRACE_PRINT(1);
     med->ModifyCallback(pos, nInserted, nDeleted, nRestyled, deletedText);
   };
   MyEditor(int X,int Y,int W,int H)
