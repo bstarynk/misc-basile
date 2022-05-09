@@ -56,13 +56,13 @@ main (int argc, char *argv[])
   gtk_widget_show_all (pScrollWin);
 
   /* Finally load an example file to see how it works */
-  open_file (sBuf, "srcview.c");
+  open_file (sBuf, __FILE__);
 
   gtk_widget_show (window);
 
   gtk_main ();
   return 0;
-}
+}				/* end main */
 
 
 static gboolean
