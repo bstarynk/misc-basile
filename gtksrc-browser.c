@@ -127,6 +127,7 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
 	{
 	case G_IO_STATUS_EOF:
 	  reading = FALSE;
+	  break;
 
 	case G_IO_STATUS_NORMAL:
 	  if (bytes_read == 0)
