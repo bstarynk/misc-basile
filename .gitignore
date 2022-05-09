@@ -41,3 +41,4 @@ run-as-misc
 *.so
 sync-periodically
 webprint-epsonxp6150
+gtksrc-browser
