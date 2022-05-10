@@ -50,7 +50,7 @@ main (int argc, char *argv[])
   sView = gtk_source_view_new_with_buffer (sBuf);
   /* Set default Font name,size */
   font_desc = pango_font_description_from_string ("mono 12");
-  gtk_widget_modify_font (sView, font_desc);
+  gtk_widget_override_font (sView, font_desc);
   pango_font_description_free (font_desc);
 
   /* Attach the GtkSourceView to the scrolled Window */
