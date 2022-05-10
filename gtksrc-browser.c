@@ -1,5 +1,9 @@
-
-
+// SPDX-License-Identifier: GPL-3.0-or-later
+// file misc-basile/gtksrc-browser.c
+// © 2022 copyright : unknown user & CEA & Basile Starynkevitch
+//
+//// code inspired from http://www.bravegnu.org/gtktext/x561.html and
+//// https://basic-converter.proboards.com/thread/587/gtksourceview-porting-code-example-solved
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include "gtksourceview/gtksource.h"
