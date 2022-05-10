@@ -4,6 +4,7 @@
 //
 //// code inspired from http://www.bravegnu.org/gtktext/x561.html and
 //// https://basic-converter.proboards.com/thread/587/gtksourceview-porting-code-example-solved
+#include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include "gtksourceview/gtksource.h"
@@ -13,18 +14,31 @@
 //#include "gtksourceview/gtksourcelanguagemanager.h"
 
 
+static const GOptionEntry prog_options_arr[] = {
+  {NULL, '\0', 0, G_OPTION_ARG_NONE, NULL, NULL}
+};
+
 static gboolean open_file (GtkSourceBuffer * sBuf, const gchar * filename);
 
 int
 main (int argc, char *argv[])
 {
   static GtkWidget *window, *pScrollWin, *sView;
-  PangoFontDescription *font_desc;
-  GtkSourceLanguageManager *lm;
-  GtkSourceBuffer *sBuf;
+  PangoFontDescription *font_desc = NULL;
+  GtkSourceLanguageManager *lm = NULL;
+  GtkSourceBuffer *sBuf = NULL;
+  GError *initerr = NULL;
+  if (!gtk_init_with_args (&argc, &argv, "gtksrc-browser",	//
+			   prog_options_arr,	//
+			   NULL,	//translation domain
+			   &initerr))
+    {
+      fprintf (stderr, "%s: failed to parse program arguments (%s)\n",
+	       argv[0], initerr ? initerr->message : "??");
+      exit (EXIT_FAILURE);
+    }
 
   /* Create a Window. */
-  gtk_init (&argc, &argv);
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   g_signal_connect (G_OBJECT (window), "destroy", G_CALLBACK (gtk_main_quit),
 		    NULL);
@@ -59,7 +73,7 @@ main (int argc, char *argv[])
   gtk_container_add (GTK_CONTAINER (window), pScrollWin);
   gtk_widget_show_all (pScrollWin);
 
-  /* Finally load an example file to see how it works */
+  /* Finally load our own file to see how it works */
   open_file (sBuf, __FILE__);
 
   gtk_widget_show (window);
@@ -93,12 +107,12 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
   if (language == NULL)
     {
       g_print ("No language found for mime type `%s'\n", "text/x-c");
-      g_object_set (G_OBJECT (sBuf), "highlight", FALSE, NULL);
+      g_object_set (G_OBJECT (sBuf), "highlight-syntaxxs", FALSE, NULL);
     }
   else
     {
       gtk_source_buffer_set_language (sBuf, language);
-      g_object_set (G_OBJECT (sBuf), "highlight", TRUE, NULL);
+      g_object_set (G_OBJECT (sBuf), "highlight-syntax", TRUE, NULL);
     }
 
   /* Now load the file from Disk */
@@ -177,7 +191,7 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
 			  (GDestroyNotify) g_free);
 
   return TRUE;
-}
+}				/* end open_filexs */
 
 
 /****************
