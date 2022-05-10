@@ -25,7 +25,7 @@ main (int argc, char *argv[])
   g_signal_connect (G_OBJECT (window), "destroy", G_CALLBACK (gtk_main_quit),
 		    NULL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 10);
-  gtk_window_set_default_size (GTK_WINDOW (window), 660, 500);
+  gtk_window_set_default_size (GTK_WINDOW (window), 760, 500);
   gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
 
   /* Create a Scrolled Window that will contain the GtkSourceView */
@@ -45,7 +45,7 @@ main (int argc, char *argv[])
   /* Create the GtkSourceView and associate it with the buffer */
   sView = gtk_source_view_new_with_buffer (sBuf);
   /* Set default Font name,size */
-  font_desc = pango_font_description_from_string ("mono 8");
+  font_desc = pango_font_description_from_string ("mono 12");
   gtk_widget_modify_font (sView, font_desc);
   pango_font_description_free (font_desc);
 
