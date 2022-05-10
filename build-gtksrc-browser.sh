@@ -6,6 +6,9 @@ CC=gcc
 OPTIMFLAGS=-Og
 indent -gnu gtksrc-browser.c
 $CC $OPTIMFLAGS -Wall -Wextra -g -Wmissing-prototypes \
-    $(pkg-config --cflags --libs \
+    $(pkg-config --cflags \
 	 glib-2.0  gobject-2.0 	gio-2.0  gtk+-3.0 pango gtksourceview-4) \
-    gtksrc-browser.c      -o gtksrc-browser
+    gtksrc-browser.c  \
+    $(pkg-config --libs \
+	 glib-2.0  gobject-2.0 	gio-2.0  gtk+-3.0 pango gtksourceview-4) \
+    -o gtksrc-browser
