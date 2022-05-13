@@ -114,7 +114,7 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
   if (language == NULL)
     {
       g_print ("No language found for mime type `%s'\n", "text/x-c");
-      g_object_set (G_OBJECT (sBuf), "highlight-syntaxxs", FALSE, NULL);
+      g_object_set (G_OBJECT (sBuf), "highlight-syntax", FALSE, NULL);
     }
   else
     {
@@ -186,7 +186,7 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
   g_object_set_data_full (G_OBJECT (sBuf), "filename", g_strdup (filename),
 			  (GDestroyNotify) g_free);
   return TRUE;
-}				/* end open_filexs */
+}				/* end open_file */
 
 
 /****************
