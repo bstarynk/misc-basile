@@ -14,17 +14,22 @@
 //#include "gtksourceview/gtksourcelanguage.h"
 //#include "gtksourceview/gtksourcelanguagemanager.h"
 
+static char *prog_name;
+
 extern gboolean version_cb (const gchar * option_name,
 			    const gchar * value,
 			    gpointer data, GError ** error);
 
-static char *prog_name;
-
+extern void
+my_sview_insert_at_cursor_cb (GtkTextView * self,
+			      gchar * string, gpointer user_data);
 gboolean
-version_cb (const gchar * option_name __attribute__((unused)),
-	    const gchar * value __attribute__((unused)),
-	    gpointer data __attribute__((unused)),
-	    GError ** error __attribute__((unused)))
+version_cb (const gchar * option_name
+	    __attribute__((unused)),
+	    const gchar * value
+	    __attribute__((unused)),
+	    gpointer data
+	    __attribute__((unused)), GError ** error __attribute__((unused)))
 {
   printf ("%s: version compiled " __DATE__ "@" __TIME__ "\n", prog_name);
   fflush (NULL);
@@ -46,6 +51,21 @@ static const GOptionEntry prog_options_arr[] = {
    .arg_data = NULL}		///
 };
 
+void
+my_sview_insert_at_cursor_cb (GtkTextView *
+			      self,
+			      gchar * string,
+			      gpointer user_data __attribute__((unused)))
+{
+  GtkSourceView *srcview = GTK_SOURCE_VIEW (self);
+  assert (srcview != NULL);
+  assert (string != NULL);
+  /// temporary, to see if it works
+  printf ("my_sview_insert_at_cursor_cb [%s:%d] string=%s\n", __FILE__,
+	  __LINE__, string);
+}				/* end my_sview_insert_at_cursor_cb */
+
+
 static gboolean open_file (GtkSourceBuffer * sBuf, const gchar * filename);
 int
 main (int argc, char *argv[])
@@ -61,28 +81,31 @@ main (int argc, char *argv[])
 			   NULL,	//translation domain
 			   &initerr))
     {
-      fprintf (stderr, "%s: failed to parse program arguments (%s)\n",
+      fprintf (stderr,
+	       "%s: failed to parse program arguments (%s)\n",
 	       argv[0], initerr ? initerr->message : "??");
       exit (EXIT_FAILURE);
     }
 
   /* Create a Window. */
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  g_signal_connect (G_OBJECT (window), "destroy", G_CALLBACK (gtk_main_quit),
-		    NULL);
+  g_signal_connect (G_OBJECT (window),
+		    "destroy", G_CALLBACK (gtk_main_quit), NULL);
   gtk_container_set_border_width (GTK_CONTAINER (window), 10);
   gtk_window_set_default_size (GTK_WINDOW (window), 760, 500);
   gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
   /* Create a Scrolled Window that will contain the GtkSourceView */
   pScrollWin = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (pScrollWin),
-				  GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_set_policy
+    (GTK_SCROLLED_WINDOW (pScrollWin),
+     GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   /* Now create a GtkSourceLanguageManager */
   lm = gtk_source_language_manager_new ();
   /* and a GtkSourceBuffer to hold text (similar to GtkTextBuffer) */
   sBuf = GTK_SOURCE_BUFFER (gtk_source_buffer_new (NULL));
   g_object_ref (lm);
-  g_object_set_data_full (G_OBJECT (sBuf), "languages-manager",
+  g_object_set_data_full (G_OBJECT (sBuf),
+			  "languages-manager",
 			  lm, (GDestroyNotify) g_object_unref);
   /* Create the GtkSourceView and associate it with the buffer */
   sView = gtk_source_view_new_with_buffer (sBuf);
@@ -90,6 +113,9 @@ main (int argc, char *argv[])
   font_desc = pango_font_description_from_string ("mono 12");
   gtk_widget_override_font (sView, font_desc);
   pango_font_description_free (font_desc);
+  g_signal_connect (G_OBJECT (sView),
+		    "insert-at-cursor",
+		    G_CALLBACK (my_sview_insert_at_cursor_cb), NULL);
   /* Attach the GtkSourceView to the scrolled Window */
   gtk_container_add (GTK_CONTAINER (pScrollWin), GTK_WIDGET (sView));
   /* And the Scrolled Window to the main Window */
@@ -104,7 +130,6 @@ main (int argc, char *argv[])
 
 
 static const int buffer_byte_size = 4096;
-
 static gboolean
 open_file (GtkSourceBuffer * sBuf, const gchar * filename)
 {
@@ -143,8 +168,8 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
 
   if (g_io_channel_set_encoding (io, "utf-8", &err) != G_IO_STATUS_NORMAL)
     {
-      g_print ("err: Failed to set encoding:\n%s\n%s", filename,
-	       (err)->message);
+      g_print
+	("err: Failed to set encoding:\n%s\n%s", filename, (err)->message);
       return FALSE;
     }
 
@@ -156,8 +181,9 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
     {
       gsize bytes_read;
       GIOStatus status;
-      status = g_io_channel_read_chars (io, buffer, buffer_byte_size,
-					&bytes_read, &err);
+      status =
+	g_io_channel_read_chars (io, buffer,
+				 buffer_byte_size, &bytes_read, &err);
       switch (status)
 	{
 	case G_IO_STATUS_EOF:
