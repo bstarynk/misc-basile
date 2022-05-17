@@ -143,7 +143,8 @@ main (int argc, char *argv[])
 		    "insert-at-cursor",
 		    G_CALLBACK (my_sview_insert_at_cursor_cb), NULL);
   g_signal_connect (txView,
-		    "keypress-event", G_CALLBACK (keypress_srcview_cb), NULL);
+		    "key-press-event", G_CALLBACK (keypress_srcview_cb),
+		    NULL);
   /* Attach the GtkSourceView to the scrolled Window */
   gtk_container_add (GTK_CONTAINER (pScrollWin), GTK_WIDGET (sView));
   /* And the Scrolled Window to the main Window */
