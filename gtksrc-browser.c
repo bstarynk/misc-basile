@@ -192,7 +192,7 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
 	case G_IO_STATUS_NORMAL:
 	  if (bytes_read == 0)
 	    continue;
-	  assert (bytes_read < buffer_byte_size);
+	  assert (bytes_read <= buffer_byte_size);
 	  gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (sBuf), &iter);
 	  gtk_text_buffer_insert (GTK_TEXT_BUFFER (sBuf), &iter, buffer,
 				  bytes_read);
