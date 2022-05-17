@@ -66,12 +66,23 @@ keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,	//
   assert (evk != NULL);
   GtkSourceView *srcview = GTK_SOURCE_VIEW (widg);
   assert (srcview != NULL);
+  //https://stackoverflow.com/a/10266773/841108
+  GdkWindow *gdkwin = gtk_widget_get_window (GTK_WIDGET (srcview));
+  assert (gdkwin);
+  gint x = -1;
+  gint y = -1;
+  /// https://stackoverflow.com/a/24847120/841108
+  GdkDisplay *display = gdk_display_get_default ();
+  GdkSeat *seat = gdk_display_get_default_seat (display);
+  GdkDevice *device = gdk_seat_get_pointer (seat);
+  gdk_device_get_position (device, NULL, &x, &y);
   GdkModifierType modmask = gtk_accelerator_get_default_mod_mask ();
   bool withctrl = (evk->state & modmask) == GDK_CONTROL_MASK;
   bool withshift = (evk->state & modmask) == GDK_SHIFT_MASK;
-  printf ("keypress_srcview_cb [%s:%d] evk keyval %#x ctrl:%s shift:%s\n",
-	  __FILE__, __LINE__,
-	  evk->keyval, (withctrl ? "yes" : "no"), (withshift ? "yes" : "no"));
+  printf
+    ("keypress_srcview_cb [%s:%d] evk keyval %#x ctrl:%s shift:%s mouse(x=%d,y=%d)\n",
+     __FILE__, __LINE__, evk->keyval, (withctrl ? "yes" : "no"),
+     (withshift ? "yes" : "no"), (int) x, (int) y);
   return FALSE;			/* to propagate the event */
 }				/* end  keypress_srcview_cb */
 
