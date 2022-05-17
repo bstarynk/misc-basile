@@ -5,6 +5,8 @@
 //// code inspired from http://www.bravegnu.org/gtktext/x561.html and
 //// https://basic-converter.proboards.com/thread/587/gtksourceview-porting-code-example-solved
 #include <assert.h>
+#include <stdio.h>
+#include <stdbool.h>
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
@@ -16,6 +18,10 @@
 
 static char *prog_name;
 
+/// https://stackoverflow.com/q/46809878/841108
+extern gboolean keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,
+				     gpointer data);
+
 extern gboolean version_cb (const gchar * option_name,
 			    const gchar * value,
 			    gpointer data, GError ** error);
@@ -23,6 +29,8 @@ extern gboolean version_cb (const gchar * option_name,
 extern void
 my_sview_insert_at_cursor_cb (GtkTextView * self,
 			      gchar * string, gpointer user_data);
+
+
 gboolean
 version_cb (const gchar * option_name
 	    __attribute__((unused)),
@@ -50,6 +58,23 @@ static const GOptionEntry prog_options_arr[] = {
    .arg = G_OPTION_ARG_NONE,	///
    .arg_data = NULL}		///
 };
+
+gboolean
+keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,	//
+		     gpointer data __attribute__((unused)))
+{
+  assert (evk != NULL);
+  GtkSourceView *srcview = GTK_SOURCE_VIEW (widg);
+  assert (srcview != NULL);
+  GdkModifierType modmask = gtk_accelerator_get_default_mod_mask ();
+  bool withctrl = (evk->state & modmask) == GDK_CONTROL_MASK;
+  bool withshift = (evk->state & modmask) == GDK_SHIFT_MASK;
+  printf ("keypress_srcview_cb [%s:%d] evk keyval %#x ctrl:%s shift:%s\n",
+	  __FILE__, __LINE__,
+	  evk->keyval, (withctrl ? "yes" : "no"), (withshift ? "yes" : "no"));
+  return FALSE;			/* to propagate the event */
+}				/* end  keypress_srcview_cb */
+
 
 void
 my_sview_insert_at_cursor_cb (GtkTextView * self,
@@ -117,6 +142,8 @@ main (int argc, char *argv[])
   g_signal_connect (txView,
 		    "insert-at-cursor",
 		    G_CALLBACK (my_sview_insert_at_cursor_cb), NULL);
+  g_signal_connect (txView,
+		    "keypress-event", G_CALLBACK (keypress_srcview_cb), NULL);
   /* Attach the GtkSourceView to the scrolled Window */
   gtk_container_add (GTK_CONTAINER (pScrollWin), GTK_WIDGET (sView));
   /* And the Scrolled Window to the main Window */
