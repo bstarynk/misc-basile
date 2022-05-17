@@ -4,6 +4,7 @@
 //
 //// code inspired from http://www.bravegnu.org/gtktext/x561.html and
 //// https://basic-converter.proboards.com/thread/587/gtksourceview-porting-code-example-solved
+#include <assert.h>
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
@@ -13,6 +14,9 @@
 //#include "gtksourceview/gtksourcelanguage.h"
 //#include "gtksourceview/gtksourcelanguagemanager.h"
 
+extern gboolean version_cb (const gchar * option_name,
+			    const gchar * value,
+			    gpointer data, GError ** error);
 
 static char *prog_name;
 
@@ -33,8 +37,13 @@ static const GOptionEntry prog_options_arr[] = {
    .flags = G_OPTION_FLAG_NONE,	//
    .arg = G_OPTION_ARG_CALLBACK,	//
    .arg_data = (void *) &version_cb},
+  /// last entry is empty
   {
-   NULL, '\0', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, NULL, NULL}
+   .long_name = NULL,		///
+   .short_name = '\0',		///
+   .flags = G_OPTION_FLAG_NONE,	///
+   .arg = G_OPTION_ARG_NONE,	///
+   .arg_data = NULL}		///
 };
 
 static gboolean open_file (GtkSourceBuffer * sBuf, const gchar * filename);
@@ -94,6 +103,8 @@ main (int argc, char *argv[])
 }				/* end main */
 
 
+static const int buffer_byte_size = 4096;
+
 static gboolean
 open_file (GtkSourceBuffer * sBuf, const gchar * filename)
 {
@@ -145,7 +156,8 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
     {
       gsize bytes_read;
       GIOStatus status;
-      status = g_io_channel_read_chars (io, buffer, 4096, &bytes_read, &err);
+      status = g_io_channel_read_chars (io, buffer, buffer_byte_size,
+					&bytes_read, &err);
       switch (status)
 	{
 	case G_IO_STATUS_EOF:
@@ -154,6 +166,7 @@ open_file (GtkSourceBuffer * sBuf, const gchar * filename)
 	case G_IO_STATUS_NORMAL:
 	  if (bytes_read == 0)
 	    continue;
+	  assert (bytes_read < buffer_byte_size);
 	  gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (sBuf), &iter);
 	  gtk_text_buffer_insert (GTK_TEXT_BUFFER (sBuf), &iter, buffer,
 				  bytes_read);
