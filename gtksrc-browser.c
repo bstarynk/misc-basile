@@ -79,6 +79,7 @@ keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,	//
   GdkModifierType modmask = gtk_accelerator_get_default_mod_mask ();
   bool withctrl = (evk->state & modmask) == GDK_CONTROL_MASK;
   bool withshift = (evk->state & modmask) == GDK_SHIFT_MASK;
+  /// now x,y are the absolute screen position... How to get a position inside our window?
   printf
     ("keypress_srcview_cb [%s:%d] evk keyval %#x ctrl:%s shift:%s mouse(x=%d,y=%d)\n",
      __FILE__, __LINE__, evk->keyval, (withctrl ? "yes" : "no"),
