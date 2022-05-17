@@ -52,17 +52,16 @@ static const GOptionEntry prog_options_arr[] = {
 };
 
 void
-my_sview_insert_at_cursor_cb (GtkTextView *
-			      self,
+my_sview_insert_at_cursor_cb (GtkTextView * self,
 			      gchar * string,
 			      gpointer user_data __attribute__((unused)))
 {
-  GtkSourceView *srcview = GTK_SOURCE_VIEW (self);
-  assert (srcview != NULL);
   assert (string != NULL);
   /// temporary, to see if it works
   printf ("my_sview_insert_at_cursor_cb [%s:%d] string=%s\n", __FILE__,
 	  __LINE__, string);
+  GtkSourceView *srcview = GTK_SOURCE_VIEW (self);
+  assert (srcview != NULL);
 }				/* end my_sview_insert_at_cursor_cb */
 
 
@@ -113,7 +112,9 @@ main (int argc, char *argv[])
   font_desc = pango_font_description_from_string ("mono 12");
   gtk_widget_override_font (sView, font_desc);
   pango_font_description_free (font_desc);
-  g_signal_connect (G_OBJECT (sView),
+  GtkTextView *txView = GTK_TEXT_VIEW (sView);
+  assert (txView != NULL);
+  g_signal_connect (txView,
 		    "insert-at-cursor",
 		    G_CALLBACK (my_sview_insert_at_cursor_cb), NULL);
   /* Attach the GtkSourceView to the scrolled Window */
