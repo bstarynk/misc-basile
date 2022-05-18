@@ -79,10 +79,19 @@ keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,	//
   GdkModifierType modmask = gtk_accelerator_get_default_mod_mask ();
   bool withctrl = (evk->state & modmask) == GDK_CONTROL_MASK;
   bool withshift = (evk->state & modmask) == GDK_SHIFT_MASK;
+  GtkTextBuffer *textbuf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (srcview));
+  assert (textbuf != NULL);
+  GtkTextMark *curinsertmark = gtk_text_buffer_get_insert (textbuf);
+  assert (curinsertmark != NULL);
+  int curlin = gtk_text_iter_get_line (curinsertmark);
+  int curcol = gtk_text_iter_get_line_offset (curinsertmark);
+  int bytix = gtk_text_iter_get_line_index (curinsertmark);
   /// now x,y are the absolute screen position... How to get a position inside our window?
   printf
-    ("keypress_srcview_cb [%s:%d] evk keyval %#x ctrl:%s shift:%s mouse(x=%d,y=%d)\n",
-     __FILE__, __LINE__, evk->keyval, (withctrl ? "yes" : "no"),
+    ("keypress_srcview_cb [%s:%d] evk cursor L%dC%d(bytix%d) keyval %#x ctrl:%s shift:%s mouse(x=%d,y=%d)\n",
+     __FILE__, __LINE__,
+     curlin, curcol, bytix,
+     evk->keyval, (withctrl ? "yes" : "no"),
      (withshift ? "yes" : "no"), (int) x, (int) y);
   return FALSE;			/* to propagate the event */
 }				/* end  keypress_srcview_cb */
