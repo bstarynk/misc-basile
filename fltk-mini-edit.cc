@@ -55,6 +55,8 @@ class MyEditor : public Fl_Text_Editor
 
   Fl_Text_Buffer *txtbuff;      // text buffer
   Fl_Text_Buffer *stybuff;	// style buffer
+  static int tab_key_binding(int key, Fl_Text_Editor*editor);
+  static int escape_key_binding(int key, Fl_Text_Editor*editor);
 public:
   void initialize(void);
   void ModifyCallback(int pos,        // position of update
@@ -132,6 +134,23 @@ public:
 };				// end MyEditor
 
 
+int
+MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
+{
+  MyEditor* myed = dynamic_cast<MyEditor*>(editor);
+  MY_BACKTRACE_PRINT(1);
+  assert (myed != nullptr);
+  return 0;
+} // end MyEditor::tab_key_binding
+
+int
+MyEditor::escape_key_binding(int key, Fl_Text_Editor*editor)
+{
+  MyEditor* myed = dynamic_cast<MyEditor*>(editor);
+  MY_BACKTRACE_PRINT(1);
+  assert (myed != nullptr);
+  return 1;
+} // end MyEditor::escape_key_binding
 
 void
 MyEditor::initialize()
@@ -142,6 +161,9 @@ MyEditor::initialize()
                  (unsigned)Style__LAST,
                  'A', 0, 0);
   txtbuff->add_modify_callback(MyEditor::static_modify_callback, (void*)this);
+  // the 0 is a state, could be FL_SHIFT etc... See Fl/Enumerations.h
+  add_key_binding(FL_Tab, 0, tab_key_binding);
+  add_key_binding(FL_Escape, 0, escape_key_binding);
   MY_BACKTRACE_PRINT(1);
 } // end MyEditor::initialize
 
@@ -257,7 +279,6 @@ void my_backtrace_error(void*data, const char*msg, int errnum)
   exit(EXIT_FAILURE);
 } // end my_backtrace_error
 
-#define MY_BACKTRACE_PRINT(Skip) my_backtrace_print_at(__LINE__, skip)
 void my_backtrace_print_at(int line, int skip)
 {
   printf("%s:%d backtrace\n", __FILE__, line);
