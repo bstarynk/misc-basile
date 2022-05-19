@@ -3,7 +3,7 @@
 
 // A simple text editor program for the Fast Light Tool Kit (FLTK).
 //
-// This program is described in Chapter 4 of the FLTK Programmer's Guide.
+// This program is inspired by Chapter 4 of the FLTK Programmer's Guide.
 //
 // Copyright 1998-2022 by Bill Spitzak and Basile Starynkevitch and CEA
 
@@ -207,8 +207,37 @@ MyEditor::decorate(void)
       else
         {
           if (curch < ' ')
-            printf("MyEditor::decorate Ctrlchar \\x%02x at %d=%#x plain_style (%s:%d)\n",
-                   (int)curch, curix, curix, __FILE__,__LINE__);
+            {
+              const char*escstr = "";
+              switch (curch)
+                {
+                case '\t':
+                  escstr = "=\\t";
+                  break;
+                case '\r':
+                  escstr = "=\\r";
+                  break;
+                case '\n':
+                  escstr = "=\\n";
+                  break;
+                case '\v':
+                  escstr = "=\\v";
+                  break;
+                case '\b':
+                  escstr = "=\\b";
+                  break;
+                case '\f':
+                  escstr = "=\\f";
+                  break;
+                case '\e':
+                  escstr = "=\\e";
+                  break;
+                default:
+                  break;
+                };
+              printf("MyEditor::decorate Ctrlchar \\x%02x%s at %d=%#x plain_style (%s:%d)\n",
+                     (int)curch, escstr, curix, curix, __FILE__,__LINE__);
+            }
           else
             printf("MyEditor::decorate Unicode %s at %d=%#x plain_style (%s:%d)\n",
                    utfbuf, curix, curix,
