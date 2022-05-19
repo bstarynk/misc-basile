@@ -140,7 +140,7 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
   MyEditor* myed = dynamic_cast<MyEditor*>(editor);
   MY_BACKTRACE_PRINT(1);
   assert (myed != nullptr);
-  return 0;
+  return 0; /// this means don't handle
 } // end MyEditor::tab_key_binding
 
 int
@@ -149,7 +149,7 @@ MyEditor::escape_key_binding(int key, Fl_Text_Editor*editor)
   MyEditor* myed = dynamic_cast<MyEditor*>(editor);
   MY_BACKTRACE_PRINT(1);
   assert (myed != nullptr);
-  return 1;
+  return 1; // this means do handle the binding
 } // end MyEditor::escape_key_binding
 
 void
