@@ -149,11 +149,12 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
       unsigned int curutf = mybuf->char_at(inspos);
       int wstart = mybuf->word_start(inspos);
       int wend = mybuf->word_end(inspos);
-      if (wend > mybuf->line_end(inspos))
-        wend = mybuf->line_end(inspos);
-      printf("MyEditor TAB [%s:%d] inspos=%d L%dC%d curutf#%d wstart=%d wend=%d\n",
+      int linend = mybuf->line_end(inspos);
+      printf("MyEditor TAB [%s:%d] inspos=%d L%dC%d curutf#%d wstart=%d wend=%d linend=%d\n",
              __FILE__, __LINE__, //
-             inspos, lin, col, curutf, wstart, wend);
+             inspos, lin, col, curutf, wstart, wend, linend);
+      if (wend > linend)
+        wend = linend;
       const char*startchr = mybuf->address(wstart);
       const char*endchr = mybuf->address(wend);
       assert(startchr != nullptr);
