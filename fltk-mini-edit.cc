@@ -161,10 +161,10 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
       assert(endchr != nullptr);
       assert (endchr >= startchr);
       char*curword = mybuf->text_range(wstart, wend);
-      printf("MyEditor TAB [%s:%d] inspos=%d word '%*s'\n",
+      printf("MyEditor TAB [%s:%d] inspos=%d word '%s'\n",
              __FILE__, __LINE__,
-             inspos,
-             (int)(endchr-startchr), startchr);
+             inspos, curword);
+      free (curword), curword = nullptr;
     }
   else
     printf("MyEditor TAB [%s:%d] inspos=%d not shown\n", __FILE__, __LINE__,
