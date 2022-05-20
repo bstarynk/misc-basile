@@ -161,10 +161,37 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
       assert(endchr != nullptr);
       assert (endchr >= startchr);
       char*curword = mybuf->text_range(wstart, wend);
-      printf("MyEditor TAB [%s:%d] inspos=%d word '%s'\n",
+      char*prefix = mybuf->text_range(wstart, inspos);
+      printf("MyEditor TAB [%s:%d] inspos=%d word '%s' prefix='%s'\n",
              __FILE__, __LINE__,
-             inspos, curword);
+             inspos, curword, prefix);
+      bool prefixdigits = true;
+      bool prefixletters = true;
+      for (const char*pc = prefix; *pc; pc++)
+        {
+          if (!isalpha(*pc)) prefixletters = false;
+          if (!isdigit(*pc)) prefixdigits = false;
+        };
+      char* prefixrepl = nullptr; // possible replacement of prefix
+      /// If the prefix is only made of digits replace it (as a
+      /// number) by its numerical successor.
+      if (prefixdigits)
+        {
+          asprintf(&prefixrepl, "%d", atoi(prefix)+1);
+        }
+      /// If the prefix is only letters replace it by a x2 duplicate
+      else if (prefixletters)
+        asprintf(&prefixrepl, "%s/%s", prefix, prefix);
+      if (prefixrepl)
+        {
+          printf("MyEditor TAB [%s:%d] inspos=%d prefixrepl:%s\n",
+                 __FILE__, __LINE__,
+                 inspos, prefixrepl);
+#warning missing actual replacement of prefix in MyEditor::tab_key_binding
+          free (prefixrepl), prefixrepl = nullptr;
+        }
       free (curword), curword = nullptr;
+      free (prefix), prefix = nullptr;
     }
   else
     printf("MyEditor TAB [%s:%d] inspos=%d not shown\n", __FILE__, __LINE__,
