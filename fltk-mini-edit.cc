@@ -142,10 +142,29 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
   assert (myed != nullptr);
   int inspos = myed->insert_position();
   int lin= -1, col= -1;
-  if (myed->position_to_linecol(inspos, &lin, &col)) {
-    printf("MyEditor TAB [%s:%d] inspos=%d L%dC%d\n", __FILE__, __LINE__,
-           inspos, lin, col);
-  }
+  if (myed->position_to_linecol(inspos, &lin, &col))
+    {
+      Fl_Text_Buffer* mybuf = myed->buffer();
+      assert (mybuf != nullptr);
+      unsigned int curutf = mybuf->char_at(inspos);
+      int wstart = mybuf->word_start(inspos);
+      int wend = mybuf->word_end(inspos);
+      if (wend > mybuf->line_end(inspos))
+        wend = mybuf->line_end(inspos);
+      printf("MyEditor TAB [%s:%d] inspos=%d L%dC%d curutf#%d wstart=%d wend=%d\n",
+             __FILE__, __LINE__, //
+             inspos, lin, col, curutf, wstart, wend);
+      const char*startchr = mybuf->address(wstart);
+      const char*endchr = mybuf->address(wend);
+      assert(startchr != nullptr);
+      assert(endchr != nullptr);
+      assert (endchr >= startchr);
+      char*curword = mybuf->text_range(wstart, wend);
+      printf("MyEditor TAB [%s:%d] inspos=%d word '%*s'\n",
+             __FILE__, __LINE__,
+             inspos,
+             (int)(endchr-startchr), startchr);
+    }
   else
     printf("MyEditor TAB [%s:%d] inspos=%d not shown\n", __FILE__, __LINE__,
            inspos);
