@@ -140,6 +140,16 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
   MyEditor* myed = dynamic_cast<MyEditor*>(editor);
   MY_BACKTRACE_PRINT(1);
   assert (myed != nullptr);
+  int inspos = myed->insert_position();
+  int lin= -1, col= -1;
+  if (myed->position_to_linecol(inspos, &lin, &col)) {
+    printf("MyEditor TAB [%s:%d] inspos=%d L%dC%d\n", __FILE__, __LINE__,
+           inspos, lin, col);
+  }
+  else
+    printf("MyEditor TAB [%s:%d] inspos=%d not shown\n", __FILE__, __LINE__,
+           inspos);
+  fflush(stdout);
   return 0; /// this means don't handle
 } // end MyEditor::tab_key_binding
 
