@@ -66,6 +66,8 @@ void
 TinyTextWindow::create()
 {
   FXMainWindow::create();
+  editorframe->create();
+  editor->create();
   show(PLACEMENT_SCREEN);
 } // end TinyTextWindow::create()
 
@@ -95,8 +97,9 @@ TinyTextWindow::TinyTextWindow(FXApp* theapp)
 
 TinyTextWindow::~TinyTextWindow()
 {
-  delete editorframe;
-  delete editor;
+  // don't delete these subwindows, FX will do it....
+  //WRONG: delete editorframe;
+  //WRONG: delete editor;
 }; // end TinyTextWindow::~TinyTextWindow
 
 int
