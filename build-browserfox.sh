@@ -6,6 +6,6 @@ CXX=g++
 ASTYLE=astyle
 ASTYLEFLAGS='--verbose --indent=spaces=2  --style=gnu'
 $ASTYLE $ASTYLEFLAGS browserfox.cc
-CXXFLAGS='-Wall  -Wextra -Woverloaded-virtual -Wshadow -O -g'
+CXXFLAGS='-Wall  -Wextra -Woverloaded-virtual -Wshadow -Og -g'
 $CXX $CXXFLAGS $(pkg-config --cflags fox17) browserfox.cc $(pkg-config --libs fox17) \
     -o browserfox
