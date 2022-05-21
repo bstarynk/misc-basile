@@ -3,8 +3,10 @@
 //  © Copyright 2022 Basile Starynkevitch (&Jeroen van der Zijp)
 //  some code taken from fox-toolkit.org Adie
 #include <fstream>
+#include <iostream>
 /// fox-toolkit.org
 #include <fx.h>
+
 
 // Editor main window
 class TinyTextWindow : public FXMainWindow
@@ -13,13 +15,50 @@ class TinyTextWindow : public FXMainWindow
   ///
   FXHorizontalFrame   *editorframe;             // Editor frame
   FXText              *editor;                  // Editor text widget
+  static int wincount;
+  int winrank;
 protected:
-  TinyTextWindow(): FXMainWindow(), editorframe(nullptr), editor(nullptr) {};
+  TinyTextWindow(): FXMainWindow(), editorframe(nullptr), editor(nullptr),
+    winrank(++wincount) {};
 public:
   TinyTextWindow(FXApp *theapp);
   virtual ~TinyTextWindow();
   virtual void create();
+  void output (std::ostream&out) const;
 };				// end TinyTextWindow
+
+int TinyTextWindow::wincount = 0;
+
+std::ostream&operator << (std::ostream&out, const TinyTextWindow&tw)
+{
+  tw.output(out);
+  return out;
+}
+
+std::ostream&operator << (std::ostream&out, const TinyTextWindow*ptw)
+{
+  if (!ptw)
+    out << "nulltextwindowptr";
+  else
+    out << *ptw << "@" << (void*)ptw;
+  return out;
+}
+void
+TinyTextWindow::output(std::ostream&out) const
+{
+  out << "TinyTextWindow#" << winrank
+      << "(X="<< getX() << ",Y="<< getY()
+      << ",W=" << getWidth() << ",H=" << getHeight()
+      << ";"
+      << (isEnabled()?"enabled":"disabled")
+      << ";"
+      << (isActive()?"active":"inactive")
+      << ";"
+      << (isShell()?"shell":"nonshell")
+      << ";"
+      << (shown()?"shown":"hidden")
+      << ")";
+} // end TinyTextWindow::output
 
 FXIMPLEMENT(TinyTextWindow,FXMainWindow,nullptr, 0);
 
@@ -31,9 +70,12 @@ TinyTextWindow::create()
 } // end TinyTextWindow::create()
 
 TinyTextWindow::TinyTextWindow(FXApp* theapp)
-  : FXMainWindow(theapp,"tiny-text-fox",nullptr, nullptr,
-                 0, 0, 450, 333),
-    editorframe(nullptr), editor(nullptr)
+  : FXMainWindow(theapp, /*name:*/"tiny-text-fox",
+                 /*closedicon:*/nullptr, /*mainicon:*/nullptr,
+                 /*opt:*/DECOR_ALL,
+                 /*x,y,w,h:*/0, 0, 450, 333),
+    editorframe(nullptr), editor(nullptr),
+    winrank (++wincount)
 {
   editorframe = //
     new FXHorizontalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
@@ -62,8 +104,14 @@ main(int argc, char*argv[])
 {
   FXApp the_app("fox-tinyed","FOX tinyed (Basile)");
   the_app.init(argc, argv);
-  new TinyTextWindow(&the_app);
   the_app.create();
+  auto mywin = new TinyTextWindow(&the_app);
+  mywin->create();
+  mywin->layout();
+  mywin->show();
+  //mywin->enable();
+  std::cout << __FILE__ ":" << __LINE__ << " "
+            << "mywin:" << mywin << std::endl;
   return the_app.run();
 } // end main
 
