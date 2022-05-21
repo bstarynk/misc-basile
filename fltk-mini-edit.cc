@@ -150,15 +150,29 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
       int wstart = mybuf->word_start(inspos);
       int wend = mybuf->word_end(inspos);
       int linend = mybuf->line_end(inspos);
-      printf("MyEditor TAB [%s:%d] inspos=%d L%dC%d curutf#%d wstart=%d wend=%d linend=%d\n",
+      int insmode = myed->insert_mode();
+      printf("MyEditor TAB [%s:%d] inspos=%d L%dC%d curutf#%d wstart=%d wend=%d linend=%d insmode=%d\n",
              __FILE__, __LINE__, //
-             inspos, lin, col, curutf, wstart, wend, linend);
+             inspos, lin, col, curutf, wstart, wend, linend, insmode);
       if (wend > linend)
         wend = linend;
       const char*startchr = mybuf->address(wstart);
       const char*endchr = mybuf->address(wend);
       assert(startchr != nullptr);
       assert(endchr != nullptr);
+      printf("MyEditor TAB [%s:%d] inspos=%d startchr:%p endchr:%p\n",
+             __FILE__, __LINE__,
+             inspos, startchr, endchr);
+      if (startchr > endchr)
+        {
+          // this happens when TAB is pressed with the cursor at end
+          // of line...
+          printf("MyEditor TAB [%s:%d] inspos=%d endofline#%d\n",
+                 __FILE__, __LINE__,
+                 inspos, lin);
+          return 0; // don't handle
+        }
+
       assert (endchr >= startchr);
       char*curword = mybuf->text_range(wstart, wend);
       char*prefix = mybuf->text_range(wstart, inspos);
@@ -187,7 +201,9 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
           printf("MyEditor TAB [%s:%d] inspos=%d prefixrepl:%s\n",
                  __FILE__, __LINE__,
                  inspos, prefixrepl);
-#warning missing actual replacement of prefix in MyEditor::tab_key_binding
+          mybuf->remove(wstart, inspos);
+          mybuf->insert(wstart, prefixrepl);
+#warning missing style insertion
           free (prefixrepl), prefixrepl = nullptr;
         }
       free (curword), curword = nullptr;
