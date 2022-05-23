@@ -167,8 +167,9 @@ main (int argc, char *argv[])
 			   &initerr))
     {
       fprintf (stderr,
-	       "%s: failed to parse program arguments (%s)\n",
-	       argv[0], initerr ? initerr->message : "??");
+	       "%s: [%s:%d] failed to parse program arguments (%s)\n",
+	       argv[0], __FILE__, __LINE__,
+	       initerr ? initerr->message : "??");
       exit (EXIT_FAILURE);
     }
   DBGEPRINTF ("start %s on %s pid #%d", prog_name, my_host_name,

@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # file misc-basile/build-gtksrc-browser.sh
 # © 2022 copyright CEA & Basile Starynkevitch
+
+## see also https://wiki.debian.org/HowToGetABacktrace
+## see also https://wiki.debian.org/Debuginfod
+## consider export DEBUGINFOD_URLS="https://debuginfod.debian.net"
 CC=gcc
 MYGITID=$(git log -1|head -1|cut -b9-20)
 OPTIMFLAGS=-Og
