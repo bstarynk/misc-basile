@@ -381,7 +381,7 @@ main(int argc, char **argv)
   med->initialize();
   med->decorate();
   win->resizable(med);
-  win->show();
+  win->show(argc, argv);
   return Fl::run();
 }  // end main
 
