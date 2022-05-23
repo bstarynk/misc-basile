@@ -369,6 +369,8 @@ my_backtrace_print_at(int line, int skip)
 int
 miniedit_prog_arg_handler(int argc, char **argv, int &i)
 {
+  if (i >= argc)
+    return 0;
   if (strcmp("-h", argv[i]) == 0 || strcmp("--help", argv[i]) == 0)
     {
       my_help_flag = 1;
