@@ -44,9 +44,9 @@ gboolean debug_wanted;
 extern gboolean keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,
 				     gpointer data);
 
-extern gboolean version_cb (const gchar * option_name,
-			    const gchar * value,
-			    gpointer data, GError ** error);
+extern gboolean show_version_cb (const gchar * option_name,
+				 const gchar * value,
+				 gpointer data, GError ** error);
 
 extern void
 my_sview_insert_at_cursor_cb (GtkTextView * self,
@@ -54,17 +54,19 @@ my_sview_insert_at_cursor_cb (GtkTextView * self,
 
 
 gboolean
-version_cb (const gchar * option_name
-	    __attribute__((unused)),
-	    const gchar * value
-	    __attribute__((unused)),
-	    gpointer data
-	    __attribute__((unused)), GError ** error __attribute__((unused)))
+show_version_cb (const gchar * option_name
+		 __attribute__((unused)),
+		 const gchar * value
+		 __attribute__((unused)),
+		 gpointer data
+		 __attribute__((unused)), GError ** error
+		 __attribute__((unused)))
 {
-  printf ("%s: version compiled " __DATE__ "@" __TIME__ "\n", prog_name);
+  printf ("%s: version compiled %s git %s\n",
+	  prog_name, __DATE__ "@" __TIME__, GIT_ID);
   fflush (NULL);
   return TRUE;
-}				/* end version_cb */
+}				/* end show_version_cb */
 
 static const GOptionEntry prog_options_arr[] = {
   // --version print the version information
@@ -72,9 +74,9 @@ static const GOptionEntry prog_options_arr[] = {
    .short_name = 'V',		//
    .flags = G_OPTION_FLAG_NONE,	//
    .arg = G_OPTION_ARG_CALLBACK,	//
-   .arg_data = (void *) &version_cb,	///
+   .arg_data = (void *) &show_version_cb,	///
    .description = "show version information",	///
-   .arg_description = NULL,
+   .arg_description = "~~",
    },
   // --debug enable a lot of debug messages
   {.long_name = "debug",	//
