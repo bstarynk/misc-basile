@@ -27,6 +27,7 @@
 #include <unistr.h>
 
 #include <string>
+#include <iostream>
 
 /// https://github.com/ianlancetaylor/libbacktrace/
 #include <backtrace.h>
@@ -49,6 +50,10 @@ struct backtrace_state *my_backtrace_state;
 #define MY_BACKTRACE_PRINT(Skip) my_backtrace_print_at(__LINE__, (Skip))
 void my_backtrace_print_at(int line, int skip);
 
+int miniedit_prog_arg_handler(int argc, char **argv, int &i);
+
+bool my_help_flag;
+bool my_version_flag;
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
 {
@@ -344,7 +349,8 @@ MyEditor::decorate(void)
 } // end MyEditor::decorate
 
 
-void my_backtrace_error(void*data, const char*msg, int errnum)
+void
+my_backtrace_error(void*data, const char*msg, int errnum)
 {
   fprintf(stderr, "backtrace error %s (errnum=%d:%s)", msg,
           errnum, (errnum>=0)?strerror(errnum):"BUG");
@@ -352,7 +358,8 @@ void my_backtrace_error(void*data, const char*msg, int errnum)
   exit(EXIT_FAILURE);
 } // end my_backtrace_error
 
-void my_backtrace_print_at(int line, int skip)
+void
+my_backtrace_print_at(int line, int skip)
 {
   printf("%s:%d backtrace\n", __FILE__, line);
   backtrace_print(my_backtrace_state, skip, stdout);
@@ -360,13 +367,51 @@ void my_backtrace_print_at(int line, int skip)
 } // end my_backtrace_print_at
 
 int
+miniedit_prog_arg_handler(int argc, char **argv, int &i)
+{
+  if (strcmp("-h", argv[i]) == 0 || strcmp("--help", argv[i]) == 0)
+    {
+      my_help_flag = 1;
+      i += 1;
+      return 1;
+    }
+  if (strcmp("-V", argv[i]) == 0 || strcmp("--version", argv[i]) == 0)
+    {
+      my_version_flag = 1;
+      i += 1;
+      return 1;
+    }
+  /* For arguments requiring a following option, increment i by 2 and return 2;
+     For other arguments to be handled by FLTK, return 0 */
+  return 0;
+} // end miniedit_prog_arg_handler
+
+int
 main(int argc, char **argv)
 {
+  int i= 1;
+  if (Fl::args(argc, argv, i, miniedit_prog_arg_handler) < argc)
+    {
+      Fl::fatal("error: unknown option: %s\n"
+                "usage: %s [options]\n"
+                " -h | --help        : print extended help message\n"
+                " -V | --version     : print version\n",
+                argv[i], argv[0]);
+    }
+  if (my_version_flag)
+    {
+      std::cout << argv[1] << " version "
+                << GITID
+                << " built " << __DATE__ "@" __TIME__ << std::endl;
+      exit(EXIT_SUCCESS);
+    }
   std::string tistr = __FILE__;
   tistr.erase(sizeof(__FILE__)-4,3);
+  ////
 #ifdef GITID
   tistr += "/" GITID;
-#endif
+#endif		       // GITID defined
+  ////
   my_backtrace_state = //
     backtrace_create_state
     (
@@ -381,7 +426,7 @@ main(int argc, char **argv)
   med->initialize();
   med->decorate();
   win->resizable(med);
-  win->show(argc, argv);
+  win->show();
   return Fl::run();
 }  // end main
 
