@@ -18,6 +18,8 @@
 
 static char *prog_name;
 
+gboolean debug_wanted;
+
 /// https://stackoverflow.com/q/46809878/841108
 extern gboolean keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,
 				     gpointer data);
@@ -45,11 +47,24 @@ version_cb (const gchar * option_name
 }				/* end version_cb */
 
 static const GOptionEntry prog_options_arr[] = {
+  // --version print the version information
   {.long_name = "version",	//
    .short_name = 'V',		//
    .flags = G_OPTION_FLAG_NONE,	//
    .arg = G_OPTION_ARG_CALLBACK,	//
-   .arg_data = (void *) &version_cb},
+   .arg_data = (void *) &version_cb,	///
+   .description = "show version information",	///
+   .arg_description = NULL,
+   },
+  // --debug enable a lot of debug messages
+  {.long_name = "debug",	//
+   .short_name = 'D',		//
+   .flags = G_OPTION_FLAG_NONE,	//
+   .arg = G_OPTION_ARG_NONE,	//
+   .arg_data = (void *) &debug_wanted,	///
+   .description = "show debugging messages",	///
+   .arg_description = NULL,
+   },
   /// last entry is empty
   {
    .long_name = NULL,		///
