@@ -4,9 +4,12 @@
 //
 //// code inspired from http://www.bravegnu.org/gtktext/x561.html and
 //// https://basic-converter.proboards.com/thread/587/gtksourceview-porting-code-example-solved
+#define _GNU_SOURCE
 #include <assert.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <string.h>
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
@@ -16,9 +19,26 @@
 //#include "gtksourceview/gtksourcelanguage.h"
 //#include "gtksourceview/gtksourcelanguagemanager.h"
 
+
+#ifndef GIT_ID
+#warning missing GIT_ID in compilation command
+#define GIT_ID "???????"
+#endif
+
 static char *prog_name;
 
+char my_host_name[48];
 gboolean debug_wanted;
+
+
+#define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {			\
+    if (debug_wanted) {						\
+      fprintf(stderr, "@¤%s:%d:", (Fil), (Lin));		\
+      fprintf(stderr, Fmt, ##__VA_ARGS__);			\
+      fputc('\n', stderr); fflush(stderr); }} while(false)
+
+#define DBGEPRINTF(Fmt,...) DBGEPRINTF_AT(__FILE__,__LINE__,\
+  (Fmt), ##__VA_ARGS__)
 
 /// https://stackoverflow.com/q/46809878/841108
 extern gboolean keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,
@@ -132,7 +152,8 @@ static gboolean open_file (GtkSourceBuffer * sBuf, const gchar * filename);
 int
 main (int argc, char *argv[])
 {
-  prog_name = argv[0];
+  prog_name = basename (argv[0]);
+  gethostname (my_host_name, sizeof (my_host_name));
   static GtkWidget *window, *pScrollWin, *sView;
   PangoFontDescription *font_desc = NULL;
   GtkSourceLanguageManager *lm = NULL;
@@ -148,7 +169,8 @@ main (int argc, char *argv[])
 	       argv[0], initerr ? initerr->message : "??");
       exit (EXIT_FAILURE);
     }
-
+  DBGEPRINTF ("start %s on %s pid #%d", prog_name, my_host_name,
+	      (int) getpid ());
   /* Create a Window. */
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   g_signal_connect (G_OBJECT (window),
