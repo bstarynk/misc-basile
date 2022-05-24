@@ -264,7 +264,7 @@ MyEditor::ModifyCallback(int pos,        // position of update
 {
   DBGPRINTF("MyEditor::ModifyCallback pos=%d ninserted=%d ndeleted=%d"
             " nrestyled=%d deltxt=%s",
-            pos, nInserted, nRestyled, deltxt);
+            pos, nInserted, nDeleted, nRestyled, deltxt);
   MY_BACKTRACE_PRINT(1);
   decorate();
 } // end MyEditor::ModifyCallback
