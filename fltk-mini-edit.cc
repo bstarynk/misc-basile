@@ -50,6 +50,28 @@ extern "C" struct backtrace_state *my_backtrace_state;
 extern "C" bool my_help_flag;
 extern "C" bool my_version_flag;
 extern "C" bool my_debug_flag;
+extern "C" bool my_styledemo_flag;
+
+/// from www.december.com/html/spec/colorsvghex.html
+#ifndef FL_ORANGE
+#define FL_ORANGE 0xffA500
+#endif
+
+#ifndef FL_PURPLE
+#define FL_PURPLE 0x800080
+#endif
+
+#ifndef FL_GOLDENROD
+#define FL_GOLDENROD 0xDAA520
+#endif
+
+#ifndef FL_LIGHTCYAN
+#define FL_LIGHTCYAN 0xE0FFFF
+#endif
+
+#ifndef FL_SLATEBLUE
+#define FL_SLATEBLUE 0x6A5ACD
+#endif
 
 #define MY_BACKTRACE_PRINT(Skip) my_backtrace_print_at(__LINE__, (Skip))
 extern "C" void my_backtrace_print_at(int line, int skip);
@@ -68,10 +90,15 @@ extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 		<< Out << std::endl; \
     }} while(0)
 
+
+class MyEditor;
+
+extern "C" void do_style_demo(MyEditor*);
+
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
 {
-
+  friend void do_style_demo(MyEditor*);
   Fl_Text_Buffer *txtbuff;      // text buffer
   Fl_Text_Buffer *stybuff;	// style buffer
   static int tab_key_binding(int key, Fl_Text_Editor*editor);
@@ -127,19 +154,19 @@ public:
     [Style_Name] =  //
     {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Name,
     [Style_Word] =  //
-    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Word,
+    {  FL_BLUE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Word,
     [Style_Keyword] =  //
-    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Keyword,
+    {  FL_DARK_MAGENTA, FL_COURIER,        17,   0,             FL_WHITE }, //:Style_Keyword,
     [Style_Oid] =  //
-    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Oid,
+    {  FL_ORANGE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Oid,
     [Style_Comment] =  //
-    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Comment,
+    {  FL_PURPLE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Comment,
     [Style_Bold] =  //
     {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Bold,
     [Style_Italic] =  //
     {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Italic,
     [Style_CodeChunk] =  //
-    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_CodeChunk,
+    {  FL_SLATEBLUE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_CodeChunk,
     [Style_Unicode] = //
     {  FL_DARK_RED,    FL_HELVETICA_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Unicode,
     [Style_Errored] = //
@@ -322,6 +349,8 @@ MyEditor::ModifyCallback(int pos,        // position of update
 void
 MyEditor::decorate(void)
 {
+  if (my_styledemo_flag)
+    return;
   Fl_Text_Buffer*buf = buffer();
   Fl_Text_Buffer*stybuf = style_buffer();
   assert (buf != nullptr);
@@ -406,6 +435,39 @@ MyEditor::decorate(void)
 #warning incomplete MyEditor::decorate
 } // end MyEditor::decorate
 
+void
+do_style_demo(MyEditor*med)
+{
+  assert (med != nullptr);
+  assert (med->txtbuff != nullptr);
+  assert (med ->stybuff != nullptr);
+#define DEMO_STYLE(S) do {			\
+    int sl = strlen(#S);			\
+    char sbuf[sizeof(#S)+1];			\
+    memset(sbuf, 0, sizeof(sbuf));		\
+    med->txtbuff->append(#S);			\
+    for (int i=0; i<sl; i++)			\
+      sbuf[i] = 'A'+(int)MyEditor::S;		\
+  med->txtbuff->append("\n");			\
+  med->stybuff->append(sbuf);			\
+  med->stybuff->append("A");			\
+  } while(0);
+  /* starting demo styles */
+  DEMO_STYLE(Style_Plain);
+  DEMO_STYLE(Style_Literal);
+  DEMO_STYLE(Style_Number);
+  DEMO_STYLE(Style_Name);
+  DEMO_STYLE(Style_Word);
+  DEMO_STYLE(Style_Keyword);
+  DEMO_STYLE(Style_Oid);
+  DEMO_STYLE(Style_Comment);
+  DEMO_STYLE(Style_Bold);
+  DEMO_STYLE(Style_Italic);
+  DEMO_STYLE(Style_CodeChunk);
+  DEMO_STYLE(Style_Unicode);
+  DEMO_STYLE(Style_Errored);
+#undef DEMO_STYLE
+} // end do_style_demo
 
 void
 my_backtrace_error(void*data, const char*msg, int errnum)
@@ -447,6 +509,12 @@ miniedit_prog_arg_handler(int argc, char **argv, int &i)
       i += 1;
       return 1;
     }
+  if (strcmp("-Y", argv[i]) == 0 || strcmp("--style-demo", argv[i]) == 0)
+    {
+      my_styledemo_flag = 1;
+      i += 1;
+      return 1;
+    }
   /* For arguments requiring a following option, increment i by 2 and return 2;
      For other arguments to be handled by FLTK, return 0 */
   return 0;
@@ -462,6 +530,7 @@ main(int argc, char **argv)
                 "usage: %s [options]\n"
                 " -h | --help        : print extended help message\n"
                 " -D | --debug       : show debugging messages\n"
+                " -Y | --style-demo  : show demo of styles\n"
                 " -V | --version     : print version\n",
                 argv[i], argv[0]);
     }
@@ -486,12 +555,13 @@ main(int argc, char **argv)
       my_backtrace_error, nullptr);
   Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
   MyEditor  *med = new MyEditor(10,10,win->w()-20,win->h()-20);
-  med->text("Test\n"
-            "Other\n"
-            "0123456789\n"
-            "°§ +\n");
-  med->initialize();
-  med->decorate();
+  if (my_styledemo_flag)
+    do_style_demo (med);
+  else
+    med->text("Test\n"
+              "Other\n"
+              "0123456789\n"
+              "°§ +\n");
   win->resizable(med);
   win->show();
   return Fl::run();
@@ -503,6 +573,7 @@ struct backtrace_state *my_backtrace_state= nullptr;
 bool my_help_flag = false;
 bool my_version_flag = false;
 bool my_debug_flag = false;
+bool my_styledemo_flag = false;
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
