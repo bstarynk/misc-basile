@@ -54,6 +54,19 @@ int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 
 bool my_help_flag;
 bool my_version_flag;
+bool my_debug_flag;
+
+#define DBGPRINTF(Fmt,...) do {if (my_debug_flag) { \
+    printf("@@%s:%d:", __FILE__, __LINE__); \
+    printf((Fmt), ##__VA_ARGS__); \
+    putchar('\n'); fflush(stdout); \
+    }} while(0)
+
+#define DBGOUT(Out) do { if (my_debug_flag) { \
+      std::cout << "@@" __FILE__ << ":" << __LINE__ << ':' \
+		<< Out << std::endl; \
+    }} while(0)
+
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
 {
@@ -156,34 +169,31 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
       int wend = mybuf->word_end(inspos);
       int linend = mybuf->line_end(inspos);
       int insmode = myed->insert_mode();
-      printf("MyEditor TAB [%s:%d] inspos=%d L%dC%d curutf#%d wstart=%d wend=%d linend=%d insmode=%d\n",
-             __FILE__, __LINE__, //
-             inspos, lin, col, curutf, wstart, wend, linend, insmode);
+      DBGPRINTF("MyEditor TAB inspos=%d L%dC%d curutf#%d wstart=%d"
+                " wend=%d linend=%d insmode=%d",
+                inspos, lin, col, curutf, wstart, wend, linend, insmode);
       if (wend > linend)
         wend = linend;
       const char*startchr = mybuf->address(wstart);
       const char*endchr = mybuf->address(wend);
       assert(startchr != nullptr);
       assert(endchr != nullptr);
-      printf("MyEditor TAB [%s:%d] inspos=%d startchr:%p endchr:%p\n",
-             __FILE__, __LINE__,
-             inspos, startchr, endchr);
+      DBGPRINTF("MyEditor TAB inspos=%d startchr:%p endchr:%p",
+                inspos, startchr, endchr);
       if (startchr > endchr)
         {
           // this happens when TAB is pressed with the cursor at end
           // of line...
-          printf("MyEditor TAB [%s:%d] inspos=%d endofline#%d\n",
-                 __FILE__, __LINE__,
-                 inspos, lin);
+          DBGPRINTF("MyEditor TAB inspos=%d endofline#%d",
+                    inspos, lin);
           return 0; // don't handle
         }
 
       assert (endchr >= startchr);
       char*curword = mybuf->text_range(wstart, wend);
       char*prefix = mybuf->text_range(wstart, inspos);
-      printf("MyEditor TAB [%s:%d] inspos=%d word '%s' prefix='%s'\n",
-             __FILE__, __LINE__,
-             inspos, curword, prefix);
+      DBGPRINTF("MyEditor TAB inspos=%d word '%s' prefix='%s'",
+                inspos, curword, prefix);
       bool prefixdigits = true;
       bool prefixletters = true;
       for (const char*pc = prefix; *pc; pc++)
@@ -203,9 +213,8 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
         asprintf(&prefixrepl, "%s/%s", prefix, prefix);
       if (prefixrepl)
         {
-          printf("MyEditor TAB [%s:%d] inspos=%d prefixrepl:%s\n",
-                 __FILE__, __LINE__,
-                 inspos, prefixrepl);
+          DBGPRINTF("MyEditor TAB inspos=%d prefixrepl:%s",
+                    inspos, prefixrepl);
           mybuf->remove(wstart, inspos);
           mybuf->insert(wstart, prefixrepl);
 #warning missing style insertion
@@ -215,8 +224,7 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
       free (prefix), prefix = nullptr;
     }
   else
-    printf("MyEditor TAB [%s:%d] inspos=%d not shown\n", __FILE__, __LINE__,
-           inspos);
+    DBGPRINTF("MyEditor TAB inspos=%d not shown",   inspos);
   fflush(stdout);
   return 0; /// this means don't handle
 } // end MyEditor::tab_key_binding
@@ -254,8 +262,9 @@ MyEditor::ModifyCallback(int pos,        // position of update
                          const char*deltxt // deleted text
                         )
 {
-  printf("MyEditor::ModifyCallback[L%d] pos=%d ninserted=%d ndeleted=%d nrestyled=%d deltxt=%s\n", __LINE__,
-         pos, nInserted, nDeleted, nRestyled, deltxt);
+  DBGPRINTF("MyEditor::ModifyCallback pos=%d ninserted=%d ndeleted=%d"
+            " nrestyled=%d deltxt=%s",
+            pos, nInserted, nRestyled, deltxt);
   MY_BACKTRACE_PRINT(1);
   decorate();
 } // end MyEditor::ModifyCallback
@@ -299,10 +308,9 @@ MyEditor::decorate(void)
           memset (stychar, 0, sizeof(stychar));
           stychar[0] = 'A' + cursty;
           stybuf->replace(curix, curix+1, stychar);
-          printf("MyEditor::decorate Unicode %s at %d=%#x style#%d/%s (%s:%d)\n",
-                 utfbuf, curix, curix, (int)cursty,
-                 stylename_table[(int)cursty],
-                 __FILE__,__LINE__);
+          DBGPRINTF("MyEditor::decorate Unicode %s at %d=%#x style#%d/%s",
+                    utfbuf, curix, curix, (int)cursty,
+                    stylename_table[(int)cursty]);
         }
       else
         {
@@ -335,13 +343,13 @@ MyEditor::decorate(void)
                 default:
                   break;
                 };
-              printf("MyEditor::decorate Ctrlchar \\x%02x%s at %d=%#x plain_style (%s:%d)\n",
-                     (int)curch, escstr, curix, curix, __FILE__,__LINE__);
+              DBGPRINTF("MyEditor::decorate Ctrlchar \\x%02x%s "
+                        "at %d=%#x plain_style",
+                        (int)curch, escstr, curix, curix);
             }
           else
-            printf("MyEditor::decorate Unicode %s at %d=%#x plain_style (%s:%d)\n",
-                   utfbuf, curix, curix,
-                   __FILE__,__LINE__);
+            DBGPRINTF("MyEditor::decorate Unicode %s at %d=%#x plain_style",
+                      utfbuf, curix, curix);
         }
       previx= curix;
     };
@@ -383,6 +391,12 @@ miniedit_prog_arg_handler(int argc, char **argv, int &i)
       i += 1;
       return 1;
     }
+  if (strcmp("-D", argv[i]) == 0 || strcmp("--debug", argv[i]) == 0)
+    {
+      my_debug_flag = 1;
+      i += 1;
+      return 1;
+    }
   /* For arguments requiring a following option, increment i by 2 and return 2;
      For other arguments to be handled by FLTK, return 0 */
   return 0;
@@ -397,6 +411,7 @@ main(int argc, char **argv)
       Fl::fatal("error: unknown option: %s\n"
                 "usage: %s [options]\n"
                 " -h | --help        : print extended help message\n"
+                " -D | --debug       : show debugging messages\n"
                 " -V | --version     : print version\n",
                 argv[i], argv[0]);
     }
