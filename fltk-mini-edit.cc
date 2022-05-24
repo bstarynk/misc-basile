@@ -45,16 +45,17 @@
 #include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Editor.H>
 #include <FL/filename.H>
-struct backtrace_state *my_backtrace_state;
+
+extern "C" struct backtrace_state *my_backtrace_state;
+extern "C" bool my_help_flag;
+extern "C" bool my_version_flag;
+extern "C" bool my_debug_flag;
 
 #define MY_BACKTRACE_PRINT(Skip) my_backtrace_print_at(__LINE__, (Skip))
-void my_backtrace_print_at(int line, int skip);
+extern "C" void my_backtrace_print_at(int line, int skip);
 
-int miniedit_prog_arg_handler(int argc, char **argv, int &i);
+extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 
-bool my_help_flag;
-bool my_version_flag;
-bool my_debug_flag;
 
 #define DBGPRINTF(Fmt,...) do {if (my_debug_flag) { \
     printf("@@%s:%d:", __FILE__, __LINE__); \
@@ -88,39 +89,29 @@ public:
                                      int nDeleted,            // number of deleted chars
                                      int nRestyled,           // number of restyled chars
                                      const char *deletedText, // text deleted
-                                     void *cbarg)             // callback data
-  {
-    assert (cbarg != nullptr);
-    MyEditor* med = reinterpret_cast<MyEditor*>(cbarg);
-    MY_BACKTRACE_PRINT(1);
-    med->ModifyCallback(pos, nInserted, nDeleted, nRestyled, deletedText);
-  };
-  MyEditor(int X,int Y,int W,int H)
-    : Fl_Text_Editor(X,Y,W,H), txtbuff(nullptr), stybuff(nullptr)
-  {
-    txtbuff = new Fl_Text_Buffer();    // text buffer
-    stybuff = new Fl_Text_Buffer();    // style buffer
-    buffer(txtbuff);
-    initialize();
-  };
-  ~MyEditor()
-  {
-    delete txtbuff;
-    delete stybuff;
-    txtbuff = nullptr;
-    stybuff = nullptr;
-  };
-  void text(const char* val)
+                                     void *cbarg);             // callback data
+
+  MyEditor(int X,int Y,int W,int H);
+  ~MyEditor();
+  inline void text(const char* val)
   {
     txtbuff->text(val);
   };
   enum my_style_en
   {
     Style_Plain,
-    Style_Voyel,
-    Style_Letter,
-    Style_Digit,
+    Style_Literal,
+    Style_Number,
+    Style_Name,
+    Style_Word,
+    Style_Keyword,
+    Style_Oid,
+    Style_Comment,
+    Style_Bold,
+    Style_Italic,
+    Style_CodeChunk,
     Style_Unicode,
+    Style_Errored,
     Style__LAST
   };
   static inline constexpr Fl_Text_Editor::Style_Table_Entry style_table[(unsigned)Style__LAST] =
@@ -129,28 +120,87 @@ public:
     // --------------- --------------      ----  ---------      -----------------
     [Style_Plain] = //
     {  FL_BLACK,       FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Plain,
-    [Style_Voyel] = //
-    {  FL_DARK_GREEN,  FL_COURIER_BOLD,    17,   0,             FL_WHITE }, //:Style_Voyel,
-    [Style_Letter] = //
-    {  FL_DARK_BLUE,   FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Letter,
-    [Style_Digit] =  //
-    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Digit,
+    [Style_Literal] = //
+    {  FL_DARK_GREEN,  FL_COURIER_BOLD,    17,   0,             FL_WHITE }, //:Style_Literal,
+    [Style_Number] = //
+    {  FL_DARK_BLUE,   FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Number,
+    [Style_Name] =  //
+    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Name,
+    [Style_Word] =  //
+    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Word,
+    [Style_Keyword] =  //
+    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Keyword,
+    [Style_Oid] =  //
+    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Oid,
+    [Style_Comment] =  //
+    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Comment,
+    [Style_Bold] =  //
+    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Bold,
+    [Style_Italic] =  //
+    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Italic,
+    [Style_CodeChunk] =  //
+    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_CodeChunk,
     [Style_Unicode] = //
     {  FL_DARK_RED,    FL_HELVETICA_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Unicode,
+    [Style_Errored] = //
+    {  FL_RED,        FL_COURIER_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Errored,
   };
   static inline constexpr const char*stylename_table[(unsigned)Style__LAST+1] =
   {
 #define NAME_STYLE(N) [(int)N] = #N
     NAME_STYLE(Style_Plain),
-    NAME_STYLE(Style_Voyel),
-    NAME_STYLE(Style_Letter),
-    NAME_STYLE(Style_Digit),
+    NAME_STYLE(Style_Literal),
+    NAME_STYLE(Style_Number),
+    NAME_STYLE(Style_Name),
+    NAME_STYLE(Style_Word),
+    NAME_STYLE(Style_Keyword),
+    NAME_STYLE(Style_Oid),
+    NAME_STYLE(Style_Comment),
+    NAME_STYLE(Style_Bold),
+    NAME_STYLE(Style_Italic),
+    NAME_STYLE(Style_CodeChunk),
     NAME_STYLE(Style_Unicode),
+    NAME_STYLE(Style_Errored),
     nullptr
   };
   void decorate(void);
 };				// end MyEditor
 
+
+extern "C" const int last_shared_line = __LINE__;
+
+// we could compile and dlopen extra C++ plugins, sharing all the code above....
+
+MyEditor::MyEditor(int X,int Y,int W,int H)
+  : Fl_Text_Editor(X,Y,W,H), txtbuff(nullptr), stybuff(nullptr)
+{
+  txtbuff = new Fl_Text_Buffer();    // text buffer
+  stybuff = new Fl_Text_Buffer();    // style buffer
+  buffer(txtbuff);
+  initialize();
+} // end MyEditor::MyEditor
+
+MyEditor::~MyEditor()
+{
+  delete txtbuff;
+  delete stybuff;
+  txtbuff = nullptr;
+  stybuff = nullptr;
+} // end MyEditor::~MyEditor
+
+void
+MyEditor::static_modify_callback(int pos,                 // position of update
+                                 int nInserted,           // number of inserted chars
+                                 int nDeleted,            // number of deleted chars
+                                 int nRestyled,           // number of restyled chars
+                                 const char *deletedText, // text deleted
+                                 void *cbarg)
+{
+  assert (cbarg != nullptr);
+  MyEditor* med = reinterpret_cast<MyEditor*>(cbarg);
+  MY_BACKTRACE_PRINT(1);
+  med->ModifyCallback(pos, nInserted, nDeleted, nRestyled, deletedText);
+};
 
 int
 MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
@@ -293,11 +343,11 @@ MyEditor::decorate(void)
       if (curch < 0x7F)
         {
           if (strchr("aeiouyAEIOUY", (int)curch))
-            cursty = Style_Voyel;
+            cursty = Style_Name;
           else if (isalpha(curch))
-            cursty = Style_Letter;
+            cursty = Style_Literal;
           else if (isdigit(curch))
-            cursty = Style_Digit;
+            cursty = Style_Number;
         }
       else
         cursty = Style_Unicode;
@@ -447,6 +497,12 @@ main(int argc, char **argv)
   return Fl::run();
 }  // end main
 
+
+
+struct backtrace_state *my_backtrace_state= nullptr;
+bool my_help_flag = false;
+bool my_version_flag = false;
+bool my_debug_flag = false;
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
