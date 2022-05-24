@@ -162,13 +162,13 @@ public:
     [Style_Comment] =  //
     {  FL_PURPLE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Comment,
     [Style_Bold] =  //
-    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Bold,
+    {  FL_BLACK,        FL_COURIER_BOLD,         17,   0,             FL_WHITE }, //:Style_Bold,
     [Style_Italic] =  //
-    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Italic,
+    {  FL_BLACK,        FL_COURIER_ITALIC,         17,   0,             FL_WHITE }, //:Style_Italic,
     [Style_CodeChunk] =  //
     {  FL_SLATEBLUE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_CodeChunk,
     [Style_Unicode] = //
-    {  FL_DARK_RED,    FL_HELVETICA_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Unicode,
+    {  FL_DARK_RED,    FL_HELVETICA_BOLD,  17,   0,  FL_GRAY0 }, //:Style_Unicode,
     [Style_Errored] = //
     {  FL_RED,        FL_COURIER_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Errored,
   };
@@ -464,6 +464,11 @@ do_style_demo(MyEditor*med)
   DEMO_STYLE(Style_Bold);
   DEMO_STYLE(Style_Italic);
   DEMO_STYLE(Style_CodeChunk);
+  med->txtbuff->append("§²°∃⁑");
+  char sb[16]= {0};
+  for (int i=0; i<(int)strlen("§²°∃⁑"); i++)
+    sb[i] = 'A'+(int)MyEditor::Style_Unicode;
+  med->stybuff->append(sb);
   DEMO_STYLE(Style_Unicode);
   DEMO_STYLE(Style_Errored);
 #undef DEMO_STYLE
