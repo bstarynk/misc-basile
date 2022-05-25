@@ -492,7 +492,7 @@ do_style_demo(MyEditor*med)
   DEMO_STYLE(Style_Italic);
   DEMO_STYLE(Style_CodeChunk);
   DBGPRINTF("after Style_CodeChunk txtbuff.len %d stybuff.len %d", med->txtbuff->length(), med->stybuff->length());
-#define DEMO_UNICODE_STR "§²ç°" //∃⁑
+#define DEMO_UNICODE_STR "§²ç°∃⁑" //∃⁑
   int ulen = (int) u8_mbsnlen((const uint8_t*)DEMO_UNICODE_STR, sizeof(DEMO_UNICODE_STR)-1);
   DBGPRINTF("do_style_demo DEMO_UNICODE_STR (%d bytes, %d utf8chars) %s",
             (int) strlen(DEMO_UNICODE_STR), ulen,
