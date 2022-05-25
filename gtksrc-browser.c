@@ -1,6 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // file misc-basile/gtksrc-browser.c
 // © 2022 copyright : unknown user & CEA & Basile Starynkevitch
+/***
+    © Copyright  1998-2022 by unknown and Basile Starynkevitch and CEA
+   program released under GNU general public license
+
+   this is free software; you can redistribute it and/or modify it under
+   the terms of the GNU General Public License as published by the Free
+   Software Foundation; either version 3, or (at your option) any later
+   version.
+
+   this is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+   License for more details.
+****/
 //
 //// code inspired from http://www.bravegnu.org/gtktext/x561.html and
 //// https://basic-converter.proboards.com/thread/587/gtksourceview-porting-code-example-solved
@@ -19,7 +33,7 @@
 //#include "gtksourceview/gtksourcelanguage.h"
 //#include "gtksourceview/gtksourcelanguagemanager.h"
 
-
+#define DEMO_UNICODE_STR "§²ç°"	//∃⁑
 #ifndef GIT_ID
 #warning missing GIT_ID in compilation command
 #define GIT_ID "???????"
