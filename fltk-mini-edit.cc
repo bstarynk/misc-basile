@@ -475,6 +475,7 @@ do_style_demo(MyEditor*med)
   assert (med != nullptr);
   assert (med->txtbuff != nullptr);
   assert (med ->stybuff != nullptr);
+  \
 #define DEMO_STYLE(S) do {			\
     int sl = strlen(#S);			\
     char sbuf[sizeof(#S)+1];			\
@@ -485,6 +486,10 @@ do_style_demo(MyEditor*med)
   med->txtbuff->append("\n");			\
   med->stybuff->append(sbuf);			\
   med->stybuff->append("A");			\
+  DBGPRINTF("DEMO_STYLE " # S			\
+	    " txtbuff.len %d stybuff.len %d",	\
+	    med->txtbuff->length(),		\
+	    med->stybuff->length());		\
   } while(0);
   /* starting demo styles */
   DEMO_STYLE(Style_Plain);
@@ -504,17 +509,24 @@ do_style_demo(MyEditor*med)
   DBGPRINTF("after Style_CodeChunk txtbuff.len %d stybuff.len %d", med->txtbuff->length(), med->stybuff->length());
 #define DEMO_UNICODE_STR "§²ç°∃⁑" //∃⁑
   int ulen = (int) u8_mbsnlen((const uint8_t*)DEMO_UNICODE_STR, sizeof(DEMO_UNICODE_STR)-1);
-  DBGPRINTF("do_style_demo DEMO_UNICODE_STR (%d bytes, %d utf8chars) %s",
+  DBGPRINTF("do_style_demo DEMO_UNICODE_STR (%d bytes, %d utf8chars) %s"
+            " txtbuff.len %d stybuff.len %d",
             (int) strlen(DEMO_UNICODE_STR), ulen,
-            DEMO_UNICODE_STR);
+            DEMO_UNICODE_STR,
+            med->txtbuff->length(), med->stybuff->length());
   med->txtbuff->append(DEMO_UNICODE_STR);
   char sb[((3*sizeof(DEMO_UNICODE_STR)/2) &0xf)+1]= {0};
   for (int i=0; i<(int)strlen(DEMO_UNICODE_STR); i++)
     sb[i] = 'A'+(int)MyEditor::Style_Unicode;
   med->stybuff->append(sb);
+  DBGPRINTF("before DEMO_STYLE Style_Unicode txtbuff.len %d stybuff.len %d sb '%s'",
+            med->txtbuff->length(), med->stybuff->length(), sb);
   DEMO_STYLE(Style_Unicode);
-  DBGPRINTF("after Style_Unicode txtbuff.len %d stybuff.len %d", med->txtbuff->length(), med->stybuff->length());
+  DBGPRINTF("after Style_Unicode txtbuff.len %d stybuff.len %d",
+            med->txtbuff->length(), med->stybuff->length());
   DEMO_STYLE(Style_Errored);
+  DBGPRINTF("ending do_style_demo txtbuff.len %d stybuff.len %d",
+            med->txtbuff->length(), med->stybuff->length());
 #undef DEMO_STYLE
 } // end do_style_demo
 
