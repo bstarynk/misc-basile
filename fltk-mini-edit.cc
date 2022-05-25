@@ -89,6 +89,9 @@ extern "C" Fl_Menu_Bar*my_menubar;
 const Fl_Font MYFL_FREEMONO_FONT = FL_FREE_FONT;
 const Fl_Font MYFL_FREEMONO_BOLD_FONT = FL_FREE_FONT+1;
 const Fl_Font MYFL_GOMONO_FONT = FL_FREE_FONT+2;
+const Fl_Font MYFL_DEJAVUSANSMONO_FONT = FL_FREE_FONT+2;
+const Fl_Font MYFL_XTRAFONT = FL_FREE_FONT+3;
+const Fl_Font MYFL_OTHERFONT = FL_FREE_FONT+4;
 
 #define MY_BACKTRACE_PRINT(Skip) do {if (my_debug_flag) \
       my_backtrace_print_at(__FILE__,__LINE__, (Skip)); } while (0)
@@ -224,6 +227,8 @@ public:
 extern "C" const int last_shared_line = __LINE__;
 
 char* my_shell_command;
+char* my_xtrafont_name;
+char* my_otherfont_name;
 
 // we could compile and dlopen extra C++ plugins, sharing all the code above....
 
@@ -565,6 +570,18 @@ miniedit_prog_arg_handler(int argc, char **argv, int &i)
       i += 2;
       return 2;
     }
+  if (strcmp("--xtrafont", argv[i]) == 0 && i+1<argc)
+    {
+      my_xtrafont_name = argv[i+1];
+      i += 2;
+      return 2;
+    }
+  if (strcmp("--otherfont", argv[i]) == 0 && i+1<argc)
+    {
+      my_otherfont_name = argv[i+1];
+      i += 2;
+      return 2;
+    }
   /* For arguments requiring a following option, increment i by 2 and return 2;
      For other arguments to be handled by FLTK, return 0 */
   return 0;
@@ -631,6 +648,8 @@ main(int argc, char **argv)
                 " -D | --debug       : show debugging messages\n"
                 " --do <shellcmd>    : run a shell command\n"
                 " -Y | --style-demo  : show demo of styles\n"
+                " --xtrafont <fontname>\n"
+                " --otherfont <fontname>\n"
                 " -V | --version     : print version\n",
                 argv[i], argv[0]);
     }
@@ -667,6 +686,11 @@ main(int argc, char **argv)
   Fl::set_font(MYFL_FREEMONO_FONT, "FreeMono");
   Fl::set_font(MYFL_FREEMONO_BOLD_FONT, "FreeMono bold");
   Fl::set_font(MYFL_GOMONO_FONT, "Go Mono");
+  Fl::set_font(MYFL_DEJAVUSANSMONO_FONT, "DejaVu Sans Mono");
+  if (my_xtrafont_name)
+    Fl::set_font(MYFL_XTRAFONT, my_xtrafont_name);
+  if (my_otherfont_name)
+    Fl::set_font(MYFL_OTHERFONT, my_xtrafont_name);
   Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
   Fl_Menu_Bar* menub = new Fl_Menu_Bar(1, 1, win->w()-5, 17);
   menub->add("&App/&Quit", "^q", my_quitmenu_handler);
