@@ -488,9 +488,14 @@ do_style_demo(MyEditor*med)
   DEMO_STYLE(Style_Bold);
   DEMO_STYLE(Style_Italic);
   DEMO_STYLE(Style_CodeChunk);
-  med->txtbuff->append("§²°∃⁑");
-  char sb[16]= {0};
-  for (int i=0; i<(int)strlen("§²°∃⁑"); i++)
+#define DEMO_UNICODE_STR "§²ç°" //∃⁑
+  int ulen = (int) u8_mbsnlen((const uint8_t*)DEMO_UNICODE_STR, sizeof(DEMO_UNICODE_STR));
+  DBGPRINTF("do_style_demo DEMO_UNICODE_STR (%d bytes, %d utf8chars) %s",
+            (int) strlen(DEMO_UNICODE_STR), ulen,
+            DEMO_UNICODE_STR);
+  med->txtbuff->append(DEMO_UNICODE_STR);
+  char sb[((3*sizeof(DEMO_UNICODE_STR)/2) &0xf)+1]= {0};
+  for (int i=0; i<(int)strlen(DEMO_UNICODE_STR); i++)
     sb[i] = 'A'+(int)MyEditor::Style_Unicode;
   med->stybuff->append(sb);
   DEMO_STYLE(Style_Unicode);
