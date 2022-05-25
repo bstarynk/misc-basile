@@ -61,6 +61,8 @@ extern "C" bool my_help_flag;
 extern "C" bool my_version_flag;
 extern "C" bool my_debug_flag;
 extern "C" bool my_styledemo_flag;
+extern "C" Fl_Window *my_top_window;
+extern "C" Fl_Menu_Bar*my_menubar;
 
 /// from www.december.com/html/spec/colorsvghex.html
 #ifndef FL_ORANGE
@@ -662,13 +664,20 @@ main(int argc, char **argv)
   win->resizable(med);
   win->end();
   win->show();
-  return Fl::run();
+  my_top_window = win;
+  my_menubar = menub;
+  int ok = Fl::run();
+  my_menubar = nullptr;
+  delete my_top_window;
 }  // end main
 
 
 
 struct backtrace_state *my_backtrace_state= nullptr;
+
 const char*my_prog_name = nullptr;
+Fl_Window *my_top_window= nullptr;
+Fl_Menu_Bar*my_menubar = nullptr;
 bool my_help_flag = false;
 bool my_version_flag = false;
 bool my_debug_flag = false;
