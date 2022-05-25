@@ -85,6 +85,11 @@ extern "C" Fl_Menu_Bar*my_menubar;
 #define FL_SLATEBLUE 0x6A5ACD
 #endif
 
+
+const Fl_Font MYFL_FREEMONO_FONT = FL_FREE_FONT;
+const Fl_Font MYFL_FREEMONO_BOLD_FONT = FL_FREE_FONT+1;
+const Fl_Font MYFL_GOMONO_FONT = FL_FREE_FONT+2;
+
 #define MY_BACKTRACE_PRINT(Skip) do {if (my_debug_flag) \
       my_backtrace_print_at(__FILE__,__LINE__, (Skip)); } while (0)
 
@@ -190,7 +195,7 @@ public:
     [Style_CodeChunk] =  //
     {  FL_SLATEBLUE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_CodeChunk,
     [Style_Unicode] = //
-    {  FL_DARK_RED,    FL_TIMES_BOLD,  17,   0,  FL_GRAY0 }, //:Style_Unicode,
+    {  FL_DARK_RED,    MYFL_FREEMONO_FONT,  17,   0,  FL_GRAY0 }, //:Style_Unicode,
     [Style_Errored] = //
     {  FL_RED,        FL_COURIER_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Errored,
   };
@@ -617,6 +622,7 @@ main(int argc, char **argv)
 {
   int i= 1;
   my_prog_name = argv[0];
+#warning should use "DejaVu Sans Mono bold" font for Unicode....
   if (Fl::args(argc, argv, i, miniedit_prog_arg_handler) < argc)
     {
       Fl::fatal("error: unknown option: %s\n"
@@ -658,6 +664,9 @@ main(int argc, char **argv)
       if (errcod)
         FATALPRINTF("shell command %s failed #%d", my_shell_command, errcod);
     };
+  Fl::set_font(MYFL_FREEMONO_FONT, "FreeMono");
+  Fl::set_font(MYFL_FREEMONO_BOLD_FONT, "FreeMono bold");
+  Fl::set_font(MYFL_GOMONO_FONT, "Go Mono");
   Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
   Fl_Menu_Bar* menub = new Fl_Menu_Bar(1, 1, win->w()-5, 17);
   menub->add("&App/&Quit", "^q", my_quitmenu_handler);
