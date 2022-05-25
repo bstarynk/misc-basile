@@ -190,7 +190,7 @@ public:
     [Style_CodeChunk] =  //
     {  FL_SLATEBLUE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_CodeChunk,
     [Style_Unicode] = //
-    {  FL_DARK_RED,    FL_HELVETICA_BOLD,  17,   0,  FL_GRAY0 }, //:Style_Unicode,
+    {  FL_DARK_RED,    FL_TIMES_BOLD,  17,   0,  FL_GRAY0 }, //:Style_Unicode,
     [Style_Errored] = //
     {  FL_RED,        FL_COURIER_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Errored,
   };
@@ -492,7 +492,7 @@ do_style_demo(MyEditor*med)
   DEMO_STYLE(Style_Italic);
   DEMO_STYLE(Style_CodeChunk);
   DBGPRINTF("after Style_CodeChunk txtbuff.len %d stybuff.len %d", med->txtbuff->length(), med->stybuff->length());
-#define DEMO_UNICODE_STR "§²ç°¬⁑" //∃⁑
+#define DEMO_UNICODE_STR "§²ç°" //∃⁑
   int ulen = (int) u8_mbsnlen((const uint8_t*)DEMO_UNICODE_STR, sizeof(DEMO_UNICODE_STR)-1);
   DBGPRINTF("do_style_demo DEMO_UNICODE_STR (%d bytes, %d utf8chars) %s",
             (int) strlen(DEMO_UNICODE_STR), ulen,
@@ -503,6 +503,7 @@ do_style_demo(MyEditor*med)
     sb[i] = 'A'+(int)MyEditor::Style_Unicode;
   med->stybuff->append(sb);
   DEMO_STYLE(Style_Unicode);
+  DBGPRINTF("after Style_Unicode txtbuff.len %d stybuff.len %d", med->txtbuff->length(), med->stybuff->length());
   DEMO_STYLE(Style_Errored);
 #undef DEMO_STYLE
 } // end do_style_demo
