@@ -55,6 +55,7 @@
 #include <FL/filename.H>
 
 extern "C" struct backtrace_state *my_backtrace_state;
+extern "C" const char*my_prog_name;
 extern "C" bool my_help_flag;
 extern "C" bool my_version_flag;
 extern "C" bool my_debug_flag;
@@ -88,6 +89,14 @@ extern "C" void my_backtrace_print_at(const char*fil, int line, int skip);
 
 extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 
+#define FATALPRINTF(Fmt,...) do {		\
+    printf("\n@@@FATAL ERROR (%s pid %d):",	\
+	   my_prog_name, (int)getpid());	\
+    printf((Fmt), ##__VA_ARGS__);		\
+    my_backtrace_print_at(__FILE__,__LINE__,	\
+			  (1));			\
+    fflush(nullptr);				\
+    abort(); } while(0)
 
 #define DBGPRINTF(Fmt,...) do {if (my_debug_flag) { \
     printf("@@%s:%d:", __FILE__, __LINE__); \
@@ -535,10 +544,39 @@ miniedit_prog_arg_handler(int argc, char **argv, int &i)
   return 0;
 } // end miniedit_prog_arg_handler
 
+static void my_quitmenu_handler(Fl_Widget *w, void *);
+static void my_exitmenu_handler(Fl_Widget *w, void *);
+static void my_dumpmenu_handler(Fl_Widget *w, void *);
+
+static void
+my_quitmenu_handler(Fl_Widget *w, void *ad)
+{
+  DBGPRINTF("my_quitmenu_handler w@%p", w);
+  exit(EXIT_SUCCESS);
+  FATALPRINTF("my_quitmenu_handler should have exited ad@%p", ad);
+} // end my_quitmenu_handler
+
+static void
+my_exitmenu_handler(Fl_Widget *w, void *ad)
+{
+  DBGPRINTF("my_exitmenu_handler w@%p", w);
+#warning unimplemented my_exitmenu_handler
+  FATALPRINTF("my_exitmenu_handler unimplemented ad@%p", ad);
+} // end my_quitmenu_handler
+
+static void
+my_dumpmenu_handler(Fl_Widget *w, void *ad)
+{
+  DBGPRINTF("my_dumpmenu_handler w@%p", w);
+#warning unimplemented my_dumpmenu_handler
+  FATALPRINTF("my_dumpmenu_handler unimplemented ad@%p", ad);
+} // end my_quitmenu_handler
+
 int
 main(int argc, char **argv)
 {
   int i= 1;
+  my_prog_name = argv[0];
   if (Fl::args(argc, argv, i, miniedit_prog_arg_handler) < argc)
     {
       Fl::fatal("error: unknown option: %s\n"
@@ -569,7 +607,11 @@ main(int argc, char **argv)
       "fltk-mini-edit", /*threaded:*/0,
       my_backtrace_error, nullptr);
   Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
-  MyEditor  *med = new MyEditor(10,10,win->w()-20,win->h()-20);
+  Fl_Menu_Bar* menub = new Fl_Menu_Bar(1, 1, win->w()-5, 17);
+  menub->add("&App/&Quit", "^q", my_quitmenu_handler);
+  menub->add("&App/&Exit", "^x", my_exitmenu_handler);
+  menub->add("&App/&Dump", "^d", my_dumpmenu_handler);
+  MyEditor  *med = new MyEditor(3,19,win->w()-8,win->h()-22);
   if (my_styledemo_flag)
     do_style_demo (med);
   else
@@ -578,6 +620,7 @@ main(int argc, char **argv)
               "0123456789\n"
               "°§ +\n");
   win->resizable(med);
+  win->end();
   win->show();
   return Fl::run();
 }  // end main
@@ -585,6 +628,7 @@ main(int argc, char **argv)
 
 
 struct backtrace_state *my_backtrace_state= nullptr;
+const char*my_prog_name = nullptr;
 bool my_help_flag = false;
 bool my_version_flag = false;
 bool my_debug_flag = false;
