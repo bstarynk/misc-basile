@@ -73,8 +73,10 @@ extern "C" bool my_styledemo_flag;
 #define FL_SLATEBLUE 0x6A5ACD
 #endif
 
-#define MY_BACKTRACE_PRINT(Skip) my_backtrace_print_at(__LINE__, (Skip))
-extern "C" void my_backtrace_print_at(int line, int skip);
+#define MY_BACKTRACE_PRINT(Skip) do {if (my_debug_flag) \
+      my_backtrace_print_at(__FILE__,__LINE__, (Skip)); } while (0)
+
+extern "C" void my_backtrace_print_at(const char*fil, int line, int skip);
 
 extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 
@@ -484,9 +486,9 @@ my_backtrace_error(void*data, const char*msg, int errnum)
 } // end my_backtrace_error
 
 void
-my_backtrace_print_at(int line, int skip)
+my_backtrace_print_at(const char*fil, int line, int skip)
 {
-  printf("%s:%d backtrace\n", __FILE__, line);
+  printf("%s:%d backtrace\n", fil, line);
   backtrace_print(my_backtrace_state, skip, stdout);
   fflush(NULL);
 } // end my_backtrace_print_at
@@ -541,7 +543,7 @@ main(int argc, char **argv)
     }
   if (my_version_flag)
     {
-      std::cout << argv[1] << " version "
+      std::cout << argv[0] << " version "
                 << GITID
                 << " built " << __DATE__ "@" __TIME__ << std::endl;
       exit(EXIT_SUCCESS);
