@@ -56,6 +56,7 @@
 
 extern "C" struct backtrace_state *my_backtrace_state;
 extern "C" const char*my_prog_name;
+extern "C" char my_host_name[];
 extern "C" bool my_help_flag;
 extern "C" bool my_version_flag;
 extern "C" bool my_debug_flag;
@@ -214,6 +215,8 @@ public:
 
 
 extern "C" const int last_shared_line = __LINE__;
+
+char* my_shell_command;
 
 // we could compile and dlopen extra C++ plugins, sharing all the code above....
 
@@ -539,6 +542,12 @@ miniedit_prog_arg_handler(int argc, char **argv, int &i)
       i += 1;
       return 1;
     }
+  if (strcmp("--do", argv[i]) == 0 && i+1<argc)
+    {
+      my_shell_command = argv[i+1];
+      i += 2;
+      return 2;
+    }
   /* For arguments requiring a following option, increment i by 2 and return 2;
      For other arguments to be handled by FLTK, return 0 */
   return 0;
@@ -554,7 +563,6 @@ my_quitmenu_handler(Fl_Widget *w, void *ad)
   DBGPRINTF("my_quitmenu_handler w@%p", w);
   MY_BACKTRACE_PRINT(1);
   exit(EXIT_SUCCESS);
-  FATALPRINTF("my_quitmenu_handler should have exited ad@%p", ad);
 } // end my_quitmenu_handler
 
 static void
@@ -573,6 +581,25 @@ my_dumpmenu_handler(Fl_Widget *w, void *ad)
   FATALPRINTF("my_dumpmenu_handler unimplemented ad@%p", ad);
 } // end my_quitmenu_handler
 
+char my_host_name[80];
+
+void my_expand_env(void)
+{
+  /* See putenv(3) man page. The buffer should be static! */
+  static char hostenvbuf[128];
+  static char pidenvbuf[64];
+  memset (hostenvbuf, 0, sizeof(hostenvbuf));
+  snprintf (hostenvbuf, sizeof(hostenvbuf), "FLTKMINIEDIT_HOST=%s", my_host_name);
+  if (putenv(hostenvbuf))
+    FATALPRINTF("failed to putenv FLTKMINIEDIT_HOST=%s %s", my_host_name, strerror(errno));
+  DBGPRINTF("my_expand_env %s", hostenvbuf);
+  memset (pidenvbuf, 0, sizeof(pidenvbuf));
+  snprintf (pidenvbuf, sizeof(pidenvbuf), "FLTKMINIEDIT_PID=%d", (int)getpid());
+  if (putenv(pidenvbuf))
+    FATALPRINTF("failed to putenv FLTKMINIEDIT_HOST=%d", (int)getpid());
+  DBGPRINTF("my_expand_env %s", pidenvbuf);
+} // end my_expand_env
+
 int
 main(int argc, char **argv)
 {
@@ -584,6 +611,7 @@ main(int argc, char **argv)
                 "usage: %s [options]\n"
                 " -h | --help        : print extended help message\n"
                 " -D | --debug       : show debugging messages\n"
+                " --do <shellcmd>    : run a shell command\n"
                 " -Y | --style-demo  : show demo of styles\n"
                 " -V | --version     : print version\n",
                 argv[i], argv[0]);
@@ -607,6 +635,17 @@ main(int argc, char **argv)
     (
       "fltk-mini-edit", /*threaded:*/0,
       my_backtrace_error, nullptr);
+  if (gethostname(my_host_name, sizeof(my_host_name)-2))
+    FATALPRINTF("failed to get hostname %s", strerror(errno));
+  my_expand_env();
+  if (my_shell_command)
+    {
+      printf("%s runs command %s\n", my_prog_name, my_shell_command);
+      fflush(nullptr);
+      int errcod = system(my_shell_command);
+      if (errcod)
+        FATALPRINTF("shell command %s failed #%d", my_shell_command, errcod);
+    };
   Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
   Fl_Menu_Bar* menub = new Fl_Menu_Bar(1, 1, win->w()-5, 17);
   menub->add("&App/&Quit", "^q", my_quitmenu_handler);
