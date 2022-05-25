@@ -1,17 +1,25 @@
 // // file fltk-mini-edit.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// A simple text editor program for the Fast Light Tool Kit (FLTK).
+// A simple text editor program for the Fast Light Tool Kit (FLTK). It
+// should interact with another Linux process using some protocol to
+// be defined...
 //
 // This program is inspired by Chapter 4 of the FLTK Programmer's Guide.
-//
-// Copyright 1998-2022 by Bill Spitzak and Basile Starynkevitch and CEA
+/****
+   © Copyright  1998-2022 by Bill Spitzak and Basile Starynkevitch and CEA
+   program released under GNU general public license
 
-/// heavily inspired by texteditor-with-dynamic-colors.cxx from FLTK.
+   this is free software; you can redistribute it and/or modify it under
+   the terms of the GNU General Public License as published by the Free
+   Software Foundation; either version 3, or (at your option) any later
+   version.
 
-// Include necessary headers...
-//
-
+   this is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+   License for more details.
+****/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
