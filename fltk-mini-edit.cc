@@ -552,6 +552,7 @@ static void
 my_quitmenu_handler(Fl_Widget *w, void *ad)
 {
   DBGPRINTF("my_quitmenu_handler w@%p", w);
+  MY_BACKTRACE_PRINT(1);
   exit(EXIT_SUCCESS);
   FATALPRINTF("my_quitmenu_handler should have exited ad@%p", ad);
 } // end my_quitmenu_handler
