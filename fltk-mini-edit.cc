@@ -267,6 +267,7 @@ int
 MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
 {
   MyEditor* myed = dynamic_cast<MyEditor*>(editor);
+  assert (key == FL_Tab);
   MY_BACKTRACE_PRINT(1);
   assert (myed != nullptr);
   int inspos = myed->insert_position();
@@ -280,8 +281,9 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
       int wend = mybuf->word_end(inspos);
       int linend = mybuf->line_end(inspos);
       int insmode = myed->insert_mode();
-      DBGPRINTF("MyEditor TAB inspos=%d L%dC%d curutf#%d wstart=%d"
+      DBGPRINTF("MyEditor TAB key=%d inspos=%d L%dC%d curutf#%d wstart=%d"
                 " wend=%d linend=%d insmode=%d",
+                key,
                 inspos, lin, col, curutf, wstart, wend, linend, insmode);
       if (wend > linend)
         wend = linend;
@@ -317,11 +319,15 @@ MyEditor::tab_key_binding(int key, Fl_Text_Editor*editor)
       /// number) by its numerical successor.
       if (prefixdigits)
         {
-          asprintf(&prefixrepl, "%d", atoi(prefix)+1);
+          int ok = asprintf(&prefixrepl, "%d", atoi(prefix)+1);
+          assert (ok > 0);
         }
       /// If the prefix is only letters replace it by a x2 duplicate
       else if (prefixletters)
-        asprintf(&prefixrepl, "%s/%s", prefix, prefix);
+        {
+          int ok = asprintf(&prefixrepl, "%s/%s", prefix, prefix);
+          assert (ok > 0);
+        }
       if (prefixrepl)
         {
           DBGPRINTF("MyEditor TAB inspos=%d prefixrepl:%s",
@@ -346,6 +352,8 @@ MyEditor::escape_key_binding(int key, Fl_Text_Editor*editor)
   MyEditor* myed = dynamic_cast<MyEditor*>(editor);
   MY_BACKTRACE_PRINT(1);
   assert (myed != nullptr);
+  assert (key ==  FL_Escape);
+  DBGPRINTF("MyEditor::escape_key_binding myed@%p", myed);
   return 1; // this means do handle the binding
 } // end MyEditor::escape_key_binding
 
@@ -515,7 +523,9 @@ do_style_demo(MyEditor*med)
             DEMO_UNICODE_STR,
             med->txtbuff->length(), med->stybuff->length());
   med->txtbuff->append(DEMO_UNICODE_STR);
-  char sb[((3*sizeof(DEMO_UNICODE_STR)/2) &0xf)+1]= {0};
+  char sb[1+((sizeof(DEMO_UNICODE_STR)+4)|0xf)
+         ]= {0};
+  static_assert (sizeof(sb) > sizeof(DEMO_UNICODE_STR));
   for (int i=0; i<(int)strlen(DEMO_UNICODE_STR); i++)
     sb[i] = 'A'+(int)MyEditor::Style_Unicode;
   med->stybuff->append(sb);
@@ -533,8 +543,9 @@ do_style_demo(MyEditor*med)
 void
 my_backtrace_error(void*data, const char*msg, int errnum)
 {
-  fprintf(stderr, "backtrace error %s (errnum=%d:%s)", msg,
-          errnum, (errnum>=0)?strerror(errnum):"BUG");
+  fprintf(stderr, "backtrace error %s (errnum=%d:%s) data:%p", msg,
+          errnum, (errnum>=0)?strerror(errnum):"BUG",
+          data);
   fflush(nullptr);
   exit(EXIT_FAILURE);
 } // end my_backtrace_error
@@ -606,7 +617,7 @@ static void my_dumpmenu_handler(Fl_Widget *w, void *);
 static void
 my_quitmenu_handler(Fl_Widget *w, void *ad)
 {
-  DBGPRINTF("my_quitmenu_handler w@%p", w);
+  DBGPRINTF("my_quitmenu_handler w@%p ad:%p", w, ad);
   MY_BACKTRACE_PRINT(1);
   exit(EXIT_SUCCESS);
 } // end my_quitmenu_handler
@@ -614,7 +625,7 @@ my_quitmenu_handler(Fl_Widget *w, void *ad)
 static void
 my_exitmenu_handler(Fl_Widget *w, void *ad)
 {
-  DBGPRINTF("my_exitmenu_handler w@%p", w);
+  DBGPRINTF("my_exitmenu_handler w@%p ad:%p", w, ad);
 #warning unimplemented my_exitmenu_handler
   FATALPRINTF("my_exitmenu_handler unimplemented ad@%p", ad);
 } // end my_quitmenu_handler
@@ -622,7 +633,7 @@ my_exitmenu_handler(Fl_Widget *w, void *ad)
 static void
 my_dumpmenu_handler(Fl_Widget *w, void *ad)
 {
-  DBGPRINTF("my_dumpmenu_handler w@%p", w);
+  DBGPRINTF("my_dumpmenu_handler w@%p ad:%p", w, ad);
 #warning unimplemented my_dumpmenu_handler
   FATALPRINTF("my_dumpmenu_handler unimplemented ad@%p", ad);
 } // end my_quitmenu_handler
@@ -721,9 +732,10 @@ main(int argc, char **argv)
   win->show();
   my_top_window = win;
   my_menubar = menub;
-  int ok = Fl::run();
+  int runerr = Fl::run();
   my_menubar = nullptr;
   delete my_top_window;
+  return runerr;
 }  // end main
 
 
