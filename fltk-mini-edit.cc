@@ -198,7 +198,7 @@ public:
     [Style_CodeChunk] =  //
     {  FL_SLATEBLUE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_CodeChunk,
     [Style_Unicode] = //
-    {  FL_DARK_RED,    MYFL_FREEMONO_FONT,  17,   0,  FL_GRAY0 }, //:Style_Unicode,
+    {  FL_DARK_RED,    MYFL_FREEMONO_BOLD_FONT,  17,   0,  FL_GRAY0 }, //:Style_Unicode,
     [Style_Errored] = //
     {  FL_RED,        FL_COURIER_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Errored,
   };
@@ -662,7 +662,6 @@ main(int argc, char **argv)
 {
   int i= 1;
   my_prog_name = argv[0];
-#warning should use "DejaVu Sans Mono bold" font for Unicode....
   if (Fl::args(argc, argv, i, miniedit_prog_arg_handler) < argc)
     {
       Fl::fatal("error: unknown option: %s\n"
@@ -732,6 +731,16 @@ main(int argc, char **argv)
   win->show();
   my_top_window = win;
   my_menubar = menub;
+  if (my_debug_flag)
+    {
+      DBGPRINTF("my_top_window@%p my_menubar@%p", my_top_window, my_menubar);
+      DBGPRINTF("MyEditor Style_Unicode color#%d font#%d size %d",
+                MyEditor::style_table[MyEditor::Style_Unicode].color,
+                MyEditor::style_table[MyEditor::Style_Unicode].font,
+                MyEditor::style_table[MyEditor::Style_Unicode].size);
+      DBGPRINTF("MyEditor Style_Unicode fontname %s",
+                Fl::get_font(MyEditor::style_table[MyEditor::Style_Unicode].font));
+    }
   int runerr = Fl::run();
   my_menubar = nullptr;
   delete my_top_window;
