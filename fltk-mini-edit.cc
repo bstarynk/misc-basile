@@ -735,7 +735,7 @@ void my_expand_env(void)
         FATALPRINTF("too long FIFO name %s", my_fifo_name);
       snprintf(fifonamebuf, sizeof(fifonamebuf), "FLTKMINIEDIT_FIFO=%s", my_fifo_name);
       if (putenv(fifonamebuf))
-        FATALPRINTF("failed to putenv FLTKMINIEDIT_FIFO=%d : %m", my_fifo_name);
+        FATALPRINTF("failed to putenv FLTKMINIEDIT_FIFO=%s : %m", my_fifo_name);
       DBGPRINTF("my_expand_env %s", fifonamebuf);
     }
 } // end my_expand_env
