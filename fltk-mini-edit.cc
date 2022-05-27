@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <gnu/libc-version.h>
 
 /// GNU libunistring https://www.gnu.org/software/libunistring/
 #include <unistd.h>
@@ -46,6 +47,7 @@
 
 /// JSONCPP from https://github.com/open-source-parsers/jsoncpp
 #include <json/json.h>
+#include <json/version.h>
 
 #include <FL/Fl.H>
 #include <FL/platform.H> // for fl_open_callback
@@ -750,7 +752,10 @@ main(int argc, char **argv)
     {
       std::cout << argv[0] << " version "
                 << GITID
-                << " built " << __DATE__ "@" __TIME__ << std::endl;
+                << " built " << __DATE__ "@" __TIME__ << " with " <<  std::endl;
+      std::cout << "\t GNU libc release " << gnu_get_libc_release() << " version " << gnu_get_libc_version() << std::endl;
+      std::cout << "\t FLTK version:" << Fl::version() << " API " << Fl::api_version() << std::endl;
+      std::cout << "\t JSONCPP version:" << JSONCPP_VERSION_STRING << std::endl;
       exit(EXIT_SUCCESS);
     }
   std::string tistr = __FILE__;
