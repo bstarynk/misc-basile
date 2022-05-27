@@ -81,6 +81,7 @@ extern "C" const char* my_fifo_name;
 #define MY_FONT_DELTA 0
 #endif
 
+#define MY_FIFO_NAME_MAXLEN 250
 #define MY_FONT_SIZE(Fsiz) ((int)(MY_FONT_DELTA)+(Fsiz))
 
 /// from www.december.com/html/spec/colorsvghex.html
@@ -717,16 +718,26 @@ void my_expand_env(void)
   /* See putenv(3) man page. The buffer should be static! */
   static char hostenvbuf[128];
   static char pidenvbuf[64];
+  static char fifonamebuf[MY_FIFO_NAME_MAXLEN+32];
   memset (hostenvbuf, 0, sizeof(hostenvbuf));
   snprintf (hostenvbuf, sizeof(hostenvbuf), "FLTKMINIEDIT_HOST=%s", my_host_name);
   if (putenv(hostenvbuf))
-    FATALPRINTF("failed to putenv FLTKMINIEDIT_HOST=%s %s", my_host_name, strerror(errno));
+    FATALPRINTF("failed to putenv FLTKMINIEDIT_HOST=%s : %m", my_host_name);
   DBGPRINTF("my_expand_env %s", hostenvbuf);
   memset (pidenvbuf, 0, sizeof(pidenvbuf));
   snprintf (pidenvbuf, sizeof(pidenvbuf), "FLTKMINIEDIT_PID=%d", (int)getpid());
   if (putenv(pidenvbuf))
-    FATALPRINTF("failed to putenv FLTKMINIEDIT_HOST=%d", (int)getpid());
+    FATALPRINTF("failed to putenv FLTKMINIEDIT_HOST=%d : %m", (int)getpid());
   DBGPRINTF("my_expand_env %s", pidenvbuf);
+  if (my_fifo_name)
+    {
+      if (strlen(my_fifo_name) >= MY_FIFO_NAME_MAXLEN)
+        FATALPRINTF("too long FIFO name %s", my_fifo_name);
+      snprintf(fifonamebuf, sizeof(fifonamebuf), "FLTKMINIEDIT_FIFO=%s", my_fifo_name);
+      if (putenv(fifonamebuf))
+        FATALPRINTF("failed to putenv FLTKMINIEDIT_FIFO=%d : %m", my_fifo_name);
+      DBGPRINTF("my_expand_env %s", fifonamebuf);
+    }
 } // end my_expand_env
 
 int
@@ -772,6 +783,8 @@ main(int argc, char **argv)
       my_backtrace_error, nullptr);
   if (gethostname(my_host_name, sizeof(my_host_name)-2))
     FATALPRINTF("failed to get hostname %s", strerror(errno));
+  if (my_fifo_name)
+    my_initialize_fifo();
   my_expand_env();
   if (my_shell_command)
     {
@@ -781,8 +794,6 @@ main(int argc, char **argv)
       if (errcod)
         FATALPRINTF("shell command %s failed #%d", my_shell_command, errcod);
     };
-  if (my_fifo_name)
-    my_initialize_fifo();
   Fl::set_font(MYFL_FREEMONO_FONT, "FreeMono");
   Fl::set_font(MYFL_FREEMONO_BOLD_FONT, "FreeMono bold");
   Fl::set_font(MYFL_GOMONO_FONT, "Go Mono");
@@ -791,24 +802,27 @@ main(int argc, char **argv)
     Fl::set_font(MYFL_XTRAFONT, my_xtrafont_name);
   if (my_otherfont_name)
     Fl::set_font(MYFL_OTHERFONT, my_xtrafont_name);
-  Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
-  Fl_Menu_Bar* menub = new Fl_Menu_Bar(1, 1, win->w()-5, 17);
-  menub->add("&App/&Quit", "^q", my_quitmenu_handler);
-  menub->add("&App/&Exit", "^x", my_exitmenu_handler);
-  menub->add("&App/&Dump", "^d", my_dumpmenu_handler);
-  MyEditor  *med = new MyEditor(3,19,win->w()-8,win->h()-22);
-  if (my_styledemo_flag)
-    do_style_demo (med);
-  else
-    med->text("Test\n"
-              "Other\n"
-              "0123456789\n"
-              "°§ +\n");
-  win->resizable(med);
-  win->end();
-  win->show();
-  my_top_window = win;
-  my_menubar = menub;
+  /// perhaps should not create windows with --help ?
+  {
+    Fl_Window *win = new Fl_Window(720, 480, tistr.c_str());
+    Fl_Menu_Bar* menub = new Fl_Menu_Bar(1, 1, win->w()-5, 17);
+    menub->add("&App/&Quit", "^q", my_quitmenu_handler);
+    menub->add("&App/&Exit", "^x", my_exitmenu_handler);
+    menub->add("&App/&Dump", "^d", my_dumpmenu_handler);
+    MyEditor  *med = new MyEditor(3,19,win->w()-8,win->h()-22);
+    if (my_styledemo_flag)
+      do_style_demo (med);
+    else
+      med->text("Test\n"
+                "Other\n"
+                "0123456789\n"
+                "°§ +\n");
+    win->resizable(med);
+    win->end();
+    win->show();
+    my_top_window = win;
+    my_menubar = menub;
+  }
   if (my_debug_flag)
     {
       DBGPRINTF("my_top_window@%p my_menubar@%p", my_top_window, my_menubar);
