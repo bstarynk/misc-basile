@@ -25,7 +25,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 /// GNU libunistring https://www.gnu.org/software/libunistring/
 #include <unistd.h>
@@ -36,6 +39,7 @@
 
 #include <string>
 #include <iostream>
+#include <cassert>
 
 /// https://github.com/ianlancetaylor/libbacktrace/
 #include <backtrace.h>
@@ -63,6 +67,16 @@ extern "C" bool my_debug_flag;
 extern "C" bool my_styledemo_flag;
 extern "C" Fl_Window *my_top_window;
 extern "C" Fl_Menu_Bar*my_menubar;
+extern "C" const int my_font_delta;
+extern "C" const char* my_fifo_name;
+
+/// a small integer to increase font size at compile time, e.g. compiling with -DMY_FONT_DELTA=2
+
+#ifndef MY_FONT_DELTA
+#define MY_FONT_DELTA 0
+#endif
+
+#define MY_FONT_SIZE(Fsiz) ((int)(MY_FONT_DELTA)+(Fsiz))
 
 /// from www.december.com/html/spec/colorsvghex.html
 #ifndef FL_ORANGE
@@ -124,7 +138,8 @@ extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 class MyEditor;
 
 extern "C" void do_style_demo(MyEditor*);
-
+extern "C" void my_initialize_fifo(void);
+extern "C" int fifo_cmd_fd, fifo_out_fd;
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
 {
@@ -176,31 +191,31 @@ public:
     // FONT COLOR      FONT FACE           SIZE  ATTRIBUTE      BACKGROUND COLOR
     // --------------- --------------      ----  ---------      -----------------
     [Style_Plain] = //
-    {  FL_BLACK,       FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Plain,
+    {  FL_BLACK,       FL_COURIER,         	MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Plain,
     [Style_Literal] = //
-    {  FL_DARK_GREEN,  FL_COURIER_BOLD,    17,   0,             FL_WHITE }, //:Style_Literal,
+    {  FL_DARK_GREEN,  FL_COURIER_BOLD,    	MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Literal,
     [Style_Number] = //
-    {  FL_DARK_BLUE,   FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Number,
+    {  FL_DARK_BLUE,   FL_COURIER,         	MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Number,
     [Style_Name] =  //
-    {  FL_CYAN,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Name,
+    {  FL_CYAN,        FL_COURIER,         	MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Name,
     [Style_Word] =  //
-    {  FL_BLUE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Word,
+    {  FL_BLUE,        FL_COURIER,         	MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Word,
     [Style_Keyword] =  //
-    {  FL_DARK_MAGENTA, FL_COURIER,        17,   0,             FL_WHITE }, //:Style_Keyword,
+    {  FL_DARK_MAGENTA, FL_COURIER,        	MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Keyword,
     [Style_Oid] =  //
-    {  FL_ORANGE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Oid,
+    {  FL_ORANGE,        FL_COURIER,            MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Oid,
     [Style_Comment] =  //
-    {  FL_PURPLE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_Comment,
+    {  FL_PURPLE,        FL_COURIER,            MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Comment,
     [Style_Bold] =  //
-    {  FL_BLACK,        FL_COURIER_BOLD,         17,   0,             FL_WHITE }, //:Style_Bold,
+    {  FL_BLACK,        FL_COURIER_BOLD,        MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Bold,
     [Style_Italic] =  //
-    {  FL_BLACK,        FL_COURIER_ITALIC,         17,   0,             FL_WHITE }, //:Style_Italic,
+    {  FL_BLACK,        FL_COURIER_ITALIC,      MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_Italic,
     [Style_CodeChunk] =  //
-    {  FL_SLATEBLUE,        FL_COURIER,         17,   0,             FL_WHITE }, //:Style_CodeChunk,
+    {  FL_SLATEBLUE,        FL_COURIER,         MY_FONT_SIZE(17),   0,             FL_WHITE }, //:Style_CodeChunk,
     [Style_Unicode] = //
-    {  FL_DARK_RED,    MYFL_FREEMONO_BOLD_FONT,  17,   0,  FL_GRAY0 }, //:Style_Unicode,
+    {  FL_DARK_RED,    MYFL_FREEMONO_BOLD_FONT, MY_FONT_SIZE(17),   0,  FL_GRAY0 }, //:Style_Unicode,
     [Style_Errored] = //
-    {  FL_RED,        FL_COURIER_BOLD,  17,   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Errored,
+    {  FL_RED,        FL_COURIER_BOLD,          MY_FONT_SIZE(17),   ATTR_BGCOLOR,  FL_GRAY0 }, //:Style_Errored,
   };
   static inline constexpr const char*stylename_table[(unsigned)Style__LAST+1] =
   {
@@ -558,6 +573,56 @@ my_backtrace_print_at(const char*fil, int line, int skip)
   fflush(NULL);
 } // end my_backtrace_print_at
 
+
+void
+my_initialize_fifo(void)
+{
+  assert (fifo_cmd_fd < 0);
+  assert (fifo_out_fd < 0);
+  assert (my_fifo_name != nullptr);
+  std::string fifo_str {my_fifo_name};
+  std::string fifo_cmd_str = fifo_str + ".cmd";
+  std::string fifo_out_str = fifo_str + ".out";
+  struct stat fifo_cmd_stat = {};
+  struct stat fifo_out_stat = {};
+  if (stat(fifo_cmd_str.c_str(), &fifo_cmd_stat))
+    {
+      // should check that it is a FIFO
+      mode_t cmd_mod = fifo_cmd_stat.st_mode;
+      if ((cmd_mod&S_IFMT) != S_IFIFO)
+        FATALPRINTF("%s is not a FIFO but should be the command FIFO",
+                    fifo_cmd_str.c_str());
+      fifo_cmd_fd = open(fifo_cmd_str.c_str(), O_RDONLY);
+      if (fifo_cmd_fd < 0)
+        FATALPRINTF("failed to open command FIFO %s - %m", fifo_cmd_str.c_str());
+    }
+  else
+    {
+      // should create the cmd FIFO
+      fifo_cmd_fd = mkfifo(fifo_cmd_str.c_str(), S_IRUSR|S_IWUSR);
+      if (fifo_cmd_fd < 0)
+        FATALPRINTF("failed to make command FIFO %s - %m", fifo_cmd_str.c_str());
+    };
+  if (stat(fifo_out_str.c_str(), &fifo_out_stat))
+    {
+      // should check that it is a FIFO
+      mode_t out_mod = fifo_out_stat.st_mode;
+      if ((out_mod&S_IFMT) != S_IFIFO)
+        FATALPRINTF("%s is not a FIFO but should be the output FIFO",
+                    fifo_out_str.c_str());
+      fifo_out_fd = open(fifo_out_str.c_str(), O_RDONLY);
+      if (fifo_out_fd < 0)
+        FATALPRINTF("failed to open output FIFO %s - %m", fifo_out_str.c_str());
+    }
+  else
+    {
+      // should create the output FIFO
+      fifo_out_fd = mkfifo(fifo_cmd_str.c_str(), S_IRUSR|S_IWUSR);
+      if (fifo_out_fd < 0)
+        FATALPRINTF("failed to make output FIFO %s - %m", fifo_out_str.c_str());
+    };
+} // end my_initialize_fifo
+
 int
 miniedit_prog_arg_handler(int argc, char **argv, int &i)
 {
@@ -668,6 +733,7 @@ main(int argc, char **argv)
                 "usage: %s [options]\n"
                 " -h | --help        : print extended help message\n"
                 " -D | --debug       : show debugging messages\n"
+                " --fifo <fifoname>  : accept JSONRPC on <fifoname>.cmd and output JSONRPC on <fifoname>.out\n"
                 " --do <shellcmd>    : run a shell command\n"
                 " -Y | --style-demo  : show demo of styles\n"
                 " --xtrafont <fontname>\n"
@@ -705,6 +771,8 @@ main(int argc, char **argv)
       if (errcod)
         FATALPRINTF("shell command %s failed #%d", my_shell_command, errcod);
     };
+  if (my_fifo_name)
+    my_initialize_fifo();
   Fl::set_font(MYFL_FREEMONO_FONT, "FreeMono");
   Fl::set_font(MYFL_FREEMONO_BOLD_FONT, "FreeMono bold");
   Fl::set_font(MYFL_GOMONO_FONT, "Go Mono");
@@ -752,12 +820,16 @@ main(int argc, char **argv)
 struct backtrace_state *my_backtrace_state= nullptr;
 
 const char*my_prog_name = nullptr;
+const char* my_fifo_name = nullptr;
+int fifo_cmd_fd = -1;
+int fifo_out_fd = -1;
 Fl_Window *my_top_window= nullptr;
 Fl_Menu_Bar*my_menubar = nullptr;
 bool my_help_flag = false;
 bool my_version_flag = false;
 bool my_debug_flag = false;
 bool my_styledemo_flag = false;
+const int my_font_delta = MY_FONT_DELTA;
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
