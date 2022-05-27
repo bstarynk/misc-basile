@@ -44,6 +44,9 @@
 /// https://github.com/ianlancetaylor/libbacktrace/
 #include <backtrace.h>
 
+/// JSONCPP from https://github.com/open-source-parsers/jsoncpp
+#include <json/json.h>
+
 #include <FL/Fl.H>
 #include <FL/platform.H> // for fl_open_callback
 #include <FL/Fl_Group.H>
@@ -241,6 +244,8 @@ public:
 
 extern "C" const int last_shared_line = __LINE__;
 
+Json::CharReaderBuilder my_json_cmd_builder;
+Json::StreamWriterBuilder my_json_out_builder;
 char* my_shell_command;
 char* my_xtrafont_name;
 char* my_otherfont_name;
