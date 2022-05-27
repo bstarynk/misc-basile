@@ -146,6 +146,9 @@ class MyEditor;
 extern "C" void do_style_demo(MyEditor*);
 extern "C" void my_initialize_fifo(void);
 extern "C" int fifo_cmd_fd, fifo_out_fd;
+extern "C" void my_cmd_fd_handler(FL_SOCKET, void*);
+extern "C" void my_out_fd_handler(FL_SOCKET, void*);
+
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
 {
@@ -593,6 +596,8 @@ my_initialize_fifo(void)
   std::string fifo_out_str = fifo_str + ".out";
   struct stat fifo_cmd_stat = {};
   struct stat fifo_out_stat = {};
+  DBGPRINTF("my_initialize_fifo fifo_cmd '%s' fifo_out '%s'",
+            fifo_cmd_str.c_str(), fifo_out_str.c_str());
   if (stat(fifo_cmd_str.c_str(), &fifo_cmd_stat))
     {
       // should check that it is a FIFO
@@ -610,6 +615,9 @@ my_initialize_fifo(void)
       fifo_cmd_fd = mkfifo(fifo_cmd_str.c_str(), S_IRUSR|S_IWUSR);
       if (fifo_cmd_fd < 0)
         FATALPRINTF("failed to make command FIFO %s - %m", fifo_cmd_str.c_str());
+      printf("%s: (pid %d on %s) created command FIFO %s\n",
+             my_prog_name, (int)getpid(), my_host_name, fifo_cmd_str.c_str());
+      fflush(stdout);
     };
   if (stat(fifo_out_str.c_str(), &fifo_out_stat))
     {
@@ -628,8 +636,31 @@ my_initialize_fifo(void)
       fifo_out_fd = mkfifo(fifo_cmd_str.c_str(), S_IRUSR|S_IWUSR);
       if (fifo_out_fd < 0)
         FATALPRINTF("failed to make output FIFO %s - %m", fifo_out_str.c_str());
+      printf("%s: (pid %d on %s) created output FIFO %s\n",
+             my_prog_name, (int)getpid(), my_host_name, fifo_out_str.c_str());
+      fflush(stdout);
     };
+  assert (fifo_cmd_fd > 0);
+  assert (fifo_out_fd > 0);
+  Fl::add_fd(fifo_cmd_fd, FL_READ, my_cmd_fd_handler, nullptr);
+  Fl::add_fd(fifo_out_fd, FL_WRITE, my_out_fd_handler, nullptr);
 } // end my_initialize_fifo
+
+void
+my_cmd_fd_handler(FL_SOCKET sock, void*)
+{
+#warning my_cmd_fd_handler unimplemented
+  assert(sock == fifo_cmd_fd);
+  FATALPRINTF("my_cmd_fd_handler unimplemented sock#%d", sock);
+} // end my_cmd_fd_handler
+
+void
+my_out_fd_handler(FL_SOCKET sock, void*)
+{
+#warning my_out_fd_handler unimplemented
+  assert(sock == fifo_out_fd);
+  FATALPRINTF("my_out_fd_handler unimplemented sock#%d", sock);
+} // end my_cmd_fd_handler
 
 int
 miniedit_prog_arg_handler(int argc, char **argv, int &i)
@@ -810,13 +841,16 @@ main(int argc, char **argv)
     menub->add("&App/&Exit", "^x", my_exitmenu_handler);
     menub->add("&App/&Dump", "^d", my_dumpmenu_handler);
     MyEditor  *med = new MyEditor(3,19,win->w()-8,win->h()-22);
-    if (my_styledemo_flag)
-      do_style_demo (med);
-    else
-      med->text("Test\n"
-                "Other\n"
-                "0123456789\n"
-                "°§ +\n");
+    if (!my_fifo_name)
+      {
+        if (my_styledemo_flag)
+          do_style_demo (med);
+        else
+          med->text("Test\n"
+                    "Other\n"
+                    "0123456789\n"
+                    "°§ +\n");
+      }
     win->resizable(med);
     win->end();
     win->show();
