@@ -124,6 +124,7 @@ extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
     printf("\n@@@FATAL ERROR (%s pid %d):",	\
 	   my_prog_name, (int)getpid());	\
     printf((Fmt), ##__VA_ARGS__);		\
+    putchar('\n');				\
     my_backtrace_print_at(__FILE__,__LINE__,	\
 			  (1));			\
     fflush(nullptr);				\
@@ -596,14 +597,14 @@ my_initialize_fifo(void)
   std::string fifo_out_str = fifo_str + ".out";
   struct stat fifo_cmd_stat = {};
   struct stat fifo_out_stat = {};
-  DBGPRINTF("my_initialize_fifo fifo_cmd '%s' fifo_out '%s'",
-            fifo_cmd_str.c_str(), fifo_out_str.c_str());
-  if (stat(fifo_cmd_str.c_str(), &fifo_cmd_stat))
+  DBGPRINTF("my_initialize_fifo fifo_cmd '%s'",
+            fifo_cmd_str.c_str());
+  if (!stat(fifo_cmd_str.c_str(), &fifo_cmd_stat))
     {
       // should check that it is a FIFO
       mode_t cmd_mod = fifo_cmd_stat.st_mode;
       if ((cmd_mod&S_IFMT) != S_IFIFO)
-        FATALPRINTF("%s is not a FIFO but should be the command FIFO",
+        FATALPRINTF("%s is not a FIFO but should be the command FIFO - %m",
                     fifo_cmd_str.c_str());
       fifo_cmd_fd = open(fifo_cmd_str.c_str(), O_RDONLY);
       if (fifo_cmd_fd < 0)
@@ -619,7 +620,9 @@ my_initialize_fifo(void)
              my_prog_name, (int)getpid(), my_host_name, fifo_cmd_str.c_str());
       fflush(stdout);
     };
-  if (stat(fifo_out_str.c_str(), &fifo_out_stat))
+  DBGPRINTF("my_initialize_fifo fifo_out '%s'",
+            fifo_out_str.c_str());
+  if (!stat(fifo_out_str.c_str(), &fifo_out_stat))
     {
       // should check that it is a FIFO
       mode_t out_mod = fifo_out_stat.st_mode;
@@ -633,15 +636,24 @@ my_initialize_fifo(void)
   else
     {
       // should create the output FIFO
-      fifo_out_fd = mkfifo(fifo_cmd_str.c_str(), S_IRUSR|S_IWUSR);
+      fifo_out_fd = mkfifo(fifo_out_str.c_str(), S_IRUSR|S_IWUSR);
       if (fifo_out_fd < 0)
         FATALPRINTF("failed to make output FIFO %s - %m", fifo_out_str.c_str());
       printf("%s: (pid %d on %s) created output FIFO %s\n",
              my_prog_name, (int)getpid(), my_host_name, fifo_out_str.c_str());
       fflush(stdout);
     };
+  DBGPRINTF("my_initialize_fifo fifo_cmd_fd#%d fifo_out_fd#%d", fifo_cmd_fd, fifo_out_fd);
+  if (my_debug_flag)
+    {
+      char cmdbuf[80];
+      memset(cmdbuf, 0, sizeof(cmdbuf));
+      snprintf(cmdbuf, sizeof(cmdbuf), "/bin/ls -l /proc/%d/fd/", (int)getpid());
+      system(cmdbuf);
+    }
   assert (fifo_cmd_fd > 0);
   assert (fifo_out_fd > 0);
+  assert (fifo_cmd_fd != fifo_out_fd);
   Fl::add_fd(fifo_cmd_fd, FL_READ, my_cmd_fd_handler, nullptr);
   Fl::add_fd(fifo_out_fd, FL_WRITE, my_out_fd_handler, nullptr);
 } // end my_initialize_fifo
@@ -709,6 +721,12 @@ miniedit_prog_arg_handler(int argc, char **argv, int &i)
       i += 2;
       return 2;
     }
+  if (strcmp("--fifo", argv[i]) == 0 && i+1<argc)
+    {
+      my_fifo_name = argv[i+1];
+      i += 2;
+      return 2;
+    }
   /* For arguments requiring a following option, increment i by 2 and return 2;
      For other arguments to be handled by FLTK, return 0 */
   return 0;
@@ -771,6 +789,23 @@ void my_expand_env(void)
     }
 } // end my_expand_env
 
+
+void
+do_show_usage(FILE*fil, const char*progname)
+{
+  fprintf(fil, "usage: %s [options...]\n"
+          " -h | --help        : print extended help message\n"
+          " -D | --debug       : show debugging messages\n"
+          " --fifo <fifoname>  : accept JSONRPC on <fifoname>.cmd and output JSONRPC on <fifoname>.out\n"
+          " --do <shellcmd>    : run a shell command\n"
+          " -Y | --style-demo  : show demo of styles\n"
+          " --xtrafont <fontname>\n"
+          " --otherfont <fontname>\n"
+          " -V | --version     : print version\n",
+          progname);
+  fflush(fil);
+} // end do_show_usage
+
 int
 main(int argc, char **argv)
 {
@@ -778,18 +813,15 @@ main(int argc, char **argv)
   my_prog_name = argv[0];
   if (Fl::args(argc, argv, i, miniedit_prog_arg_handler) < argc)
     {
-      Fl::fatal("error: unknown option: %s\n"
-                "usage: %s [options]\n"
-                " -h | --help        : print extended help message\n"
-                " -D | --debug       : show debugging messages\n"
-                " --fifo <fifoname>  : accept JSONRPC on <fifoname>.cmd and output JSONRPC on <fifoname>.out\n"
-                " --do <shellcmd>    : run a shell command\n"
-                " -Y | --style-demo  : show demo of styles\n"
-                " --xtrafont <fontname>\n"
-                " --otherfont <fontname>\n"
-                " -V | --version     : print version\n",
-                argv[i], argv[0]);
+      do_show_usage(stderr, my_prog_name);
+      Fl::fatal("error: unknown option: %s\n",
+                argv[i]);
     }
+  if (my_help_flag)
+    {
+      do_show_usage(stdout, my_prog_name);
+      exit(EXIT_SUCCESS);
+    };
   if (my_version_flag)
     {
       std::cout << argv[0] << " version "
