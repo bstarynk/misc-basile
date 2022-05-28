@@ -27,7 +27,9 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
+#include <dlfcn.h>
 
 #include <gnu/libc-version.h>
 
@@ -743,10 +745,77 @@ my_cmd_fd_handler(FL_SOCKET sock, void*)
 void
 my_out_fd_handler(FL_SOCKET sock, void*)
 {
-#warning my_out_fd_handler unimplemented
+  /// TODO: we probably need some std::ostringstream to buffer the output...
+#warning my_out_fd_handler unimplemented, may need some std::ostringstream global
   assert(sock == fifo_out_fd);
   FATALPRINTF("my_out_fd_handler unimplemented sock#%d", sock);
 } // end my_cmd_fd_handler
+
+
+static pid_t my_compilation_pid;
+static std::string my_compiled_srcfile;
+static int my_compilation_wstatus;
+static std::string my_plugin_initializer;
+static std::string my_plugin_prefix;
+static long my_plugin_id;
+constexpr double my_compilation_period_wait = 0.1;
+static void
+my_check_compilation_ended(void*)
+{
+  assert(my_compilation_pid>0);
+  int srcfilen = my_compiled_srcfile.size();
+  assert(srcfilen>5);
+  std::string my_compiled_plugin = my_compiled_srcfile;
+  /// the srcfile is ending with .cc, so the plugin is...
+  my_compiled_plugin[srcfilen-2] = 's';
+  my_compiled_plugin[srcfilen-2] = 'o';
+  int ws= 0;
+  if (waitpid(my_compilation_pid, &ws, WNOHANG) == my_compilation_pid)
+    {
+      DBGPRINTF("after waitpid compilation pid %d ws: %d my_compiled_plugin %s",
+                (int)my_compilation_pid, ws, my_compiled_plugin.c_str());
+      my_compilation_wstatus = ws;
+      if (ws)
+        {
+          std::clog << my_prog_name << " pid#" << (int)getpid()
+                    << " git " << GITID << " failed to compile "
+                    << my_compiled_srcfile << " (wstatus#" << ws << ")"
+                    << std::endl;
+          return;
+        }
+      void*initad = nullptr;
+      if (access(my_compiled_plugin.c_str(), R_OK))
+        FATALPRINTF("cannot access for read my_compiled_plugin %s: %m",
+                    my_compiled_plugin.c_str());
+      void* dlh = dlopen(my_compiled_plugin.c_str(), RTLD_NOW|RTLD_GLOBAL);
+      if (!dlh)
+        FATALPRINTF("cannot dlopen my_compiled_plugin %s: %s",
+                    my_compiled_plugin.c_str(), dlerror());
+      if (!my_plugin_initializer.empty())
+        {
+          initad = dlsym(dlh, my_plugin_initializer.c_str());
+          if (!initad)
+            FATALPRINTF("cannot dlsym plugin initializer %s in plugin %s - %s",
+                        my_plugin_initializer.c_str(),
+                        my_compiled_plugin.c_str(),
+                        dlerror());
+          typedef void initrout_t(const char*prefix, long id);
+          initrout_t* initroutp = (initrout_t*)initad;
+          (*initroutp)(my_plugin_prefix.c_str(), my_plugin_id);
+        };
+      /// forget about previous compilation
+      my_compilation_pid = 0;
+      my_compiled_srcfile.clear();
+      my_compilation_wstatus = 0;
+      my_plugin_initializer.clear();
+      my_plugin_prefix.clear();
+      my_plugin_id = 0;
+    } // end if waitpid
+  else
+    Fl::repeat_timeout(my_compilation_period_wait, my_check_compilation_ended);
+} // end my_check_compilation_ended
+
+
 
 void
 my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount)
@@ -755,18 +824,22 @@ my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount)
   const Json::Value& prefixjs = (*pcmdjson)["prefix"];
   const Json::Value& idjs = (*pcmdjson)["id"];
   const Json::Value& codelinesjs = (*pcmdjson)["codelines"];
-  std::string initializer;
   char tempcodename[128];
   memset (tempcodename, 0, sizeof(tempcodename));
   std::string prefixstr = prefixjs.asString();
   for (char c: prefixstr)
     if (!isalnum(c) && c != '_')
       throw std::runtime_error(std::string("Bad compileplugin prefix ") + prefixstr);
+  if (my_compilation_pid > 0)
+    throw std::runtime_error(std::string("compileplugin impossible since compilation is running"));
   long id = idjs.asInt64();
   snprintf(tempcodename, sizeof(tempcodename)-1,"%.80s/%s-%ld.cc",
            my_tempdir, prefixstr.c_str(), id);
+  DBGPRINTF("my_rpc_compileplugin_handler tempcodename: %s", tempcodename);
   if (pcmdjson->isMember("initializer"))
-    initializer = (*pcmdjson)["initializer"].asString();
+    my_plugin_initializer = (*pcmdjson)["initializer"].asString();
+  else
+    my_plugin_initializer.clear();
   if (!codelinesjs.isArray())
     throw std::runtime_error(std::string("compileplugin wants an array of codelines"));
   int nbcodelines = codelinesjs.size();
@@ -796,12 +869,39 @@ my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount)
     std::ofstream codoutf{tempcodename};
     for (std::string& curlin: codelinvec)
       codoutf << curlin << "\n";
+    codoutf << "/// end of temporary file "<< tempcodename << std::endl;
     codoutf << std::flush;
   }
-#warning my_rpc_compileplugin_handler should start a compilation command
-  FATALPRINTF("unimplemented my_rpc_compileplugin_handler cmdcount#%ld", cmdcount);
+  fflush(nullptr);
+  my_compilation_pid = fork();
+  if (my_compilation_pid < 0)
+    FATALPRINTF("my_rpc_compileplugin_handler fork failed (%m)");
+  if (my_compilation_pid == 0)
+    {
+      // child process
+      int nullfd = open("/dev/null", O_RDONLY);
+      if (nullfd>0)
+        dup2(nullfd, STDIN_FILENO);
+      for (int fd=3; fd<128; fd++)
+        close(fd);
+      execl (my_compile_script, my_compile_script, tempcodename, nullptr);
+      /// unlikely to be reached, except if something else removed the my_compile_script
+      perror(my_compile_script);
+      _exit(125);
+    } // end if child process
+  my_compiled_srcfile = tempcodename;
+  my_plugin_prefix = prefixstr;
+  my_plugin_id = id;
+  Fl::add_timeout(my_compilation_period_wait, my_check_compilation_ended);
+  {
+    Json::Value resob(Json::objectValue);
+    resob["jsonrpc"] = "2.0";
+    resob["result"] = my_compilation_pid;
+    resob["id"] = id;
+    std::string outstr = Json::writeString(my_json_out_builder, resob);
+#warning incomplete my_rpc_compileplugin_handler; should write the outstr in my_out_fd_handler
+  }
   /* see description of JSONRPC in file mini-edit-JSONRPC.md */
-#warning unimplemented my_rpc_compileplugin_handler
 } // end my_rpc_compileplugin_handler
 
 
