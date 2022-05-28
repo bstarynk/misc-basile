@@ -76,6 +76,20 @@ extern "C" Fl_Menu_Bar*my_menubar;
 extern "C" const int my_font_delta;
 extern "C" const char* my_fifo_name;
 
+typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount);
+struct my_jsoncmd_handler_st
+{
+  my_jsoncmd_handling_sigt*cmd_fun;
+  intptr_t cmd_data1;
+  intptr_t cmd_data2;
+};
+
+extern "C" std::map<std::string,my_jsoncmd_handler_st> my_cmd_handling_dict;
+extern "C" void my_command_register(const std::string&name, struct my_jsoncmd_handler_st cmdh);
+extern "C" void my_command_register_plain(const std::string&name, my_jsoncmd_handling_sigt*cmdrout);
+extern "C" void my_command_register_data1(const std::string&name, my_jsoncmd_handling_sigt*cmdrout, intptr_t data1);
+extern "C" void my_command_register_data2(const std::string&name, my_jsoncmd_handling_sigt*cmdrout, intptr_t data1, intptr_t data2);
+
 /// a small integer to increase font size at compile time, e.g. compiling with -DMY_FONT_DELTA=2
 
 #ifndef MY_FONT_DELTA
@@ -152,6 +166,7 @@ extern "C" void my_cmd_fd_handler(FL_SOCKET, void*);
 extern "C" void my_out_fd_handler(FL_SOCKET, void*);
 extern "C" void my_cmd_processor(int cmdlen);
 extern "C" void my_cmd_handle_buffer(const char*cmdbuf, int cmdlen);
+extern "C" void my_cmd_process_json(const Json::Value*pjson, long cmdcount);
 
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
@@ -849,7 +864,7 @@ my_cmd_processor(int cmdlen)
   my_cmd_sstream.flush();
   char smallbuf[512];
   memset(smallbuf, 0, sizeof(smallbuf));
-  if (cmdlen < sizeof(smallbuf))
+  if (cmdlen < (int)sizeof(smallbuf))
     {
       my_cmd_sstream.read(smallbuf, cmdlen);
       DBGPRINTF("my_cmd_sstream smallcmd len.%d:\n%s\n", cmdlen, smallbuf);
@@ -882,7 +897,7 @@ my_cmd_handle_buffer(const char*cmdbuf, int cmdlen)
     {
       DBGOUT("my_cmd_handle_buffer cmd#" << cmdcount << "::" << std::endl
              << jscmd << std::endl << "endcmd#" << cmdcount);
-#warning should define and document some JSONRPC protocol for commands
+      my_cmd_process_json(&jscmd, cmdcount);
     }
   else
     {
@@ -896,6 +911,78 @@ my_cmd_handle_buffer(const char*cmdbuf, int cmdlen)
   FATALPRINTF("unimplemented my_cmd_handle_buffer cmd#%ld cmdlen:%d buffer:\n%s\n### endcmd#%ld\n",
               cmdcount, cmdlen, cmdbuf, cmdcount);
 } // end my_cmd_handle_buffer
+
+void
+my_cmd_process_json(const Json::Value*pjson, long cmdcount)
+{
+  assert (pjson != nullptr);
+  DBGOUT("my_cmd_process_json cmdcount#" << cmdcount <<" pjson=" << *pjson);
+  try
+    {
+      bool gotid = false;
+      long cmdid = -1;
+      if ((*pjson)["jsonrpc"] != "2.0")
+        throw std::runtime_error("wrong JSONRPC version");
+      Json::Value methjs = (*pjson)["method"];
+      if (!methjs.isString())
+        throw std::runtime_error("invalid method in JSONRPC");
+      Json::Value paramjs = (*pjson)["params"];
+      Json::Value idjs = (*pjson)["id"];
+      if (idjs.isIntegral())
+        {
+          gotid = true;
+          cmdid = idjs.asInt64();
+        }
+      std::string methstr = methjs.asString();
+      auto itcmd = my_cmd_handling_dict.find(methstr);
+      if (itcmd != my_cmd_handling_dict.end())
+        {
+          my_jsoncmd_handler_st cmdh = itcmd->second;
+          assert (cmdh.cmd_fun);
+          (*cmdh.cmd_fun)(pjson, cmdcount);
+        }
+    }
+  catch (std::exception &exc)
+    {
+      std::clog << "my_cmd_process_json FAILED for cmdcount#" << cmdcount
+                << " got exception:" << exc.what()
+                << std::endl;
+    }
+} // end my_cmd_process_json
+
+
+void
+my_command_register(const std::string&name, struct my_jsoncmd_handler_st cmdh)
+{
+  if (name.empty())
+    {
+      std::clog<<my_prog_name<< " pid." << (int)getpid() << " on " << my_host_name
+               << " with empty command name."<< std::endl;
+      throw std::runtime_error("empty command name");
+    }
+  my_cmd_handling_dict.insert({name,cmdh});
+} // end my_command_register
+
+void
+my_command_register_plain(const std::string&name, my_jsoncmd_handling_sigt*cmdrout)
+{
+  struct my_jsoncmd_handler_st cmdh = {.cmd_fun=cmdrout, .cmd_data1=0, .cmd_data2= 0};
+  my_command_register(name,cmdh);
+} // end my_command_register_plain
+
+void
+my_command_register_data1(const std::string&name, my_jsoncmd_handling_sigt*cmdrout, intptr_t data1)
+{
+  struct my_jsoncmd_handler_st cmdh = {.cmd_fun=cmdrout, .cmd_data1=data1, .cmd_data2= 0};
+  my_command_register(name,cmdh);
+} // end my_command_register_data1
+
+void
+my_command_register_data1(const std::string&name, my_jsoncmd_handling_sigt*cmdrout, intptr_t data1, intptr_t data2)
+{
+  struct my_jsoncmd_handler_st cmdh = {.cmd_fun=cmdrout, .cmd_data1=data1, .cmd_data2= data2};
+  my_command_register(name,cmdh);
+} // end my_command_register_data2
 
 void
 do_show_usage(FILE*fil, const char*progname)
@@ -1027,6 +1114,7 @@ bool my_help_flag = false;
 bool my_version_flag = false;
 bool my_debug_flag = false;
 bool my_styledemo_flag = false;
+std::map<std::string,my_jsoncmd_handler_st> my_cmd_handling_dict;
 const int my_font_delta = MY_FONT_DELTA;
 /****************
  **                           for Emacs...
