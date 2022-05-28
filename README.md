@@ -72,7 +72,7 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
   incomplete). It accepts some
   [JSONRPC](https://www.jsonrpc.org/specification) inspired protocol,
   documented in file
-  [mini-edit-JSONRPC.md](https://github.com/bstarynk/misc-basile/[mini-edit-JSONRPC.md).
+  [mini-edit-JSONRPC.md](https://github.com/bstarynk/misc-basile/mini-edit-JSONRPC.md).
 
 * `logged-gcc.cc` is a (GPLv3 licensed) wrapper (coded in C++) around
   compilation commands by [GCC](http://gcc.gnu.org/) to log them (and
