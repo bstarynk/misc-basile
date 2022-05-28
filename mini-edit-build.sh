@@ -11,7 +11,9 @@ if [ -x fltk-mini-edit ]; then
 fi
 $CXX $CXXFLAGS $($FLTKCONFIG --cflags) -DGITID=\"$GITID\" \
      -DCXX_COMPILER=\"$CXX\" \
+     -DCXX_SOURCE_DIR=\"$(/bin/pwd)\" \
      $(pkg-config --cflags jsoncpp) \
+     -rdynamic \
      fltk-mini-edit.cc \
      -L/usr/local/lib \
      $($FLTKCONFIG --libs) \

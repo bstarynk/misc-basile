@@ -75,6 +75,8 @@ extern "C" Fl_Window *my_top_window;
 extern "C" Fl_Menu_Bar*my_menubar;
 extern "C" const int my_font_delta;
 extern "C" const char* my_fifo_name;
+extern "C" const char my_source_dir[];
+extern "C" const char my_source_file[];
 
 typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount);
 struct my_jsoncmd_handler_st
@@ -1105,6 +1107,8 @@ struct backtrace_state *my_backtrace_state= nullptr;
 
 const char*my_prog_name = nullptr;
 const char* my_fifo_name = nullptr;
+const char my_source_dir[] = CXX_SOURCE_DIR;
+const char my_source_file[] = CXX_SOURCE_DIR "/" __FILE__;
 int fifo_cmd_fd = -1;
 int fifo_out_fd = -1;
 std::stringstream my_cmd_sstream;
