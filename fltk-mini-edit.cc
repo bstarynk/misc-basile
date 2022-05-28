@@ -40,6 +40,7 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <cassert>
 
 /// https://github.com/ianlancetaylor/libbacktrace/
@@ -149,6 +150,8 @@ extern "C" void my_initialize_fifo(void);
 extern "C" int fifo_cmd_fd, fifo_out_fd;
 extern "C" void my_cmd_fd_handler(FL_SOCKET, void*);
 extern "C" void my_out_fd_handler(FL_SOCKET, void*);
+extern "C" void my_cmd_processor(int cmdlen);
+extern "C" void my_cmd_handle_buffer(const char*cmdbuf, int cmdlen);
 
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
@@ -251,6 +254,7 @@ public:
 
 extern "C" const int last_shared_line = __LINE__;
 
+extern "C" std::stringstream my_cmd_sstream;
 Json::CharReaderBuilder my_json_cmd_builder;
 Json::StreamWriterBuilder my_json_out_builder;
 char* my_shell_command;
@@ -596,7 +600,6 @@ my_initialize_fifo(void)
   std::string fifo_cmd_str = fifo_str + ".cmd";
   std::string fifo_out_str = fifo_str + ".out";
   struct stat fifo_cmd_stat = {};
-  struct stat fifo_out_stat = {};
   DBGPRINTF("my_initialize_fifo fifo_cmd '%s'",
             fifo_cmd_str.c_str());
   if (!stat(fifo_cmd_str.c_str(), &fifo_cmd_stat))
@@ -606,20 +609,23 @@ my_initialize_fifo(void)
       if ((cmd_mod&S_IFMT) != S_IFIFO)
         FATALPRINTF("%s is not a FIFO but should be the command FIFO - %m",
                     fifo_cmd_str.c_str());
-      fifo_cmd_fd = open(fifo_cmd_str.c_str(), O_RDONLY);
-      if (fifo_cmd_fd < 0)
-        FATALPRINTF("failed to open command FIFO %s - %m", fifo_cmd_str.c_str());
     }
   else
     {
       // should create the cmd FIFO
-      fifo_cmd_fd = mkfifo(fifo_cmd_str.c_str(), S_IRUSR|S_IWUSR);
-      if (fifo_cmd_fd < 0)
+      if (!mkfifo(fifo_cmd_str.c_str(), S_IRUSR|S_IWUSR))
         FATALPRINTF("failed to make command FIFO %s - %m", fifo_cmd_str.c_str());
       printf("%s: (pid %d on %s) created command FIFO %s\n",
              my_prog_name, (int)getpid(), my_host_name, fifo_cmd_str.c_str());
       fflush(stdout);
     };
+  fifo_cmd_fd = open(fifo_cmd_str.c_str(), O_RDONLY|O_NONBLOCK);
+  if (fifo_cmd_fd < 0)
+    FATALPRINTF("failed to open command FIFO %s - %m", fifo_cmd_str.c_str());
+  DBGPRINTF("my_initialize_fifo fifo_cmd '%s' fifo_cmd_fd#%d",
+            fifo_cmd_str.c_str(), fifo_cmd_fd);
+  /////
+  struct stat fifo_out_stat = {};
   DBGPRINTF("my_initialize_fifo fifo_out '%s'",
             fifo_out_str.c_str());
   if (!stat(fifo_out_str.c_str(), &fifo_out_stat))
@@ -629,27 +635,27 @@ my_initialize_fifo(void)
       if ((out_mod&S_IFMT) != S_IFIFO)
         FATALPRINTF("%s is not a FIFO but should be the output FIFO",
                     fifo_out_str.c_str());
-      fifo_out_fd = open(fifo_out_str.c_str(), O_RDONLY);
-      if (fifo_out_fd < 0)
-        FATALPRINTF("failed to open output FIFO %s - %m", fifo_out_str.c_str());
     }
   else
     {
       // should create the output FIFO
-      fifo_out_fd = mkfifo(fifo_out_str.c_str(), S_IRUSR|S_IWUSR);
-      if (fifo_out_fd < 0)
+      if (!mkfifo(fifo_out_str.c_str(), S_IRUSR|S_IWUSR))
         FATALPRINTF("failed to make output FIFO %s - %m", fifo_out_str.c_str());
       printf("%s: (pid %d on %s) created output FIFO %s\n",
              my_prog_name, (int)getpid(), my_host_name, fifo_out_str.c_str());
       fflush(stdout);
     };
-  DBGPRINTF("my_initialize_fifo fifo_cmd_fd#%d fifo_out_fd#%d", fifo_cmd_fd, fifo_out_fd);
+  DBGPRINTF("my_initialize_fifo fifo_out %s", fifo_out_str.c_str());
+#warning the output fifo should be opened later....
   if (my_debug_flag)
     {
       char cmdbuf[80];
       memset(cmdbuf, 0, sizeof(cmdbuf));
+      fflush(nullptr);
       snprintf(cmdbuf, sizeof(cmdbuf), "/bin/ls -l /proc/%d/fd/", (int)getpid());
-      system(cmdbuf);
+      int cmdret = system(cmdbuf);
+      if (cmdret != 0)
+        FATALPRINTF("failed to run %s : %d (%m)", cmdbuf, cmdret);
     }
   assert (fifo_cmd_fd > 0);
   assert (fifo_out_fd > 0);
@@ -663,7 +669,35 @@ my_cmd_fd_handler(FL_SOCKET sock, void*)
 {
 #warning my_cmd_fd_handler unimplemented
   assert(sock == fifo_cmd_fd);
-  FATALPRINTF("my_cmd_fd_handler unimplemented sock#%d", sock);
+  ssize_t cmdrdcnt = -1;
+  size_t startcmdlen = my_cmd_sstream.tellg();
+  int cmdlen = -1;
+  DBGPRINTF("my_cmd_sstream sock#%d startcmdlen=%zd", sock, startcmdlen);
+  for(;;)
+    {
+      size_t curcmdlen = my_cmd_sstream.tellg();
+#define CMDBUF_SIZE 2048
+      char cmdbuf[CMDBUF_SIZE+4];
+      memset(cmdbuf, 0, sizeof(cmdbuf));
+      cmdrdcnt = read(sock, cmdbuf, CMDBUF_SIZE);
+      if (cmdrdcnt > 0)
+        {
+          my_cmd_sstream.write(cmdbuf, cmdrdcnt);
+          const char*ff = strchr(cmdbuf, '\f');
+          if (ff)
+            cmdlen =  curcmdlen+(ff-cmdbuf);
+          const char*nlnl = strstr(cmdbuf, "\n\n");
+          if (nlnl)
+            cmdlen = curcmdlen+(nlnl-cmdbuf);
+        }
+      else
+        {
+          if (cmdrdcnt == 0)
+            cmdlen = curcmdlen;
+        }
+      if (cmdlen > 0)
+        my_cmd_processor(cmdlen);
+    };
 } // end my_cmd_fd_handler
 
 void
@@ -789,6 +823,44 @@ void my_expand_env(void)
     }
 } // end my_expand_env
 
+void
+my_cmd_processor(int cmdlen)
+{
+  char *bigcmdbuf = nullptr;
+  assert (cmdlen>0);
+  DBGPRINTF("my_cmd_processor cmdlen=%d", cmdlen);
+  my_cmd_sstream.flush();
+  char smallbuf[512];
+  memset(smallbuf, 0, sizeof(smallbuf));
+  if (cmdlen < sizeof(smallbuf))
+    {
+      my_cmd_sstream.read(smallbuf, cmdlen);
+      DBGPRINTF("my_cmd_sstream smallcmd len.%d:\n%s\n", cmdlen, smallbuf);
+      my_cmd_handle_buffer(smallbuf, cmdlen);
+    }
+  else
+    {
+      int buflen = ((cmdlen+10)|0x1f)+1;
+      bigcmdbuf = (char*)calloc(1, buflen);
+      if (!bigcmdbuf)
+        FATALPRINTF("failed to allocate bigcmdbuf for %d bytes (%m)", buflen);
+      my_cmd_sstream.read(bigcmdbuf, cmdlen);
+      DBGPRINTF("my_cmd_sstream bigcmd len.%d:\n%s\n", cmdlen, bigcmdbuf);
+      my_cmd_handle_buffer(bigcmdbuf, cmdlen);
+    }
+  if (bigcmdbuf)
+    free(bigcmdbuf);
+} // end my_cmd_processor
+
+void
+my_cmd_handle_buffer(const char*cmdbuf, int cmdlen)
+{
+  static long cmdcount;
+  cmdcount++;
+#warning my_cmd_handle_buffer is not implemented
+  FATALPRINTF("unimplemented my_cmd_handle_buffer cmd#%ld cmdlen:%d buffer:\n%s\n### endcmd#%ld\n",
+              cmdcount, cmdlen, cmdbuf, cmdcount);
+} // end my_cmd_handle_buffer
 
 void
 do_show_usage(FILE*fil, const char*progname)
@@ -913,6 +985,7 @@ const char*my_prog_name = nullptr;
 const char* my_fifo_name = nullptr;
 int fifo_cmd_fd = -1;
 int fifo_out_fd = -1;
+std::stringstream my_cmd_sstream;
 Fl_Window *my_top_window= nullptr;
 Fl_Menu_Bar*my_menubar = nullptr;
 bool my_help_flag = false;
