@@ -40,6 +40,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <cassert>
 
@@ -78,6 +79,8 @@ extern "C" const char* my_fifo_name;
 extern "C" const char my_source_dir[];
 extern "C" const char my_source_file[];
 extern "C" const char my_compile_script[];
+#define MY_TEMPDIR_LEN 256
+extern "C" char my_tempdir[MY_TEMPDIR_LEN];
 
 typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount);
 struct my_jsoncmd_handler_st
@@ -749,6 +752,53 @@ void
 my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount)
 {
   /* the RPCJSON request gives C++ code to be added in the generated plugin ... */
+  const Json::Value& prefixjs = (*pcmdjson)["prefix"];
+  const Json::Value& idjs = (*pcmdjson)["id"];
+  const Json::Value& codelinesjs = (*pcmdjson)["codelines"];
+  std::string initializer;
+  char tempcodename[128];
+  memset (tempcodename, 0, sizeof(tempcodename));
+  std::string prefixstr = prefixjs.asString();
+  for (char c: prefixstr)
+    if (!isalnum(c) && c != '_')
+      throw std::runtime_error(std::string("Bad compileplugin prefix ") + prefixstr);
+  long id = idjs.asInt64();
+  snprintf(tempcodename, sizeof(tempcodename)-1,"%.80s/%s-%ld.cc",
+           my_tempdir, prefixstr.c_str(), id);
+  if (pcmdjson->isMember("initializer"))
+    initializer = (*pcmdjson)["initializer"].asString();
+  if (!codelinesjs.isArray())
+    throw std::runtime_error(std::string("compileplugin wants an array of codelines"));
+  int nbcodelines = codelinesjs.size();
+  std::vector<std::string> codelinvec;
+  codelinvec.reserve(last_shared_line);
+  std::ifstream self_source_file(my_source_file);
+  char bufnam[400];
+  memset (bufnam, 0, sizeof(bufnam));
+  snprintf(bufnam, sizeof(bufnam), "/// temporary C++ code file %s",
+           tempcodename);
+  codelinvec.push_back(std::string(bufnam));
+  char linebuf[256];
+  for (int i=0; i<last_shared_line; i++)
+    {
+      self_source_file.getline(linebuf, sizeof(linebuf)-2);
+      if (i==0) continue;
+      std::string linstr(linebuf);
+      codelinvec.push_back(linstr);
+    };
+  for (int codlinenum=0; codlinenum<nbcodelines; codlinenum++)
+    {
+      const Json::Value&curlinejs = codelinesjs[codlinenum];
+      if (curlinejs.isString())
+        codelinvec.push_back(curlinejs.asString());
+    }
+  {
+    std::ofstream codoutf{tempcodename};
+    for (std::string& curlin: codelinvec)
+      codoutf << curlin << "\n";
+    codoutf << std::flush;
+  }
+#warning my_rpc_compileplugin_handler should start a compilation command
   FATALPRINTF("unimplemented my_rpc_compileplugin_handler cmdcount#%ld", cmdcount);
   /* see description of JSONRPC in file mini-edit-JSONRPC.md */
 #warning unimplemented my_rpc_compileplugin_handler
@@ -1015,11 +1065,28 @@ do_show_usage(FILE*fil, const char*progname)
   fflush(fil);
 } // end do_show_usage
 
+extern "C" void my_postponed_remove_tempdir(void);
+void
+my_postponed_remove_tempdir(void)
+{
+  if (!my_tempdir[0])
+    return;
+  // we keep temporary directory for ten minutes to ease debugging....
+  FILE* patf = popen("/bin/at now + 10 min", "w");
+  if (!patf)
+    return;
+  fprintf(patf, "/bin/rm -rf '%s'", my_tempdir);
+  fflush(patf);
+  (void) pclose(patf);
+} // end my_postponed_remove_tempdir
+
 int
 main(int argc, char **argv)
 {
   int i= 1;
   my_prog_name = argv[0];
+  int l = snprintf(my_tempdir, sizeof(my_tempdir), "/tmp/%s", __FILE__);
+  snprintf(my_tempdir + l - 3, sizeof(my_tempdir) - l - 8, "-pid%d-git%s", (int)getpid(), GITID);
   if (Fl::args(argc, argv, i, miniedit_prog_arg_handler) < argc)
     {
       do_show_usage(stderr, my_prog_name);
@@ -1041,6 +1108,7 @@ main(int argc, char **argv)
       std::cout << "\t JSONCPP version:" << JSONCPP_VERSION_STRING << std::endl;
       std::cout << "\t source file: " << my_source_file << std::endl;
       std::cout << "\t compile script: " << my_compile_script << std::endl;
+      std::cout << "\t current tempdir: " << my_tempdir << std::endl;
       exit(EXIT_SUCCESS);
     }
   std::string tistr = __FILE__;
@@ -1059,6 +1127,10 @@ main(int argc, char **argv)
     FATALPRINTF("failed to get hostname %s", strerror(errno));
   if (my_fifo_name)
     my_initialize_fifo();
+  if (!mkdir(my_tempdir, S_IRWXU))
+    FATALPRINTF("failed to mkdir %s - %m", my_tempdir);
+  DBGPRINTF("made temporary directory %s", my_tempdir);
+  atexit(my_postponed_remove_tempdir);
   my_expand_env();
   if (my_shell_command)
     {
@@ -1125,6 +1197,7 @@ const char* my_fifo_name = nullptr;
 const char my_source_dir[] = CXX_SOURCE_DIR;
 const char my_source_file[] = CXX_SOURCE_DIR "/" __FILE__;
 const char my_compile_script[] = CXX_SOURCE_DIR "/" COMPILE_SCRIPT;
+char my_tempdir[MY_TEMPDIR_LEN];
 int fifo_cmd_fd = -1;
 int fifo_out_fd = -1;
 std::stringstream my_cmd_sstream;
