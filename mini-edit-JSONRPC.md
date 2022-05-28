@@ -19,5 +19,5 @@ Communication between `fltk-mini-edit` and some other process
 pipes.
 
 Each JSONRPC message should be ended by two newlines character
-(e.g. `"\\n\\n"` in C notation) or by one formfeed character
-(e.g. `'\\f'` in C notation). This differs from traditional JSONRPC.
+(e.g. `"\n\n"` in C notation) or by one formfeed character
+(e.g. `'\f'` in C notation). *This differs from traditional JSONRPC conventions.*
