@@ -36,3 +36,18 @@ JSONRPC method names.
 This method gets C++ code lines in the JSONRPC request, to be
 aggregated into a temporary plugin, which should be `dlopen`-ed. Once
 loaded, some initialization C routine is run.
+
+The RPC call should have a unique `id`, and the following JSON fields
+
+* `"method" : "compileplugin"`
+* `"prefix" :` *small-name-prefix*
+* `"id" :` *required unique id integer*
+* `"codelines" :` JSON array of strings, one per C++ line of the plugin
+
+**Optionally**, it may have
+
+* `"initializer" : ` JSON-string naming an initializing `extern "C"`
+  routine. called with the given prefix and the given id. Once the
+  plugin has been compiled and `dlopen`-ed, the `dlsym` is used to
+  retrieve that initializing function.
+
