@@ -597,6 +597,23 @@ my_initialize_fifo(void)
   assert (fifo_out_fd < 0);
   assert (my_fifo_name != nullptr);
   std::string fifo_str {my_fifo_name};
+  {
+    Json::Value cmdoptjs(Json::objectValue);
+    cmdoptjs["allowComments"] = true;
+    cmdoptjs["allowTrailingCommas"] = true;
+    cmdoptjs["rejectDupKeys"] = true;
+    my_json_cmd_builder.setDefaults(&cmdoptjs);
+  }
+  {
+    Json::Value outoptjs(Json::objectValue);
+    outoptjs["commentStyle"] = "All";
+    outoptjs["indentation"] = " ";
+    outoptjs["useSpecialFloats"] = true;
+    outoptjs["precision"] = 17;
+    outoptjs["precisionType"] = "significant";
+    outoptjs["emitUTF8"] = true;
+    my_json_out_builder.setDefaults(&outoptjs);
+  }
   std::string fifo_cmd_str = fifo_str + ".cmd";
   std::string fifo_out_str = fifo_str + ".out";
   struct stat fifo_cmd_stat = {};
@@ -852,11 +869,29 @@ my_cmd_processor(int cmdlen)
     free(bigcmdbuf);
 } // end my_cmd_processor
 
+
 void
 my_cmd_handle_buffer(const char*cmdbuf, int cmdlen)
 {
   static long cmdcount;
   cmdcount++;
+  std::string errstr;
+  const std::unique_ptr<Json::CharReader> reader(my_json_cmd_builder.newCharReader());
+  Json::Value jscmd;
+  if (reader->parse(cmdbuf, cmdbuf+cmdlen, &jscmd, &errstr))
+    {
+      DBGOUT("my_cmd_handle_buffer cmd#" << cmdcount << "::" << std::endl
+             << jscmd << std::endl << "endcmd#" << cmdcount);
+#warning should define and document some JSONRPC protocol for commands
+    }
+  else
+    {
+      std::clog << my_prog_name << "(pid " << (int)getpid() << " on " << my_host_name << ") failed to parse:" << std::endl
+                << std::string(cmdbuf, cmdlen)
+                << std::endl
+                << errstr
+                << std::endl;
+    }
 #warning my_cmd_handle_buffer is not implemented
   FATALPRINTF("unimplemented my_cmd_handle_buffer cmd#%ld cmdlen:%d buffer:\n%s\n### endcmd#%ld\n",
               cmdcount, cmdlen, cmdbuf, cmdcount);
