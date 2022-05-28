@@ -67,7 +67,12 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
 
 * `fox-tinyed.cc` is for learning the [FOX](https://fox-toolkit.org/) toolkit - a tiny editor (perhaps incomplete).
 
-* `fltk-mini-edit.cc` is for learning the [FLTK](https://fltk-toolkit.org/) toolkit - a tiny editor (perhaps incomplete).
+* `fltk-mini-edit.cc` is for learning the
+  [FLTK](https://fltk-toolkit.org/) toolkit - a tiny editor (perhaps
+  incomplete). It accepts some
+  [JSONRPC](https://www.jsonrpc.org/specification) inspired protocol,
+  documented in file
+  [mini-edit-JSONRPC.md](https://github.com/bstarynk/misc-basile/[mini-edit-JSONRPC.md).
 
 * `logged-gcc.cc` is a (GPLv3 licensed) wrapper (coded in C++) around
   compilation commands by [GCC](http://gcc.gnu.org/) to log them (and
