@@ -10,6 +10,7 @@ if [ -x fltk-mini-edit ]; then
     /bin/mv -v fltk-mini-edit fltk-mini-edit~
 fi
 $CXX $CXXFLAGS $($FLTKCONFIG --cflags) -DGITID=\"$GITID\" \
+     -DCXX_COMPILER=\"$CXX\" \
      $(pkg-config --cflags jsoncpp) \
      fltk-mini-edit.cc \
      -L/usr/local/lib \
