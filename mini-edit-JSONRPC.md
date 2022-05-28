@@ -21,3 +21,18 @@ pipes.
 Each JSONRPC message should be ended by two newlines character
 (e.g. `"\n\n"` in C notation) or by one formfeed character
 (e.g. `'\f'` in C notation). *This differs from traditional JSONRPC conventions.*
+
+## API to extend the protocol (C compatible)
+
+Use (in the process running `fltk-mini-edit`...) the functions
+`my_command_register` and related `my_command_register_plain`,
+`my_command_register_data1`, `my_command_register_data2` to add new
+JSONRPC method names.
+
+## core JSONRPC methods
+
+### method `compileplugin`
+
+This method gets C++ code lines in the JSONRPC request, to be
+aggregated into a temporary plugin, which should be `dlopen`-ed. Once
+loaded, some initialization C routine is run.

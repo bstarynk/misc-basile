@@ -77,6 +77,7 @@ extern "C" const int my_font_delta;
 extern "C" const char* my_fifo_name;
 extern "C" const char my_source_dir[];
 extern "C" const char my_source_file[];
+extern "C" const char my_compile_script[];
 
 typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount);
 struct my_jsoncmd_handler_st
@@ -91,6 +92,9 @@ extern "C" void my_command_register(const std::string&name, struct my_jsoncmd_ha
 extern "C" void my_command_register_plain(const std::string&name, my_jsoncmd_handling_sigt*cmdrout);
 extern "C" void my_command_register_data1(const std::string&name, my_jsoncmd_handling_sigt*cmdrout, intptr_t data1);
 extern "C" void my_command_register_data2(const std::string&name, my_jsoncmd_handling_sigt*cmdrout, intptr_t data1, intptr_t data2);
+
+/// by convention, handling of JSONRPC method FOO is named my_rpc_FOO_handler
+extern "C" void my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount);
 
 /// a small integer to increase font size at compile time, e.g. compiling with -DMY_FONT_DELTA=2
 
@@ -697,7 +701,6 @@ my_initialize_fifo(void)
   Fl::add_fd(fifo_cmd_fd, FL_READ, my_cmd_fd_handler, nullptr);
   Fl::add_fd(fifo_out_fd, FL_WRITE, my_out_fd_handler, nullptr);
 } // end my_initialize_fifo
-
 void
 my_cmd_fd_handler(FL_SOCKET sock, void*)
 {
@@ -741,6 +744,16 @@ my_out_fd_handler(FL_SOCKET sock, void*)
   assert(sock == fifo_out_fd);
   FATALPRINTF("my_out_fd_handler unimplemented sock#%d", sock);
 } // end my_cmd_fd_handler
+
+void
+my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount)
+{
+  /* the RPCJSON request gives C++ code to be added in the generated plugin ... */
+  FATALPRINTF("unimplemented my_rpc_compileplugin_handler cmdcount#%ld", cmdcount);
+  /* see description of JSONRPC in file mini-edit-JSONRPC.md */
+#warning unimplemented my_rpc_compileplugin_handler
+} // end my_rpc_compileplugin_handler
+
 
 int
 miniedit_prog_arg_handler(int argc, char **argv, int &i)
@@ -1026,6 +1039,8 @@ main(int argc, char **argv)
       std::cout << "\t GNU libc release " << gnu_get_libc_release() << " version " << gnu_get_libc_version() << std::endl;
       std::cout << "\t FLTK version:" << Fl::version() << " API " << Fl::api_version() << std::endl;
       std::cout << "\t JSONCPP version:" << JSONCPP_VERSION_STRING << std::endl;
+      std::cout << "\t source file: " << my_source_file << std::endl;
+      std::cout << "\t compile script: " << my_compile_script << std::endl;
       exit(EXIT_SUCCESS);
     }
   std::string tistr = __FILE__;
@@ -1109,6 +1124,7 @@ const char*my_prog_name = nullptr;
 const char* my_fifo_name = nullptr;
 const char my_source_dir[] = CXX_SOURCE_DIR;
 const char my_source_file[] = CXX_SOURCE_DIR "/" __FILE__;
+const char my_compile_script[] = CXX_SOURCE_DIR "/" COMPILE_SCRIPT;
 int fifo_cmd_fd = -1;
 int fifo_out_fd = -1;
 std::stringstream my_cmd_sstream;
