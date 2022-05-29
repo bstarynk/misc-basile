@@ -83,6 +83,7 @@ extern "C" const char my_source_file[];
 extern "C" const char my_compile_script[];
 #define MY_TEMPDIR_LEN 256
 extern "C" char my_tempdir[MY_TEMPDIR_LEN];
+extern "C" std::stringstream my_out_stringstream;
 
 typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount);
 struct my_jsoncmd_handler_st
@@ -706,10 +707,12 @@ my_initialize_fifo(void)
   Fl::add_fd(fifo_cmd_fd, FL_READ, my_cmd_fd_handler, nullptr);
   Fl::add_fd(fifo_out_fd, FL_WRITE, my_out_fd_handler, nullptr);
 } // end my_initialize_fifo
+
+
+// callback called when something is readable on the command FIFO
 void
 my_cmd_fd_handler(FL_SOCKET sock, void*)
 {
-#warning my_cmd_fd_handler unimplemented
   assert(sock == fifo_cmd_fd);
   ssize_t cmdrdcnt = -1;
   size_t startcmdlen = my_cmd_sstream.tellg();
@@ -742,13 +745,40 @@ my_cmd_fd_handler(FL_SOCKET sock, void*)
     };
 } // end my_cmd_fd_handler
 
+
+
+
+// callback called when something is writable on the output FIFO
 void
 my_out_fd_handler(FL_SOCKET sock, void*)
 {
-  /// TODO: we probably need some std::ostringstream to buffer the output...
-#warning my_out_fd_handler unimplemented, may need some std::ostringstream global
   assert(sock == fifo_out_fd);
-  FATALPRINTF("my_out_fd_handler unimplemented sock#%d", sock);
+  DBGPRINTF("my_out_fd_handler start sock#%d", sock);
+  long outbytcnt = -1;
+  while ((outbytcnt = my_out_stringstream.tellp()) > 0)
+    {
+      constexpr const int bufsiz = 1024;
+      char buf[bufsiz+4];
+      memset (buf, 0, sizeof(buf));
+      my_out_stringstream.get(buf, bufsiz);
+      int rdlen = my_out_stringstream.gcount();
+      if (rdlen < 0) break;
+      assert (rdlen <= bufsiz);
+      int wrlen = write(sock, buf, rdlen);
+      if (wrlen > 0)
+        {
+          if (wrlen < rdlen)
+            {
+              /// TODO: review code.... should we loop with increasing
+              /// or with decreasing index i ??
+              for (int i=wrlen; i<rdlen; i++)
+                my_out_stringstream.putback(buf[i]);
+            }
+        }
+      else if (wrlen < 0)
+        FATALPRINTF("my_out_fd_handler failed to write to sock#%d %d bytes (%m)", sock, rdlen);
+    }
+  DBGPRINTF("my_out_fd_handler ended sock#%d", sock);
 } // end my_cmd_fd_handler
 
 
@@ -1072,9 +1102,9 @@ my_cmd_handle_buffer(const char*cmdbuf, int cmdlen)
                 << errstr
                 << std::endl;
     }
-#warning my_cmd_handle_buffer is not implemented
-  FATALPRINTF("unimplemented my_cmd_handle_buffer cmd#%ld cmdlen:%d buffer:\n%s\n### endcmd#%ld\n",
-              cmdcount, cmdlen, cmdbuf, cmdcount);
+#warning my_cmd_handle_buffer might not be fully implemented
+  DBGPRINTF("end my_cmd_handle_buffer cmd#%ld cmdlen:%d buffer:\n%s\n### endcmd#%ld\n",
+            cmdcount, cmdlen, cmdbuf, cmdcount);
 } // end my_cmd_handle_buffer
 
 void
@@ -1166,6 +1196,9 @@ do_show_usage(FILE*fil, const char*progname)
 } // end do_show_usage
 
 extern "C" void my_postponed_remove_tempdir(void);
+
+/// this function is registered with atexit.. It uses the at(1) command.
+/// see https://linuxize.com/post/at-command-in-linux/
 void
 my_postponed_remove_tempdir(void)
 {
@@ -1186,7 +1219,7 @@ main(int argc, char **argv)
   int i= 1;
   my_prog_name = argv[0];
   int l = snprintf(my_tempdir, sizeof(my_tempdir), "/tmp/%s", __FILE__);
-  snprintf(my_tempdir + l - 3, sizeof(my_tempdir) - l - 8, "-pid%d-git%s", (int)getpid(), GITID);
+  snprintf(my_tempdir + l - 3, sizeof(my_tempdir) - l - 8, "-pid%d-git_%s", (int)getpid(), GITID);
   if (Fl::args(argc, argv, i, miniedit_prog_arg_handler) < argc)
     {
       do_show_usage(stderr, my_prog_name);
@@ -1308,6 +1341,7 @@ bool my_version_flag = false;
 bool my_debug_flag = false;
 bool my_styledemo_flag = false;
 std::map<std::string,my_jsoncmd_handler_st> my_cmd_handling_dict;
+std::stringstream my_out_stringstream;
 const int my_font_delta = MY_FONT_DELTA;
 /****************
  **                           for Emacs...
