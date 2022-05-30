@@ -147,14 +147,15 @@ extern "C" void my_backtrace_print_at(const char*fil, int line, int skip);
 
 extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 
-#define FATALPRINTF(Fmt,...) do {		\
-    printf("\n@@@FATAL ERROR (%s pid %d):",	\
-	   my_prog_name, (int)getpid());	\
-    printf((Fmt), ##__VA_ARGS__);		\
-    putchar('\n');				\
-    my_backtrace_print_at(__FILE__,__LINE__,	\
-			  (1));			\
-    fflush(nullptr);				\
+#define FATALPRINTF(Fmt,...) do {			\
+    printf("\n@@@FATAL ERROR (%s pid %d) %s:%d:",	\
+	   my_prog_name, (int)getpid(),			\
+	   __FILE__, __LINE__);				\
+    printf((Fmt), ##__VA_ARGS__);			\
+    putchar('\n');					\
+    my_backtrace_print_at(__FILE__,__LINE__,		\
+			  (1));				\
+    fflush(nullptr);					\
     abort(); } while(0)
 
 #define DBGPRINTF(Fmt,...) do {if (my_debug_flag) { \
