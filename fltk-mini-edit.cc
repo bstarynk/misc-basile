@@ -1113,12 +1113,12 @@ my_cmd_handle_buffer(const char*cmdbuf, int cmdlen)
 void
 my_cmd_process_json(const Json::Value*pjson, long cmdcount)
 {
+  bool gotid = false;
+  long cmdid = -1;
   assert (pjson != nullptr);
   DBGOUT("my_cmd_process_json cmdcount#" << cmdcount <<" pjson=" << *pjson);
   try
     {
-      bool gotid = false;
-      long cmdid = -1;
       if ((*pjson)["jsonrpc"] != "2.0")
         throw std::runtime_error("wrong JSONRPC version");
       Json::Value methjs = (*pjson)["method"];
