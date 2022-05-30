@@ -148,7 +148,7 @@ extern "C" void my_backtrace_print_at(const char*fil, int line, int skip);
 extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 
 #define FATALPRINTF(Fmt,...) do {			\
-    printf("\n@@@FATAL ERROR (%s pid %d) %s:%d:",	\
+    printf("\n@@°@@FATAL ERROR (%s pid %d) %s:%d:\n",	\
 	   my_prog_name, (int)getpid(),			\
 	   __FILE__, __LINE__);				\
     printf((Fmt), ##__VA_ARGS__);			\
@@ -156,6 +156,7 @@ extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
     my_backtrace_print_at(__FILE__,__LINE__,		\
 			  (1));				\
     fflush(nullptr);					\
+    my_postponed_remove_tempdir();			\
     abort(); } while(0)
 
 #define DBGPRINTF(Fmt,...) do {if (my_debug_flag) { \
@@ -172,6 +173,7 @@ extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 
 class MyEditor;
 
+extern "C" void my_postponed_remove_tempdir(void);
 extern "C" void do_style_demo(MyEditor*);
 extern "C" void my_initialize_fifo(void);
 extern "C" int fifo_cmd_fd, fifo_out_fd;
@@ -1196,7 +1198,6 @@ do_show_usage(FILE*fil, const char*progname)
   fflush(fil);
 } // end do_show_usage
 
-extern "C" void my_postponed_remove_tempdir(void);
 
 /// this function is registered with atexit.. It uses the at(1) command.
 /// see https://linuxize.com/post/at-command-in-linux/
@@ -1261,7 +1262,7 @@ main(int argc, char **argv)
     FATALPRINTF("failed to get hostname %s", strerror(errno));
   if (my_fifo_name)
     my_initialize_fifo();
-  if (!mkdir(my_tempdir, S_IRWXU))
+  if (mkdir(my_tempdir, S_IRWXU))
     FATALPRINTF("failed to mkdir %s - %m", my_tempdir);
   DBGPRINTF("made temporary directory %s", my_tempdir);
   atexit(my_postponed_remove_tempdir);
