@@ -22,7 +22,8 @@ int main(void)
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-        GLFWwindow *window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "RefPerSys", NULL, NULL);
+        GLFWwindow *window = //
+	  glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "glfw-test", NULL, NULL);
         if (!window) {
                 printf("Failed to create GLFW window\n");
                 glfwTerminate();
