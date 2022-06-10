@@ -10,4 +10,4 @@ clean:
 glfw-test: src/glad.c main.c
 	$(CC) $(CFLAGS) src/glad.c main.c -o $@ -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 glfw-testxx: main.cpp
-	$(CXX) $(CXXFLAGS) main.cpp src/glad.c -o $@ -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+	$(CXX) $(CXXFLAGS) main.cpp src/window.c src/shader.c src/glad.c -o $@ -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl

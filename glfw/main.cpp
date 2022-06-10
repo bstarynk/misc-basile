@@ -1,93 +1,6 @@
-#include "include/glad/glad.h"
-#include <GLFW/glfw3.h>
-
-#include <iostream>
-
-
-typedef GLFWwindow rps_window_t;
-
-static rps_window_t *rps_window_new(void);
-static void rps_window_close(rps_window_t *);
-static void rps_window_run(rps_window_t *);
-
-static void rps_window_eventhnd__(rps_window_t *);
-static void rps_window_resize__(rps_window_t *, int, int);
-
-
-// Creates new GLFW window
-rps_window_t *rps_window_new(void)
-{
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    const int width = 800;
-    const int height = 600;
-    const char *title = "RefPerSys";
-
-    GLFWwindow* ctx = glfwCreateWindow(width, height, title, NULL, NULL);
-
-    if (!ctx) {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        abort();
-    }
-
-    glfwMakeContextCurrent(ctx);
-    glfwSetFramebufferSizeCallback(ctx, rps_window_resize__);
-
-    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        glfwTerminate();
-        abort();
-    }
-
-    return ctx;
-}
-
-
-// Closes window
-void
-rps_window_close(rps_window_t *ctx)
-{
-    (void) ctx; // will be used later
-    glfwTerminate();
-}
-
-
-// Main window event loop
-void
-rps_window_run(rps_window_t *ctx)
-{
-    while (!glfwWindowShouldClose(ctx)) {
-        rps_window_eventhnd__(ctx);
-
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glfwSwapBuffers(ctx);
-
-        glfwPollEvents();
-    }
-}
-
-
-// Callback to handle window events
-void
-rps_window_eventhnd__(rps_window_t *ctx)
-{
-    if (glfwGetKey(ctx, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(ctx, true);
-}
-
-
-// Callback on window resize
-void
-rps_window_resize__(rps_window_t *ctx, int w, int h)
-{
-    (void) ctx; // will be used later
-    glViewport(0, 0, w, h);
-}
+#include "include/window.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 
 int main(int argc, char **argv)
@@ -97,7 +10,7 @@ int main(int argc, char **argv)
 
     rps_window_t *w = rps_window_new();
     rps_window_run(w);
-    rps_window_close(w);
+    rps_window_free(&w);
 
     return EXIT_SUCCESS;
 }
@@ -105,9 +18,6 @@ int main(int argc, char **argv)
 
 ///// DEPRECATED; kept only for reference; will be removed
 #if 0
-void framebfrsz_cbk(GLFWwindow* window, int width, int height);
-void proc_input(GLFWwindow *window);
-
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -229,16 +139,5 @@ int main(void)
     glfwTerminate();
 
     return 0;
-}
-
-void proc_input(GLFWwindow *window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
-
-void framebfrsz_cbk(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
 }
 #endif
