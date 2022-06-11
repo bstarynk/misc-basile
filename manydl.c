@@ -268,7 +268,8 @@ main (int argc, char **argv)
   secpertick = 1.0 / (double) sysconf (_SC_CLK_TCK);
   memset (&t_init, 0, sizeof (t_init));
   firstclock = cl_init = times (&t_init);
-  nice (2);
+  if (nice (2)<0)
+    perror("nice");
   /* If we have a program argument, it is the number of generated functions */
   if (argc > 1)
     maxcnt = atoi (argv[1]);
@@ -412,12 +413,12 @@ main (int argc, char **argv)
 	  fprintf (stderr, "\n dlopen %s failed %s\n", cmd, dlerror ());
 	  /* display the memory map */
 	  rewind (map);
-	  while (!feof (map))
-	    {
+	   do {
 	      memset (linbuf, 0, sizeof (linbuf));
-	      fgets (linbuf, sizeof (linbuf) - 1, map);
+	      if (!fgets (linbuf, sizeof (linbuf) - 1, map))
+		break;
 	      fputs (linbuf, stderr);
-	    };
+	    } while (!feof (map));
 	  fflush (stderr);
 	  exit (EXIT_FAILURE);
 	};
@@ -456,13 +457,12 @@ main (int argc, char **argv)
   /* display the memory map */
   printf ("\n\n**** memory map of process %ld ****\n", (long) getpid ());
   rewind (map);
-  while (!feof (map))
-    {
-      memset (linbuf, 0, sizeof (linbuf));
-      fgets (linbuf, sizeof (linbuf) - 1, map);
-      fputs (linbuf, stdout);
-    };
-
+  do {
+    memset (linbuf, 0, sizeof (linbuf));
+    if (NULL==fgets (linbuf, sizeof (linbuf) - 1, map))
+      break;
+    fputs (linbuf, stdout);
+  } while (!feof (map));
   putchar ('\n');
   fflush (stdout);
   /* call randomly the functions */
