@@ -970,6 +970,9 @@ miniedit_prog_arg_handler(int argc, char **argv, int &i)
     }
   if (strcmp("--do", argv[i]) == 0 && i+1<argc)
     {
+      if (my_shell_command && my_shell_command[0])
+        FATALPRINTF("duplicate shell command given %s and %s",
+                    my_shell_command, argv[i+1]);
       my_shell_command = argv[i+1];
       i += 2;
       return 2;
