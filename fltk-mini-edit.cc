@@ -1290,6 +1290,7 @@ main(int argc, char **argv)
       my_backtrace_error, nullptr);
   if (gethostname(my_host_name, sizeof(my_host_name)-2))
     FATALPRINTF("failed to get hostname %s", strerror(errno));
+  my_command_register_plain("compileplugin",  my_rpc_compileplugin_handler);
   if (my_fifo_name)
     my_initialize_fifo();
   if (mkdir(my_tempdir, S_IRWXU))
