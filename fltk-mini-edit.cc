@@ -1163,6 +1163,21 @@ my_command_register(const std::string&name, struct my_jsoncmd_handler_st cmdh)
   my_cmd_handling_dict.insert({name,cmdh});
   if (my_debug_flag)
     {
+      Dl_info dlinfcmd = {};
+      memset (&dlinfcmd, 0, sizeof(dlinfcmd));
+      if (!dladdr((void*)cmdh.cmd_fun, &dlinfcmd))
+        {
+          FATALPRINTF("dladdr failed for cmd_fun@%p registering command %s",
+                      cmdh.cmd_fun, name.c_str());
+        };
+      DBGPRINTF("my_command_register cmd_fun@%p = %s+%#lx in %s data1@%p data2@%p",
+                (void*)cmdh.cmd_fun,
+                dlinfcmd.dli_sname,
+                (long) ((char*)cmdh.cmd_fun -(char*)dlinfcmd.dli_saddr),
+                dlinfcmd.dli_fname,
+                (void*)cmdh.cmd_data1,
+                (void*)cmdh.cmd_data2);
+      fflush(nullptr);
     };
 } // end my_command_register
 
@@ -1226,6 +1241,7 @@ main(int argc, char **argv)
   int i= 1;
   int templn = -1;
   my_prog_name = argv[0];
+  // we may need to dladdr for debugging purposes.
   my_prog_dlhandle = dlopen(nullptr, RTLD_NOW);
   if (!my_prog_dlhandle)
     {
