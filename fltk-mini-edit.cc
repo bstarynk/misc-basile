@@ -1003,6 +1003,9 @@ miniedit_prog_arg_handler(int argc, char **argv, int &i)
 static void my_quitmenu_handler(Fl_Widget *w, void *);
 static void my_exitmenu_handler(Fl_Widget *w, void *);
 static void my_dumpmenu_handler(Fl_Widget *w, void *);
+static void my_copymenu_handler(Fl_Widget *w, void *);
+static void my_pastemenu_handler(Fl_Widget *w, void *);
+static void my_cutmenu_handler(Fl_Widget *w, void *);
 
 static void
 my_quitmenu_handler(Fl_Widget *w, void *ad)
@@ -1027,6 +1030,30 @@ my_dumpmenu_handler(Fl_Widget *w, void *ad)
 #warning unimplemented my_dumpmenu_handler
   FATALPRINTF("my_dumpmenu_handler unimplemented ad@%p", ad);
 } // end my_quitmenu_handler
+
+static void
+my_copymenu_handler(Fl_Widget *w, void *ad)
+{
+  DBGPRINTF("my_copymenu_handler w@%p ad:%p", w, ad);
+#warning unimplemented my_copymenu_handler
+  FATALPRINTF("my_copymenu_handler unimplemented ad@%p", ad);
+} // end my_copymenu_handler
+
+static void
+my_pastemenu_handler(Fl_Widget *w, void *ad)
+{
+  DBGPRINTF("my_pastemenu_handler w@%p ad:%p", w, ad);
+#warning unimplemented my_pastemenu_handler
+  FATALPRINTF("my_pastemenu_handler unimplemented ad@%p", ad);
+} // end my_pastemenu_handler
+
+static void
+my_cutmenu_handler(Fl_Widget *w, void *ad)
+{
+  DBGPRINTF("my_cutmenu_handler w@%p ad:%p", w, ad);
+#warning unimplemented my_cutmenu_handler
+  FATALPRINTF("my_cutmenu_handler unimplemented ad@%p", ad);
+} // end my_cutmenu_handler
 
 char my_host_name[80];
 
@@ -1325,6 +1352,9 @@ main(int argc, char **argv)
     menub->add("&App/&Exit", "^x", my_exitmenu_handler);
     menub->add("&App/&Dump", "^d", my_dumpmenu_handler);
     MyEditor  *med = new MyEditor(3,19,win->w()-8,win->h()-22);
+    menub->add("&Edit/&Copy", "^c", my_copymenu_handler, med);
+    menub->add("&Edit/&Paste", "^p", my_pastemenu_handler, med);
+    menub->add("&Edit/c&Ut", "^u", my_cutmenu_handler, med);
     if (!my_fifo_name)
       {
         if (my_styledemo_flag)
