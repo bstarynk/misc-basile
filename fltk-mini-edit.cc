@@ -69,6 +69,7 @@
 
 extern "C" struct backtrace_state *my_backtrace_state;
 extern "C" const char*my_prog_name;
+extern "C" void*my_prog_dlhandle; // the dlopen of the whole program
 extern "C" char my_host_name[];
 extern "C" bool my_help_flag;
 extern "C" bool my_version_flag;
@@ -1158,7 +1159,11 @@ my_command_register(const std::string&name, struct my_jsoncmd_handler_st cmdh)
                << " with empty command name."<< std::endl;
       throw std::runtime_error("empty command name");
     }
+  assert ((void*)cmdh.cmd_fun != nullptr);
   my_cmd_handling_dict.insert({name,cmdh});
+  if (my_debug_flag)
+    {
+    };
 } // end my_command_register
 
 void
@@ -1219,9 +1224,18 @@ int
 main(int argc, char **argv)
 {
   int i= 1;
+  int templn = -1;
   my_prog_name = argv[0];
-  int l = snprintf(my_tempdir, sizeof(my_tempdir), "/tmp/%s", __FILE__);
-  snprintf(my_tempdir + l - 3, sizeof(my_tempdir) - l - 8, "-pid%d-git_%s", (int)getpid(), GITID);
+  my_prog_dlhandle = dlopen(nullptr, RTLD_NOW);
+  if (!my_prog_dlhandle)
+    {
+      std::clog <<  argv[0] << " version "
+                << GITID << " failed to self-dlopen:" << dlerror()
+                << std::endl;
+      abort();
+    };
+  templn = snprintf(my_tempdir, sizeof(my_tempdir), "/tmp/%s", __FILE__);
+  snprintf(my_tempdir + templn - 3, sizeof(my_tempdir) - templn - 8, "-pid%d-git_%s", (int)getpid(), GITID);
   if (Fl::args(argc, argv, i, miniedit_prog_arg_handler) < argc)
     {
       do_show_usage(stderr, my_prog_name);
@@ -1342,6 +1356,7 @@ bool my_help_flag = false;
 bool my_version_flag = false;
 bool my_debug_flag = false;
 bool my_styledemo_flag = false;
+void*my_prog_dlhandle = nullptr;
 std::map<std::string,my_jsoncmd_handler_st> my_cmd_handling_dict;
 std::stringstream my_out_stringstream;
 const int my_font_delta = MY_FONT_DELTA;
