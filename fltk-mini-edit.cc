@@ -1351,6 +1351,8 @@ main(int argc, char **argv)
       DBGPRINTF("MyEditor Style_Unicode fontname %s",
                 Fl::get_font(MyEditor::style_table[MyEditor::Style_Unicode].font));
     }
+  if (access("/bin/at", X_OK))
+    FATALPRINTF("The /bin/at command is missing but needed (%m)");
   int runerr = Fl::run();
   my_menubar = nullptr;
   delete my_top_window;
