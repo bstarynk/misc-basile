@@ -1170,6 +1170,8 @@ my_cmd_process_json(const Json::Value*pjson, long cmdcount)
           assert (cmdh.cmd_fun);
           (*cmdh.cmd_fun)(pjson, cmdcount);
         }
+      else
+        throw std::runtime_error(std::string{"unknown method in JSONRPC: "} + methjs.asString());
     }
   catch (std::exception &exc)
     {
