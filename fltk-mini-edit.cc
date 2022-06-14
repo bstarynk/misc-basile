@@ -86,7 +86,7 @@ extern "C" const char my_compile_script[];
 extern "C" char my_tempdir[MY_TEMPDIR_LEN];
 extern "C" std::stringstream my_out_stringstream;
 
-typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount);
+typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount, FL_SOCKET outsock);
 struct my_jsoncmd_handler_st
 {
   my_jsoncmd_handling_sigt*cmd_fun;
@@ -101,7 +101,7 @@ extern "C" void my_command_register_data1(const std::string&name, my_jsoncmd_han
 extern "C" void my_command_register_data2(const std::string&name, my_jsoncmd_handling_sigt*cmdrout, intptr_t data1, intptr_t data2);
 
 /// by convention, handling of JSONRPC method FOO is named my_rpc_FOO_handler
-extern "C" void my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount);
+extern "C" void my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount, FL_SOCKET outsock= -1);
 
 /// a small integer to increase font size at compile time, e.g. compiling with -DMY_FONT_DELTA=2
 
@@ -173,6 +173,7 @@ extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
 
 
 class MyEditor;
+class MyAbstractCommandProcessor;
 
 extern "C" void my_postponed_remove_tempdir(void);
 extern "C" void do_style_demo(MyEditor*);
@@ -180,9 +181,30 @@ extern "C" void my_initialize_fifo(void);
 extern "C" int fifo_cmd_fd, fifo_out_fd;
 extern "C" void my_cmd_fd_handler(FL_SOCKET, void*);
 extern "C" void my_out_fd_handler(FL_SOCKET, void*);
-extern "C" void my_cmd_processor(int cmdlen);
-extern "C" void my_cmd_handle_buffer(const char*cmdbuf, int cmdlen);
-extern "C" void my_cmd_process_json(const Json::Value*pjson, long cmdcount);
+extern "C" void my_cmd_processor(int cmdlen, FL_SOCKET outsock);
+extern "C" void my_cmd_handle_buffer(const char*cmdbuf, int cmdlen, FL_SOCKET outsock);
+extern "C" void my_cmd_process_json(const Json::Value*pjson, long cmdcount, FL_SOCKET outsock= -1);
+
+
+class MyAbstractCommandProcessor
+{
+  FL_SOCKET cmdproc_in_sock;
+  FL_SOCKET cmdproc_out_sock;
+  char* cmdproc_data1;
+  char* cmdproc_data2;
+  intptr_t cmdproc_num1;
+  intptr_t cmdproc_num2;
+  static std::map<int, MyAbstractCommandProcessor*> cmdproc_map_in_fd;
+  static std::map<int, MyAbstractCommandProcessor*> cmdproc_map_out_fd;
+protected:
+  MyAbstractCommandProcessor(FL_SOCKET insock, FL_SOCKET outsock, char*data1 = nullptr, char*data2 = nullptr, intptr_t num1= 0, intptr_t num2= 0);
+  MyAbstractCommandProcessor(const MyAbstractCommandProcessor& oth) = default;
+  MyAbstractCommandProcessor(MyAbstractCommandProcessor&& oth) = default;
+public:
+  virtual ~MyAbstractCommandProcessor() =0;
+  virtual void process_jsonrpc_command(const Json::Value*pjson, long cmdcount) =0;
+  virtual std::string command_processor_name(void) const =0;
+};				// end MyAbstractCommandProcessor
 
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
@@ -283,16 +305,19 @@ public:
 };				// end MyEditor
 
 
+// we could compile and dlopen extra C++ plugins, sharing all the code above up to the last_shared_line
 extern "C" const int last_shared_line = __LINE__;
 
 extern "C" std::stringstream my_cmd_sstream;
+
+std::map<int, MyAbstractCommandProcessor*> MyAbstractCommandProcessor::cmdproc_map_in_fd;
+std::map<int, MyAbstractCommandProcessor*> MyAbstractCommandProcessor::cmdproc_map_out_fd;
 Json::CharReaderBuilder my_json_cmd_builder;
 Json::StreamWriterBuilder my_json_out_builder;
 char* my_shell_command;
 char* my_xtrafont_name;
 char* my_otherfont_name;
 
-// we could compile and dlopen extra C++ plugins, sharing all the code above....
 
 MyEditor::MyEditor(int X,int Y,int W,int H)
   : Fl_Text_Editor(X,Y,W,H), txtbuff(nullptr), stybuff(nullptr)
@@ -717,6 +742,7 @@ my_initialize_fifo(void)
 void
 my_cmd_fd_handler(FL_SOCKET sock, void*)
 {
+  extern  void my_cmd_processor(int cmdlen, FL_SOCKET outsock= -1);
   assert(sock == fifo_cmd_fd);
   ssize_t cmdrdcnt = -1;
   size_t startcmdlen = my_cmd_sstream.tellg();
@@ -745,7 +771,7 @@ my_cmd_fd_handler(FL_SOCKET sock, void*)
             cmdlen = curcmdlen;
         }
       if (cmdlen > 0)
-        my_cmd_processor(cmdlen);
+        my_cmd_processor(cmdlen, sock);
     };
 } // end my_cmd_fd_handler
 
@@ -852,8 +878,13 @@ my_check_compilation_ended(void*)
 
 
 void
-my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount)
+my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount, FL_SOCKET outsock)
 {
+  assert (pcmdjson != nullptr);
+  if (outsock < 0)
+    outsock = fifo_out_fd;
+  DBGPRINTF("my_rpc_compileplugin_handler start cmdcount=%ld outsock=%d",
+            cmdcount, outsock);
   /* the RPCJSON request gives C++ code to be added in the generated plugin ... */
   const Json::Value& prefixjs = (*pcmdjson)["prefix"];
   const Json::Value& idjs = (*pcmdjson)["id"];
@@ -1085,11 +1116,11 @@ void my_expand_env(void)
 } // end my_expand_env
 
 void
-my_cmd_processor(int cmdlen)
+my_cmd_processor(int cmdlen, FL_SOCKET outsock)
 {
   char *bigcmdbuf = nullptr;
   assert (cmdlen>0);
-  DBGPRINTF("my_cmd_processor cmdlen=%d", cmdlen);
+  DBGPRINTF("my_cmd_processor cmdlen=%d outsock=%d", cmdlen, outsock);
   my_cmd_sstream.flush();
   char smallbuf[512];
   memset(smallbuf, 0, sizeof(smallbuf));
@@ -1097,7 +1128,7 @@ my_cmd_processor(int cmdlen)
     {
       my_cmd_sstream.read(smallbuf, cmdlen);
       DBGPRINTF("my_cmd_sstream smallcmd len.%d:\n%s\n", cmdlen, smallbuf);
-      my_cmd_handle_buffer(smallbuf, cmdlen);
+      my_cmd_handle_buffer(smallbuf, cmdlen, outsock);
     }
   else
     {
@@ -1107,7 +1138,7 @@ my_cmd_processor(int cmdlen)
         FATALPRINTF("failed to allocate bigcmdbuf for %d bytes (%m)", buflen);
       my_cmd_sstream.read(bigcmdbuf, cmdlen);
       DBGPRINTF("my_cmd_sstream bigcmd len.%d:\n%s\n", cmdlen, bigcmdbuf);
-      my_cmd_handle_buffer(bigcmdbuf, cmdlen);
+      my_cmd_handle_buffer(bigcmdbuf, cmdlen, outsock);
     }
   if (bigcmdbuf)
     free(bigcmdbuf);
@@ -1115,10 +1146,12 @@ my_cmd_processor(int cmdlen)
 
 
 void
-my_cmd_handle_buffer(const char*cmdbuf, int cmdlen)
+my_cmd_handle_buffer(const char*cmdbuf, int cmdlen, FL_SOCKET outsock)
 {
   static long cmdcount;
   cmdcount++;
+  DBGPRINTF("my_cmd_handle_buffer cmdbuf=%s cmdlen=%d outsock=%d",
+            cmdbuf, cmdlen, outsock);
   std::string errstr;
   const std::unique_ptr<Json::CharReader> reader(my_json_cmd_builder.newCharReader());
   Json::Value jscmd;
@@ -1142,12 +1175,14 @@ my_cmd_handle_buffer(const char*cmdbuf, int cmdlen)
 } // end my_cmd_handle_buffer
 
 void
-my_cmd_process_json(const Json::Value*pjson, long cmdcount)
+my_cmd_process_json(const Json::Value*pjson, long cmdcount, FL_SOCKET outsock)
 {
   bool gotid = false;
   long cmdid = -1;
   assert (pjson != nullptr);
-  DBGOUT("my_cmd_process_json cmdcount#" << cmdcount <<" pjson=" << *pjson);
+  if (outsock < 0)
+    outsock = fifo_out_fd;
+  DBGOUT("my_cmd_process_json cmdcount#" << cmdcount <<" pjson=" << *pjson << " outsock:" << outsock);
   try
     {
       if ((*pjson)["jsonrpc"] != "2.0")
@@ -1168,7 +1203,7 @@ my_cmd_process_json(const Json::Value*pjson, long cmdcount)
         {
           my_jsoncmd_handler_st cmdh = itcmd->second;
           assert (cmdh.cmd_fun);
-          (*cmdh.cmd_fun)(pjson, cmdcount);
+          (*cmdh.cmd_fun)(pjson, cmdcount, outsock);
         }
       else
         throw std::runtime_error(std::string{"unknown method in JSONRPC: "} + methjs.asString());
