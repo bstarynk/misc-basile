@@ -85,8 +85,9 @@ extern "C" const char my_compile_script[];
 #define MY_TEMPDIR_LEN 256
 extern "C" char my_tempdir[MY_TEMPDIR_LEN];
 extern "C" std::stringstream my_out_stringstream;
+class MyAbstractCommandProcessor;
 
-typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount, FL_SOCKET outsock);
+typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount, MyAbstractCommandProcessor*cmdproc);
 struct my_jsoncmd_handler_st
 {
   my_jsoncmd_handling_sigt*cmd_fun;
@@ -101,7 +102,7 @@ extern "C" void my_command_register_data1(const std::string&name, my_jsoncmd_han
 extern "C" void my_command_register_data2(const std::string&name, my_jsoncmd_handling_sigt*cmdrout, intptr_t data1, intptr_t data2);
 
 /// by convention, handling of JSONRPC method FOO is named my_rpc_FOO_handler
-extern "C" void my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount, FL_SOCKET outsock= -1);
+extern "C" void my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount, MyAbstractCommandProcessor*cmdproc);
 
 /// a small integer to increase font size at compile time, e.g. compiling with -DMY_FONT_DELTA=2
 
@@ -160,15 +161,15 @@ extern "C" int miniedit_prog_arg_handler(int argc, char **argv, int &i);
     my_postponed_remove_tempdir();			\
     abort(); } while(0)
 
-#define DBGPRINTF(Fmt,...) do {if (my_debug_flag) { \
-    printf("@@%s:%d:", __FILE__, __LINE__); \
-    printf((Fmt), ##__VA_ARGS__); \
-    putchar('\n'); fflush(stdout); \
+#define DBGPRINTF(Fmt,...) do {if (my_debug_flag) {	\
+    printf("@@%s:%d:", __FILE__, __LINE__);		\
+    printf((Fmt), ##__VA_ARGS__);			\
+    putchar('\n'); fflush(stdout);			\
     }} while(0)
 
-#define DBGOUT(Out) do { if (my_debug_flag) { \
-      std::cout << "@@" __FILE__ << ":" << __LINE__ << ':' \
-		<< Out << std::endl; \
+#define DBGOUT(Out) do { if (my_debug_flag) {			\
+      std::cout << "@@" __FILE__ << ":" << __LINE__ << ':'	\
+		<< Out << std::endl;				\
     }} while(0)
 
 
@@ -188,23 +189,67 @@ extern "C" void my_cmd_process_json(const Json::Value*pjson, long cmdcount, FL_S
 
 class MyAbstractCommandProcessor
 {
+  int cmdproc_magic;
+  static int constexpr CMDPROC_NUM_MAGIC = 0x65bdf317 ;//=1706947351
   FL_SOCKET cmdproc_in_sock;
   FL_SOCKET cmdproc_out_sock;
+  static std::map<int, MyAbstractCommandProcessor*> cmdproc_map_in_fd;
+  static std::map<int, MyAbstractCommandProcessor*> cmdproc_map_out_fd;
+protected:
   char* cmdproc_data1;
   char* cmdproc_data2;
   intptr_t cmdproc_num1;
   intptr_t cmdproc_num2;
-  static std::map<int, MyAbstractCommandProcessor*> cmdproc_map_in_fd;
-  static std::map<int, MyAbstractCommandProcessor*> cmdproc_map_out_fd;
+  std::stringstream cmdproc_instr;
+  std::stringstream cmdproc_outstr;
 protected:
   MyAbstractCommandProcessor(FL_SOCKET insock, FL_SOCKET outsock, char*data1 = nullptr, char*data2 = nullptr, intptr_t num1= 0, intptr_t num2= 0);
   MyAbstractCommandProcessor(const MyAbstractCommandProcessor& oth) = default;
   MyAbstractCommandProcessor(MyAbstractCommandProcessor&& oth) = default;
 public:
-  virtual ~MyAbstractCommandProcessor() =0;
-  virtual void process_jsonrpc_command(const Json::Value*pjson, long cmdcount) =0;
+  inline bool is_valid_cmdproc(void) const
+  {
+    return cmdproc_magic == CMDPROC_NUM_MAGIC;
+  }
+  FL_SOCKET cmd_socket() const
+  {
+    return cmdproc_in_sock;
+  };
+  FL_SOCKET out_socket() const
+  {
+    return cmdproc_out_sock;
+  };
+  static void cmd_fd_handler(FL_SOCKET*, void*);
+  static void out_fd_handler(FL_SOCKET*, void*);
+  virtual ~MyAbstractCommandProcessor();
+  virtual void process_jsonrpc_command(const Json::Value*pjson, long cmdcount);
   virtual std::string command_processor_name(void) const =0;
 };				// end MyAbstractCommandProcessor
+
+
+
+
+class MyFifoCommandProcessor : public MyAbstractCommandProcessor
+{
+  std::string fifocmd_prefix;
+  static int open_fifo_cmd(const std::string& prefix);
+  static int open_fifo_out(const std::string& prefix);
+public:
+  MyFifoCommandProcessor(const std::string& prefix);
+  ~MyFifoCommandProcessor();
+  const std::string & fifo_prefix(void) const
+  {
+    return fifocmd_prefix;
+  };
+  virtual std::string command_processor_name(void) const
+  {
+    return std::string("FIFOcmdproc:")+fifocmd_prefix;
+  };
+};	      // end MyFifoCommandProcessor
+
+
+
+////////////////////////////////////////////////////////////////
 
 // Custom class to demonstrate a specialized text editor
 class MyEditor : public Fl_Text_Editor
@@ -306,12 +351,76 @@ public:
 
 
 // we could compile and dlopen extra C++ plugins, sharing all the code above up to the last_shared_line
-extern "C" const int last_shared_line = __LINE__;
+extern "C" const int last_shared_line = __LINE__; ///°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 
-extern "C" std::stringstream my_cmd_sstream;
+
+
+
+
+
 
 std::map<int, MyAbstractCommandProcessor*> MyAbstractCommandProcessor::cmdproc_map_in_fd;
 std::map<int, MyAbstractCommandProcessor*> MyAbstractCommandProcessor::cmdproc_map_out_fd;
+MyAbstractCommandProcessor::MyAbstractCommandProcessor(FL_SOCKET insock, FL_SOCKET outsock,
+    char*data1, char*data2,
+    intptr_t num1, intptr_t num2)
+  : cmdproc_magic(CMDPROC_NUM_MAGIC),
+    cmdproc_in_sock(insock), cmdproc_out_sock(outsock),
+    cmdproc_data1(data1), cmdproc_data2(data2),
+    cmdproc_num1(num1), cmdproc_num2(num2)
+{
+  assert (insock>=0);
+  assert (outsock>=0);
+  cmdproc_map_in_fd.insert({insock,this});
+  cmdproc_map_out_fd.insert({outsock,this});
+};				// end MyAbstractCommandProcessor::MyAbstractCommandProcessor
+
+MyAbstractCommandProcessor::~MyAbstractCommandProcessor()
+{
+  assert (is_valid_cmdproc());
+  cmdproc_magic = 0;
+  assert(cmdproc_in_sock>=0 && cmdproc_map_in_fd.find(cmdproc_in_sock) != cmdproc_map_in_fd.end());
+  assert(cmdproc_out_sock>=0 && cmdproc_map_out_fd.find(cmdproc_out_sock) != cmdproc_map_out_fd.end());
+  cmdproc_map_in_fd.erase(cmdproc_in_sock);
+  close(cmdproc_in_sock);
+  cmdproc_in_sock= -1;
+  cmdproc_map_out_fd.erase(cmdproc_out_sock);
+  close(cmdproc_out_sock);
+  cmdproc_out_sock= -1;
+} // end MyAbstractCommandProcessor::~MyAbstractCommandProcessor
+
+void
+MyAbstractCommandProcessor::process_jsonrpc_command(Json::Value const*pjson, long cmdcount)
+{
+  FATALPRINTF("unimplemented process_jsonrpc_command cmdcount=%ld", cmdcount);
+#warning unimplemented process_jsonrpc_command
+} // end MyAbstractCommandProcessor::process_jsonrpc_command
+
+MyFifoCommandProcessor::MyFifoCommandProcessor(const std::string& fifoprefix)
+  : MyAbstractCommandProcessor(open_fifo_cmd(fifoprefix), open_fifo_out(fifoprefix)),
+    fifocmd_prefix(fifoprefix)
+{
+} // end MyFifoCommandProcessor::MyFifoCommandProcessor
+
+MyFifoCommandProcessor::~MyFifoCommandProcessor()
+{
+  fifocmd_prefix.erase();
+} // end MyFifoCommandProcessor::~MyFifoCommandProcessor
+
+int
+MyFifoCommandProcessor::open_fifo_cmd (const std::string&fifoprefix)
+{
+#warning unimplemented MyFifoCommandProcessor::open_fifo_cmd
+  FATALPRINTF("unimplemented MyFifoCommandProcessor::open_fifo_cmd fifoprefix:%s", fifoprefix.c_str());
+} // end MyFifoCommandProcessor::open_fifo_cmd
+
+int
+MyFifoCommandProcessor::open_fifo_out (const std::string&fifoprefix)
+{
+#warning unimplemented MyFifoCommandProcessor::open_fifo_out
+  FATALPRINTF("unimplemented MyFifoCommandProcessor::open_fifo_out fifoprefix:%s", fifoprefix.c_str());
+} // end MyFifoCommandProcessor::open_fifo_out
+
 Json::CharReaderBuilder my_json_cmd_builder;
 Json::StreamWriterBuilder my_json_out_builder;
 char* my_shell_command;
@@ -646,6 +755,7 @@ my_backtrace_print_at(const char*fil, int line, int skip)
 } // end my_backtrace_print_at
 
 
+#if 0
 void
 my_initialize_fifo(void)
 {
@@ -810,7 +920,7 @@ my_out_fd_handler(FL_SOCKET sock, void*)
     }
   DBGPRINTF("my_out_fd_handler ended sock#%d", sock);
 } // end my_cmd_fd_handler
-
+#endif /*old code*/
 
 static pid_t my_compilation_pid;
 static std::string my_compiled_srcfile;
@@ -878,13 +988,12 @@ my_check_compilation_ended(void*)
 
 
 void
-my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount, FL_SOCKET outsock)
+my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount, MyAbstractCommandProcessor*cmdproc)
 {
   assert (pcmdjson != nullptr);
-  if (outsock < 0)
-    outsock = fifo_out_fd;
-  DBGPRINTF("my_rpc_compileplugin_handler start cmdcount=%ld outsock=%d",
-            cmdcount, outsock);
+  assert (cmdproc != nullptr && cmdproc->is_valid_cmdproc());
+  DBGPRINTF("my_rpc_compileplugin_handler start cmdcount=%ld cmdproc@%p",
+            cmdcount, (void*)cmdproc);
   /* the RPCJSON request gives C++ code to be added in the generated plugin ... */
   const Json::Value& prefixjs = (*pcmdjson)["prefix"];
   const Json::Value& idjs = (*pcmdjson)["id"];
@@ -1115,6 +1224,8 @@ void my_expand_env(void)
     }
 } // end my_expand_env
 
+
+#if 0
 void
 my_cmd_processor(int cmdlen, FL_SOCKET outsock)
 {
@@ -1215,7 +1326,7 @@ my_cmd_process_json(const Json::Value*pjson, long cmdcount, FL_SOCKET outsock)
                 << std::endl;
     }
 } // end my_cmd_process_json
-
+#endif /*old*/
 
 void
 my_command_register(const std::string&name, struct my_jsoncmd_handler_st cmdh)
@@ -1357,9 +1468,10 @@ main(int argc, char **argv)
       my_backtrace_error, nullptr);
   if (gethostname(my_host_name, sizeof(my_host_name)-2))
     FATALPRINTF("failed to get hostname %s", strerror(errno));
+  MyFifoCommandProcessor* fifoproc = nullptr;
   my_command_register_plain("compileplugin",  my_rpc_compileplugin_handler);
   if (my_fifo_name)
-    my_initialize_fifo();
+    fifoproc = new MyFifoCommandProcessor(my_fifo_name);
   if (mkdir(my_tempdir, S_IRWXU))
     FATALPRINTF("failed to mkdir %s - %m", my_tempdir);
   DBGPRINTF("made temporary directory %s", my_tempdir);
@@ -1421,6 +1533,8 @@ main(int argc, char **argv)
   if (access("/bin/at", X_OK))
     FATALPRINTF("The /bin/at command is missing but needed (%m)");
   int runerr = Fl::run();
+  if (fifoproc)
+    delete fifoproc;
   my_menubar = nullptr;
   delete my_top_window;
   return runerr;
