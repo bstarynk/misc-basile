@@ -392,8 +392,20 @@ MyAbstractCommandProcessor::~MyAbstractCommandProcessor()
 void
 MyAbstractCommandProcessor::process_jsonrpc_command(Json::Value const*pjson, long cmdcount)
 {
-  FATALPRINTF("unimplemented process_jsonrpc_command cmdcount=%ld", cmdcount);
-#warning unimplemented process_jsonrpc_command
+  assert (pjson != nullptr);
+  DBGOUT("process_jsonrpc_command start cmdcount:" << cmdcount);
+  if (!pjson->isMember("method"))
+    FATALPRINTF("MyAbstractCommandProcessor::process_jsonrpc_command missing method cmdcount:%ld json:%s",
+                cmdcount, pjson->asCString());
+  std::string methstr = (*pjson)["method"].asString();
+  my_jsoncmd_handler_st jh = my_cmd_handling_dict.at(methstr);
+  assert (jh.cmd_fun);
+  DBGOUT("process_jsonrpc_command method " << methstr << " cmdcount:" << cmdcount
+         << " processor:" << command_processor_name()
+         << " pjson:" << (*pjson));
+  (*jh.cmd_fun)(pjson, cmdcount, this);
+  DBGOUT("process_jsonrpc_command DONE method " << methstr << " cmdcount:" << cmdcount
+         << " processor:" << command_processor_name() << std::endl);
 } // end MyAbstractCommandProcessor::process_jsonrpc_command
 
 MyFifoCommandProcessor::MyFifoCommandProcessor(const std::string& fifoprefix)
