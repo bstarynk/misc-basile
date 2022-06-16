@@ -422,14 +422,59 @@ MyFifoCommandProcessor::~MyFifoCommandProcessor()
 int
 MyFifoCommandProcessor::open_fifo_cmd (const std::string&fifoprefix)
 {
-#warning unimplemented MyFifoCommandProcessor::open_fifo_cmd
-  FATALPRINTF("unimplemented MyFifoCommandProcessor::open_fifo_cmd fifoprefix:%s", fifoprefix.c_str());
+  std::string fifo_cmd_str = fifoprefix + ".cmd";
+  struct stat fifo_cmd_stat = {};
+  /// code copied from old my_initialize_fifo below
+  DBGPRINTF("MyFifoCommandProcessor::open_fifo_cmd fifo_cmd_str:%s", fifo_cmd_str.c_str());
+  if (!stat(fifo_cmd_str.c_str(), &fifo_cmd_stat))
+    {
+      // should check that it is a FIFO
+      mode_t cmd_mod = fifo_cmd_stat.st_mode;
+      if ((cmd_mod&S_IFMT) != S_IFIFO)
+        FATALPRINTF("%s is not a FIFO but should be the command FIFO - %m",
+                    fifo_cmd_str.c_str());
+    }
+  else
+    {
+      // should create the cmd FIFO
+      if (!mkfifo(fifo_cmd_str.c_str(), S_IRUSR|S_IWUSR))
+        FATALPRINTF("failed to make command FIFO %s - %m", fifo_cmd_str.c_str());
+      printf("%s: (pid %d on %s) created command FIFO %s\n",
+             my_prog_name, (int)getpid(), my_host_name, fifo_cmd_str.c_str());
+      fflush(stdout);
+    };
+  int fifo_cmd_fd = open(fifo_cmd_str.c_str(), O_RDONLY|O_NONBLOCK);
+  if (fifo_cmd_fd < 0)
+    FATALPRINTF("failed to open command FIFO %s - %m", fifo_cmd_str.c_str());
+  DBGPRINTF("MyFifoCommandProcessor::open_fifo_cmd fifo_cmd_str:%s fifo_cmd_fd:%d", fifo_cmd_str.c_str(), fifo_cmd_fd);
+  return fifo_cmd_fd;
 } // end MyFifoCommandProcessor::open_fifo_cmd
 
 int
 MyFifoCommandProcessor::open_fifo_out (const std::string&fifoprefix)
 {
-#warning unimplemented MyFifoCommandProcessor::open_fifo_out
+  std::string fifo_out_str = fifoprefix + ".out";
+  struct stat fifo_out_stat = {};
+  /// code copied from old my_initialize_fifo below
+  DBGPRINTF("MyFifoCommandProcessor::open_fifo_out fifo_out_str:%s", fifo_out_str.c_str());
+  if (!stat(fifo_out_str.c_str(), &fifo_out_stat))
+    {
+      // should check that it is a FIFO
+      mode_t cmd_mod = fifo_out_stat.st_mode;
+      if ((cmd_mod&S_IFMT) != S_IFIFO)
+        FATALPRINTF("%s is not a FIFO but should be the command FIFO - %m",
+                    fifo_out_str.c_str());
+    }
+  else
+    {
+      // should create the out FIFO
+      if (!mkfifo(fifo_out_str.c_str(), S_IRUSR|S_IWUSR))
+        FATALPRINTF("failed to make command FIFO %s - %m", fifo_out_str.c_str());
+      printf("%s: (pid %d on %s) created command FIFO %s\n",
+             my_prog_name, (int)getpid(), my_host_name, fifo_out_str.c_str());
+      fflush(stdout);
+    };
+#warning unimplemented MyFifoCommandProcessor::open_fifo_out; should we open here?
   FATALPRINTF("unimplemented MyFifoCommandProcessor::open_fifo_out fifoprefix:%s", fifoprefix.c_str());
 } // end MyFifoCommandProcessor::open_fifo_out
 
