@@ -462,20 +462,23 @@ MyFifoCommandProcessor::open_fifo_out (const std::string&fifoprefix)
       // should check that it is a FIFO
       mode_t cmd_mod = fifo_out_stat.st_mode;
       if ((cmd_mod&S_IFMT) != S_IFIFO)
-        FATALPRINTF("%s is not a FIFO but should be the command FIFO - %m",
+        FATALPRINTF("%s is not a FIFO but should be the output FIFO - %m",
                     fifo_out_str.c_str());
     }
   else
     {
       // should create the out FIFO
       if (!mkfifo(fifo_out_str.c_str(), S_IRUSR|S_IWUSR))
-        FATALPRINTF("failed to make command FIFO %s - %m", fifo_out_str.c_str());
-      printf("%s: (pid %d on %s) created command FIFO %s\n",
+        FATALPRINTF("failed to make output FIFO %s - %m", fifo_out_str.c_str());
+      printf("%s: (pid %d on %s) created output FIFO %s\n",
              my_prog_name, (int)getpid(), my_host_name, fifo_out_str.c_str());
       fflush(stdout);
     };
-#warning unimplemented MyFifoCommandProcessor::open_fifo_out; should we open here?
-  FATALPRINTF("unimplemented MyFifoCommandProcessor::open_fifo_out fifoprefix:%s", fifoprefix.c_str());
+  int fifo_out_fd = open(fifo_out_str.c_str(), O_WRONLY|O_NONBLOCK);
+  if (fifo_out_fd < 0)
+    FATALPRINTF("failed to open output FIFO %s - %m", fifo_out_str.c_str());
+  DBGPRINTF("MyFifoCommandProcessor::open_fifo_out fifo_out_str:%s fd#%d",  fifo_out_str.c_str(), fifo_out_fd);
+  return fifo_out_fd;
 } // end MyFifoCommandProcessor::open_fifo_out
 
 Json::CharReaderBuilder my_json_cmd_builder;
