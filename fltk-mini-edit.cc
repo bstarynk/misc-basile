@@ -84,7 +84,6 @@ extern "C" const char my_source_file[];
 extern "C" const char my_compile_script[];
 #define MY_TEMPDIR_LEN 256
 extern "C" char my_tempdir[MY_TEMPDIR_LEN];
-extern "C" std::stringstream my_out_stringstream;
 class MyAbstractCommandProcessor;
 
 typedef void my_jsoncmd_handling_sigt(const Json::Value*pcmdjson, long cmdcount, MyAbstractCommandProcessor*cmdproc);
@@ -199,8 +198,8 @@ protected:
   char* cmdproc_data2;
   intptr_t cmdproc_num1;
   intptr_t cmdproc_num2;
-  std::stringstream cmdproc_instr;
-  std::stringstream cmdproc_outstr;
+  std::istringstream cmdproc_instr;
+  std::ostringstream cmdproc_outstr;
 protected:
   MyAbstractCommandProcessor(FL_SOCKET insock, FL_SOCKET outsock, char*data1 = nullptr, char*data2 = nullptr, intptr_t num1= 0, intptr_t num2= 0);
   MyAbstractCommandProcessor(const MyAbstractCommandProcessor& oth) = default;
@@ -217,6 +216,10 @@ public:
   FL_SOCKET out_socket() const
   {
     return cmdproc_out_sock;
+  };
+  std::ostringstream& out_stream(void)
+  {
+    return cmdproc_outstr;
   };
   static void cmd_fd_handler(FL_SOCKET*, void*);
   static void out_fd_handler(FL_SOCKET*, void*);
@@ -1126,14 +1129,20 @@ my_rpc_compileplugin_handler(const Json::Value*pcmdjson, long cmdcount, MyAbstra
   my_plugin_prefix = prefixstr;
   my_plugin_id = id;
   Fl::add_timeout(my_compilation_period_wait, my_check_compilation_ended);
+  std::string outstr;
   {
     Json::Value resob(Json::objectValue);
     resob["jsonrpc"] = "2.0";
-    resob["result"] = my_compilation_pid;
+    Json::Value resinfob(Json::objectValue);
+    resinfob["compilation_pid"] = my_compilation_pid;
+    resinfob["temporary_code"] = tempcodename;
+    resinfob["plugin_prefix"] = my_plugin_prefix;
+    resob["result"] = resinfob;
     resob["id"] = id;
-    std::string outstr = Json::writeString(my_json_out_builder, resob);
-#warning incomplete my_rpc_compileplugin_handler; should write the outstr in my_out_fd_handler
+    outstr = Json::writeString(my_json_out_builder, resob);
+    outstr.append("\n\n");
   }
+  cmdproc->out_stream() << outstr << std::flush;
   /* see description of JSONRPC in file mini-edit-JSONRPC.md */
 } // end my_rpc_compileplugin_handler
 
@@ -1609,8 +1618,6 @@ const char my_source_dir[] = CXX_SOURCE_DIR;
 const char my_source_file[] = CXX_SOURCE_DIR "/" __FILE__;
 const char my_compile_script[] = CXX_SOURCE_DIR "/" COMPILE_SCRIPT;
 char my_tempdir[MY_TEMPDIR_LEN];
-int fifo_cmd_fd = -1;
-int fifo_out_fd = -1;
 std::stringstream my_cmd_sstream;
 Fl_Window *my_top_window= nullptr;
 Fl_Menu_Bar*my_menubar = nullptr;

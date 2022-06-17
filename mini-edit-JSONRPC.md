@@ -51,3 +51,7 @@ The RPC call should have a unique `id`, and the following JSON fields
   plugin has been compiled and `dlopen`-ed, the `dlsym` is used to
   retrieve that initializing function.
 
+The JSONRPC `result` has the following JSON fields
+
+* `"compilation_pid"` : *pid-number*
+* `"temporary_code"` : *file-name*
