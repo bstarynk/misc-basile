@@ -179,7 +179,6 @@ class MyAbstractCommandProcessor;
 extern "C" void my_postponed_remove_tempdir(void);
 extern "C" void do_style_demo(MyEditor*);
 extern "C" void my_initialize_fifo(void);
-extern "C" int fifo_cmd_fd, fifo_out_fd;
 extern "C" void my_cmd_fd_handler(FL_SOCKET, void*);
 extern "C" void my_out_fd_handler(FL_SOCKET, void*);
 extern "C" void my_cmd_processor(int cmdlen, FL_SOCKET outsock);
