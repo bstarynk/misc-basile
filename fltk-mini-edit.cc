@@ -39,6 +39,7 @@
 #include <unictype.h>
 #include <uniconv.h>
 #include <unistr.h>
+#include <poll.h>
 
 #include <string>
 #include <iostream>
@@ -190,10 +191,12 @@ class MyAbstractCommandProcessor
 {
   int cmdproc_magic;
   static int constexpr CMDPROC_NUM_MAGIC = 0x65bdf317 ;//=1706947351
+  static std::atomic<MyAbstractCommandProcessor*> the_cmdproc;
   FL_SOCKET cmdproc_in_sock;
   FL_SOCKET cmdproc_out_sock;
   static std::map<int, MyAbstractCommandProcessor*> cmdproc_map_in_fd;
   static std::map<int, MyAbstractCommandProcessor*> cmdproc_map_out_fd;
+  static constexpr int cmdproc_poll_delay_milliseconds = 10;
 protected:
   char* cmdproc_data1;
   char* cmdproc_data2;
@@ -212,6 +215,10 @@ public:
   {
     return cmdproc_magic == CMDPROC_NUM_MAGIC;
   }
+  static inline MyAbstractCommandProcessor*instance(void)
+  {
+    return the_cmdproc.load();
+  };
   FL_SOCKET cmd_socket() const
   {
     return cmdproc_in_sock;
@@ -224,6 +231,7 @@ public:
   {
     return cmdproc_outstr;
   };
+  bool flush_output_stream(void);// return true if no pending bytes....
   static void cmd_fd_handler(FL_SOCKET*, void*);
   static void out_fd_handler(FL_SOCKET*, void*);
   virtual ~MyAbstractCommandProcessor();
@@ -367,6 +375,8 @@ extern "C" const int last_shared_line = __LINE__; ///°°°°°°°°°°°°°�
 
 std::map<int, MyAbstractCommandProcessor*> MyAbstractCommandProcessor::cmdproc_map_in_fd;
 std::map<int, MyAbstractCommandProcessor*> MyAbstractCommandProcessor::cmdproc_map_out_fd;
+std::atomic_ulong MyAbstractCommandProcessor::cmdproc_unique_counter;
+std::atomic<MyAbstractCommandProcessor*>MyAbstractCommandProcessor::the_cmdproc;
 MyAbstractCommandProcessor::MyAbstractCommandProcessor(FL_SOCKET insock, FL_SOCKET outsock,
     char*data1, char*data2,
     intptr_t num1, intptr_t num2)
@@ -375,13 +385,13 @@ MyAbstractCommandProcessor::MyAbstractCommandProcessor(FL_SOCKET insock, FL_SOCK
     cmdproc_data1(data1), cmdproc_data2(data2),
     cmdproc_num1(num1), cmdproc_num2(num2), cmdproc_event_counter(0)
 {
+  MyAbstractCommandProcessor* oldproc = the_cmdproc.exchange(this);
+  assert (oldproc == nullptr);
   assert (insock>=0);
   assert (outsock>=0);
   cmdproc_map_in_fd.insert({insock,this});
   cmdproc_map_out_fd.insert({outsock,this});
 };				// end MyAbstractCommandProcessor::MyAbstractCommandProcessor
-
-std::atomic_ulong MyAbstractCommandProcessor::cmdproc_unique_counter;
 
 
 MyAbstractCommandProcessor::~MyAbstractCommandProcessor()
@@ -396,6 +406,7 @@ MyAbstractCommandProcessor::~MyAbstractCommandProcessor()
   cmdproc_map_out_fd.erase(cmdproc_out_sock);
   close(cmdproc_out_sock);
   cmdproc_out_sock= -1;
+  the_cmdproc.store(nullptr);
 } // end MyAbstractCommandProcessor::~MyAbstractCommandProcessor
 
 void
@@ -432,9 +443,59 @@ MyAbstractCommandProcessor::send_asynchronous_json_event (const std::string& evn
   clock_gettime(CLOCK_REALTIME, &ts);
   double nowt = ts.tv_sec + 1.0e-9*ts.tv_nsec;
   jmsg["event_time"] = nowt;
-#warning incomplete MyAbstractCommandProcessor::send_asynchronous_json_event
-  FATALPRINTF("incomplete MyAbstractCommandProcessor::send_asynchronous_json_event");
+  cmdproc_outstr << jmsg << "\n\n" << std::flush;
+  bool flushed = flush_output_stream();
+  DBGOUT("command processor " << command_processor_name() << " async JSON event " << jmsg
+         << (flushed?" flushed ":" pending output"));
 } // end MyAbstractCommandProcessor::send_asynchronous_json_event
+
+
+bool
+MyAbstractCommandProcessor::flush_output_stream(void)
+{
+  cmdproc_outstr << std::flush;
+  if (cmdproc_out_sock < 0)
+    return false;
+  std::string ostr =  cmdproc_outstr.str();
+  if (ostr.empty())
+    return true;
+  struct pollfd pfarr[2];
+  memset (pfarr, 0, sizeof(pfarr));
+  pfarr[0].fd = cmdproc_out_sock;
+  pfarr[0].events = POLLOUT;
+  if (poll(pfarr, 1, cmdproc_poll_delay_milliseconds) >0 && pfarr[0].revents == POLLOUT)
+    {
+      int slen = ostr.size();
+      const char*buf = ostr.c_str();
+      DBGPRINTF("flush_output_stream wants to write %d bytes to outsockfd#%d:\n%s\n### end %d bytes\n",
+                slen, cmdproc_out_sock, buf, slen);
+      int nbw = write(cmdproc_out_sock, buf, slen);
+      if (nbw < 0)
+        {
+          DBGPRINTF("flush_output_stream FAILED write %d bytes to outsockfd#%d: %m\n",slen, cmdproc_out_sock);
+          return false;
+        }
+      if (nbw == slen)
+        {
+          cmdproc_outstr.str("");
+          cmdproc_outstr.clear();
+          DBGPRINTF("flush_output_stream COMPLETED write %d bytes to outsockfd#%d: %m\n",slen, cmdproc_out_sock);
+          return true;
+        }
+      else
+        {
+          std::string rest {buf+nbw, (int)(slen-nbw)};
+          cmdproc_outstr.clear();
+          DBGPRINTF("flush_output_stream PARTIAL write %d bytes to outsockfd#%d: remaining %d bytes\n%s\n",
+                    slen, cmdproc_out_sock, slen-nbw, rest.c_str());
+          cmdproc_outstr.str(rest);
+          return false;
+        }
+    }
+  else
+    return false;
+} // end  MyAbstractCommandProcessor::flush_output_stream
+
 
 MyFifoCommandProcessor::MyFifoCommandProcessor(const std::string& fifoprefix)
   : MyAbstractCommandProcessor(open_fifo_cmd(fifoprefix), open_fifo_out(fifoprefix)),
@@ -446,6 +507,8 @@ MyFifoCommandProcessor::~MyFifoCommandProcessor()
 {
   fifocmd_prefix.erase();
 } // end MyFifoCommandProcessor::~MyFifoCommandProcessor
+
+
 
 int
 MyFifoCommandProcessor::open_fifo_cmd (const std::string&fifoprefix)
@@ -508,6 +571,8 @@ MyFifoCommandProcessor::open_fifo_out (const std::string&fifoprefix)
   DBGPRINTF("MyFifoCommandProcessor::open_fifo_out fifo_out_str:%s fd#%d",  fifo_out_str.c_str(), fifo_out_fd);
   return fifo_out_fd;
 } // end MyFifoCommandProcessor::open_fifo_out
+
+
 
 Json::CharReaderBuilder my_json_cmd_builder;
 Json::StreamWriterBuilder my_json_out_builder;
@@ -1246,6 +1311,10 @@ my_quitmenu_handler(Fl_Widget *w, void *ad)
 {
   DBGPRINTF("my_quitmenu_handler w@%p ad:%p", w, ad);
   MY_BACKTRACE_PRINT(1);
+  auto cmdproc = MyAbstractCommandProcessor::instance();
+  assert (cmdproc);
+  cmdproc->send_asynchronous_json_event ("quit");
+  (void) cmdproc->flush_output_stream();
   exit(EXIT_SUCCESS);
 } // end my_quitmenu_handler
 
@@ -1253,17 +1322,21 @@ static void
 my_exitmenu_handler(Fl_Widget *w, void *ad)
 {
   DBGPRINTF("my_exitmenu_handler w@%p ad:%p", w, ad);
-#warning unimplemented my_exitmenu_handler
-  FATALPRINTF("my_exitmenu_handler unimplemented ad@%p", ad);
-} // end my_quitmenu_handler
+  auto cmdproc = MyAbstractCommandProcessor::instance();
+  assert (cmdproc);
+  cmdproc->send_asynchronous_json_event ("exit");
+  (void) cmdproc->flush_output_stream();
+} // end my_exitmenu_handler
 
 static void
 my_dumpmenu_handler(Fl_Widget *w, void *ad)
 {
   DBGPRINTF("my_dumpmenu_handler w@%p ad:%p", w, ad);
-#warning unimplemented my_dumpmenu_handler
-  FATALPRINTF("my_dumpmenu_handler unimplemented ad@%p", ad);
-} // end my_quitmenu_handler
+  auto cmdproc = MyAbstractCommandProcessor::instance();
+  assert (cmdproc);
+  cmdproc->send_asynchronous_json_event ("dump");
+  (void) cmdproc->flush_output_stream();
+} // end my_dumpmenu_handler
 
 static void
 my_copymenu_handler(Fl_Widget *w, void *ad)
