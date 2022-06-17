@@ -45,6 +45,7 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
+#include <atomic>
 
 /// https://github.com/ianlancetaylor/libbacktrace/
 #include <backtrace.h>
@@ -200,6 +201,8 @@ protected:
   intptr_t cmdproc_num2;
   std::istringstream cmdproc_instr;
   std::ostringstream cmdproc_outstr;
+  long cmdproc_event_counter;
+  static std::atomic_ulong cmdproc_unique_counter;
 protected:
   MyAbstractCommandProcessor(FL_SOCKET insock, FL_SOCKET outsock, char*data1 = nullptr, char*data2 = nullptr, intptr_t num1= 0, intptr_t num2= 0);
   MyAbstractCommandProcessor(const MyAbstractCommandProcessor& oth) = default;
@@ -226,6 +229,7 @@ public:
   virtual ~MyAbstractCommandProcessor();
   virtual void process_jsonrpc_command(const Json::Value*pjson, long cmdcount);
   virtual std::string command_processor_name(void) const =0;
+  void send_asynchronous_json_event (const std::string& evname, const Json::Value evjson = Json::nullValue);
 };				// end MyAbstractCommandProcessor
 
 
@@ -369,13 +373,16 @@ MyAbstractCommandProcessor::MyAbstractCommandProcessor(FL_SOCKET insock, FL_SOCK
   : cmdproc_magic(CMDPROC_NUM_MAGIC),
     cmdproc_in_sock(insock), cmdproc_out_sock(outsock),
     cmdproc_data1(data1), cmdproc_data2(data2),
-    cmdproc_num1(num1), cmdproc_num2(num2)
+    cmdproc_num1(num1), cmdproc_num2(num2), cmdproc_event_counter(0)
 {
   assert (insock>=0);
   assert (outsock>=0);
   cmdproc_map_in_fd.insert({insock,this});
   cmdproc_map_out_fd.insert({outsock,this});
 };				// end MyAbstractCommandProcessor::MyAbstractCommandProcessor
+
+std::atomic_ulong MyAbstractCommandProcessor::cmdproc_unique_counter;
+
 
 MyAbstractCommandProcessor::~MyAbstractCommandProcessor()
 {
@@ -409,6 +416,25 @@ MyAbstractCommandProcessor::process_jsonrpc_command(Json::Value const*pjson, lon
   DBGOUT("process_jsonrpc_command DONE method " << methstr << " cmdcount:" << cmdcount
          << " processor:" << command_processor_name() << std::endl);
 } // end MyAbstractCommandProcessor::process_jsonrpc_command
+
+
+
+void
+MyAbstractCommandProcessor::send_asynchronous_json_event (const std::string& evname, const Json::Value evjson)
+{
+  Json::Value jmsg(Json::objectValue);
+  jmsg["json_event"] = Json::Value("1.0");
+  jmsg["event_number"] = ++cmdproc_event_counter;
+  jmsg["event_unique_rank"] = 1+cmdproc_unique_counter.fetch_add(1);
+  jmsg["event_name"] = evname;
+  jmsg["event_data"] = evjson;
+  struct timespec ts = {0,0};
+  clock_gettime(CLOCK_REALTIME, &ts);
+  double nowt = ts.tv_sec + 1.0e-9*ts.tv_nsec;
+  jmsg["event_time"] = nowt;
+#warning incomplete MyAbstractCommandProcessor::send_asynchronous_json_event
+  FATALPRINTF("incomplete MyAbstractCommandProcessor::send_asynchronous_json_event");
+} // end MyAbstractCommandProcessor::send_asynchronous_json_event
 
 MyFifoCommandProcessor::MyFifoCommandProcessor(const std::string& fifoprefix)
   : MyAbstractCommandProcessor(open_fifo_cmd(fifoprefix), open_fifo_out(fifoprefix)),
