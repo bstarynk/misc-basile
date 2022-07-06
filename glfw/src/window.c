@@ -1,4 +1,5 @@
 #include "../include/window.h"
+#include "../include/shader.h"
 #include "../include/glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <stdio.h>
@@ -8,6 +9,7 @@
 
 struct rps_window__ {
         GLFWwindow *wnd;
+        rps_shader_t *shd;
 };
 
 
@@ -16,7 +18,7 @@ static void rps_window_resize__(GLFWwindow *, int, int);
 
 
 // Creates new GLFW window
-rps_window_t *rps_window_new(void)
+rps_window_t *rps_window_new(rps_shader_t *shd)
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -50,6 +52,8 @@ rps_window_t *rps_window_new(void)
         abort();
     }
 
+    ctx->shd = shd;
+    rps_shader_init(shd);
     return ctx;
 }
 
@@ -78,8 +82,8 @@ rps_window_run(rps_window_t *ctx)
 
                 glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT);
+                rps_shader_render(ctx->shd);
                 glfwSwapBuffers(ctx->wnd);
-
                 glfwPollEvents();
         }
 }
