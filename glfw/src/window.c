@@ -18,7 +18,7 @@ static void rps_window_resize__(GLFWwindow *, int, int);
 
 
 // Creates new GLFW window
-rps_window_t *rps_window_new(const char *vertex_src, const char *fragment_src)
+rps_window_t *rps_window_new(rps_shader_t *shd)
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -52,7 +52,8 @@ rps_window_t *rps_window_new(const char *vertex_src, const char *fragment_src)
         abort();
     }
 
-    ctx->shd = rps_shader_new(vertex_src, fragment_src);
+    ctx->shd = shd;
+    rps_shader_init(shd);
     return ctx;
 }
 

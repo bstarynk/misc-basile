@@ -1,3 +1,4 @@
+#include "include/shader.h"
 #include "include/window.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,12 +20,21 @@ const char *fragment_src = "#version 330 core\n"
     "}\n\0";
 
 
+const float vertices[] = {
+    -0.5f, -0.5f, 0.0f,
+    0.5f, -0.5f, 0.0f,
+    0.0f,  0.5f, 0.0f
+};
+
+
 int main(int argc, char **argv)
 {
     (void) argc; // will be used later
     (void) argv; // will be used later
 
-    rps_window_t *w = rps_window_new(vertex_src, fragment_src);
+    rps_shader_t *s = rps_shader_new(vertex_src, fragment_src, vertices,
+                                     sizeof vertices / sizeof *vertices);
+    rps_window_t *w = rps_window_new(s);
     rps_window_run(w);
     rps_window_free(&w);
 
