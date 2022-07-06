@@ -1,4 +1,5 @@
 #include "../include/window.h"
+#include "../include/shader.h"
 #include "../include/glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <stdio.h>
@@ -8,6 +9,7 @@
 
 struct rps_window__ {
         GLFWwindow *wnd;
+        rps_shader_t *shd;
 };
 
 
@@ -16,7 +18,7 @@ static void rps_window_resize__(GLFWwindow *, int, int);
 
 
 // Creates new GLFW window
-rps_window_t *rps_window_new(void)
+rps_window_t *rps_window_new(const char *vertex_src, const char *fragment_src)
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -50,6 +52,7 @@ rps_window_t *rps_window_new(void)
         abort();
     }
 
+    ctx->shd = rps_shader_new(vertex_src, fragment_src);
     return ctx;
 }
 
