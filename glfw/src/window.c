@@ -82,8 +82,8 @@ rps_window_run(rps_window_t *ctx)
 
                 glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT);
+                rps_shader_render(ctx->shd);
                 glfwSwapBuffers(ctx->wnd);
-
                 glfwPollEvents();
         }
 }

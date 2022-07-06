@@ -12,6 +12,8 @@ struct rps_shader__ {
     size_t nvertices;
     GLchar *vertex_src;
     GLchar *fragment_src;
+    unsigned int vbo;
+    unsigned int vao;
 };
 
 
@@ -47,6 +49,8 @@ rps_shader_new(const char *vertex_src, const char *fragment_src,
     ctx->program = 0;
     ctx->nvertices = nvertices;
     ctx->vertices = (float *) malloc(sizeof *ctx->vertices * nvertices);
+    ctx->vbo = 0;
+    ctx->vao = 0;
 
     if (!ctx->vertices) {
         printf("Failed to allocate memory for vertex array!\n");
@@ -99,6 +103,19 @@ rps_shader_init(rps_shader_t *ctx)
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
+
+    glGenVertexArrays(1, &ctx->vao);
+    glGenBuffers(1, &ctx->vbo);
+    glBindVertexArray(ctx->vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, ctx->vbo);
+    glBufferData(GL_ARRAY_BUFFER, ctx->nvertices, ctx->vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (float), (void *) 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }
 
 
@@ -106,6 +123,8 @@ void
 rps_shader_render(const rps_shader_t *ctx)
 {
     glUseProgram(ctx->program);
+    glBindVertexArray(ctx->vao);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 
