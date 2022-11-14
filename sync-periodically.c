@@ -43,10 +43,10 @@ volatile atomic_bool synper_stop;
 bool synper_daemonized;
 
 #define SYNPER_MIN_PERIOD 2	/*minimal sync period, in seconds */
-#define SYNPER_MAX_PERIOD 30	/*maximal sync period, in seconds */
+#define SYNPER_MAX_PERIOD 32	/*maximal sync period, in seconds */
 
-#define SYNPER_MIN_LOGPERIOD 100	/*minimal log period, in seconds */
-#define SYNPER_MAX_LOGPERIOD 7200	/*maximal log period, in seconds */
+#define SYNPER_MIN_LOGPERIOD 64	/*minimal log period, in seconds */
+#define SYNPER_MAX_LOGPERIOD 8192 /*maximal log period, in seconds */
 
 
 void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
@@ -140,6 +140,8 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
 #endif
 	printf ("\t run as: '%s --help' to get help.\n", synper_progname);
 	printf ("\t see also https://github.com/bstarynk/misc-basile/\n");
+	printf ("\t sync period between %d and %d seconds\n", SYNPER_MIN_PERIOD, SYNPER_MAX_PERIOD);
+	printf ("\t log period between %d and %d seconds\n", SYNPER_MIN_LOGPERIOD, SYNPER_MAX_LOGPERIOD);
 	fflush (NULL);
 	exit (EXIT_SUCCESS);
       }
