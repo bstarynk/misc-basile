@@ -1,6 +1,6 @@
 // file sync-periodically.c in github.com/bstarynk/misc-basile/
 
-/* Copyright 2020, 2021 Basile Starynkevitch
+/* Copyright 2020 - 2022 Basile Starynkevitch
    <basile@starynkevitch.net>
 
 This sync-periodically program is free software; you can redistribute it and/or
@@ -246,28 +246,49 @@ main (int argc, char **argv)
     }
   usleep (10 * 1024);
   if (synper_period < SYNPER_MIN_PERIOD)
-    synper_period = SYNPER_MIN_PERIOD;
+    {
+      fprintf (stderr, "%s: sync period should be at least %d. Updated!\n",
+	       synper_progname, SYNPER_MIN_PERIOD);
+      synper_period = SYNPER_MIN_PERIOD;
+    }
   if (synper_period > SYNPER_MAX_PERIOD)
-    synper_period = SYNPER_MAX_PERIOD;
+    {
+      fprintf (stderr, "%s: sync period should be at most %d. Updated!\n",
+	       synper_progname, SYNPER_MAX_PERIOD);
+      synper_period = SYNPER_MAX_PERIOD;
+    }
   if (synper_logperiod < SYNPER_MIN_LOGPERIOD)
-    synper_logperiod = SYNPER_MIN_LOGPERIOD;
+    {
+      fprintf (stderr, "%s: log period should be at least %d. Updated!\n",
+	       synper_progname, SYNPER_MIN_LOGPERIOD);
+      synper_logperiod = SYNPER_MIN_LOGPERIOD;
+    }
   if (synper_logperiod < 3 * synper_period)
-    synper_logperiod = 3 * synper_period;
+    {
+      synper_logperiod = 3 * synper_period;
+      fprintf (stderr,
+	       "%s: log period should be at least three times bigger than\n"
+	       " ... sync period %d.  Updated to %d\n", synper_progname,
+	       synper_period, synper_logperiod);
+    }
   if (synper_logperiod > SYNPER_MAX_LOGPERIOD)
-    synper_logperiod = SYNPER_MAX_LOGPERIOD;
+    {
+      synper_logperiod = SYNPER_MAX_LOGPERIOD;
+      fprintf (stderr, "%s: log period should be at most %d. Updated!\n",
+	       synper_progname, SYNPER_MAX_LOGPERIOD);
+    }
   synper_syslog_begin ();
   if (synper_pidfile)
     {
       syslog (LOG_INFO, "%s wrote pid-file %s as uid#%d", synper_progname,
 	      synper_pidfile, (int) getuid ());
     };
-  sleep (synper_period / 3);
+  sleep (synper_period / 4 + 1);	/* sleep a while */
   time_t lastlogtime = 0;
   long loopcnt = 0;
   while (true)
     {
       time_t nowt = 0;
-      usleep (2000);
       sync ();
       (void) sleep (synper_period);
       if (atomic_load (&synper_stop))
