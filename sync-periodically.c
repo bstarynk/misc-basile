@@ -43,10 +43,10 @@ volatile atomic_bool synper_stop;
 bool synper_daemonized;
 
 #define SYNPER_MIN_PERIOD 2	/*minimal sync period, in seconds */
-#define SYNPER_MAX_PERIOD 32	/*maximal sync period, in seconds */
+#define SYNPER_MAX_PERIOD 30	/*maximal sync period, in seconds */
 
-#define SYNPER_MIN_LOGPERIOD 64	/*minimal log period, in seconds */
-#define SYNPER_MAX_LOGPERIOD 8192 /*maximal log period, in seconds */
+#define SYNPER_MIN_LOGPERIOD 100	/*minimal log period, in seconds */
+#define SYNPER_MAX_LOGPERIOD 7200	/*maximal log period, in seconds */
 
 
 void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
@@ -140,8 +140,6 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
 #endif
 	printf ("\t run as: '%s --help' to get help.\n", synper_progname);
 	printf ("\t see also https://github.com/bstarynk/misc-basile/\n");
-	printf ("\t sync period between %d and %d seconds\n", SYNPER_MIN_PERIOD, SYNPER_MAX_PERIOD);
-	printf ("\t log period between %d and %d seconds\n", SYNPER_MIN_LOGPERIOD, SYNPER_MAX_LOGPERIOD);
 	fflush (NULL);
 	exit (EXIT_SUCCESS);
       }
@@ -174,19 +172,37 @@ synper_syslog_begin (void)
     SYNPER_FATAL ("failed to get localtime");
   char nowbuf[80];
   memset (nowbuf, 0, sizeof (nowbuf));
+  char parentexe[128];
+  memset (parentexe, 0, sizeof(parentexe));
   if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm) <= 0)
     SYNPER_FATAL ("failed to strftime");
+  pid_t parentpid = getppid();
+  if (parentpid > 0) {
+    char parentprocx[64];
+    memset (parentprocx, 0, sizeof(parentprocx));
+    snprintf(parentprocx, sizeof(parentprocx), "/proc/%d/exe", (int)parentpid);
+    if (readlink(parentprocx, parentexe, sizeof(parentexe)-1)<0)
+      SYNPER_FATAL("failed to readlink from %s", parentprocx);
+  }
+  else
+    SYNPER_FATAL("failed to getppid");
 #ifdef SYNPER_GITID
   if (synper_name)
     syslog (LOG_INFO,
-	    "start of %s named %s git %s build %s with sync period %d seconds and log period %d seconds at %s\n",
+	    "start of %s named %s git %s build %s with sync period %d seconds"
+	    " and log period %d seconds"
+	    " at %s, pid %d, parentpid %d running %s\n",
 	    synper_progname, synper_name, SYNPER_STRINGIFY (SYNPER_GITID),
-	    __DATE__, synper_period, synper_logperiod, nowbuf);
+	    __DATE__, synper_period, synper_logperiod, nowbuf,
+	    (int)getpid(), (int)parentpid, parentexe);
   else
     syslog (LOG_INFO,
-	    "start of %s git %s build %s with sync period %d seconds and log period %d seconds at %s\n",
+	    "start of %s git %s build %s with sync period %d seconds"
+	    " and log period %d seconds"
+	    " at %s, pid %d, parentpid %d running %s\n",
 	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), __DATE__,
-	    synper_period, synper_logperiod, nowbuf);
+	    synper_period, synper_logperiod, nowbuf,
+	    (int)getpid(), (int)parentpid, parentexe);
   if (synper_daemonized)
     syslog (LOG_NOTICE, "%s git %s daemonized as pid %ld",
 	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID),
@@ -194,14 +210,20 @@ synper_syslog_begin (void)
 #else
   if (synper_name)
     syslog (LOG_INFO,
-	    "start of %s named %s built %s with sync period %d seconds and log period %d seconds at %s\n",
+	    "start of %s named %s built %s with sync period %d seconds"
+	    " and log period %d seconds at %s,"
+	    " pid %d, parentpid %d running %s\n",
 	    synper_progname, synper_name, __DATE__, synper_period,
-	    synper_logperiod, nowbuf);
+	    synper_logperiod, nowbuf,
+	    (int)getpid(), (int)parentpid, parentexe);
   else
     syslog (LOG_INFO,
-	    "start of %s built %s with sync period %d seconds and log period %d seconds at %s\n",
+	    "start of %s built %s with sync period %d seconds"
+	    " and log period %d seconds"
+	    " at %s, pid %d, parentpid %d running %s\n",
 	    synper_progname, __DATE__, synper_period, synper_logperiod,
-	    nowbuf);
+	    nowbuf,
+	    (int)getpid(), (int)parentpid, parentexe);
   if (synper_daemonized)
     syslog (LOG_NOTICE, "%s daemonized as pid %ld", synper_progname,
 	    (long) getpid ());
@@ -248,49 +270,28 @@ main (int argc, char **argv)
     }
   usleep (10 * 1024);
   if (synper_period < SYNPER_MIN_PERIOD)
-    {
-      fprintf (stderr, "%s: sync period should be at least %d. Updated!\n",
-	       synper_progname, SYNPER_MIN_PERIOD);
-      synper_period = SYNPER_MIN_PERIOD;
-    }
+    synper_period = SYNPER_MIN_PERIOD;
   if (synper_period > SYNPER_MAX_PERIOD)
-    {
-      fprintf (stderr, "%s: sync period should be at most %d. Updated!\n",
-	       synper_progname, SYNPER_MAX_PERIOD);
-      synper_period = SYNPER_MAX_PERIOD;
-    }
+    synper_period = SYNPER_MAX_PERIOD;
   if (synper_logperiod < SYNPER_MIN_LOGPERIOD)
-    {
-      fprintf (stderr, "%s: log period should be at least %d. Updated!\n",
-	       synper_progname, SYNPER_MIN_LOGPERIOD);
-      synper_logperiod = SYNPER_MIN_LOGPERIOD;
-    }
+    synper_logperiod = SYNPER_MIN_LOGPERIOD;
   if (synper_logperiod < 3 * synper_period)
-    {
-      synper_logperiod = 3 * synper_period;
-      fprintf (stderr,
-	       "%s: log period should be at least three times bigger than\n"
-	       " ... sync period %d.  Updated to %d\n", synper_progname,
-	       synper_period, synper_logperiod);
-    }
+    synper_logperiod = 3 * synper_period;
   if (synper_logperiod > SYNPER_MAX_LOGPERIOD)
-    {
-      synper_logperiod = SYNPER_MAX_LOGPERIOD;
-      fprintf (stderr, "%s: log period should be at most %d. Updated!\n",
-	       synper_progname, SYNPER_MAX_LOGPERIOD);
-    }
+    synper_logperiod = SYNPER_MAX_LOGPERIOD;
   synper_syslog_begin ();
   if (synper_pidfile)
     {
       syslog (LOG_INFO, "%s wrote pid-file %s as uid#%d", synper_progname,
 	      synper_pidfile, (int) getuid ());
     };
-  sleep (synper_period / 4 + 1);	/* sleep a while */
+  sleep (synper_period / 3);
   time_t lastlogtime = 0;
   long loopcnt = 0;
   while (true)
     {
       time_t nowt = 0;
+      usleep (2000);
       sync ();
       (void) sleep (synper_period);
       if (atomic_load (&synper_stop))
