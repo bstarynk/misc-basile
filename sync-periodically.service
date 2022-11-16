@@ -35,7 +35,7 @@ Restart=on-failure
 RestartPreventExitStatus=254
 Type=notify
 KillMode=process
-RuntimeDirectory=sync-periodically-dir
+RuntimeDirectory=/var/run
 RuntimeDirectoryMode=0755
 
 [Install]
