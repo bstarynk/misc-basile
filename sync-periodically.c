@@ -139,7 +139,12 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
 	printf ("%s built on %s\n", synper_progname, __DATE__);
 #endif
 	printf ("\t run as: '%s --help' to get help.\n", synper_progname);
-	printf ("\t see also https://github.com/bstarynk/misc-basile/\n");
+	printf ("\t sync period show be between %d and %d seconds.",
+		SYNPER_MIN_PERIOD, SYNPER_MAX_PERIOD);
+	printf ("\t log period should be between %d and %d seconds,\n\t... and more than 3 times the sync period.\n",
+		SYNPER_MIN_LOGPERIOD, SYNPER_MAX_LOGPERIOD);
+	printf ("\t see also %s on https://github.com/bstarynk/misc-basile/\n",
+		__FILE__);
 	fflush (NULL);
 	exit (EXIT_SUCCESS);
       }
