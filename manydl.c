@@ -288,7 +288,7 @@ main (int argc, char **argv)
   uname (&uts);			/* don't bother checking success */
   /* print counter, system, & library information */
   printf
-    ("running %s, max.counter %d, mean len %d, glibc version %s release %s\n"
+    ("Running %s, max.counter %d, mean len %d, glibc version %s release %s\n"
      "on sys %s release %s version %s\n", argv[0], maxcnt, meanlen,
      gnu_get_libc_version (), gnu_get_libc_release (), uts.sysname,
      uts.release, uts.version);
@@ -330,8 +330,16 @@ main (int argc, char **argv)
   cflags = getenv ("CFLAGS");
   if (!cflags)
     cflags = "-O2";
-  printf (" before generation of %d files with CC=%s and CFLAGS=%s\n",
-	  maxcnt, cc, cflags);
+  time_t nowt = 0;
+  time (&nowt);
+  char hnam[80];
+  memset (&hnam, 0, sizeof(hnam));
+  gethostname(hnam, sizeof(hnam)-2);
+  printf ("%s: before generation of %d files, mean size %d, with CC=%s and CFLAGS=%s\n"
+	  "... at %s on %s pid %d\n",
+	  argv[0], maxcnt, meanlen, 
+	  cc, cflags, ctime(&nowt), hnam, (int)getpid());
+  fflush (NULL);
   /* the generating and compiling loop */
   for (k = 0; k < maxcnt; k++)
     {
