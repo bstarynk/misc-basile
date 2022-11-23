@@ -28,6 +28,10 @@
 
 #include <gnu/libc-version.h>
 
+char *progname;
+
+#define INDENT_PROGRAM "/usr/bin/indent"
+
 extern long dynstep;
 extern void say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d);
 
@@ -56,8 +60,8 @@ clock_t firstclock;
 int
 generate_file (const char *name, int meanlen)
 {
-  char path[500];
-  FILE *f;
+  char path[100];
+  FILE *f = NULL;
   int l = 0;
   int i = 0;
   int prevjmpix = 0;
@@ -200,10 +204,26 @@ generate_file (const char *name, int meanlen)
       fprintf (f, " lab%d:", i);
   fprintf (f, " a &= 0xffffff;\n");
   fprintf (f, " say_fun_a_b_c_d(\"%s\", a, b, c, d);\n", name);
-  fprintf (f, " return a;} /* end %s of %d instr */\n", name, l);
+  fprintf (f, " return a;\n" "} /* end %s of %d instr */\n", name, l);
   fclose (f);
+  if (!access (INDENT_PROGRAM, X_OK))
+    {
+      char indcmd[128];
+      memset (indcmd, 0, sizeof (indcmd));
+      snprintf (indcmd, sizeof (indcmd), "%s %s", INDENT_PROGRAM, path);
+      int err = system (indcmd);
+      if (err)
+	{
+	  char cwdbuf[256];
+	  memset (cwdbuf, 0, sizeof (cwdbuf));
+	  getcwd (cwdbuf, sizeof (cwdbuf) - 2);
+	  fprintf (stderr, "%s: failed to run %s (%d) in %s\n", progname,
+		   indcmd, err, cwdbuf);
+	  exit (EXIT_FAILURE);
+	};
+    }
   return l;
-}
+}				/* end generate_file */
 
 
 /* return a *static* string containing the self & child CPU times */
@@ -227,6 +247,7 @@ timestring ()
 int
 main (int argc, char **argv)
 {
+  progname = argv[0];
   int maxcnt = 100;
   int meanlen = 300;
   int k = 0, l = 0;
@@ -333,12 +354,12 @@ main (int argc, char **argv)
   time_t nowt = 0;
   time (&nowt);
   char hnam[80];
-  memset (&hnam, 0, sizeof(hnam));
-  gethostname(hnam, sizeof(hnam)-2);
-  printf ("%s: before generation of %d files, mean size %d, with CC=%s and CFLAGS=%s\n"
-	  "... at %s on %s pid %d\n",
-	  argv[0], maxcnt, meanlen, 
-	  cc, cflags, ctime(&nowt), hnam, (int)getpid());
+  memset (&hnam, 0, sizeof (hnam));
+  gethostname (hnam, sizeof (hnam) - 2);
+  printf
+    ("%s: before generation of %d files, mean size %d, with CC=%s and CFLAGS=%s\n"
+     "... at %s on %s pid %d\n", argv[0], maxcnt, meanlen, cc, cflags,
+     ctime (&nowt), hnam, (int) getpid ());
   fflush (NULL);
   /* the generating and compiling loop */
   for (k = 0; k < maxcnt; k++)
