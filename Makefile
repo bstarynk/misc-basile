@@ -25,8 +25,8 @@ sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) $^  -o $@
 
 
-analyze-frama-c:
-	$(FRAMAC) -verbosity 2  bwc.c
+analyze-framac:
+	$(FRAMAC)  -cpp-command '$(CC) -C -E -I. -I/usr/include -x c'  -eva -eva-verbose 2  bwc.c
+	$(FRAMAC)  -cpp-command '$(CC) -C -E -I. -I/usr/include -x c'  -eva  -eva-verbose 2 sync-periodically.c
 	$(FRAMAC) manydl.c
 	$(FRAMAC) half.c
-	$(FRAMAC) sync-periodically.c
