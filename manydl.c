@@ -60,7 +60,8 @@ clock_t firstclock;
 int
 generate_file (const char *name, int meanlen)
 {
-  char path[100];
+  char pathsrc[100];
+  char pathso[100];
   FILE *f = NULL;
   int l = 0;
   int i = 0;
@@ -68,22 +69,22 @@ generate_file (const char *name, int meanlen)
 #define MAXLAB 8
   enum labstate
   { LAB_NONE = 0, LAB_JUMPED, LAB_DEFINED } lab[MAXLAB];
-  memset (path, 0, sizeof (path));
+  memset (pathsrc, 0, sizeof (pathsrc));
   memset (lab, 0, sizeof (lab));
-  snprintf (path, sizeof (path) - 1, "%s.c", name);
-  f = fopen (path, "w");
+  snprintf (pathsrc, sizeof (pathsrc) - 1, "%s.c", name);
+  f = fopen (pathsrc, "w");
   if (!f)
     {
-      perror (path);
+      perror (pathsrc);
       exit (EXIT_FAILURE);
     };
-  snprintf (path, sizeof (path) - 1, "%s.so", name);
-  remove (path);
+  snprintf (pathso, sizeof (pathso) - 1, "%s.so", name);
+  remove (pathso);
   if (meanlen < 20)
     meanlen = 20;
   /* random length of generated function */
   l = meanlen / 2 + DICE (meanlen);
-  fprintf (f, "/* generated file %s length %d meanlen %d*/\n", path, l,
+  fprintf (f, "/* generated file %s length %d meanlen %d*/\n", pathsrc, l,
 	   meanlen);
   fprintf (f, "extern long dynstep;\n" "extern int tab[%d];\n", MAXTAB);
   fprintf (f,
@@ -210,7 +211,7 @@ generate_file (const char *name, int meanlen)
     {
       char indcmd[128];
       memset (indcmd, 0, sizeof (indcmd));
-      snprintf (indcmd, sizeof (indcmd), "%s %s", INDENT_PROGRAM, path);
+      snprintf (indcmd, sizeof (indcmd), "%s %s", INDENT_PROGRAM, pathsrc);
       int err = system (indcmd);
       if (err)
 	{
