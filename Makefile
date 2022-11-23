@@ -1,7 +1,7 @@
 ## file misc-basile/Makefile
 ## on https://github.com/bstarynk/
 
-.PHONY: all clean indent
+.PHONY: all clean indent analyze-framac
 FRAMAC=/usr/bin/frama-c
 INDENT=/usr/bin/indent
 CC=/usr/bin/gcc
@@ -23,3 +23,10 @@ bwc: bwc.c
 
 sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) $^  -o $@
+
+
+analyze-frama-c:
+	$(FRAMAC) -verbosity 2  bwc.c
+	$(FRAMAC) manydl.c
+	$(FRAMAC) half.c
+	$(FRAMAC) sync-periodically.c
