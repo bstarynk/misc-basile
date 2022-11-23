@@ -21,6 +21,8 @@
 #include <string.h>
 #include <time.h>
 
+const char *progname = NULL;
+
 void
 count_lines (FILE * f, char *name)
 {
@@ -43,6 +45,12 @@ count_lines (FILE * f, char *name)
       lincnt++;
       if (linwidth < linlen)
 	linwidth = linlen;
+      if (linlen > (1 << 20))
+	{
+	  fprintf (stderr, "in file %s line#%ld is huge: %ld\n",
+		   name, lincnt, linwidth);
+	  exit (EXIT_FAILURE);
+	};
     }
   while (!feof (f));
   clock_t stf = clock ();
@@ -55,6 +63,7 @@ count_lines (FILE * f, char *name)
 int
 main (int argc, char **argv)
 {
+  progname = argv[0];
   bool withmmap = false;
   if (argc < 2 || !strcmp (argv[1], "-h") || !strcmp (argv[1], "--help"))
     {
@@ -84,3 +93,6 @@ main (int argc, char **argv)
     }
   return EXIT_SUCCESS;
 }				/* end main */
+
+
+/// end of file misc-basile/bwc.c
