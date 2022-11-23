@@ -29,7 +29,6 @@
 #include <gnu/libc-version.h>
 
 extern long dynstep;
-extern int tab[];
 extern void say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d);
 
 /* dynstep, tab & say_fun_a_b_c_d are used in generated files */
@@ -37,6 +36,7 @@ long dynstep;			/* number of executed lines */
 #define MAXTAB 128		/* length of tab should be a power of two */
 int tab[MAXTAB];		/* a table */
 
+extern int tab[MAXTAB];
 
 void				/* printing function for generated files */
 say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d)
@@ -81,7 +81,7 @@ generate_file (const char *name, int meanlen)
   l = meanlen / 2 + DICE (meanlen);
   fprintf (f, "/* generated file %s length %d meanlen %d*/\n", path, l,
 	   meanlen);
-  fprintf (f, "extern long dynstep; extern int tab[];\n");
+  fprintf (f, "extern long dynstep;\n" "extern int tab[%d];\n", MAXTAB);
   fprintf (f,
 	   "extern void say_fun_a_b_c_d(const char*fun, int a, int b, int c, int d);\n");
   fprintf (f, "const char gentimestamp_%s[] = __DATE__ \"@\" __TIME__;\n",
@@ -268,8 +268,8 @@ main (int argc, char **argv)
   secpertick = 1.0 / (double) sysconf (_SC_CLK_TCK);
   memset (&t_init, 0, sizeof (t_init));
   firstclock = cl_init = times (&t_init);
-  if (nice (2)<0)
-    perror("nice");
+  if (nice (2) < 0)
+    perror ("nice");
   /* If we have a program argument, it is the number of generated functions */
   if (argc > 1)
     maxcnt = atoi (argv[1]);
@@ -413,12 +413,14 @@ main (int argc, char **argv)
 	  fprintf (stderr, "\n dlopen %s failed %s\n", cmd, dlerror ());
 	  /* display the memory map */
 	  rewind (map);
-	   do {
+	  do
+	    {
 	      memset (linbuf, 0, sizeof (linbuf));
 	      if (!fgets (linbuf, sizeof (linbuf) - 1, map))
 		break;
 	      fputs (linbuf, stderr);
-	    } while (!feof (map));
+	    }
+	  while (!feof (map));
 	  fflush (stderr);
 	  exit (EXIT_FAILURE);
 	};
@@ -457,12 +459,14 @@ main (int argc, char **argv)
   /* display the memory map */
   printf ("\n\n**** memory map of process %ld ****\n", (long) getpid ());
   rewind (map);
-  do {
-    memset (linbuf, 0, sizeof (linbuf));
-    if (NULL==fgets (linbuf, sizeof (linbuf) - 1, map))
-      break;
-    fputs (linbuf, stdout);
-  } while (!feof (map));
+  do
+    {
+      memset (linbuf, 0, sizeof (linbuf));
+      if (NULL == fgets (linbuf, sizeof (linbuf) - 1, map))
+	break;
+      fputs (linbuf, stdout);
+    }
+  while (!feof (map));
   putchar ('\n');
   fflush (stdout);
   /* call randomly the functions */
