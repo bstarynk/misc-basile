@@ -1,7 +1,8 @@
 ## file misc-basile/Makefile
 ## on https://github.com/bstarynk/
 
-.PHONY: all clean indent analyze-framac
+.PHONY: all clean indent analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half
+
 FRAMAC=/usr/bin/frama-c
 INDENT=/usr/bin/indent
 CC=/usr/bin/gcc
@@ -25,8 +26,16 @@ sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) $^  -o $@
 
 
-analyze-framac:
+analyze-framac:  framac-bwc framac-sync-periodically framac-manydl framac-half
+
+framac-bwc:
 	$(FRAMAC)  -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva -eva-verbose 2  bwc.c
+
+framac-sync-periodically:
 	$(FRAMAC)  -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2 sync-periodically.c
-	$(FRAMAC) manydl.c
-	$(FRAMAC) half.c
+
+framac-manydl:
+	$(FRAMAC)  -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2 manydl.c
+
+framac-half:
+	$(FRAMAC) -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2  half.c
