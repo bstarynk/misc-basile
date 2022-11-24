@@ -26,7 +26,7 @@ sync-periodically: sync-periodically.c
 
 
 analyze-framac:
-	$(FRAMAC)  -cpp-command '$(CC) -C -E -I. -I/usr/include -x c'  -eva -eva-verbose 2  bwc.c
-	$(FRAMAC)  -cpp-command '$(CC) -C -E -I. -I/usr/include -x c'  -eva  -eva-verbose 2 sync-periodically.c
+	$(FRAMAC)  -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva -eva-verbose 2  bwc.c
+	$(FRAMAC)  -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2 sync-periodically.c
 	$(FRAMAC) manydl.c
 	$(FRAMAC) half.c
