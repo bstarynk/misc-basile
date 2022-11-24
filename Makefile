@@ -4,6 +4,7 @@
 .PHONY: all clean indent analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half
 
 FRAMAC=/usr/bin/frama-c
+FRAMALIBC=/usr/share/frama-c/libc/
 INDENT=/usr/bin/indent
 CC=/usr/bin/gcc
 CXX=/usr/bin/g++
@@ -29,13 +30,13 @@ sync-periodically: sync-periodically.c
 analyze-framac:  framac-bwc framac-sync-periodically framac-manydl framac-half
 
 framac-bwc:
-	$(FRAMAC)  -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva -eva-verbose 2  bwc.c
+	$(FRAMAC)  -cpp-command '$(CC) -C -E -I $(FRAMALIBC) -I. -I/usr/include -x c'  -eva -eva-verbose 2  bwc.c
 
 framac-sync-periodically:
-	$(FRAMAC)  -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2 sync-periodically.c
+	$(FRAMAC)  -cpp-command '$(CC) -C -E -I$(FRAMALIBC)  -I. -I/usr/include -x c'  -eva  -eva-verbose 2 sync-periodically.c
 
 framac-manydl:
-	$(FRAMAC)  -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2 manydl.c
+	$(FRAMAC)  -cpp-command '$(CC) -C -E -I $(FRAMALIBC)  -I. -I/usr/include -x c'  -eva  -eva-verbose 2 $(FRAMALIBC)/string.c manydl.c
 
 framac-half:
 	$(FRAMAC) -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2  half.c
