@@ -26,8 +26,12 @@
 #include <unistd.h>
 #include <sys/utsname.h>
 
+#ifdef __FRAMAC__
+#define gnu_get_libc_version() "libc-framac"
+#define gnu_get_libc_release() "libc-framac-release"
+#else
 #include <gnu/libc-version.h>
-
+#endif /*__FRAMAC__*/
 char *progname;
 
 #define INDENT_PROGRAM "/usr/bin/indent"
