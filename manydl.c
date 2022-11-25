@@ -369,10 +369,11 @@ main (int argc, char **argv)
   /* the generating and compiling loop */
   for (k = 0; k < maxcnt; k++)
     {
-      /* generate a name like genf_C9 or genf_A0 and duplicate it */
+      /* generate a name like genf_C_9 or genf_A_0 and duplicate it */
       memset (buf, 0, sizeof (buf));
-      snprintf (buf, sizeof (buf) - 1, "genf_%c%d", "ABCDEFGHIJ"[k % 10],
-		k / 10);
+      snprintf (buf, sizeof (buf) - 1, "genf_%c_%d",
+		"ABCDEFGHIJKLMNOPQ"[k % 16],
+		k / 16);
       namarr[k] = strdup (buf);
       if (!namarr[k])
 	{
