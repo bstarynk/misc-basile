@@ -256,25 +256,25 @@ main (int argc, char **argv)
   int maxcnt = 100;
   int meanlen = 300;
   int k = 0, l = 0;
-  long suml;
+  long suml = 0;
   int r = 0, s = 0;
   long nbcall = 0, n = 0;
   FILE *map = NULL;		/* the /proc/self/maps pseudofile (Linux) */
-  char buf[100];		/* buffer for name */
-  char cmd[400];		/* buffer for command */
-  char linbuf[500];		/* line buffer for map */
+  char buf[100] = { (char) 0 };	/* buffer for name */
+  char cmd[400] = { (char) 0 };	/* buffer for command */
+  char linbuf[500] = { (char) 0 };	/* line buffer for map */
   char *cc = NULL;		/* the CC command or gcc (from environment) */
   char *cflags = NULL;		/* the CFLAGS option or -O (from environment)  */
   typedef int (*funptr_t) (int, int);	/* tpye of function pointers */
-  void **hdlarr;		/* array of dlopened handles */
-  funptr_t *funarr;		/* array of function pointers */
-  char **namarr;		/* array of names */
-  struct utsname uts;		/* for uname ie system version */
-  struct tms t_init, t_generate, t_load, t_run;
-  clock_t cl_init, cl_generate, cl_load, cl_run;
-  double tim_cpu_generate, tim_real_generate;
-  double tim_cpu_load, tim_real_load;
-  double tim_cpu_run, tim_real_run;
+  void **hdlarr = NULL;		/* array of dlopened handles */
+  funptr_t *funarr = NULL;	/* array of function pointers */
+  char **namarr = NULL;		/* array of names */
+  struct utsname uts = { };	/* for uname ie system version */
+  struct tms t_init = { }, t_generate = { }, t_load = { }, t_run = { };
+  clock_t cl_init = 0, cl_generate = 0, cl_load = 0, cl_run = 0;
+  double tim_cpu_generate = 0.0, tim_real_generate = 0.0;
+  double tim_cpu_load = 0.0, tim_real_load = 0.0;
+  double tim_cpu_run = 0.0, tim_real_run = 0.0;
   if (argc > 1 && !strcmp (argv[1], "--help"))
     {
       printf ("usage: %s [maxcnt [meanlen]]\n"
@@ -346,7 +346,7 @@ main (int argc, char **argv)
   if (!map)
     {
       perror ("/proc/self/maps");
-      exit (EXIT_SUCCESS);
+      exit (EXIT_FAILURE);
     };
   /* get the compiler - default is gcc */
   cc = getenv ("CC");
