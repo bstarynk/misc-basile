@@ -27,7 +27,7 @@
 #include <sys/utsname.h>
 
 #ifdef MANYDL_GIT
-const char manydl_git[]= MANYDL_GIT;
+const char manydl_git[] = MANYDL_GIT;
 #endif
 
 #ifdef __FRAMAC__
@@ -37,6 +37,10 @@ const char manydl_git[]= MANYDL_GIT;
 #include <gnu/libc-version.h>
 #endif /*__FRAMAC__*/
 char *progname;
+
+typedef int (*funptr_t) (int, int);	/* type of function pointers */
+
+funptr_t *funarr = NULL;
 
 #define INDENT_PROGRAM "/usr/bin/indent"
 
@@ -50,17 +54,19 @@ int tab[MAXTAB];		/* a table */
 
 extern int tab[MAXTAB];
 
-extern double my_clock(clockid_t);
+extern double my_clock (clockid_t);
 
-double my_clock(clockid_t clid)
+double
+my_clock (clockid_t clid)
 {
-  struct timespec ts={0,0};
-  if (clock_gettime(clid, &ts)) {
-    perror("clock_gettime");
-    exit(EXIT_FAILURE);
-  };
-  return (double)ts.tv_sec + 1.0e-9*ts.tv_nsec;
-}    /* end my_clock */
+  struct timespec ts = { 0, 0 };
+  if (clock_gettime (clid, &ts))
+    {
+      perror ("clock_gettime");
+      exit (EXIT_FAILURE);
+    };
+  return (double) ts.tv_sec + 1.0e-9 * ts.tv_nsec;
+}				/* end my_clock */
 
 void				/* printing function for generated files */
 say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d)
@@ -281,9 +287,7 @@ main (int argc, char **argv)
   char linbuf[500] = { (char) 0 };	/* line buffer for map */
   char *cc = NULL;		/* the CC command or gcc (from environment) */
   char *cflags = NULL;		/* the CFLAGS option or -O (from environment)  */
-  typedef int (*funptr_t) (int, int);	/* tpye of function pointers */
   void **hdlarr = NULL;		/* array of dlopened handles */
-  funptr_t *funarr = NULL;	/* array of function pointers */
   char **namarr = NULL;		/* array of names */
   struct utsname uts = { };	/* for uname ie system version */
   struct tms t_init = { }, t_generate = { }, t_load = { }, t_run = { };
@@ -388,8 +392,7 @@ main (int argc, char **argv)
       /* generate a name like genf_C_9 or genf_A_0 and duplicate it */
       memset (buf, 0, sizeof (buf));
       snprintf (buf, sizeof (buf) - 1, "genf_%c_%d",
-		"ABCDEFGHIJKLMNOPQ"[k % 16],
-		k / 16);
+		"ABCDEFGHIJKLMNOPQ"[k % 16], k / 16);
       namarr[k] = strdup (buf);
       if (!namarr[k])
 	{
@@ -402,7 +405,7 @@ main (int argc, char **argv)
       l = generate_file (namarr[k], meanlen);
       printf ("compiling %d instructions", l);
       fflush (stdout);
-      double tstartcompil = my_clock(CLOCK_MONOTONIC);
+      double tstartcompil = my_clock (CLOCK_MONOTONIC);
       memset (cmd, 0, sizeof (cmd));
       snprintf (cmd, sizeof (cmd) - 1,
 		"%s -fPIC -shared %s %s.c -o %s.so",
@@ -412,8 +415,8 @@ main (int argc, char **argv)
 	  fprintf (stderr, "\ncompilation %s #%d failed\n", cmd, k + 1);
 	  exit (EXIT_FAILURE);
 	};
-      double tendcompil = my_clock(CLOCK_MONOTONIC);
-      printf(" in %.2f elapsed seconds.", tendcompil - tstartcompil);
+      double tendcompil = my_clock (CLOCK_MONOTONIC);
+      printf (" in %.2f elapsed seconds.", tendcompil - tstartcompil);
       putchar ('\n');
       fflush (stdout);
       suml += l;
@@ -453,6 +456,34 @@ main (int argc, char **argv)
   /* now all files are generated, and compiled, each into a shared
      library *.so; we load all the libraries with dlopen */
   printf ("\n generated %ld instructions in %d files\n", suml, k);
+#ifdef __FRAMAC__
+  extern void initialize_funarr_framac (void);
+  initialize_funarr_framac ();
+#else /*!__FRAMAC__ */
+  {
+    FILE *genframac = fopen ("genf_framac.c", "w");
+    if (!genframac)
+      {
+	perror ("genf_framac.c");
+	exit (EXIT_FAILURE);
+      }
+    fprintf (genframac, "/* generated file genf_framac.c for Frama-C */\n");
+    for (k = 0; k < maxcnt; k++)
+      {
+	fprintf (genframac, "extern int %s(int, int);\n", namarr[k]);
+      };
+
+    fprintf (genframac, "extern void initialize_funarr_framac(void);\n");
+    fprintf (genframac, "void initialize_funarr_framac(void)\n{\n");
+    for (k = 0; k < maxcnt; k++)
+      fprintf (genframac, "  funarr[%d] = %s;\n", k, namarr[k]);
+    fprintf (genframac, "} /*end generated initialize_funarr_framac*/\n");
+    fflush (genframac);
+    fprintf (genframac,
+	     "// end of generated file genf_framac.c for Frama-C */\n");
+    fclose (genframac);
+  };
+#endif /*__FRAMAC__*/
   for (k = 0; k < maxcnt; k++)
     {
       printf ("dynloading #%d %s", k + 1, namarr[k]);
@@ -538,9 +569,7 @@ main (int argc, char **argv)
 #ifdef MANYDL_GIT
 		" git " MANYDL_GIT
 #endif
-		" time \n"
-		" .. [sec]\n", n + 1,
-		timestring ());
+		" time \n" " .. [sec]\n", n + 1, timestring ());
     };
 
   memset (&t_run, 0, sizeof (t_run));
@@ -589,7 +618,7 @@ main (int argc, char **argv)
 #ifdef MANYDL_GIT
      " git " MANYDL_GIT
 #endif
-     );
+    );
   return 0;
 }
 
