@@ -26,6 +26,10 @@
 #include <unistd.h>
 #include <sys/utsname.h>
 
+#ifdef MANYDL_GIT
+const char manydl_git[] = MANYDL_GIT;
+#endif
+
 #ifdef __FRAMAC__
 #define gnu_get_libc_version() "libc-framac"
 #define gnu_get_libc_release() "libc-framac-release"
@@ -33,6 +37,10 @@
 #include <gnu/libc-version.h>
 #endif /*__FRAMAC__*/
 char *progname;
+
+typedef int (*funptr_t) (int, int);	/* type of function pointers */
+
+funptr_t *funarr = NULL;
 
 #define INDENT_PROGRAM "/usr/bin/indent"
 
@@ -45,6 +53,20 @@ long dynstep;			/* number of executed lines */
 int tab[MAXTAB];		/* a table */
 
 extern int tab[MAXTAB];
+
+extern double my_clock (clockid_t);
+
+double
+my_clock (clockid_t clid)
+{
+  struct timespec ts = { 0, 0 };
+  if (clock_gettime (clid, &ts))
+    {
+      perror ("clock_gettime");
+      exit (EXIT_FAILURE);
+    };
+  return (double) ts.tv_sec + 1.0e-9 * ts.tv_nsec;
+}				/* end my_clock */
 
 void				/* printing function for generated files */
 say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d)
@@ -257,25 +279,23 @@ main (int argc, char **argv)
   int maxcnt = 100;
   int meanlen = 300;
   int k = 0, l = 0;
-  long suml;
+  long suml = 0;
   int r = 0, s = 0;
   long nbcall = 0, n = 0;
   FILE *map = NULL;		/* the /proc/self/maps pseudofile (Linux) */
-  char buf[100];		/* buffer for name */
-  char cmd[400];		/* buffer for command */
-  char linbuf[500];		/* line buffer for map */
+  char buf[100] = { (char) 0 };	/* buffer for name */
+  char cmd[400] = { (char) 0 };	/* buffer for command */
+  char linbuf[500] = { (char) 0 };	/* line buffer for map */
   char *cc = NULL;		/* the CC command or gcc (from environment) */
   char *cflags = NULL;		/* the CFLAGS option or -O (from environment)  */
-  typedef int (*funptr_t) (int, int);	/* tpye of function pointers */
-  void **hdlarr;		/* array of dlopened handles */
-  funptr_t *funarr;		/* array of function pointers */
-  char **namarr;		/* array of names */
-  struct utsname uts;		/* for uname ie system version */
-  struct tms t_init, t_generate, t_load, t_run;
-  clock_t cl_init, cl_generate, cl_load, cl_run;
-  double tim_cpu_generate, tim_real_generate;
-  double tim_cpu_load, tim_real_load;
-  double tim_cpu_run, tim_real_run;
+  void **hdlarr = NULL;		/* array of dlopened handles */
+  char **namarr = NULL;		/* array of names */
+  struct utsname uts = { };	/* for uname ie system version */
+  struct tms t_init = { }, t_generate = { }, t_load = { }, t_run = { };
+  clock_t cl_init = 0, cl_generate = 0, cl_load = 0, cl_run = 0;
+  double tim_cpu_generate = 0.0, tim_real_generate = 0.0;
+  double tim_cpu_load = 0.0, tim_real_load = 0.0;
+  double tim_cpu_run = 0.0, tim_real_run = 0.0;
   if (argc > 1 && !strcmp (argv[1], "--help"))
     {
       printf ("usage: %s [maxcnt [meanlen]]\n"
@@ -347,7 +367,7 @@ main (int argc, char **argv)
   if (!map)
     {
       perror ("/proc/self/maps");
-      exit (EXIT_SUCCESS);
+      exit (EXIT_FAILURE);
     };
   /* get the compiler - default is gcc */
   cc = getenv ("CC");
@@ -370,10 +390,10 @@ main (int argc, char **argv)
   /* the generating and compiling loop */
   for (k = 0; k < maxcnt; k++)
     {
-      /* generate a name like genf_C9 or genf_A0 and duplicate it */
+      /* generate a name like genf_C_9 or genf_A_0 and duplicate it */
       memset (buf, 0, sizeof (buf));
-      snprintf (buf, sizeof (buf) - 1, "genf_%c%d", "ABCDEFGHIJ"[k % 10],
-		k / 10);
+      snprintf (buf, sizeof (buf) - 1, "genf_%c_%d",
+		"ABCDEFGHIJKLMNOPQ"[k % 16], k / 16);
       namarr[k] = strdup (buf);
       if (!namarr[k])
 	{
@@ -384,8 +404,9 @@ main (int argc, char **argv)
       fflush (stdout);
       /* generate and compile the file */
       l = generate_file (namarr[k], meanlen);
-      printf ("compiling %d instructions ", l);
+      printf ("compiling %d instructions", l);
       fflush (stdout);
+      double tstartcompil = my_clock (CLOCK_MONOTONIC);
       memset (cmd, 0, sizeof (cmd));
       snprintf (cmd, sizeof (cmd) - 1,
 		"%s -fPIC -shared %s %s.c -o %s.so",
@@ -395,7 +416,8 @@ main (int argc, char **argv)
 	  fprintf (stderr, "\ncompilation %s #%d failed\n", cmd, k + 1);
 	  exit (EXIT_FAILURE);
 	};
-      putchar ('.');
+      double tendcompil = my_clock (CLOCK_MONOTONIC);
+      printf (" in %.2f elapsed seconds.", tendcompil - tstartcompil);
       putchar ('\n');
       fflush (stdout);
       suml += l;
@@ -435,6 +457,36 @@ main (int argc, char **argv)
   /* now all files are generated, and compiled, each into a shared
      library *.so; we load all the libraries with dlopen */
   printf ("\n generated %ld instructions in %d files\n", suml, k);
+#ifdef __FRAMAC__
+  extern void initialize_funarr_framac (void);
+  initialize_funarr_framac ();
+#else /*!__FRAMAC__ */
+  {
+    FILE *genframac = fopen ("genf_framac.c", "w");
+    if (!genframac)
+      {
+	perror ("genf_framac.c");
+	exit (EXIT_FAILURE);
+      }
+    fprintf (genframac, "/* generated file genf_framac.c for Frama-C */\n");
+    fprintf (genframac, "typedef int (*funptr_t) (int, int);\n");
+    fprintf (genframac, "extern funptr_t*funarr;\n");
+    //
+    for (k = 0; k < maxcnt; k++)
+      {
+	fprintf (genframac, "extern int %s(int, int);\n", namarr[k]);
+      };
+
+    fprintf (genframac, "extern void initialize_funarr_framac(void);\n");
+    fprintf (genframac, "void initialize_funarr_framac(void)\n{\n");
+    for (k = 0; k < maxcnt; k++)
+      fprintf (genframac, "  funarr[%d] = %s;\n", k, namarr[k]);
+    fprintf (genframac, "} /*end generated initialize_funarr_framac*/\n");
+    fflush (genframac);
+    fprintf (genframac,
+	     "// end of generated file genf_framac.c for Frama-C */\n");
+    fclose (genframac);
+  };
   for (k = 0; k < maxcnt; k++)
     {
       printf ("dynloading #%d %s", k + 1, namarr[k]);
@@ -469,7 +521,7 @@ main (int argc, char **argv)
       fflush (stdout);
       fflush (stderr);
     };
-
+#endif /*__FRAMAC__*/
   memset (&t_load, 0, sizeof (t_load));
   cl_load = times (&t_load);
   tim_cpu_load =
@@ -516,7 +568,11 @@ main (int argc, char **argv)
       fflush (stdout);
       r = (*funarr[k]) (n / 16, s);
       if (n % 64 == 32)
-	printf ("after %ld calls time\n .. %s [sec]\n", n + 1, timestring ());
+	printf ("after %ld calls %s"
+#ifdef MANYDL_GIT
+		" git " MANYDL_GIT
+#endif
+		" time \n" " .. [sec]\n", n + 1, timestring ());
     };
 
   memset (&t_run, 0, sizeof (t_run));
@@ -559,9 +615,13 @@ main (int argc, char **argv)
   free (namarr);
   free (hdlarr);
   printf
-    ("\n total time for %d files %ld instructions %ld executed steps %ld calls:\n ... %s sec\n id %s\n",
-     maxcnt, suml, dynstep, nbcall, timestring (),
-     __FILE__ " " __DATE__ "@" __TIME__);
+    ("\n%s: total time for %d files %ld instructions %ld executed steps %ld calls:\n ... %s sec\n source %s\n",
+     progname, maxcnt, suml, dynstep, nbcall, timestring (),
+     __FILE__ " " __DATE__ "@" __TIME__
+#ifdef MANYDL_GIT
+     " git " MANYDL_GIT
+#endif
+    );
   return 0;
 }
 
@@ -569,6 +629,6 @@ main (int argc, char **argv)
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
- ** compile-command: "gcc -o manydl -Wall -rdynamic -O -g manydl.c -ldl" ;;
+ ** compile-command: "gcc -o manydl -DMANYDL_GIT=\"$(git log --format=oneline -q -1 | cut -c1-12)\" -Wall -rdynamic -O -g manydl.c -ldl" ;;
  ** End: ;;
  ****************/
