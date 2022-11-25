@@ -221,7 +221,8 @@ generate_file (const char *name, int meanlen)
 	{
 	  char cwdbuf[256];
 	  memset (cwdbuf, 0, sizeof (cwdbuf));
-	  getcwd (cwdbuf, sizeof (cwdbuf) - 2);
+	  if (!getcwd (cwdbuf, sizeof (cwdbuf) - 2))
+	    strcpy(cwdbuf, "./");
 	  fprintf (stderr, "%s: failed to run %s (%d) in %s\n", progname,
 		   indcmd, err, cwdbuf);
 	  exit (EXIT_FAILURE);
