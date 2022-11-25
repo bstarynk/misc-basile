@@ -26,6 +26,10 @@
 #include <unistd.h>
 #include <sys/utsname.h>
 
+#ifdef MANYDL_GIT
+const char manydl_git[]= MANYDL_GIT;
+#endif
+
 #ifdef __FRAMAC__
 #define gnu_get_libc_version() "libc-framac"
 #define gnu_get_libc_release() "libc-framac-release"
@@ -45,6 +49,18 @@ long dynstep;			/* number of executed lines */
 int tab[MAXTAB];		/* a table */
 
 extern int tab[MAXTAB];
+
+extern double my_clock(clockid_t);
+
+double my_clock(clockid_t clid)
+{
+  struct timespec ts={0,0};
+  if (clock_gettime(clid, &ts)) {
+    perror("clock_gettime");
+    exit(EXIT_FAILURE);
+  };
+  return (double)ts.tv_sec + 1.0e-9*ts.tv_nsec;
+}    /* end my_clock */
 
 void				/* printing function for generated files */
 say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d)
@@ -384,8 +400,9 @@ main (int argc, char **argv)
       fflush (stdout);
       /* generate and compile the file */
       l = generate_file (namarr[k], meanlen);
-      printf ("compiling %d instructions ", l);
+      printf ("compiling %d instructions", l);
       fflush (stdout);
+      double tstartcompil = my_clock(CLOCK_MONOTONIC);
       memset (cmd, 0, sizeof (cmd));
       snprintf (cmd, sizeof (cmd) - 1,
 		"%s -fPIC -shared %s %s.c -o %s.so",
@@ -395,7 +412,8 @@ main (int argc, char **argv)
 	  fprintf (stderr, "\ncompilation %s #%d failed\n", cmd, k + 1);
 	  exit (EXIT_FAILURE);
 	};
-      putchar ('.');
+      double tendcompil = my_clock(CLOCK_MONOTONIC);
+      printf(" in %.2f elapsed seconds.", tendcompil - tstartcompil);
       putchar ('\n');
       fflush (stdout);
       suml += l;
@@ -516,7 +534,13 @@ main (int argc, char **argv)
       fflush (stdout);
       r = (*funarr[k]) (n / 16, s);
       if (n % 64 == 32)
-	printf ("after %ld calls time\n .. %s [sec]\n", n + 1, timestring ());
+	printf ("after %ld calls %s"
+#ifdef MANYDL_GIT
+		" git " MANYDL_GIT
+#endif
+		" time \n"
+		" .. [sec]\n", n + 1,
+		timestring ());
     };
 
   memset (&t_run, 0, sizeof (t_run));
@@ -559,9 +583,13 @@ main (int argc, char **argv)
   free (namarr);
   free (hdlarr);
   printf
-    ("\n total time for %d files %ld instructions %ld executed steps %ld calls:\n ... %s sec\n id %s\n",
-     maxcnt, suml, dynstep, nbcall, timestring (),
-     __FILE__ " " __DATE__ "@" __TIME__);
+    ("\n%s: total time for %d files %ld instructions %ld executed steps %ld calls:\n ... %s sec\n source %s\n",
+     progname, maxcnt, suml, dynstep, nbcall, timestring (),
+     __FILE__ " " __DATE__ "@" __TIME__
+#ifdef MANYDL_GIT
+     " git " MANYDL_GIT
+#endif
+     );
   return 0;
 }
 
@@ -569,6 +597,6 @@ main (int argc, char **argv)
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
- ** compile-command: "gcc -o manydl -Wall -rdynamic -O -g manydl.c -ldl" ;;
+ ** compile-command: "gcc -o manydl -DMANYDL_GIT=\"$(git log --format=oneline -q -1 | cut -c1-12)\" -Wall -rdynamic -O -g manydl.c -ldl" ;;
  ** End: ;;
  ****************/

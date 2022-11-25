@@ -9,13 +9,14 @@ INDENT=/usr/bin/indent
 CC=/usr/bin/gcc
 CXX=/usr/bin/g++
 RM=/bin/rm -vf
+GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 
 
 all: manydl half bwc sync-periodically
 
 manydl: manydl.c
-	$(CC) $(CFLAGS) -rdynamic $^ -ldl -o $@
+	$(CC) $(CFLAGS) -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -ldl -o $@
 
 half: half.c
 	$(CC) $(CFLAGS) $^  -o $@
