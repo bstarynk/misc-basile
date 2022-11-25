@@ -468,6 +468,9 @@ main (int argc, char **argv)
 	exit (EXIT_FAILURE);
       }
     fprintf (genframac, "/* generated file genf_framac.c for Frama-C */\n");
+    fprintf (genframac, "typedef int (*funptr_t) (int, int);\n");
+    fprintf (genframac, "extern funptr_t*funarr;\n");
+    //
     for (k = 0; k < maxcnt; k++)
       {
 	fprintf (genframac, "extern int %s(int, int);\n", namarr[k]);
@@ -483,7 +486,6 @@ main (int argc, char **argv)
 	     "// end of generated file genf_framac.c for Frama-C */\n");
     fclose (genframac);
   };
-#endif /*__FRAMAC__*/
   for (k = 0; k < maxcnt; k++)
     {
       printf ("dynloading #%d %s", k + 1, namarr[k]);
@@ -518,7 +520,7 @@ main (int argc, char **argv)
       fflush (stdout);
       fflush (stderr);
     };
-
+#endif /*__FRAMAC__*/
   memset (&t_load, 0, sizeof (t_load));
   cl_load = times (&t_load);
   tim_cpu_load =
