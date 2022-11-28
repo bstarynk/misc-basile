@@ -2,7 +2,7 @@
    generating lots of C functions, and dynamically compiling and loading them
    this is completely useless, except for testing & benchmarking 
    
-   © Copyright Basile Starynkevitch 2004- 2021
+   © Copyright Basile Starynkevitch 2004- 2022
    program released under GNU general public license
 
    this is free software; you can redistribute it and/or modify it under
@@ -244,7 +244,7 @@ generate_file (const char *name, int meanlen)
 	  char cwdbuf[256];
 	  memset (cwdbuf, 0, sizeof (cwdbuf));
 	  if (!getcwd (cwdbuf, sizeof (cwdbuf) - 2))
-	    strcpy(cwdbuf, "./");
+	    strcpy (cwdbuf, "./");
 	  fprintf (stderr, "%s: failed to run %s (%d) in %s\n", progname,
 		   indcmd, err, cwdbuf);
 	  exit (EXIT_FAILURE);
@@ -574,6 +574,42 @@ main (int argc, char **argv)
 #endif
 		" time \n" " .. [sec]\n", n + 1, timestring ());
     };
+
+  {
+    // copying /proc/self/maps to some genf_manydl_p<pid>.map file
+    FILE *fselfmap = fopen ("/proc/self/maps", "r");
+    if (!fselfmap)
+      {
+	perror ("/proc/self/maps");
+	exit (EXIT_FAILURE);
+      };
+    char mapname[64];
+    memset (mapname, 0, sizeof (mapname));
+#ifdef  MANYDL_GIT
+    snprintf (mapname, sizeof (mapname),
+	      "genfmap_%.s_p%d.map", MANYDL_GIT, (int) getpid ());
+#else
+    snprintf (mapname, sizeof (mapname), "genfmap_p%d.map", (int) getpid ());
+#endif
+    FILE *fmapcopy = fopen (mapname, "w");
+    if (!fmapcopy)
+      {
+	perror (mapname);
+	exit (EXIT_FAILURE);
+      };
+    do
+      {
+	char linbuf[128];
+	memset (linbuf, 0, sizeof (linbuf));
+	if (!fgets (linbuf, sizeof (linbuf) - 1, fselfmap))
+	  break;
+	fputs (linbuf, fmapcopy);
+      }
+    while (!feof (fselfmap));
+    fclose (fselfmap);
+    fclose (fmapcopy);
+    printf ("%s: copied /proc/self/maps to %s\n", progname, mapname);
+  }
 
   memset (&t_run, 0, sizeof (t_run));
   cl_run = times (&t_run);
