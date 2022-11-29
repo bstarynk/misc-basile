@@ -400,11 +400,11 @@ main (int argc, char **argv)
 	  perror ("strdup");
 	  exit (EXIT_FAILURE);
 	};
-      printf ("generating %s (#%d); ", namarr[k], k + 1);
+      printf ("generating %s; ", namarr[k]);
       fflush (stdout);
       /* generate and compile the file */
       l = generate_file (namarr[k], meanlen);
-      printf ("compiling %d instructions", l);
+      printf ("compiling %4d instructions", l);
       fflush (stdout);
       double tstartcompil = my_clock (CLOCK_MONOTONIC);
       memset (cmd, 0, sizeof (cmd));
@@ -417,22 +417,24 @@ main (int argc, char **argv)
 	  exit (EXIT_FAILURE);
 	};
       double tendcompil = my_clock (CLOCK_MONOTONIC);
-      printf (" in %.2f elapsed seconds.", tendcompil - tstartcompil);
+      printf (" in %.4f elapsed seconds.", tendcompil - tstartcompil);
       putchar ('\n');
       fflush (stdout);
       suml += l;
-      if (k % 32 == 16)
+      if (k % 64 == 32)
 	printf
-	  ("after %d generated & compiled files (%ld instrs) time\n .. %s [sec]\n",
+	  ("°after %d generated & compiled files (%ld instrs) time\n"
+	   "° .. %s [sec]\n",
 	   k + 1, suml, timestring ());
     };
   putchar ('.');
   putchar ('\n');
   fflush (stdout);
   suml += l;
-  if (k % 32 == 16)
+  if (k % 64 == 32)
     printf
-      ("after %d generated & compiled files (%ld instrs) time\n .. %s [sec]\n",
+      ("°after %d generated & compiled files (%ld instrs) time\n"
+       "° .. %s [sec]\n",
        k + 1, suml, timestring ());
 
   memset (&t_generate, 0, sizeof (t_generate));
