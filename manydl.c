@@ -333,12 +333,21 @@ main (int argc, char **argv)
   /* ask for system information */
   memset (&uts, 0, sizeof (uts));
   uname (&uts);			/* don't bother checking success */
-  /* print counter, system, & library information */
-  printf
-    ("Running %s, max.counter %d, mean len %d, glibc version %s release %s\n"
-     "on sys %s release %s version %s\n", argv[0], maxcnt, meanlen,
-     gnu_get_libc_version (), gnu_get_libc_release (), uts.sysname,
-     uts.release, uts.version);
+  {
+    char cwdbuf[200];
+    memset (cwdbuf, 0, sizeof (cwdbuf));
+    if (!getcwd (cwdbuf, sizeof (cwdbuf)))
+      {
+	perror ("getcwd");
+	strcpy (cwdbuf, "./");
+      };
+    /* print counter, system, & library information */
+    printf
+      ("Running %s, max.counter %d, mean len %d, glibc version %s release %s\n"
+       "on sys %s release %s version %s in %s\n", argv[0], maxcnt, meanlen,
+       gnu_get_libc_version (), gnu_get_libc_release (), uts.sysname,
+       uts.release, uts.version, cwdbuf);
+  }
   /* allocate the array of handles (for dlopen) */
   hdlarr = (void **) calloc (maxcnt + 1, sizeof (*hdlarr));
   if (!hdlarr)
@@ -424,8 +433,7 @@ main (int argc, char **argv)
       if (k % 64 == 32)
 	printf
 	  ("°after %d generated & compiled files (%ld instrs) time\n"
-	   "° .. %s [sec]\n",
-	   k + 1, suml, timestring ());
+	   "° .. %s [sec]\n", k + 1, suml, timestring ());
     };
   putchar ('.');
   putchar ('\n');
@@ -434,8 +442,7 @@ main (int argc, char **argv)
   if (k % 64 == 32)
     printf
       ("°after %d generated & compiled files (%ld instrs) time\n"
-       "° .. %s [sec]\n",
-       k + 1, suml, timestring ());
+       "° .. %s [sec]\n", k + 1, suml, timestring ());
 
   memset (&t_generate, 0, sizeof (t_generate));
   cl_generate = times (&t_generate);
