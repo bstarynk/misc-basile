@@ -43,3 +43,5 @@ sync-periodically
 webprint-epsonxp6150
 gtksrc-browser
 bwc
+genf*.c
+genfmap*.map
