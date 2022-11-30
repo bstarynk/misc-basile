@@ -42,6 +42,9 @@ const char manydl_git[] = MANYDL_GIT;
 #endif /*__FRAMAC__*/
 char *progname;
 
+int maxcnt = 100;
+int meanlen = 300;
+
 typedef int (*funptr_t) (int, int);	/* type of function pointers */
 
 funptr_t *funarr = NULL;
@@ -360,8 +363,6 @@ int
 main (int argc, char **argv)
 {
   progname = argv[0];
-  int maxcnt = 100;
-  int meanlen = 300;
   int k = 0, l = 0;
   long suml = 0;
   int r = 0, s = 0;
@@ -371,6 +372,7 @@ main (int argc, char **argv)
   char cmd[100] = { (char) 0 };	/* buffer for command */
   char defercmd[100] = { (char) 0 };	/* buffer for deferred command */
   int deferredl = 0;
+  int deferredix = 0;
   char linbuf[500] = { (char) 0 };	/* line buffer for map */
   char *cc = NULL;		/* the CC command or gcc (from environment) */
   char *cflags = NULL;		/* the CFLAGS option or -O (from environment)  */
@@ -559,7 +561,7 @@ main (int argc, char **argv)
 	  if (deferredpid > 0)
 	    {
 	      // wait for the previous deferred compilation!
-	      waitdeferred (deferredl, tim_deferred, deferredpid, deferredl,
+	      waitdeferred (deferredix, tim_deferred, deferredpid, deferredl,
 			    defercmd);
 	      deferredpid = 0;
 	    };
@@ -567,6 +569,7 @@ main (int argc, char **argv)
 	  memset (defercmd, 0, sizeof (defercmd));
 	  strncpy (defercmd, cmd, sizeof (defercmd));
 	  deferredl = l;
+	  deferredix = k;
 	  tim_deferred = my_clock (CLOCK_MONOTONIC);
 	  deferredpid = fork ();
 	  if (deferredpid == 0)
