@@ -314,9 +314,8 @@ timestring ()
 }
 
 
-#warning FIXME: waitdeferred should get the start elapsed time!
 void
-waitdeferred (pid_t pid, int deferredl, const char *cmd)
+waitdeferred (double tstart, pid_t pid, int deferredl, const char *cmd)
 {
   if (pid == 0 || !cmd)
     return;
@@ -333,13 +332,14 @@ waitdeferred (pid_t pid, int deferredl, const char *cmd)
       waitcnt++;
     }
   while (wstat == 0 && wpid != pid && waitcnt < 4);
+  double tim_end = my_clock (CLOCK_MONOTONIC);
   double usertime =
     1.0 * rusw.ru_utime.tv_sec + 1.0e-6 * rusw.ru_utime.tv_usec;
   double systime =
     1.0 * rusw.ru_stime.tv_sec + 1.0e-6 * rusw.ru_stime.tv_usec;
   printf
-    ("deferred %s in pid %d for %d instr: CPU %.4f usr + %.4f sys seconds",
-     cmd, (int) pid, deferredl, usertime, systime);
+    ("deferred %s in pid %d for %d instr: elapsed %.3f, CPU %.4f usr + %.4f sys seconds\n",
+     cmd, (int) pid, deferredl, tim_end - tstart, usertime, systime);
 }				/* end waitdeferred */
 
 
@@ -370,6 +370,7 @@ main (int argc, char **argv)
   double tim_cpu_load = 0.0, tim_real_load = 0.0;
   double tim_cpu_run = 0.0, tim_real_run = 0.0;
   pid_t deferredpid = 0;
+  double tim_deferred = 0;
   if (argc > 1 && !strcmp (argv[1], "--help"))
     {
       printf ("usage: %s [maxcnt [meanlen]]\n"
@@ -515,13 +516,14 @@ main (int argc, char **argv)
 	  if (deferredpid > 0)
 	    {
 	      // wait for the previous deferred compilation!
-	      waitdeferred (deferredpid, deferredl, defercmd);
+	      waitdeferred (tim_deferred, deferredpid, deferredl, defercmd);
 	      deferredpid = 0;
 	    };
 	  fflush (NULL);
 	  memset (defercmd, 0, sizeof (defercmd));
 	  strncpy (defercmd, cmd, sizeof (defercmd));
 	  deferredl = l;
+	  tim_deferred = my_clock (CLOCK_MONOTONIC);
 	  deferredpid = fork ();
 	  if (deferredpid == 0)
 	    {			/* child process */
@@ -546,7 +548,7 @@ main (int argc, char **argv)
   if (deferredpid > 0)
     {
       usleep (1000);
-      waitdeferred (deferredpid, deferredl, defercmd);
+      waitdeferred (tim_deferred, deferredpid, deferredl, defercmd);
       deferredpid = 0;
     };
   suml += l;
