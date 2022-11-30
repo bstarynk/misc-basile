@@ -30,6 +30,8 @@
 
 #ifdef MANYDL_GIT
 const char manydl_git[] = MANYDL_GIT;
+#else
+#define manydl_git "???"
 #endif
 
 #ifdef __FRAMAC__
@@ -47,6 +49,7 @@ char **namarr = NULL;		/* array of names */
 
 FILE *timedataf;
 
+char myhostname[64];
 #define INDENT_PROGRAM "/usr/bin/indent"
 
 extern long dynstep;
@@ -385,7 +388,8 @@ main (int argc, char **argv)
       printf ("usage: %s [maxcnt [meanlen]]\n"
 	      "\t\t (a program generating many plugins for dlopen on Linux)\n"
 	      "\t where maxcnt (default %d) is the count of generated functions and plugins.\n"
-	      "\t where meanlen (default %d) is related to the mean length of generated functions",
+	      "\t where meanlen (default %d) is related to the mean length of generated functions\n"
+	      "\t (a data file, usable by GNU plot, is generated and named data_manydl_<maxcnt>_<meanlen>_p<pid>.dat)\n",
 	      argv[0], maxcnt, meanlen);
       exit (EXIT_SUCCESS);
     }
@@ -399,6 +403,8 @@ main (int argc, char **argv)
   secpertick = 1.0 / (double) sysconf (_SC_CLK_TCK);
   memset (&t_init, 0, sizeof (t_init));
   firstclock = cl_init = times (&t_init);
+  char timedataname[64];
+  memset (timedataname, 0, sizeof (timedataname));
   if (nice (2) < 0)
     perror ("nice");
   /* If we have a program argument, it is the number of generated functions */
@@ -414,6 +420,16 @@ main (int argc, char **argv)
     meanlen = 50;
   else if (meanlen > 200000)
     meanlen = 200000;
+
+  snprintf (timedataname, sizeof (timedataname),
+	    "data_manydl_%d_%d_p%d.dat", maxcnt, meanlen, (int) getpid ());
+  timedataf = fopen (timedataname, "w");
+  if (!timedataf)
+    {
+      perror (timedataname);
+      exit (EXIT_FAILURE);
+    };
+  gethostname (myhostname, sizeof (myhostname) - 1);
   /* ask for system information */
   memset (&uts, 0, sizeof (uts));
   uname (&uts);			/* don't bother checking success */
@@ -425,6 +441,10 @@ main (int argc, char **argv)
 	perror ("getcwd");
 	strcpy (cwdbuf, "./");
       };
+
+    fprintf (timedataf, "# file %s in %s on %s git %s\n", timedataname,
+	     cwdbuf, myhostname, manydl_git);
+    fflush (timedataf);
     /* print counter, system, & library information */
     printf
       ("Running %s, max.counter %d, mean len %d, glibc version %s release %s\n"
@@ -565,6 +585,8 @@ main (int argc, char **argv)
 	printf
 	  ("°after %d generated & compiled files (%ld instrs) time\n"
 	   "° .. %s [sec]\n", k + 1, suml, timestring ());
+      if (k % 32 == 0)
+	fflush (timedataf);
     };				/* end for k loop */
   putchar ('.');
   putchar ('\n');
@@ -575,6 +597,8 @@ main (int argc, char **argv)
       waitdeferred (k, tim_deferred, deferredpid, deferredl, defercmd);
       deferredpid = 0;
     };
+  fprintf (timedataf, "# end of file %s\n", timedataname);
+  fclose (timedataf), timedataf = NULL;
   suml += l;
   if (k % 64 == 32)
     printf
