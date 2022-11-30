@@ -49,7 +49,7 @@ extern void say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d);
 
 /* dynstep, tab & say_fun_a_b_c_d are used in generated files */
 long dynstep;			/* number of executed lines */
-#define MAXTAB 128		/* length of tab should be a power of two */
+#define MAXTAB 256		/* length of tab should be a power of two */
 int tab[MAXTAB];		/* a table */
 
 extern int tab[MAXTAB];
@@ -92,7 +92,7 @@ generate_file (const char *name, int meanlen)
   int l = 0;
   int i = 0;
   int prevjmpix = 0;
-#define MAXLAB 8
+#define MAXLAB 32
   enum labstate
   { LAB_NONE = 0, LAB_JUMPED, LAB_DEFINED } lab[MAXLAB];
   memset (pathsrc, 0, sizeof (pathsrc));
@@ -118,8 +118,9 @@ generate_file (const char *name, int meanlen)
   fprintf (f, "const char gentimestamp_%s[] = __DATE__ \"@\" __TIME__;\n",
 	   name);
   fprintf (f, "int %s(int a, int b) {\n", name);
-  fputs ("  int c=0, d=1, e=2, f=3, g=4, h=5;\n", f);
-#define RANVAR ('a'+DICE(8))
+  fputs ("  int c=0, d=1, e=2, f=3, g=4, h=5, i=6, j=7, k=8, l=a+b;\n", f);
+  fputs ("  long initdynstep = dynstep;\n", f);
+#define RANVAR ('a'+DICE(12))
   for (i = 0; i < l; i++)
     {
       switch (DICE (16))
@@ -128,23 +129,30 @@ generate_file (const char *name, int meanlen)
 	  fprintf (f, " %c = (%c * %d + %c * %d + %d) & 0xffffff;\n",
 		   RANVAR, RANVAR, 2 + DICE (8), RANVAR, 3 + 2 * DICE (8),
 		   DICE (32));
+	  if (DICE (8) == 0)
+	    fprintf (f, " dynstep++;\n");
 	  break;
 	case 1:
 	  fprintf (f,
 		   " %c = (%c * %d + tab[%c & %d] - %c) & 0xffffff; tab[%d]++;\n",
 		   RANVAR, RANVAR, 1 + DICE (16), RANVAR, MAXTAB - 1, RANVAR,
 		   DICE (MAXTAB));
+	  if (DICE (8) == 0)
+	    fprintf (f, " dynstep++;\n");
 	  break;
 	case 2:
-	  ;
 	  fprintf (f,
 		   " if (%c > %c + %d) %c++; else %c=(tab[%d] + %c) & 0xffffff;\n",
 		   RANVAR, RANVAR, DICE (8), RANVAR, RANVAR, DICE (MAXTAB),
 		   RANVAR);
+	  if (DICE (8) == 0)
+	    fprintf (f, " dynstep++;\n");
 	  break;
 	case 3:
 	  fprintf (f, " tab[%c & %d] += %d + ((%c - %c) & 0xf); %c++;\n",
 		   RANVAR, MAXTAB - 1, DICE (8) + 2, RANVAR, RANVAR, RANVAR);
+	  if (DICE (8) == 0)
+	    fprintf (f, " dynstep++;\n");
 	  break;
 	case 4:
 	  {
@@ -157,6 +165,17 @@ generate_file (const char *name, int meanlen)
 	  break;
 	case 5:
 	  fprintf (f, " %c++, %c++;\n", RANVAR, RANVAR);
+	  if (DICE (8) == 0)
+	    fprintf (f, " %c++, %c++;\n", RANVAR, RANVAR);
+	  if (DICE (16) == 0)
+	    fprintf (f, " %c += (%c &0xfffff);\n", RANVAR, RANVAR);
+	  if (DICE (16) == 0)
+	    fprintf (f, " %c -= (1+ %c&0x7ffff);\n", RANVAR, RANVAR);
+	  if (DICE (8) == 0)
+	    {
+	      fprintf (f, " %c++, %c++;\n", RANVAR, RANVAR);
+	      fprintf (f, " dynstep++;\n");
+	    };
 	  break;
 	case 6:
 	  {
@@ -209,27 +228,47 @@ generate_file (const char *name, int meanlen)
 	    fprintf (f,
 		     " for (%c &= %d; %c>0; %c--) {dynstep++;tab[%c] += (1+(%c&0x1f));};\n",
 		     fvar, MAXTAB - 1, fvar, fvar, fvar, RANVAR);
-	    break;
+	  }
+	  break;
 	case 14:
-	    {
-	      char lvar = RANVAR, rvar = RANVAR;
-	      if (lvar != rvar)
-		fprintf (f, " %c = %c;\n", lvar, rvar);
-	      else
-		fprintf (f, " %c++;\n", lvar);
-	    };
-	    break;
+	  {
+	    char lvar = RANVAR, rvar = RANVAR;
+	    if (lvar != rvar)
+	      fprintf (f, " %c = %c;\n", lvar, rvar);
+	    else
+	      fprintf (f, " %c++;\n", lvar);
+	  };
+	  break;
 	case 15:
+	  {
+	    int labrank = DICE (MAXLAB);
 	    fprintf (f, " %c = %c + %d;\n", RANVAR, RANVAR, 2 + DICE (5));
+	    fprintf (f, " dynstep++;\n");
+	    fprintf (f, " if (dynstep < initdynstep + %d)\n",
+		     DICE (16384) + 10);
+	    fprintf (f, "    goto lab%d;\n", labrank);
+	    if (lab[labrank] == LAB_NONE)
+	      lab[labrank] = LAB_JUMPED;
 	    break;
 	  };
-	}
+
+	};
+      fprintf (f, " dynstep+=%d;\n", i - prevjmpix);
     };
-  fprintf (f, " dynstep+=%d;\n", i - prevjmpix);
   for (i = 0; i < MAXLAB; i++)
-    if (lab[i] == LAB_JUMPED)
-      fprintf (f, " lab%d:", i);
+    {
+      if (lab[i] == LAB_JUMPED)
+	fprintf (f, " lab%d: %c++;\n", i, RANVAR);
+      if (DICE (4) == 0 || i == MAXLAB / 2)
+	{
+	  fprintf (f, " tab[(%c &0xffffff) %% %d] += %c;\n", RANVAR, MAXTAB,
+		   RANVAR);
+	  fprintf (f, " %c += (%c&0xffff);\n", RANVAR, RANVAR);
+	  fprintf (f, " dynstep++;\n");
+	};
+    }
   fprintf (f, " a &= 0xffffff;\n");
+  fprintf (f, "end_%s:\n", name);
   fprintf (f, " say_fun_a_b_c_d(\"%s\", a, b, c, d);\n", name);
   fprintf (f, " return a;\n" "} /* end %s of %d instr */\n", name, l);
   fclose (f);
@@ -547,7 +586,8 @@ main (int argc, char **argv)
 	   maxcnt, suml, timestring ());
   fprintf (stderr, "dynload time total: %.2f cpu %.2f real seconds\n",
 	   tim_cpu_load, tim_real_load);
-  fprintf (stderr, "dynload time per file: %.3f cpu %.3f real seconds/file\n",
+  fprintf (stderr,
+	   "dynload time per file: %.3f cpu %.3f real seconds/file\n",
 	   tim_cpu_load / maxcnt, tim_real_load / maxcnt);
   fprintf (stderr,
 	   "dynload time per instr: %g cpu %g real milliseconds/instr\n",
@@ -629,9 +669,10 @@ main (int argc, char **argv)
 		    + t_load.tms_utime + t_load.tms_stime);
   tim_real_run = secpertick * (cl_run - cl_load);
   printf
-    ("\nmade %ld calls to %d functions r=%d s=%d dynstep=%ld "
-     "tab=%d %d %d %d ...\n... %s\n",
-     nbcall, maxcnt, r, s, dynstep, tab[0], tab[1], tab[2], tab[3],
+    ("\n°%s: made %ld calls to %d functions r=%d s=%d dynstep=%ld "
+     "tab=%d %d %d %d %d %d %d %d...\n... %s\n",
+     progname, nbcall, maxcnt, r, s, dynstep,
+     tab[0], tab[1], tab[2], tab[3], tab[4], tab[5], tab[6], tab[7],
      timestring ());
   fprintf (stdout,
 	   "\nrun  %ld calls (%ld C steps)=%g steps/call\n run time %s\n",
