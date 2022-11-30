@@ -332,21 +332,26 @@ waitdeferred (int rank, double tstart, pid_t pid, int deferredl,
   int waitcnt = 0;
   int wstat = 0;
   pid_t wpid = 0;
-  struct rusage rusw = { };
+  struct rusage ruswself = { };
+  struct rusage ruswchil = { };
   fflush (NULL);
   // if the previous compilation is still running, wait for it.
   do
     {
-      memset (&rusw, 0, sizeof (rusw));
-      wpid = wait4 (pid, &wstat, WEXITED, &rusw);
+      memset (&ruswself, 0, sizeof (ruswself));
+      memset (&ruswchil, 0, sizeof (ruswchil));
+      wpid = wait4 (pid, &wstat, WEXITED, &ruswself);
+      getrusage (RUSAGE_CHILDREN, &ruswchil);
       waitcnt++;
     }
   while (wstat == 0 && wpid != pid && waitcnt < 4);
   double tim_end = my_clock (CLOCK_MONOTONIC);
   double usertime =
-    1.0 * rusw.ru_utime.tv_sec + 1.0e-6 * rusw.ru_utime.tv_usec;
+    1.0 * ruswself.ru_utime.tv_sec + 1.0e-6 * ruswself.ru_utime.tv_usec
+    + 1.0 * ruswchil.ru_utime.tv_sec + 1.0e-6 * ruswchil.ru_utime.tv_usec;
   double systime =
-    1.0 * rusw.ru_stime.tv_sec + 1.0e-6 * rusw.ru_stime.tv_usec;
+    1.0 * ruswself.ru_utime.tv_sec + 1.0e-6 * ruswself.ru_utime.tv_usec
+    + 1.0 * ruswchil.ru_stime.tv_sec + 1.0e-6 * ruswchil.ru_stime.tv_usec;
   if (timedataf)
     fprintf (timedataf,
 	     "NM='%s' IX=%d SZ=%d ELAPSED=%.3f UCPU=%.4f SCPU=%.4f\n",
