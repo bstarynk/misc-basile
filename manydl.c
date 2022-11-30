@@ -23,6 +23,7 @@
 #include <dlfcn.h>
 #include <time.h>
 #include <sys/times.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <sys/utsname.h>
 
@@ -304,7 +305,7 @@ timestring ()
   clock = times (&ti);
   memset (timbuf, 0, sizeof (timbuf));
   snprintf (timbuf, sizeof (timbuf) - 1,
-	    "CPU= %.2fu+%.2fs self, %.2fu+%.2fs children; real= %.2f",
+	    "CPU= %.3fu+%.3fs self, %.3fu+%.3fs children; real= %.3f",
 	    secpertick * ti.tms_utime, secpertick * ti.tms_stime,
 	    secpertick * ti.tms_cutime, secpertick * ti.tms_cstime,
 	    secpertick * (clock - firstclock));
@@ -335,6 +336,7 @@ main (int argc, char **argv)
   double tim_cpu_generate = 0.0, tim_real_generate = 0.0;
   double tim_cpu_load = 0.0, tim_real_load = 0.0;
   double tim_cpu_run = 0.0, tim_real_run = 0.0;
+  pid_t deferredpid = 0;
   if (argc > 1 && !strcmp (argv[1], "--help"))
     {
       printf ("usage: %s [maxcnt [meanlen]]\n"
@@ -452,18 +454,54 @@ main (int argc, char **argv)
       fflush (stdout);
       /* generate and compile the file */
       l = generate_file (namarr[k], meanlen);
-      printf ("compiling %4d instructions", l);
       fflush (stdout);
       double tstartcompil = my_clock (CLOCK_MONOTONIC);
       memset (cmd, 0, sizeof (cmd));
       snprintf (cmd, sizeof (cmd) - 1,
 		"%s -fPIC -shared %s %s.c -o %s.so",
 		cc, cflags, namarr[k], namarr[k]);
-      if (system (cmd))
+      if (k % 2 == 0)
 	{
-	  fprintf (stderr, "\ncompilation %s #%d failed\n", cmd, k + 1);
-	  exit (EXIT_FAILURE);
-	};
+	  // immediate compilation 
+	  printf ("compiling %4d instructions", l);
+	  if (system (cmd))
+	    {
+	      fprintf (stderr, "\ncompilation %s #%d failed\n", cmd, k + 1);
+	      exit (EXIT_FAILURE);
+	    };
+	}
+      else
+	{
+	  // deferred compilation
+	  printf (" - deferring %s\n", cmd);
+	  fflush (NULL);
+	  if (deferredpid > 0)
+	    {
+	      int waitcnt = 0;
+	      int wstat = 0;
+	      pid_t wpid = 0;
+	      // if the previous compilation is still running, wait for it.
+	      do
+		{
+		  wpid = waitpid (deferredpid, &wstat, WEXITED);
+		  waitcnt++;
+		}
+	      while (wstat == 0 && wpid != deferredpid && waitcnt < 4);
+	      deferredpid = 0;
+	    };
+	  fflush (NULL);
+	  deferredpid = fork ();
+	  if (deferredpid == 0)
+	    {			/* child process */
+	      close (STDIN_FILENO);
+	      execl ("/bin/sh", "/bin/sh", "-c", cmd, NULL);
+	      perror ("execl-sh");
+	    }
+	  else
+	    usleep (1000);
+	}
+      if ((k + DICE (8)) % 6 == 0)
+	sync ();
       double tendcompil = my_clock (CLOCK_MONOTONIC);
       printf (" in %.4f elapsed seconds.", tendcompil - tstartcompil);
       putchar ('\n');
@@ -473,10 +511,24 @@ main (int argc, char **argv)
 	printf
 	  ("°after %d generated & compiled files (%ld instrs) time\n"
 	   "° .. %s [sec]\n", k + 1, suml, timestring ());
-    };
+    };				/* end for k loop */
   putchar ('.');
   putchar ('\n');
-  fflush (stdout);
+  fflush (NULL);
+  if (deferredpid > 0)
+    {
+      int waitcnt = 0;
+      int wstat = 0;
+      pid_t wpid = 0;
+      // if the previous compilation is still running, wait for it.
+      do
+	{
+	  wpid = waitpid (deferredpid, &wstat, WEXITED);
+	  waitcnt++;
+	}
+      while (wstat == 0 && wpid != deferredpid && waitcnt < 4);
+      deferredpid = 0;
+    };
   suml += l;
   if (k % 64 == 32)
     printf
@@ -502,6 +554,7 @@ main (int argc, char **argv)
   fprintf (stderr,
 	   "generation time per instr: %g cpu %g real milliseconds/instr\n",
 	   1.0e3 * tim_cpu_generate / suml, 1.0e3 * tim_real_generate / suml);
+  sleep (1);
   /* now all files are generated, and compiled, each into a shared
      library *.so; we load all the libraries with dlopen */
   printf ("\n generated %ld instructions in %d files\n", suml, k);
@@ -715,6 +768,6 @@ main (int argc, char **argv)
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
- ** compile-command: "gcc -o manydl -DMANYDL_GIT=\"$(git log --format=oneline -q -1 | cut -c1-12)\" -Wall -rdynamic -O -g manydl.c -ldl" ;;
+ ** compile-command: "make manydl" ;;
  ** End: ;;
  ****************/
