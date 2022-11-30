@@ -43,6 +43,9 @@ char *progname;
 typedef int (*funptr_t) (int, int);	/* type of function pointers */
 
 funptr_t *funarr = NULL;
+char **namarr = NULL;		/* array of names */
+
+FILE *timedataf;
 
 #define INDENT_PROGRAM "/usr/bin/indent"
 
@@ -315,7 +318,8 @@ timestring ()
 
 
 void
-waitdeferred (double tstart, pid_t pid, int deferredl, const char *cmd)
+waitdeferred (int rank, double tstart, pid_t pid, int deferredl,
+	      const char *cmd)
 {
   if (pid == 0 || !cmd)
     return;
@@ -337,6 +341,12 @@ waitdeferred (double tstart, pid_t pid, int deferredl, const char *cmd)
     1.0 * rusw.ru_utime.tv_sec + 1.0e-6 * rusw.ru_utime.tv_usec;
   double systime =
     1.0 * rusw.ru_stime.tv_sec + 1.0e-6 * rusw.ru_stime.tv_usec;
+  if (timedataf)
+    fprintf (timedataf,
+	     "NM='%s' IX=%d SZ=%d ELAPSED=%.3f UCPU=%.4f SCPU=%.4f\n",
+	     namarr[rank], rank, deferredl, tim_end - tstart,
+	     1.0 * (usertime) / sysconf (_SC_CLK_TCK),
+	     1.0 * (systime) / sysconf (_SC_CLK_TCK));
   printf
     ("deferred %s in pid %d for %d instr: elapsed %.3f, CPU %.4f usr + %.4f sys seconds\n",
      cmd, (int) pid, deferredl, tim_end - tstart, usertime, systime);
@@ -362,7 +372,6 @@ main (int argc, char **argv)
   char *cc = NULL;		/* the CC command or gcc (from environment) */
   char *cflags = NULL;		/* the CFLAGS option or -O (from environment)  */
   void **hdlarr = NULL;		/* array of dlopened handles */
-  char **namarr = NULL;		/* array of names */
   struct utsname uts = { };	/* for uname ie system version */
   struct tms t_init = { }, t_generate = { }, t_load = { }, t_run = { };
   clock_t cl_init = 0, cl_generate = 0, cl_load = 0, cl_run = 0;
@@ -498,15 +507,29 @@ main (int argc, char **argv)
 	{
 	  // immediate compilation 
 	  printf ("compiling %4d instructions", l);
+	  struct tms my_start_tms = { };
+	  struct tms my_end_tms = { };
+	  if (times (&my_start_tms) < 0)
+	    perror ("times");
 	  if (system (cmd))
 	    {
 	      fprintf (stderr, "\ncompilation %s #%d failed\n", cmd, k + 1);
 	      exit (EXIT_FAILURE);
 	    };
+	  if (times (&my_end_tms) < 0)
+	    perror ("times");
 	  double tendcompil = my_clock (CLOCK_MONOTONIC);
 	  printf (" in %.4f elapsed seconds.", tendcompil - tstartcompil);
 	  putchar ('\n');
 	  fflush (stdout);
+	  if (timedataf)
+	    fprintf (timedataf,
+		     "NM='%s' IX=%d SZ=%d ELAPSED=%.3f UCPU=%.4f SCPU=%.4f\n",
+		     namarr[k], k, l, tendcompil - tstartcompil,
+		     1.0 * (my_end_tms.tms_cutime -
+			    my_start_tms.tms_cutime) / sysconf (_SC_CLK_TCK),
+		     1.0 * (my_end_tms.tms_cstime -
+			    my_start_tms.tms_cstime) / sysconf (_SC_CLK_TCK));
 	}
       else
 	{
@@ -516,7 +539,8 @@ main (int argc, char **argv)
 	  if (deferredpid > 0)
 	    {
 	      // wait for the previous deferred compilation!
-	      waitdeferred (tim_deferred, deferredpid, deferredl, defercmd);
+	      waitdeferred (deferredl, tim_deferred, deferredpid, deferredl,
+			    defercmd);
 	      deferredpid = 0;
 	    };
 	  fflush (NULL);
@@ -548,7 +572,7 @@ main (int argc, char **argv)
   if (deferredpid > 0)
     {
       usleep (1000);
-      waitdeferred (tim_deferred, deferredpid, deferredl, defercmd);
+      waitdeferred (k, tim_deferred, deferredpid, deferredl, defercmd);
       deferredpid = 0;
     };
   suml += l;
