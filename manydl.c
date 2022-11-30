@@ -23,6 +23,7 @@
 #include <dlfcn.h>
 #include <time.h>
 #include <sys/times.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <sys/utsname.h>
@@ -312,6 +313,36 @@ timestring ()
   return timbuf;
 }
 
+
+#warning FIXME: waitdeferred should get the start elapsed time!
+void
+waitdeferred (pid_t pid, int deferredl, const char *cmd)
+{
+  if (pid == 0 || !cmd)
+    return;
+  int waitcnt = 0;
+  int wstat = 0;
+  pid_t wpid = 0;
+  struct rusage rusw = { };
+  fflush (NULL);
+  // if the previous compilation is still running, wait for it.
+  do
+    {
+      memset (&rusw, 0, sizeof (rusw));
+      wpid = wait4 (pid, &wstat, WEXITED, &rusw);
+      waitcnt++;
+    }
+  while (wstat == 0 && wpid != pid && waitcnt < 4);
+  double usertime =
+    1.0 * rusw.ru_utime.tv_sec + 1.0e-6 * rusw.ru_utime.tv_usec;
+  double systime =
+    1.0 * rusw.ru_stime.tv_sec + 1.0e-6 * rusw.ru_stime.tv_usec;
+  printf
+    ("deferred %s in pid %d for %d instr: CPU %.4f usr + %.4f sys seconds",
+     cmd, (int) pid, deferredl, usertime, systime);
+}				/* end waitdeferred */
+
+
 int
 main (int argc, char **argv)
 {
@@ -324,7 +355,9 @@ main (int argc, char **argv)
   long nbcall = 0, n = 0;
   FILE *map = NULL;		/* the /proc/self/maps pseudofile (Linux) */
   char buf[100] = { (char) 0 };	/* buffer for name */
-  char cmd[400] = { (char) 0 };	/* buffer for command */
+  char cmd[100] = { (char) 0 };	/* buffer for command */
+  char defercmd[100] = { (char) 0 };	/* buffer for deferred command */
+  int deferredl = 0;
   char linbuf[500] = { (char) 0 };	/* line buffer for map */
   char *cc = NULL;		/* the CC command or gcc (from environment) */
   char *cflags = NULL;		/* the CFLAGS option or -O (from environment)  */
@@ -469,6 +502,10 @@ main (int argc, char **argv)
 	      fprintf (stderr, "\ncompilation %s #%d failed\n", cmd, k + 1);
 	      exit (EXIT_FAILURE);
 	    };
+	  double tendcompil = my_clock (CLOCK_MONOTONIC);
+	  printf (" in %.4f elapsed seconds.", tendcompil - tstartcompil);
+	  putchar ('\n');
+	  fflush (stdout);
 	}
       else
 	{
@@ -477,19 +514,14 @@ main (int argc, char **argv)
 	  fflush (NULL);
 	  if (deferredpid > 0)
 	    {
-	      int waitcnt = 0;
-	      int wstat = 0;
-	      pid_t wpid = 0;
-	      // if the previous compilation is still running, wait for it.
-	      do
-		{
-		  wpid = waitpid (deferredpid, &wstat, WEXITED);
-		  waitcnt++;
-		}
-	      while (wstat == 0 && wpid != deferredpid && waitcnt < 4);
+	      // wait for the previous deferred compilation!
+	      waitdeferred (deferredpid, deferredl, defercmd);
 	      deferredpid = 0;
 	    };
 	  fflush (NULL);
+	  memset (defercmd, 0, sizeof (defercmd));
+	  strncpy (defercmd, cmd, sizeof (defercmd));
+	  deferredl = l;
 	  deferredpid = fork ();
 	  if (deferredpid == 0)
 	    {			/* child process */
@@ -502,10 +534,6 @@ main (int argc, char **argv)
 	}
       if ((k + DICE (8)) % 6 == 0)
 	sync ();
-      double tendcompil = my_clock (CLOCK_MONOTONIC);
-      printf (" in %.4f elapsed seconds.", tendcompil - tstartcompil);
-      putchar ('\n');
-      fflush (stdout);
       suml += l;
       if (k % 64 == 32)
 	printf
@@ -517,16 +545,8 @@ main (int argc, char **argv)
   fflush (NULL);
   if (deferredpid > 0)
     {
-      int waitcnt = 0;
-      int wstat = 0;
-      pid_t wpid = 0;
-      // if the previous compilation is still running, wait for it.
-      do
-	{
-	  wpid = waitpid (deferredpid, &wstat, WEXITED);
-	  waitcnt++;
-	}
-      while (wstat == 0 && wpid != deferredpid && waitcnt < 4);
+      usleep (1000);
+      waitdeferred (deferredpid, deferredl, defercmd);
       deferredpid = 0;
     };
   suml += l;
