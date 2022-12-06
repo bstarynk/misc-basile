@@ -105,6 +105,24 @@ parse_program_arguments(int argc, char**argv)
         {
             framacexe = optarg;
         };
+    /* Handle any remaining command line arguments (not options). */
+    if (optind < argc)
+        {
+            if (verbose_opt)
+                printf("%s: processing %d arguments\n",
+                       progname, argc-optind);
+            while (optind < argc)
+                {
+                    const char*curarg = argv[optind];
+                    if (access(curarg, R_OK))
+                        {
+                            perror(curarg);
+                            exit(EXIT_FAILURE);
+                        };
+#warning parse_program_arguments should do something with non-option curarg
+                    optind++;
+                }
+        }
 } // end parse_program_arguments
 
 int
