@@ -45,3 +45,4 @@ gtksrc-browser
 bwc
 genf*.c
 genfmap*.map
+manydl_*.dat
