@@ -33,10 +33,13 @@
  *      extern int optind, opterr, optopt;
  ***/
 
+char myhost[80];
 const char*progname;
+const char*framacexe = "/usr/bin/frama-c";
 int verbose_opt;
 int version_opt;
 int framac_opt;
+int help_opt;
 
 
 enum clever_flags_en
@@ -52,15 +55,30 @@ const struct option long_clever_options[] =
 {
     {"verbose", no_argument, &verbose_opt, verbose_flag},
     {"version", no_argument, &version_opt, version_flag},
+    {"help", no_argument, &help_opt, help_flag},
     {"framac", required_argument, &framac_opt, framac_flag},
     {0,0,0,0}
 };
+
+void
+show_help(void)
+{
+    printf("%s usage:\n"
+           "\t -V|--verbose           # output more messages\n"
+           "\t --version              # give version information\n"
+           "\t -h|--help              # give this help\n"
+           "\t -F|--framac <framac>   # explicit Frama-C to be used\n"
+           "\t                        # default is %s\n"
+           "\n",
+           progname, framacexe);
+} // end show_help
 
 void
 parse_program_arguments(int argc, char**argv)
 {
     int c=0;
     int option_index= -1;
+    gethostname(myhost, sizeof(myhost)-1);
 #warning incomplete parse_program_arguments in clever-framac.cc
     do
         {
@@ -78,7 +96,15 @@ parse_program_arguments(int argc, char**argv)
         {
             printf("%s: version git %s built %s at %s\n",
                    progname, GIT_ID, __DATE__, __TIME__);
+        };
+    if (help_opt)
+        {
+            show_help();
         }
+    if (framac_opt)
+        {
+            framacexe = optarg;
+        };
 } // end parse_program_arguments
 
 int
@@ -86,6 +112,9 @@ main(int argc, char*argv[])
 {
     progname = argv[0];
     parse_program_arguments(argc, argv);
+    if (verbose_opt)
+        printf("%s running verbosely on %s pid %d git %s\n", progname,
+               myhost, (int)getpid(), GIT_ID);
 } // end main
 
 /****************
