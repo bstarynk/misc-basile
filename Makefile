@@ -1,7 +1,7 @@
 ## file misc-basile/Makefile
 ## on https://github.com/bstarynk/
 
-.PHONY: all clean indent analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half
+.PHONY: all clean indent analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac
 
 FRAMAC=/usr/bin/frama-c
 FRAMALIBC=/usr/share/frama-c/libc/
@@ -13,7 +13,7 @@ GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 
 
-all: manydl half bwc sync-periodically
+all: manydl half bwc sync-periodically clever-framac
 
 manydl: manydl.c
 	$(CC) $(CFLAGS) -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -ldl -o $@
@@ -27,6 +27,9 @@ bwc: bwc.c
 sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) $^  -o $@
 
+
+clever-framac: clever-framac.cc build-clever-framac.sh
+	./build-clever-framac.sh
 
 analyze-framac:  framac-bwc framac-sync-periodically framac-manydl framac-half
 
