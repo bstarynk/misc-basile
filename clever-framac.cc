@@ -51,6 +51,8 @@ parse_program_arguments(int argc, char**argv)
                             long_clever_options, &option_index);
             if (c<0)
                 break;
+            if (long_clever_options[option_index].flag != nullptr)
+                continue;
         }
     while (c>=0);
 } // end parse_program_arguments
