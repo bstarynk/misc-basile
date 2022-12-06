@@ -28,26 +28,45 @@
 #include <unistd.h>
 #include <getopt.h>
 
+/*** see getopt(3) man page mentionning
+ *      extern char *optarg;
+ *      extern int optind, opterr, optopt;
+ ***/
 
 const char*progname;
-int verbose_flag;
-int version_flag;
+int verbose_opt;
+int version_opt;
+int framac_opt;
+
+
+enum clever_flags_en
+{
+    no_flags=0,
+    help_flag='h',
+    verbose_flag='V',
+    framac_flag='F',
+    version_flag=1000,
+};
+
+const struct option long_clever_options[] =
+{
+    {"verbose", no_argument, &verbose_opt, verbose_flag},
+    {"version", no_argument, &version_opt, version_flag},
+    {"framac", required_argument, &framac_opt, framac_flag},
+    {0,0,0,0}
+};
+
 void
 parse_program_arguments(int argc, char**argv)
 {
     int c=0;
     int option_index= -1;
 #warning incomplete parse_program_arguments in clever-framac.cc
-    static const struct option long_clever_options[] =
-    {
-        {"verbose", no_argument, &verbose_flag, 'V'},
-        {0,0,0,0}
-    };
     do
         {
             option_index = -1;
             c = getopt_long(argc, argv,
-                            "V",
+                            "VhF:",
                             long_clever_options, &option_index);
             if (c<0)
                 break;
@@ -55,6 +74,11 @@ parse_program_arguments(int argc, char**argv)
                 continue;
         }
     while (c>=0);
+    if (version_opt)
+        {
+            printf("%s: version git %s built %s at %s\n",
+                   progname, GIT_ID, __DATE__, __TIME__);
+        }
 } // end parse_program_arguments
 
 int
