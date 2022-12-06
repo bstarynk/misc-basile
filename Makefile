@@ -15,6 +15,12 @@ CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 
 all: manydl half bwc sync-periodically clever-framac
 
+
+clean:
+	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically
+	$(RM) genf*.c
+	$(RM) genf*.so
+
 manydl: manydl.c
 	$(CC) $(CFLAGS) -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -ldl -o $@
 
