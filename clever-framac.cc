@@ -48,11 +48,30 @@ enum source_type
     srcty_cpp
 };				// end source_type
 
-class source_file
+class Source_file
 {
+    std::string srcf_path;
     source_type srcf_type;
-    const std::string srcf_path;
-};				// end source_file
+#warning should have a dictionary of Source_file-s
+public:
+    Source_file(const std::string& path, source_type ty=srcty_c)
+        : srcf_path(path), srcf_type(ty) {
+    };
+    ~Source_file()
+    {
+        srcf_path.erase();
+        srcf_type = srcty_NONE;
+    };
+    const std::string& path(void) const
+    {
+        return srcf_path;
+    };
+    source_type type() const
+    {
+        return srcf_type;
+    };
+    Source_file(Source_file&) = default;
+};				// end Source_file
 
 enum clever_flags_en
 {
