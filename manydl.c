@@ -335,6 +335,8 @@ waitdeferred (int rank, double tstart, pid_t pid, int deferredl,
   struct rusage ruswchilstart = { };
   struct rusage ruswchil = { };
   fflush (NULL);
+  if (rank<0 || rank>=maxcnt)
+    return;
   getrusage (RUSAGE_CHILDREN, &ruswchilstart);
   // if the previous compilation is still running, wait for it.
   do
