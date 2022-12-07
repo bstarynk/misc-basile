@@ -41,6 +41,18 @@ int version_opt;
 int framac_opt;
 int help_opt;
 
+enum source_type
+{
+    srcty_NONE,
+    srcty_c,
+    srcty_cpp
+};				// end source_type
+
+class source_file
+{
+    source_type srcf_type;
+    const std::string srcf_path;
+};				// end source_file
 
 enum clever_flags_en
 {
