@@ -55,7 +55,8 @@ class Source_file
 #warning should have a dictionary of Source_file-s
 public:
     Source_file(const std::string& path, source_type ty=srcty_c)
-        : srcf_path(path), srcf_type(ty) {
+        : srcf_path(path), srcf_type(ty)
+    {
     };
     ~Source_file()
     {
