@@ -26,6 +26,8 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include <map>
+#include <string>
 #include <unistd.h>
 #include <getopt.h>
 
@@ -53,14 +55,16 @@ class Source_file
 {
     std::string srcf_path;
     source_type srcf_type;
-#warning should have a dictionary of Source_file-s
+    static std::map<std::string, Source_file*> srcf_dict;
 public:
     Source_file(const std::string& path, source_type ty=srcty_c)
         : srcf_path(path), srcf_type(ty)
     {
+        srcf_dict.insert({path,this});
     };
     ~Source_file()
     {
+        srcf_dict.erase(srcf_path);
         srcf_path.erase();
         srcf_type = srcty_NONE;
     };
@@ -74,6 +78,8 @@ public:
     };
     Source_file(Source_file&) = default;
 };				// end Source_file
+
+std::map<std::string, Source_file*> Source_file::srcf_dict;
 
 enum clever_flags_en
 {
@@ -155,11 +161,20 @@ parse_program_arguments(int argc, char**argv)
                             perror(curarg);
                             exit(EXIT_FAILURE);
                         };
+                    if (strlen(curarg) < 4)
+                        {
+                            fprintf(stderr,
+                                    "%s: too short argument#%d: %s\n",
+                                    progname, optind, curarg);
+                            exit(EXIT_FAILURE);
+                        }
                     resolvedpath = realpath(curarg, NULL);
                     // so resolvedpath has been malloced
                     if (strlen(resolvedpath) < 4)
                         {
-                            fprintf(stderr, "%s: too short argument#%d: %s\n", progname, optind, resolvedpath);
+                            fprintf(stderr,
+                                    "%s: too short argument#%d: %s == %s\n",
+                                    progname, optind, curarg, resolvedpath);
                             exit(EXIT_FAILURE);
                         };
                     for (const char*pc = resolvedpath; *pc; pc++)
