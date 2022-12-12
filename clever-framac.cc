@@ -149,28 +149,27 @@ parse_program_arguments(int argc, char**argv)
             while (optind < argc)
                 {
                     const char*curarg = argv[optind];
+                    const char*resolvedpath = NULL;
                     if (access(curarg, R_OK))
                         {
                             perror(curarg);
                             exit(EXIT_FAILURE);
                         };
-                    if (strlen(curarg) < 4)
+                    resolvedpath = realpath(curarg, NULL);
+                    // so resolvedpath has been malloced
+                    if (strlen(resolvedpath) < 4)
                         {
-                            fprintf(stderr, "%s: too short argument#%d: %s\n", progname, optind, curarg);
+                            fprintf(stderr, "%s: too short argument#%d: %s\n", progname, optind, resolvedpath);
                             exit(EXIT_FAILURE);
                         };
-                    if (!isalnum(curarg[0]) && curarg[0] != '_')
-                        {
-                            fprintf(stderr, "%s: first char in argument#%d should be letter or digit or underscore: %s\n", progname, optind, curarg);
-                            exit(EXIT_FAILURE);
-                        }
-                    for (const char*pc = curarg; *pc; pc++)
+                    for (const char*pc = resolvedpath; *pc; pc++)
                         if (isspace(*pc))
                             {
-                                fprintf(stderr, "%s: unexpected space in argument#%d: %s\n", progname, optind, curarg);
+                                fprintf(stderr, "%s: unexpected space in argument#%d: %s == %s\n", progname, optind, curarg, resolvedpath);
                                 exit(EXIT_FAILURE);
                             };
-#warning parse_program_arguments should do something with non-option curarg
+#warning parse_program_arguments should do something with resolvedpath
+                    free ((void*)resolvedpath);
                     optind++;
                 }
         }
