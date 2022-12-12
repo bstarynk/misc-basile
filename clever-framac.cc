@@ -25,6 +25,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <cstring>
 #include <unistd.h>
 #include <getopt.h>
 
@@ -101,6 +102,8 @@ show_help(void)
            "\t -h|--help              # give this help\n"
            "\t -F|--framac <framac>   # explicit Frama-C to be used\n"
            "\t                        # default is %s\n"
+           "\t ... <source files>     # sources are C files *.c\n"
+           "\t                        # or C++ files *.cc\n"
            "\n",
            progname, framacexe);
 } // end show_help
@@ -151,11 +154,28 @@ parse_program_arguments(int argc, char**argv)
                             perror(curarg);
                             exit(EXIT_FAILURE);
                         };
+                    if (strlen(curarg) < 4)
+                        {
+                            fprintf(stderr, "%s: too short argument#%d: %s\n", progname, optind, curarg);
+                            exit(EXIT_FAILURE);
+                        };
+                    if (!isalnum(curarg[0]) && curarg[0] != '_')
+                        {
+                            fprintf(stderr, "%s: first char in argument#%d should be letter or digit or underscore: %s\n", progname, optind, curarg);
+                            exit(EXIT_FAILURE);
+                        }
+                    for (const char*pc = curarg; *pc; pc++)
+                        if (isspace(*pc))
+                            {
+                                fprintf(stderr, "%s: unexpected space in argument#%d: %s\n", progname, optind, curarg);
+                                exit(EXIT_FAILURE);
+                            };
 #warning parse_program_arguments should do something with non-option curarg
                     optind++;
                 }
         }
 } // end parse_program_arguments
+
 
 int
 main(int argc, char*argv[])
