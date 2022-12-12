@@ -62,6 +62,8 @@ public:
     {
         srcf_dict.insert({path,this});
     };
+    Source_file (const Source_file&) = default;
+    Source_file(Source_file&) = default;
     ~Source_file()
     {
         srcf_dict.erase(srcf_path);
@@ -76,10 +78,11 @@ public:
     {
         return srcf_type;
     };
-    Source_file(Source_file&) = default;
+    Source_file& operator = (Source_file&) = default;
 };				// end Source_file
 
 std::map<std::string, Source_file*> Source_file::srcf_dict;
+
 
 enum clever_flags_en
 {
@@ -156,15 +159,29 @@ parse_program_arguments(int argc, char**argv)
                 {
                     const char*curarg = argv[optind];
                     const char*resolvedpath = NULL;
+                    enum source_type styp = srcty_NONE;
                     if (access(curarg, R_OK))
                         {
                             perror(curarg);
                             exit(EXIT_FAILURE);
                         };
-                    if (strlen(curarg) < 4)
+                    int curlen = strlen(curarg);
+                    if (curlen < 4)
                         {
                             fprintf(stderr,
                                     "%s: too short argument#%d: %s\n",
+                                    progname, optind, curarg);
+                            exit(EXIT_FAILURE);
+                        };
+                    if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
+                        styp = srcty_c;
+                    else if (curarg[curlen-3] == '.'
+                             && curarg[curlen-2] == 'c' && curarg[curlen-1] == 'c')
+                        styp = srcty_cpp;
+                    else
+                        {
+                            fprintf(stderr,
+                                    "%s: unexpected argument#%d: %s not ending with .c or .cc\n",
                                     progname, optind, curarg);
                             exit(EXIT_FAILURE);
                         }
@@ -180,9 +197,12 @@ parse_program_arguments(int argc, char**argv)
                     for (const char*pc = resolvedpath; *pc; pc++)
                         if (isspace(*pc))
                             {
-                                fprintf(stderr, "%s: unexpected space in argument#%d: %s == %s\n", progname, optind, curarg, resolvedpath);
+                                fprintf(stderr,
+                                        "%s: unexpected space in argument#%d: %s == %s\n",
+                                        progname, optind, curarg, resolvedpath);
                                 exit(EXIT_FAILURE);
                             };
+
 #warning parse_program_arguments should do something with resolvedpath
                     free ((void*)resolvedpath);
                     optind++;
