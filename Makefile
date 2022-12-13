@@ -13,7 +13,7 @@ GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 
 
-all: manydl half bwc sync-periodically clever-framac
+all: manydl half bwc sync-periodically clever-framac  logged-gcc
 
 
 clean:
@@ -34,6 +34,9 @@ sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
 
 
+
+logged-gcc: logged-gcc.cc compile-logged-gcc.sh
+	./compile-logged-gcc.sh
 clever-framac: clever-framac.cc build-clever-framac.sh
 	./build-clever-framac.sh
 
