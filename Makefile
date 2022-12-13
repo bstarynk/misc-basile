@@ -31,7 +31,7 @@ bwc: bwc.c
 	$(CC) $(CFLAGS) $^  -o $@
 
 sync-periodically: sync-periodically.c
-	$(CC) $(CFLAGS) $^  -o $@
+	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
 
 
 clever-framac: clever-framac.cc build-clever-framac.sh
