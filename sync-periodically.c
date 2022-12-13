@@ -49,6 +49,8 @@ bool synper_daemonized;
 #define SYNPER_MAX_LOGPERIOD 7200	/*maximal log period, in seconds */
 
 
+void synper_set_signal_handlers (void);
+
 void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
 
 #define SYNPER_FATAL_AT_BIS(Fil,Lin,Fmt,...) do {			\
@@ -108,6 +110,7 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
 	if (daemon (0, /*no-close: */ 1))
 	  SYNPER_FATAL ("failed to daemon(3) : %m");
 	synper_daemonized = true;
+	synper_set_signal_handlers();
       };
       return 0;
     case 'P':			// --pid-file
@@ -141,10 +144,12 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
 	printf ("\t run as: '%s --help' to get help.\n", synper_progname);
 	printf ("\t sync period show be between %d and %d seconds.\n",
 		SYNPER_MIN_PERIOD, SYNPER_MAX_PERIOD);
-	printf ("\t log period should be between %d and %d seconds,\n\t... and more than 3 times the sync period.\n",
-		SYNPER_MIN_LOGPERIOD, SYNPER_MAX_LOGPERIOD);
-	printf ("\t see also %s on https://github.com/bstarynk/misc-basile/\n",
-		__FILE__);
+	printf
+	  ("\t log period should be between %d and %d seconds,\n\t... and more than 3 times the sync period.\n",
+	   SYNPER_MIN_LOGPERIOD, SYNPER_MAX_LOGPERIOD);
+	printf
+	  ("\t see also %s on https://github.com/bstarynk/misc-basile/\n",
+	   __FILE__);
 	fflush (NULL);
 	exit (EXIT_SUCCESS);
       }
@@ -178,19 +183,21 @@ synper_syslog_begin (void)
   char nowbuf[80];
   memset (nowbuf, 0, sizeof (nowbuf));
   char parentexe[128];
-  memset (parentexe, 0, sizeof(parentexe));
+  memset (parentexe, 0, sizeof (parentexe));
   if (strftime (nowbuf, sizeof (nowbuf), "%Y/%b/%d %T %Z", &nowtm) <= 0)
     SYNPER_FATAL ("failed to strftime");
-  pid_t parentpid = getppid();
-  if (parentpid > 0) {
-    char parentprocx[64];
-    memset (parentprocx, 0, sizeof(parentprocx));
-    snprintf(parentprocx, sizeof(parentprocx), "/proc/%d/exe", (int)parentpid);
-    if (readlink(parentprocx, parentexe, sizeof(parentexe)-1)<0)
-      SYNPER_FATAL("failed to readlink from %s", parentprocx);
-  }
+  pid_t parentpid = getppid ();
+  if (parentpid > 0)
+    {
+      char parentprocx[64];
+      memset (parentprocx, 0, sizeof (parentprocx));
+      snprintf (parentprocx, sizeof (parentprocx), "/proc/%d/exe",
+		(int) parentpid);
+      if (readlink (parentprocx, parentexe, sizeof (parentexe) - 1) < 0)
+	SYNPER_FATAL ("failed to readlink from %s", parentprocx);
+    }
   else
-    SYNPER_FATAL("failed to getppid");
+    SYNPER_FATAL ("failed to getppid");
 #ifdef SYNPER_GITID
   if (synper_name)
     syslog (LOG_INFO,
@@ -199,7 +206,7 @@ synper_syslog_begin (void)
 	    " at %s, pid %d, parentpid %d running %s\n",
 	    synper_progname, synper_name, SYNPER_STRINGIFY (SYNPER_GITID),
 	    __DATE__, synper_period, synper_logperiod, nowbuf,
-	    (int)getpid(), (int)parentpid, parentexe);
+	    (int) getpid (), (int) parentpid, parentexe);
   else
     syslog (LOG_INFO,
 	    "start of %s git %s build %s with sync period %d seconds"
@@ -207,7 +214,7 @@ synper_syslog_begin (void)
 	    " at %s, pid %d, parentpid %d running %s\n",
 	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), __DATE__,
 	    synper_period, synper_logperiod, nowbuf,
-	    (int)getpid(), (int)parentpid, parentexe);
+	    (int) getpid (), (int) parentpid, parentexe);
   if (synper_daemonized)
     syslog (LOG_NOTICE, "%s git %s daemonized as pid %ld",
 	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID),
@@ -220,15 +227,14 @@ synper_syslog_begin (void)
 	    " pid %d, parentpid %d running %s\n",
 	    synper_progname, synper_name, __DATE__, synper_period,
 	    synper_logperiod, nowbuf,
-	    (int)getpid(), (int)parentpid, parentexe);
+	    (int) getpid (), (int) parentpid, parentexe);
   else
     syslog (LOG_INFO,
 	    "start of %s built %s with sync period %d seconds"
 	    " and log period %d seconds"
 	    " at %s, pid %d, parentpid %d running %s\n",
 	    synper_progname, __DATE__, synper_period, synper_logperiod,
-	    nowbuf,
-	    (int)getpid(), (int)parentpid, parentexe);
+	    nowbuf, (int) getpid (), (int) parentpid, parentexe);
   if (synper_daemonized)
     syslog (LOG_NOTICE, "%s daemonized as pid %ld", synper_progname,
 	    (long) getpid ());
@@ -273,6 +279,7 @@ main (int argc, char **argv)
 	SYNPER_FATAL ("%s failed to close pid file %s : %m",
 		      synper_progname, synper_pidfile);
     }
+  synper_set_signal_handlers ();
   usleep (10 * 1024);
   if (synper_period < SYNPER_MIN_PERIOD)
     synper_period = SYNPER_MIN_PERIOD;
@@ -293,7 +300,7 @@ main (int argc, char **argv)
   sleep (synper_period / 3);
   time_t lastlogtime = 0;
   long loopcnt = 0;
-  while (true)
+  while (!atomic_load (&synper_stop))
     {
       time_t nowt = 0;
       usleep (2000);
@@ -345,6 +352,6 @@ main (int argc, char **argv)
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
- ** compile-command: "gcc -o sync-periodically -Wall -Wextra -O -g -DSYNPER_GITID=\"$(git log --format=oneline -q -1 | awk '{print $1}')\" sync-periodically.c" ;;
+ ** compile-command: "make sync-periodically" ;;
  ** End: ;;
  ****************/
