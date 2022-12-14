@@ -5,7 +5,7 @@
 (global-set-key (kbd "S-<f7>") 'previous-error)
 ;(global-set-key [shift f10] 'flymake-goto-next-error)
 (global-auto-revert-mode t)
-(global-linum-mode t)
+; (global-linum-mode t)
 (mouse-wheel-mode 1)
 ;; BASILE: ninja-mode from github.com/ninja-build/ninja/blob/master/misc/ninja-mode.el
 ;; for http://ninja-build.org/ tool
@@ -35,10 +35,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(column-number-mode t)
- '(show-paren-mode t)
- '(size-indication-mode t)
- '(compile-command "time make -j7")
- )
+ '(global-display-line-numbers-mode t)
+ '(line-number-mode nil)
+ '(size-indication-mode t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

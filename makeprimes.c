@@ -99,7 +99,7 @@ main (int argc, char **argv)
 	      putchar ('\n');
 	      if (outcnt % 100 == 0)
 		{
-		  printf ("//#%d of %ld (p:%g)\n", outcnt, incnt, (double)n);
+		  printf ("//#%d of %ld (p:%g)\n", outcnt, incnt, (double) n);
 		  fflush (NULL);
 		};
 	      if (outcnt < 100 || outcnt % 64 == 0)
@@ -113,7 +113,8 @@ main (int argc, char **argv)
 	  struct timespec ts = { 0, 0 };
 	  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &ts);
 	  fprintf (stderr, "## incnt=%ldM outcnt=%d n=%ld=%g cpu %.2f s\n",
-		   incnt/MILLION, outcnt, n, (double)n, 1.0 * ts.tv_sec + 1.0e-9 * ts.tv_nsec);
+		   incnt / MILLION, outcnt, n, (double) n,
+		   1.0 * ts.tv_sec + 1.0e-9 * ts.tv_nsec);
 	  fflush (NULL);
 	  showstat = false;
 	}

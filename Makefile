@@ -21,6 +21,9 @@ clean:
 	$(RM) genf*.c
 	$(RM) genf*.so
 
+indent:
+	for f in $(wildcard *.c) ; do $(INDENT) --gnu-style $$f ; done
+
 manydl: manydl.c
 	$(CC) $(CFLAGS) -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -ldl -o $@
 
