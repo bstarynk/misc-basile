@@ -175,7 +175,7 @@ string_to_lower (char *str)
 {
   assert (str != NULL);
 
-  for (int i = 0; i < strlen (str); i++)
+  for (int i = 0; i < (int) strlen (str); i++)
     str[i] = tolower (str[i]);
 }
 
@@ -190,7 +190,7 @@ blank_string (char *str)
 {
   assert (str != NULL);
 
-  for (int i = 0; i < strlen (str); i++)
+  for (int i = 0; i < (int) strlen (str); i++)
     {
       if (str[i] != ' ' && str[i] != '\t' && str[i] != '\n')
 	return 0;
@@ -310,10 +310,10 @@ print_cmd_line (cmd_line_t * cmd_line)
   for (size_t i = 0; i < cmd_line->nargs; i++)
     {
       if (cmd_line->args[i] != NULL)
-	printf ("[%d]\t%s\n", i, cmd_line->args[i]);
+	printf ("[%d]\t%s\n", (int) i, cmd_line->args[i]);
     }
 
-  printf ("NARGS: %d\n", cmd_line->nargs);
+  printf ("NARGS: %d\n", (int) cmd_line->nargs);
 }
 
 // ================================================
@@ -360,7 +360,7 @@ typedef struct
 int
 alphabetical_string (char *str)
 {
-  for (int i = 0; i < strlen (str); i++)	//checks for prohibited chars in the command token
+  for (int i = 0; i < (int) strlen (str); i++)	//checks for prohibited chars in the command token
     {
       if (str[i] - 'a' >= ALPHABETICAL_TREE_ENTRIES || str[i] - 'a' < 0)	//non-alphabetic char
 	return 0;
@@ -462,7 +462,7 @@ insert_token_in_tree (alphabetical_tree_header_t * h, char *token,
   else
     {
       alphabetical_tree_node_t *iterator = h->entries[j];
-      for (int i = 1; i < token_len; i++)
+      for (int i = 1; i < (int) token_len; i++)
 	{
 	  j = token[i] - 'a';
 
@@ -510,7 +510,7 @@ find_token_in_tree (alphabetical_tree_header_t * h, char *token)
     {
       //Walk in the tree
       alphabetical_tree_node_t *iterator = h->entries[j];
-      for (int i = 1; i < token_len; i++)	//For each token's char (after the first char)
+      for (int i = 1; i < (int) token_len; i++)	//For each token's char (after the first char)
 	{
 	  if (iterator == NULL)
 	    return NULL;	//If the current node is NULL, then there is no path to the token.
@@ -782,7 +782,7 @@ exec_command (cmd_line_t * cmd_line)
       //build the argv array
       char **argv = (char **) calloc (cmd_line->nargs + 1, sizeof (char *));
 
-      for (int i = 0; i < cmd_line->nargs; i++)
+      for (int i = 0; i < (int) cmd_line->nargs; i++)
 	argv[i] = cmd_line->args[i];
 
       argv[cmd_line->nargs] = NULL;	//argv must be NULL-terminated
@@ -881,7 +881,7 @@ print_command (cmd_line_t * cmd_line)
       return;
     }
 
-  for (int i = 0; i < cmd_line->nargs; i++)
+  for (int i = 0; i < (int) cmd_line->nargs; i++)
     {
       if (cmd_line->args[i][0] == '$' && cmd_line->args[i][1] != '$')	//arg is a variable name
 	{
@@ -947,7 +947,7 @@ uv_command (cmd_line_t * cmd_line)
   set_cmd_line_command (new_cmd_line, cmd_line->args[0]);
   init_cmd_line_args (new_cmd_line, cmd_line->nargs - 1);
 
-  for (int i = 1; i < cmd_line->nargs; i++)
+  for (int i = 1; i < (int) cmd_line->nargs; i++)
     {
       if (cmd_line->args[i][0] == '$' && cmd_line->args[i][1] != '$')	//arg is a variable name
 	{
