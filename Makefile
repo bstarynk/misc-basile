@@ -17,7 +17,8 @@ all: manydl half bwc sync-periodically clever-framac  logged-gcc filipe-shell
 
 
 clean:
-	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically
+	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically filipe-shell
+	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
 	$(RM) genf*.c
 	$(RM) genf*.so
 
