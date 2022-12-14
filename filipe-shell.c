@@ -22,6 +22,12 @@
  *      5 - Main function
  */
 
+/*** 
+ * Basile note: in git commit bdceaecbc6 this has only warnings like
+ *    comparison of unsigned expression in ‘>= 0’ is always true
+ * using  GCC 12.2 on Linux/x86-64
+ ***/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
