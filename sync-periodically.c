@@ -32,6 +32,13 @@ See of course https://man7.org/linux/man-pages/man2/sync.2.html
 #include <stdatomic.h>
 #include <argp.h>
 
+#ifndef SYNPER_GITID
+#error compilation command should define SYNPER_GITID
+/*** for example in our Makefile:
+   GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
+***/
+#endif
+
 char *synper_progname;
 char *synper_pidfile;
 char *synper_name;
@@ -143,13 +150,8 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
       return 0;
     case 'V':			// --version
       {
-#ifdef SYNPER_GITID
 	printf ("%s gitid %s built on %s (executable %s)\n", synper_progname,
 		SYNPER_STRINGIFY (SYNPER_GITID), __DATE__, synper_selfexe);
-#else
-	printf ("%s built on %s (executable %s)\n", synper_progname, __DATE__,
-		synper_selfexe);
-#endif
 	printf ("\t run as: '%s --help' to get help.\n", synper_progname);
 	fflush (NULL);
 	exit (EXIT_SUCCESS);
@@ -199,7 +201,6 @@ synper_syslog_begin (void)
     }
   else
     SYNPER_FATAL ("failed to getppid");
-#ifdef SYNPER_GITID
   if (synper_name)
     syslog (LOG_INFO,
 	    "start of %s named %s git %s build %s with sync period %d seconds"
@@ -220,26 +221,6 @@ synper_syslog_begin (void)
     syslog (LOG_NOTICE, "%s git %s daemonized as pid %ld",
 	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID),
 	    (long) getpid ());
-#else
-  if (synper_name)
-    syslog (LOG_INFO,
-	    "start of %s named %s built %s with sync period %d seconds"
-	    " and log period %d seconds at %s,"
-	    " pid %d, parentpid %d running %s\n",
-	    synper_progname, synper_name, __DATE__, synper_period,
-	    synper_logperiod, nowbuf,
-	    (int) getpid (), (int) parentpid, parentexe);
-  else
-    syslog (LOG_INFO,
-	    "start of %s built %s with sync period %d seconds"
-	    " and log period %d seconds"
-	    " at %s, pid %d, parentpid %d running %s\n",
-	    synper_progname, __DATE__, synper_period, synper_logperiod,
-	    nowbuf, (int) getpid (), (int) parentpid, parentexe);
-  if (synper_daemonized)
-    syslog (LOG_NOTICE, "%s daemonized as pid %ld", synper_progname,
-	    (long) getpid ());
-#endif /*SYNPER_GITID */
 }				/* end synper_syslog_begin */
 
 
@@ -273,11 +254,7 @@ main (int argc, char **argv)
     "Utility to call sync(2) periodically. GPLv3+ licensed.\n"
       "See www.gnu.org/licenses/ for details.\n"
       "Source " __FILE__ " on github.com/bstarynk/misc-basile/\n"
-      "Build on " __DATE__
-#ifdef SYNPER_GITID
-      " git " SYNPER_GITID
-#endif /*SYNPER_GITID */
-      "\n" "Program options:\n",
+      "Build on " __DATE__ " git " SYNPER_GITID "\n" "Program options:\n",
     /*children: */ NULL,
     /*help_filter: */ NULL,
     /*argp_domain: */ NULL
