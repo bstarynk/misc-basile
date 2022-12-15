@@ -63,68 +63,68 @@ const char *OP_port;
 struct argp_option OP_progoptions[] = {
   /* ======= web server host ======= */
   { /*name: */ "web-host",	///
-						/*key: */ OP_PROGOPT_WEB_SERVER_HOST,
-						///
-				/*arg: */ "WEBHOST",
-				///
-				/*flags: */ 0,
-				///
-						/*doc: */ "Run web server host name",
-						//
-				/*group: */ 0
-				///
+   /*key: */ OP_PROGOPT_WEB_SERVER_HOST,
+   ///
+   /*arg: */ "WEBHOST",
+   ///
+   /*flags: */ 0,
+   ///
+   /*doc: */ "Run web server host name",
+   //
+   /*group: */ 0
+   ///
    },
   /* ======= web server host ======= */
   { /*name: */ "web-port",	///
-						/*key: */ OP_PROGOPT_WEB_SERVER_PORT,
-						///
-				/*arg: */ "WEBPORT",
-				///
-				/*flags: */ 0,
-				///
-						/*doc: */ "Run web server port name",
-						//
-				/*group: */ 0
-				///
+   /*key: */ OP_PROGOPT_WEB_SERVER_PORT,
+   ///
+   /*arg: */ "WEBPORT",
+   ///
+   /*flags: */ 0,
+   ///
+   /*doc: */ "Run web server port name",
+   //
+   /*group: */ 0
+   ///
    },
   /* ======= printing command ======= */
   { /*name: */ "print-command",	///
-					/*key: */ OP_PROGOPT_PRINT_COMMAND,
-					///
-				/*arg: */ "PRINTCOMMAND",
-				///
-				/*flags: */ 0,
-				///
-					/*doc: */ "The printing command",
-					//
-				/*group: */ 0
-				///
+   /*key: */ OP_PROGOPT_PRINT_COMMAND,
+   ///
+   /*arg: */ "PRINTCOMMAND",
+   ///
+   /*flags: */ 0,
+   ///
+   /*doc: */ "The printing command",
+   //
+   /*group: */ 0
+   ///
    },
   /* ======= printed file size limit ======= */
   { /*name: */ "print-limit",	///
-					/*key: */ OP_PROGOPT_PRINT_COMMAND,
-					///
-				/*arg: */ "SIZELIMIT",
-				///
-				/*flags: */ 0,
-				///
-								/*doc: */ "The printed file size limit, in megabytes",
-								//
-				/*group: */ 0
-				///
+   /*key: */ OP_PROGOPT_PRINT_COMMAND,
+   ///
+   /*arg: */ "SIZELIMIT",
+   ///
+   /*flags: */ 0,
+   ///
+   /*doc: */ "The printed file size limit, in megabytes",
+   //
+   /*group: */ 0
+   ///
    },
   /* ======= terminating empty option ======= */
   { /*name: */ (const char *) 0,	///
-				/*key: */ 0,
-				///
-				/*arg: */ (const char *) 0,
-				///
-				/*flags: */ 0,
-				///
-				/*doc: */ (const char *) 0,
-				///
-				/*group: */ 0
-				///
+   /*key: */ 0,
+   ///
+   /*arg: */ (const char *) 0,
+   ///
+   /*flags: */ 0,
+   ///
+   /*doc: */ (const char *) 0,
+   ///
+   /*group: */ 0
+   ///
    }
 };				/* end OP_progoptions */
 

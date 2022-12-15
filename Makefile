@@ -13,27 +13,32 @@ GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 
 
-all: manydl half bwc sync-periodically clever-framac  logged-gcc
+all: manydl half bwc sync-periodically clever-framac  logged-gcc filipe-shell
 
 
 clean:
-	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically
+	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically filipe-shell
+	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
 	$(RM) genf*.c
 	$(RM) genf*.so
+
+indent:
+	for f in $(wildcard *.c) ; do $(INDENT) --gnu-style $$f ; done
 
 manydl: manydl.c
 	$(CC) $(CFLAGS) -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -ldl -o $@
 
 half: half.c
-	$(CC) $(CFLAGS) $^  -o $@
+	$(CC) $(CFLAGS) -DHALF_GIT='"$(GIT_ID)"' $^  -o $@
 
 bwc: bwc.c
-	$(CC) $(CFLAGS) $^  -o $@
+	$(CC) $(CFLAGS) -DBWC_GIT='"$(GIT_ID)"' $^  -o $@
 
 sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
 
-
+filipe-shell: filipe-shell.c
+	$(CC) $(CFLAGS) -DFILIPE_GIT='"$(GIT_ID)"' $^  -o $@
 
 logged-gcc: logged-gcc.cc compile-logged-gcc.sh
 	./compile-logged-gcc.sh
