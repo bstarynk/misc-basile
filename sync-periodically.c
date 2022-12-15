@@ -3,15 +3,15 @@
 /* Copyright 2020 - 2022 Basile Starynkevitch
    <basile@starynkevitch.net>
 
-This sync-periodically program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2, or (at
-your option) any later version.
+This sync-periodically program is free software for Linux; you can
+redistribute it and/or modify it under the terms of the GNU General
+Public License as published by the Free Software Foundation; either
+version 2, or (at your option) any later version.
 
-sync-periodically is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+The sync-periodically program is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
 
 The purpose of sync-periodically is to regularily call the sync(2)
 system call to avoid losing too much data on a Linux desktop with
@@ -35,6 +35,8 @@ See of course https://man7.org/linux/man-pages/man2/sync.2.html
 char *synper_progname;
 char *synper_pidfile;
 char *synper_name;
+char synper_selfexe[256];
+char synper_host[128];
 
 /// see http://man7.org/linux/man-pages/man2/sync.2.html
 int synper_period;		// period for sync(2) in seconds
@@ -108,9 +110,13 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
     case 'd':			// --daemon
       {
 	if (daemon (0, /*no-close: */ 1))
-	  SYNPER_FATAL ("failed to daemon(3) : %m");
+	  {
+	    int olderr = errno;
+	    SYNPER_FATAL ("failed to daemon(3) pid %ld : %s",
+			  (long) getpid (), strerror (olderr));
+	  }
 	synper_daemonized = true;
-	synper_set_signal_handlers();
+	synper_set_signal_handlers ();
       };
       return 0;
     case 'P':			// --pid-file
@@ -246,6 +252,24 @@ int
 main (int argc, char **argv)
 {
   synper_progname = argv[0];
+  if (!gethostname (synper_host, sizeof (synper_host)))
+    SYNPER_FATAL ("%s git %s failed to gethostname (%m)",
+		  synper_progname, SYNPER_STRINGIFY (SYNPER_GITID));
+  {
+    char myselfexe[sizeof (synper_selfexe)];
+    memset (myselfexe, 0, sizeof (myselfexe));
+    if (!readlink ("/proc/self/exe", myselfexe, sizeof (myselfexe))
+	&& myselfexe[sizeof (myselfexe) - 1] == (char) 0
+	&& myselfexe[0] != (char) 0)
+      strcpy (synper_selfexe, myselfexe);
+    else
+      {
+	SYNPER_FATAL
+	  ("%s failed to readlink /proc/self/exe git %s pid %ld on %s",
+	   synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), (long) getpid (),
+	   synper_host);
+      }
+  }
   struct argp argp = { synper_options, synper_parse_opt, "",
     "Utility to call sync(2) periodically. GPLv3+ licensed.\n"
       "See www.gnu.org/licenses/ for details.\n"
@@ -257,12 +281,36 @@ main (int argc, char **argv)
   argp_parse (&argp, argc, argv, 0, 0, NULL);	// could run daemon(3)
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
   if (synper_daemonized)
-    syslog (LOG_INFO, "%s is daemonized as pid %ld. See daemon(3)",
-	    synper_progname, (long) getpid);
+    syslog (LOG_INFO,
+	    "%s is daemonized as pid %ld on %s git %s. See daemon(3)",
+	    synper_progname, (long) getpid, synper_host,
+	    SYNPER_STRINGIFY (SYNPER_GITID));
+  else
+    syslog (LOG_INFO, "%s is started as pid %ld on %s git %s.",
+	    synper_progname, (long) getpid, synper_host,
+	    SYNPER_STRINGIFY (SYNPER_GITID));
+
   if (synper_name)
     syslog (LOG_INFO, "%s named %s", synper_progname, synper_name);
+
   if (synper_pidfile)
     {
+      {
+	FILE *oldpidfil = fopen (synper_pidfile, "r");
+	pid_t oldpid = 0;
+	if (oldpidfil)
+	  {
+	    long oldp = 0;
+	    if (fscanf (oldpidfil, " %ld", &oldp) > 0 && oldp > 0)
+	      {
+		char oldprexebuf[64];
+		memset (oldprexebuf, 0, sizeof (oldprexebuf));
+		snprintf (oldprexebuf, sizeof (oldprexebuf),
+			  "/proc/%ld/exe", oldp);
+	      }
+	    fclose (oldpidfil);
+	  }
+      }
       {
 	char backup[256];
 	memset (backup, 0, sizeof (backup));
@@ -294,8 +342,8 @@ main (int argc, char **argv)
   synper_syslog_begin ();
   if (synper_pidfile)
     {
-      syslog (LOG_INFO, "%s wrote pid-file %s as uid#%d", synper_progname,
-	      synper_pidfile, (int) getuid ());
+      syslog (LOG_INFO, "%s wrote pid-file %s as uid#%d on %s",
+	      synper_progname, synper_pidfile, (int) getuid (), synper_host);
     };
   sleep (synper_period / 3);
   time_t lastlogtime = 0;
