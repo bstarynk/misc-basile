@@ -314,7 +314,6 @@ main (int argc, char **argv)
 	char oldexebuf[256];
 	memset (oldexebuf, 0, sizeof (oldexebuf));
 	FILE *oldpidfil = fopen (synper_pidfile, "r");
-	pid_t oldpid = 0;
 	if (oldpidfil)
 	  {
 	    char oldexe[sizeof (synper_selfexe)];
