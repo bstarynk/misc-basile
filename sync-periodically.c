@@ -69,7 +69,8 @@ void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
 
 struct argp_option synper_options[] = {
   /*name, key, arg, flag, doc, group */
-  {"pid-file", 'P', "FILE", 0, "write pid to file", 0},
+  {"pid-file", 'P', "FILE", 0,
+   "write pid to file, ensuring no other process is running", 0},
   {"name", 'N', "NAME", 0, "set NAME for logging", 0},
   {"sync-period", 'Y', "SYNC-PERIOD", 0,
    "call sync(2) every SYNC-PERIOD seconds", 0},
@@ -96,6 +97,7 @@ void
 synper_fatal_at (const char *file, int lin)
 {
   syslog (LOG_CRIT, "SYNPER FATAL %s:%d", file, lin);
+  fflush (NULL);
   abort ();
 }				/* end synper_fatal_at */
 
@@ -142,20 +144,13 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
     case 'V':			// --version
       {
 #ifdef SYNPER_GITID
-	printf ("%s gitid %s built on %s\n", synper_progname,
-		SYNPER_STRINGIFY (SYNPER_GITID), __DATE__);
+	printf ("%s gitid %s built on %s (executable %s)\n", synper_progname,
+		SYNPER_STRINGIFY (SYNPER_GITID), __DATE__, synper_selfexe);
 #else
-	printf ("%s built on %s\n", synper_progname, __DATE__);
+	printf ("%s built on %s (executable %s)\n", synper_progname, __DATE__,
+		synper_selfexe);
 #endif
 	printf ("\t run as: '%s --help' to get help.\n", synper_progname);
-	printf ("\t sync period show be between %d and %d seconds.\n",
-		SYNPER_MIN_PERIOD, SYNPER_MAX_PERIOD);
-	printf
-	  ("\t log period should be between %d and %d seconds,\n\t... and more than 3 times the sync period.\n",
-	   SYNPER_MIN_LOGPERIOD, SYNPER_MAX_LOGPERIOD);
-	printf
-	  ("\t see also %s on https://github.com/bstarynk/misc-basile/\n",
-	   __FILE__);
 	fflush (NULL);
 	exit (EXIT_SUCCESS);
       }
@@ -252,13 +247,15 @@ int
 main (int argc, char **argv)
 {
   synper_progname = argv[0];
-  if (!gethostname (synper_host, sizeof (synper_host)))
-    SYNPER_FATAL ("%s git %s failed to gethostname (%m)",
-		  synper_progname, SYNPER_STRINGIFY (SYNPER_GITID));
+  if (gethostname (synper_host, sizeof (synper_host)))
+    {
+      SYNPER_FATAL ("%s git %s failed to gethostname (%m)",
+		    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID));
+    }
+  char myselfexe[sizeof (synper_selfexe)];
+  memset (myselfexe, 0, sizeof (myselfexe));
   {
-    char myselfexe[sizeof (synper_selfexe)];
-    memset (myselfexe, 0, sizeof (myselfexe));
-    if (!readlink ("/proc/self/exe", myselfexe, sizeof (myselfexe))
+    if (readlink ("/proc/self/exe", myselfexe, sizeof (myselfexe)) > 0
 	&& myselfexe[sizeof (myselfexe) - 1] == (char) 0
 	&& myselfexe[0] != (char) 0)
       strcpy (synper_selfexe, myselfexe);
@@ -270,25 +267,43 @@ main (int argc, char **argv)
 	   synper_host);
       }
   }
+  /// sleep a small amount of time to let other processes run....
+  usleep (2000 + ((int) getpid ()) % 1024);
   struct argp argp = { synper_options, synper_parse_opt, "",
     "Utility to call sync(2) periodically. GPLv3+ licensed.\n"
       "See www.gnu.org/licenses/ for details.\n"
-      "Source " __FILE__ " on github.com/bstarynk/misc-basile/\n",
+      "Source " __FILE__ " on github.com/bstarynk/misc-basile/\n"
+      "Build on " __DATE__
+#ifdef SYNPER_GITID
+      " git " SYNPER_GITID
+#endif /*SYNPER_GITID */
+      "\n" "Program options:\n",
     /*children: */ NULL,
     /*help_filter: */ NULL,
     /*argp_domain: */ NULL
   };
   argp_parse (&argp, argc, argv, 0, 0, NULL);	// could run daemon(3)
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
+  time_t nowt = 0;
+  char timbuf[48];
+  memset (timbuf, 0, sizeof (timbuf));
+  if (time (&nowt))
+    {
+      ctime_r (&nowt, timbuf);
+    }
+  else
+    SYNPER_FATAL ("%s git %s failed to get current time: %m", synper_progname,
+		  SYNPER_STRINGIFY (SYNPER_GITID));
   if (synper_daemonized)
     syslog (LOG_INFO,
-	    "%s is daemonized as pid %ld on %s git %s. See daemon(3)",
+	    "%s is daemonized as pid %ld on %s git %s executable %s on %s. See daemon(3)",
 	    synper_progname, (long) getpid, synper_host,
-	    SYNPER_STRINGIFY (SYNPER_GITID));
+	    SYNPER_STRINGIFY (SYNPER_GITID), synper_selfexe, timbuf);
   else
-    syslog (LOG_INFO, "%s is started as pid %ld on %s git %s.",
+    syslog (LOG_INFO,
+	    "%s is started as pid %ld on %s git %s executable %s on %s.",
 	    synper_progname, (long) getpid, synper_host,
-	    SYNPER_STRINGIFY (SYNPER_GITID));
+	    SYNPER_STRINGIFY (SYNPER_GITID), synper_selfexe, timbuf);
 
   if (synper_name)
     syslog (LOG_INFO, "%s named %s", synper_progname, synper_name);
@@ -296,17 +311,31 @@ main (int argc, char **argv)
   if (synper_pidfile)
     {
       {
+	char oldexebuf[256];
+	memset (oldexebuf, 0, sizeof (oldexebuf));
 	FILE *oldpidfil = fopen (synper_pidfile, "r");
 	pid_t oldpid = 0;
 	if (oldpidfil)
 	  {
+	    char oldexe[sizeof (synper_selfexe)];
 	    long oldp = 0;
-	    if (fscanf (oldpidfil, " %ld", &oldp) > 0 && oldp > 0)
+	    if (fscanf (oldpidfil, " %ld", &oldp) > 0 && oldp > 0
+		&& kill (oldp, 0))
 	      {
 		char oldprexebuf[64];
 		memset (oldprexebuf, 0, sizeof (oldprexebuf));
 		snprintf (oldprexebuf, sizeof (oldprexebuf),
 			  "/proc/%ld/exe", oldp);
+		if (readlink (oldprexebuf, oldexe, sizeof (oldexe)) > 0
+		    && oldexe[sizeof (oldexe) - 1] == (char) 0
+		    && oldexe[0] != (char) 0 && !strcmp (oldexe, myselfexe))
+		  {
+		    SYNPER_FATAL
+		      ("%s (executable %s) is already running as old pid %ld"
+		       " on %s (git %s) - from pid %ld", synper_progname,
+		       myselfexe, oldp, synper_host,
+		       SYNPER_STRINGIFY (SYNPER_GITID), (long) getpid ());
+		  }
 	      }
 	    fclose (oldpidfil);
 	  }
