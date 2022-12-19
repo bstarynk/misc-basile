@@ -184,6 +184,7 @@ generate_file (const char *name)
       switch (DICE (16))
 	{
 	case 0:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f, " %c = (%c * %d + %c * %d + %d) & 0xffffff;\n",
 		   RANVAR, RANVAR, 2 + DICE (8), RANVAR, 3 + 2 * DICE (8),
 		   DICE (32));
@@ -191,6 +192,7 @@ generate_file (const char *name)
 	    fprintf (f, " dynstep++;\n");
 	  break;
 	case 1:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f,
 		   " %c = (%c * %d + tab[%c & %d] - %c) & 0xffffff; tab[%d]++;\n",
 		   RANVAR, RANVAR, 1 + DICE (16), RANVAR, MAXTAB - 1, RANVAR,
@@ -199,6 +201,7 @@ generate_file (const char *name)
 	    fprintf (f, " dynstep++;\n");
 	  break;
 	case 2:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f,
 		   " if (%c > %c + %d) %c++; else %c=(tab[%d] + %c) & 0xffffff;\n",
 		   RANVAR, RANVAR, DICE (8), RANVAR, RANVAR, DICE (MAXTAB),
@@ -207,6 +210,7 @@ generate_file (const char *name)
 	    fprintf (f, " dynstep++;\n");
 	  break;
 	case 3:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f, " tab[%c & %d] += %d + ((%c - %c) & 0xf); %c++;\n",
 		   RANVAR, MAXTAB - 1, DICE (8) + 2, RANVAR, RANVAR, RANVAR);
 	  if (DICE (8) == 0)
@@ -214,6 +218,7 @@ generate_file (const char *name)
 	  break;
 	case 4:
 	  {
+	    fprintf (f, "// from %d\n", __LINE__);
 	    char lvar = RANVAR;
 	    fprintf (f,
 		     " while (%c>0) { dynstep++; %c -= (%c/3) + %d; }; %c=%d+%c;\n",
@@ -222,6 +227,7 @@ generate_file (const char *name)
 	  }
 	  break;
 	case 5:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f, " %c++, %c++;\n", RANVAR, RANVAR);
 	  if (DICE (8) == 0)
 	    fprintf (f, " %c++, %c++;\n", RANVAR, RANVAR);
@@ -237,6 +243,7 @@ generate_file (const char *name)
 	  break;
 	case 6:
 	  {
+	    fprintf (f, "// from %d\n", __LINE__);
 	    int labrank = DICE (MAXLAB);
 	    fprintf (f, " dynstep+=%d;\n", i - prevjmpix);
 	    prevjmpix = i;
@@ -257,39 +264,49 @@ generate_file (const char *name)
 	  }
 	  break;
 	case 7:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f,
 		   " %c = (%c / ((%c & 0xffff) + 2) + %c * %d) & 0xffffff;\n",
 		   RANVAR, RANVAR, RANVAR, RANVAR, DICE (10) + 3);
 	  break;
 	case 8:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f,
 		   " %c = (%d + ((%c << (1+ (%c & 0x7))) + %c)) & 0xffffff;\n",
 		   RANVAR, DICE (32) + 5, RANVAR, RANVAR, RANVAR);
 	  break;
 	case 9:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f, " %c = (%c * %d + %d) & 0xffffff;\n",
 		   RANVAR, RANVAR, DICE (100) + 7, DICE (200) + 12);
 	  break;
 	case 10:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f, " tab[%d]++, tab[%c & %d] += (%c & 0xff) + %d;\n",
 		   DICE (MAXTAB), RANVAR, MAXTAB - 1, RANVAR, DICE (8) + 2);
 	  break;
 	case 11:
-	  fprintf (f, " %c = %c;\n", RANVAR, RANVAR);
+	  fprintf (f, "// from %d\n", __LINE__);
+	  fprintf (f, " %c = %c + %d;\n", RANVAR, RANVAR, (2 + DICE (5)));
 	  break;
 	case 12:
+	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f, " %c = %d;\n", RANVAR, 5 + DICE (20));
 	  break;
 	case 13:
 	  {
+	    fprintf (f, "// from %d\n", __LINE__);
 	    char fvar = RANVAR;
 	    fprintf (f,
 		     " for (%c &= %d; %c>0; %c--) {dynstep++;tab[%c] += (1+(%c&0x1f));};\n",
 		     fvar, MAXTAB - 1, fvar, fvar, fvar, RANVAR);
+	    if (DICE (5) == 0)
+	      fprintf (f, " %c += %d;\n", RANVAR, 5 + DICE (20));
 	  }
 	  break;
 	case 14:
 	  {
+	    fprintf (f, "// from %d\n", __LINE__);
 	    char lvar = RANVAR, rvar = RANVAR;
 	    if (lvar != rvar)
 	      fprintf (f, " %c = %c;\n", lvar, rvar);
@@ -299,6 +316,7 @@ generate_file (const char *name)
 	  break;
 	case 15:
 	  {
+	    fprintf (f, "// from %d\n", __LINE__);
 	    int labrank = DICE (MAXLAB);
 	    fprintf (f, " %c = %c + %d;\n", RANVAR, RANVAR, 2 + DICE (5));
 	    fprintf (f, " dynstep++;\n");
@@ -495,6 +513,24 @@ generate_all_c_files (void)
     }
 }				/* end generate_all_c_files */
 
+void
+compile_all_plugins (void)
+{
+  char buildcmd[128];
+  snprintf (buildcmd, sizeof (buildcmd),
+	    "%s -j%d manydl-plugins", makeprog, makenbjobs);
+  fflush (NULL);
+  printf ("%s will do: %s\n", progname, buildcmd);
+  fflush (NULL);
+  int buildcode = system (buildcmd);
+  if (buildcode > 0)
+    {
+      fprintf (stderr, "%s failed to run: %s (%d)\n",
+	       progname, buildcmd, buildcode);
+    };
+}				/* end compile_all_plugins */
+
+
 int
 main (int argc, char **argv)
 {
@@ -506,6 +542,7 @@ main (int argc, char **argv)
     show_version ();
   get_options (argc, argv);
   generate_all_c_files ();
+  compile_all_plugins ();
 }				/* end of main */
 
 /****************
