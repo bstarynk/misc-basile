@@ -67,6 +67,8 @@ int makenbjobs = 4;
 
 bool verbose = false;
 
+bool didcleanup = false;
+
 long random_seed;
 
 const char *pluginsuffix = ".so";
@@ -462,13 +464,14 @@ cleanup_the_mess (void)
   while ((curent = readdir (curdir)) != NULL)
     {
       char c = 0;
-      int ix = 0;
+      int ix = -1;
       int pos = -1;
       if (curent->d_type != DT_REG /*not regular file */ )
 	continue;
       if (curent->d_name[0] == 'g'
 	  && !strncmp (curent->d_name, "genf_", 5)
 	  && sscanf (curent->d_name, "genf_%c_%d%n", &c, &ix, &pos) >= 2
+	  && ix >= 0
 	  && pos > 0 && curent->d_name[pos] == '.' && c >= 'A' && c <= 'Z')
 	{
 	  if (oldnbnames + 1 >= oldnamsiz)
@@ -520,6 +523,7 @@ cleanup_the_mess (void)
     ("%s: cleaned and removed %d files starting with genf_ in %s in %.4f elapsed, %.4f cpu sec\n",
      progname, nbclean, cwdbuf, endelapsedclock - startelapsedclock,
      endcpuclock - startcpuclock);
+  didcleanup = true;
 }				/* end cleanup_the_mess */
 
 void
@@ -783,6 +787,8 @@ main (int argc, char **argv)
   if (argc > 1 && !strcmp (argv[1], "--version"))
     show_version ();
   get_options (argc, argv);
+  if (didcleanup)
+    return 0;
   generate_all_c_files ();
   compile_all_plugins ();
   dlopen_all_plugins ();
