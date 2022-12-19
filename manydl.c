@@ -234,7 +234,7 @@ generate_file (const char *name)
 	  if (DICE (16) == 0)
 	    fprintf (f, " %c += (%c &0xfffff);\n", RANVAR, RANVAR);
 	  if (DICE (16) == 0)
-	    fprintf (f, " %c -= (1+ %c&0x7ffff);\n", RANVAR, RANVAR);
+	    fprintf (f, " %c -= (1+ (%c&0x7ffff));\n", RANVAR, RANVAR);
 	  if (DICE (8) == 0)
 	    {
 	      fprintf (f, " %c++, %c++;\n", RANVAR, RANVAR);
@@ -284,6 +284,10 @@ generate_file (const char *name)
 	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f, " tab[%d]++, tab[%c & %d] += (%c & 0xff) + %d;\n",
 		   DICE (MAXTAB), RANVAR, MAXTAB - 1, RANVAR, DICE (8) + 2);
+	  fprintf (f,
+		   " if (tab[%d] %% %d == 0 && dynstep > initdynstep + %d)\n"
+		   "     goto end_%s;\n", DICE (MAXTAB), (40 + DICE (50)),
+		   meansize + 50 + 20 * DICE (1000), name);
 	  break;
 	case 11:
 	  fprintf (f, "// from %d\n", __LINE__);
@@ -504,6 +508,8 @@ get_options (int argc, char **argv)
 void
 generate_all_c_files (void)
 {
+  double startelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   for (int ix = 0; ix < maxcnt; ix++)
     {
       char curname[64];
@@ -511,6 +517,15 @@ generate_all_c_files (void)
       compute_name_for_index (curname, ix);
       generate_file (curname);
     }
+  double endelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double endcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  printf ("%s generated %d C files in %.3f elapsed sec (%.4f / file)\n",
+	  progname, maxcnt, endelapsedclock - startelapsedclock,
+	  (endelapsedclock - startelapsedclock) / (double) maxcnt);
+  printf ("%s generated %d C files in %.3f CPU sec (%.4f / file)\n",
+	  progname, maxcnt, endcpuclock - startcpuclock,
+	  (endcpuclock - startcpuclock) / (double) maxcnt);
+  fflush (NULL);
 }				/* end generate_all_c_files */
 
 void
@@ -531,6 +546,68 @@ compile_all_plugins (void)
 }				/* end compile_all_plugins */
 
 
+void
+dlopen_all_plugins (void)
+{
+  double startelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  hdlarr = calloc ((size_t) maxcnt, sizeof (void *));
+  if (!hdlarr)
+    {
+      fprintf (stderr, "%s: failed to calloc hdlarr for %d plugins (%s)\n",
+	       progname, maxcnt, strerror (errno));
+      exit (EXIT_FAILURE);
+    };
+  namarr = calloc ((size_t) maxcnt, sizeof (char *));
+  if (!namarr)
+    {
+      fprintf (stderr, "%s: failed to calloc namarr for %d plugins (%s)\n",
+	       progname, maxcnt, strerror (errno));
+      exit (EXIT_FAILURE);
+    }
+  fflush (NULL);
+  for (int ix = 0; ix < maxcnt; ix++)
+    {
+      char curname[64];
+      memset (curname, 0, sizeof (curname));
+      char pluginpath[96];
+      memset (pluginpath, 0, sizeof (pluginpath));
+      compute_name_for_index (curname, ix);
+      namarr[ix] = strdup (curname);
+      snprintf (pluginpath, sizeof (pluginpath), "./%s%s",
+		curname, pluginsuffix);
+      if (access (pluginpath, F_OK))
+	{
+	  fprintf (stderr, "%s: cannot access plugin#%d %s (%s)\n",
+		   progname, ix, pluginpath, strerror (errno));
+	  exit (EXIT_FAILURE);
+	};
+      hdlarr[ix] = dlopen (pluginpath, RTLD_NOW);
+      if (!hdlarr[ix])
+	{
+	  fprintf (stderr, "%s: cannot dlopen plugin#%d %s (%s)\n",
+		   progname, ix, pluginpath, dlerror ());
+	  exit (EXIT_FAILURE);
+	};
+      funarr[ix] = dlsym (hdlarr[ix], namarr[ix]);
+      if (!funarr[ix])
+	{
+	  fprintf (stderr, "%s: cannot dlsym name %s in plugin#%d %s (%s)\n",
+		   progname, namarr[ix], ix, pluginpath, dlerror ());
+	  exit (EXIT_FAILURE);
+	};
+    };
+  double endelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double endcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  printf ("%s dlopen-ed %d plugins in %.3f elapsed sec (%.4f / plugin)\n",
+	  progname, maxcnt, endelapsedclock - startelapsedclock,
+	  (endelapsedclock - startelapsedclock) / (double) maxcnt);
+  printf ("%s dlopen-ed %d plugins in %.3f CPU sec (%.4f / plugin)\n",
+	  progname, maxcnt, endcpuclock - startcpuclock,
+	  (endcpuclock - startcpuclock) / (double) maxcnt);
+  fflush (NULL);
+}				/* end dlopen_all_plugins */
+
 int
 main (int argc, char **argv)
 {
@@ -543,6 +620,7 @@ main (int argc, char **argv)
   get_options (argc, argv);
   generate_all_c_files ();
   compile_all_plugins ();
+  dlopen_all_plugins ();
 }				/* end of main */
 
 /****************
