@@ -486,6 +486,15 @@ get_options (int argc, char **argv)
 	  random_seed = atol (optarg);
 	  seeded = true;
 	  break;
+	case 'j':
+	  makenbjobs = atoi (optarg);
+	  if (makenbjobs < MINIMAL_NBJOBS || makenbjobs > MAXIMAL_NBJOBS)
+	    {
+	      fprintf (stderr, "%s: unexpected -j %d number of make jobs\n"
+		       "... (should be between %d and %d)\n",
+		       progname, makenbjobs, MINIMAL_NBJOBS, MAXIMAL_NBJOBS);
+	    };
+	  break;
 	default:
 	  fprintf (stderr, "%s: unexpected option %c\n", progname,
 		   (char) opt);
@@ -639,10 +648,10 @@ do_the_random_calls_to_dlsymed_functions (void)
     }
   double endelapsedclock = my_clock (CLOCK_MONOTONIC);
   double endcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
-  printf ("%s: done %ld random calls (git %s) in %.3f elapsed %.4f cpu sec\n",
-	  progname, nbcalls, MANYDL_GIT,
-	  (endelapsedclock - startelapsedclock),
-	  (endcpuclock - startcpuclock));
+  printf
+    ("%s: done %ld random calls (git %s) in %.3f elapsed %.4f cpu sec with %d plugins\n",
+     progname, nbcalls, MANYDL_GIT, (endelapsedclock - startelapsedclock),
+     (endcpuclock - startcpuclock), maxcnt);
   printf ("%s: so %.3f µs elapsed %.3f µs cpu µs per call\n", progname,
 	  1.0e+6 * (endelapsedclock - startelapsedclock) / (double) nbcalls,
 	  1.0e+6 * (endcpuclock - startcpuclock) / (double) nbcalls);
