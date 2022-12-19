@@ -628,7 +628,7 @@ generate_all_c_files (void)
   double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   printf ("%s start generating %d C files\n", progname, maxcnt);
   fflush (NULL);
-  int p = 1 + (((int) sqrt (maxcnt)) | 0x1f);
+  int p = 1 + (((int) sqrt (maxcnt + maxcnt / 8)) | 0x1f);
   for (int ix = 0; ix < maxcnt; ix++)
     {
       char curname[64];
@@ -637,8 +637,8 @@ generate_all_c_files (void)
       generate_file (curname);
       if (verbose && ix % p == 0 && ix > 10)
 	{
-	  printf ("%s: %d generated C files out of %d\n",
-		  progname, ix, maxcnt);
+	  printf ("%s: %d generated C files out of %d (so %.2f %%)\n",
+		  progname, ix, maxcnt, (100.0 * ix) / maxcnt);
 	  fflush (NULL);
 	  sync ();
 	};
