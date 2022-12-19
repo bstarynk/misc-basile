@@ -566,6 +566,14 @@ dlopen_all_plugins (void)
 	       progname, maxcnt, strerror (errno));
       exit (EXIT_FAILURE);
     }
+  funarr = calloc ((size_t) maxcnt, sizeof (funptr_t));
+  if (!funarr)
+    {
+      fprintf (stderr,
+	       "%s: failed to calloc funarr for %d function pointers (%s)\n",
+	       progname, maxcnt, strerror (errno));
+      exit (EXIT_FAILURE);
+    }
   fflush (NULL);
   for (int ix = 0; ix < maxcnt; ix++)
     {
