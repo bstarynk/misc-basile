@@ -37,6 +37,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <errno.h>
+#include <dirent.h>
 #include <dlfcn.h>
 #include <time.h>
 #include <ctype.h>
@@ -406,12 +407,12 @@ show_help (void)
 	  " default is %d\n", maxcnt);
   printf ("\t -s <mean-size>   : set mean size of generated plugins,"
 	  " default is %d\n", meansize);
-  printf ("\t -j <job>        : number of jobs, passed to make,"
+  printf ("\t -j <job>         : number of jobs, passed to make,"
 	  " default is %d\n", makenbjobs);
-  printf ("\t -m <maker>      : make program, default is %s\n", makeprog);
-  printf ("\t -R <randomseed> : seed passed to srand48, default is unique\n");
-  printf ("\t -S <p.suffix>  : plugin suffix, default is %s\n", pluginsuffix);
-
+  printf ("\t -m <maker>       : make program, default is %s\n", makeprog);
+  printf ("\t -R <randomseed>  : seed passed to srand48, default is unique\n");
+  printf ("\t -S <p.suffix>    : plugin suffix, default is %s\n", pluginsuffix);
+  printf ("\t -C               : clean up the mess (old genf_* files)\n");
 }				/* end of show_help */
 
 void
@@ -423,13 +424,99 @@ show_version (void)
 }				/* end of show_version */
 
 
+void
+cleanup_the_mess (void)
+{
+  char **oldnamarr = NULL;
+  char cwdbuf[256];
+  int nbclean = 0;
+  int oldnamsiz = ((2 * maxcnt + 40) | 0x3f) + 1;
+  struct dirent *curent = NULL;
+  oldnamarr = calloc (oldnamsiz, sizeof (char *));
+  if (!oldnamarr)
+    {
+      fprintf (stderr,
+	       "%s: failed to calloc oldnamarr for %d string pointers (%s)\n",
+	       progname, oldnamsiz, strerror(errno));
+      exit (EXIT_FAILURE);
+    };
+  memset (cwdbuf, 0, sizeof (cwdbuf));
+  if (!getcwd (cwdbuf, sizeof (cwdbuf) - 2))
+    {
+      fprintf (stderr, "%s: failed to getcwd (%s)\n", progname,
+	       strerror (errno));
+    };
+  DIR *curdir = opendir (cwdbuf);
+  if (!curdir)
+    {
+      fprintf (stderr,
+	       "%s: failed to opendir the current directory %s for %d string pointers (%s)\n",
+	       progname, cwdbuf, oldnamsiz, strerror(errno));
+      exit (EXIT_FAILURE);
+    };
+  int oldnbnames = 0;
+  while ((curent = readdir (curdir)) != NULL)
+    {
+      char c = 0;
+      int ix = 0;
+      int pos = -1;
+      if (curent->d_type == DT_REG	/*regular file */
+	  && curent->d_name[0] == 'g'
+	  && !strncmp (curent->d_name, "genf_", 5)
+	  && sscanf (curent->d_name, "genf_%c_%d%n", &c, &ix, &pos) >= 2
+	  && pos > 0 && curent->d_name[pos] == '.' && c >= 'A' && c <= 'Z')
+	{
+	  if (oldnbnames + 1 >= oldnamsiz)
+	    {			// should grow oldnamarr
+	      int biggernamsiz =
+		1 + ((oldnamsiz + oldnamsiz / 4 + 10) | 0x1f);
+	      char **biggernamarr = calloc (biggernamsiz, sizeof (char *));
+	      if (!biggernamarr)
+		{
+		  fprintf (stderr,
+			   "%s: failed to calloc biggernamarr for %d string pointers (%s)\n",
+			   progname, biggernamsiz, strerror (errno));
+		  exit (EXIT_FAILURE);
+		};
+	      memcpy (biggernamarr, oldnamarr, oldnamsiz * sizeof (char *));
+	      oldnamsiz = biggernamsiz;
+	      free (oldnamarr);
+	      oldnamarr = biggernamarr;
+	    };			// end growing up the oldnamarr
+	  char *dupcurnam = strdup (curent->d_name);
+	  if (!dupcurnam)
+	    {
+	      fprintf (stderr,
+		       "%s: failed in the current directory %s for %d string pointers to strdup name '%s' (%s)\n",
+		       progname, cwdbuf, oldnamsiz, curent->d_name, strerror(errno));
+	      break;
+	    }
+	}
+    };
+  closedir (curdir), curdir = NULL;
+  for (int k = 0; k < oldnbnames; k++)
+    {
+      if (unlink (oldnamarr[k]))
+	{
+	  fprintf (stderr,
+		   "%s: failed in current directory %s to unlink '%s' (%s)\n",
+		   progname, cwdbuf, oldnamarr[k], strerror (errno));
+	}
+      else
+	nbclean++;
+      free (oldnamarr[k]), oldnamarr[k] = NULL;
+    };
+  free (oldnamarr), oldnamarr = NULL;
+  printf ("%s: cleaned and removed %d files starting with genf_ in %s\n",
+	  progname, nbclean, cwdbuf);
+}				/* end cleanup_the_mess */
 
 void
 get_options (int argc, char **argv)
 {
   bool seeded = false;
   int opt = 0;
-  while ((opt = getopt (argc, argv, "hVvn:s:j:m:S:R:")) > 0)
+  while ((opt = getopt (argc, argv, "hVCvn:s:j:m:S:R:")) > 0)
     {
       switch (opt)
 	{
@@ -441,6 +528,10 @@ get_options (int argc, char **argv)
 	  return;
 	case 'v':		/* verbose */
 	  verbose = true;
+	  break;
+	case 'C':		/* cleanup - remove all previous plugins
+				   and previously generated genf*.c files */
+	  cleanup_the_mess ();
 	  break;
 	case 'n':		/* number of plugins */
 	  maxcnt = atoi (optarg);
@@ -520,12 +611,22 @@ generate_all_c_files (void)
 {
   double startelapsedclock = my_clock (CLOCK_MONOTONIC);
   double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  printf ("%s start generating %d C files\n", progname, maxcnt);
+  fflush (NULL);
+  int p = 1 + (((int) sqrt (maxcnt)) | 0x1f);
   for (int ix = 0; ix < maxcnt; ix++)
     {
       char curname[64];
       memset (curname, 0, sizeof (curname));
       compute_name_for_index (curname, ix);
       generate_file (curname);
+      if (verbose && ix % p == 0 && ix > 10)
+	{
+	  printf ("%s: %d generated C files out of %d\n",
+		  progname, ix, maxcnt);
+	  fflush (NULL);
+	  sync ();
+	};
     }
   double endelapsedclock = my_clock (CLOCK_MONOTONIC);
   double endcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
@@ -544,8 +645,9 @@ compile_all_plugins (void)
   char buildcmd[128];
   snprintf (buildcmd, sizeof (buildcmd),
 	    "%s -j%d manydl-plugins", makeprog, makenbjobs);
+  printf ("%s start compiling %d plugins\n", progname, maxcnt);
   fflush (NULL);
-  printf ("%s will do: %s\n", progname, buildcmd);
+  printf ("%s will do for %d plugins: %s\n", progname, maxcnt, buildcmd);
   fflush (NULL);
   int buildcode = system (buildcmd);
   if (buildcode > 0)
@@ -583,6 +685,8 @@ dlopen_all_plugins (void)
 	       progname, maxcnt, strerror (errno));
       exit (EXIT_FAILURE);
     }
+  printf ("%s start dlopen-ing %d plugins\n", progname, maxcnt);
+  fflush (NULL);
   fflush (NULL);
   for (int ix = 0; ix < maxcnt; ix++)
     {
