@@ -1,7 +1,7 @@
 ## file misc-basile/Makefile
 ## on https://github.com/bstarynk/
 
-.PHONY: all clean indent analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac
+.PHONY: all clean indent manydl-plugins analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac
 
 FRAMAC=/usr/bin/frama-c
 FRAMALIBC=/usr/share/frama-c/libc/
@@ -11,7 +11,7 @@ CXX=/usr/bin/g++
 RM=/bin/rm -vf
 GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
-
+GENF_CFLAGS= -O2 -g -fPIC -Wall
 
 all: manydl half bwc sync-periodically clever-framac  logged-gcc filipe-shell
 
@@ -20,7 +20,16 @@ clean:
 	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically filipe-shell
 	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
 	$(RM) genf*.c
+## on non Linux, change .so to whatever can be dlopen-esd
 	$(RM) genf*.so
+
+
+## on non Linux systems, change the .so suffix to whatever can be dlopen-ed
+manydl-plugins: $(patsubst %.c, %.so, $(wildcard genf*.c))
+
+## this is specific to Linux, change it on other POSIX systems
+genf%.so: genf%.c
+	$(CC) $(GENF_CFLAGS) -shared -o $@ $^
 
 indent:
 	for f in $(wildcard *.c) ; do $(INDENT) --gnu-style $$f ; done
