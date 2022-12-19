@@ -41,6 +41,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <assert.h>
+#include <math.h>
 #include <sys/times.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -608,6 +609,38 @@ dlopen_all_plugins (void)
   fflush (NULL);
 }				/* end dlopen_all_plugins */
 
+
+void
+do_the_random_calls_to_dlsymed_functions (void)
+{
+  double startelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  long nbcalls = ((long) maxcnt * meansize) / 16 + 1234 + DICE (128);
+  printf ("%s: doing %ld random calls (git %s)\n",
+	  progname, nbcalls, MANYDL_GIT);
+  fflush (NULL);
+  int s = maxcnt;
+  int r = DICE (100);
+  int p = 20 + DICE (10) + (int) sqrt (nbcalls);
+  for (long n = 0; n < nbcalls; n++)
+    {
+      int k = DICE (maxcnt);
+      r = (*funarr[k]) ((int) (n / 10) + DICE (maxcnt), s + r);
+      if (n % p == 0)
+	printf ("%s: after %ld calls r is %d\n", progname, n, r);
+    }
+  double endelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double endcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  printf ("%s: done %ld random calls (git %s) in %.3f elapsed %.4f cpu sec\n",
+	  progname, nbcalls, MANYDL_GIT,
+	  (endelapsedclock - startelapsedclock),
+	  (endcpuclock - startcpuclock));
+  printf ("%s: so %.3f µs elapsed %.3f µs cpu µs per call\n", progname,
+	  1.0e+6 * (endelapsedclock - startelapsedclock) / (double) nbcalls,
+	  1.0e+6 * (endcpuclock - startcpuclock) / (double) nbcalls);
+  fflush (NULL);
+}				/* end do_the_random_calls_to_dlsymed_functions */
+
 int
 main (int argc, char **argv)
 {
@@ -621,6 +654,9 @@ main (int argc, char **argv)
   generate_all_c_files ();
   compile_all_plugins ();
   dlopen_all_plugins ();
+  do_the_random_calls_to_dlsymed_functions ();
+  // we don't bother to dlclose
+  return 0;
 }				/* end of main */
 
 /****************
