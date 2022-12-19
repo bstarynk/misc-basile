@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 #include <dlfcn.h>
@@ -51,8 +52,14 @@
 const char manydl_git[] = MANYDL_GIT;
 
 int maxcnt = 100;		/* number of generated plugins */
-int meanlen = 300;		/* mean length of generated C file */
+#define MINIMAL_COUNT 10
+int meansize = 300;		/* mean size of generated C file */
+#define MINIMAL_SIZE 15
 int makenbjobs = 4;
+#define MINIMAL_NBJOBS 3
+#define MAXIMAL_NBJOBS 50
+
+bool verbose = false;
 
 const char *pluginsuffix = ".so";
 
@@ -111,7 +118,7 @@ clock_t firstclock;
    generator; return the size */
 
 int
-generate_file (const char *name, int meanlen)
+generate_file (const char *name)
 {
   char pathsrc[100];
   FILE *f = NULL;
@@ -130,12 +137,10 @@ generate_file (const char *name, int meanlen)
       perror (pathsrc);
       exit (EXIT_FAILURE);
     };
-  if (meanlen < 20)
-    meanlen = 20;
   /* random length of generated function */
-  l = meanlen / 2 + DICE (meanlen);
-  fprintf (f, "/* generated file %s length %d meanlen %d*/\n", pathsrc, l,
-	   meanlen);
+  l = meansize / 2 + DICE (meansize);
+  fprintf (f, "/* generated file %s length %d meansize %d*/\n", pathsrc, l,
+	   meansize);
   fprintf (f, "extern long dynstep;\n" "extern int tab[%d];\n", MAXTAB);
   fprintf (f,
 	   "extern void say_fun_a_b_c_d(const char*fun, int a, int b, int c, int d);\n");
@@ -343,17 +348,17 @@ show_help (void)
   printf ("%s usage (MIT licensed, no warranty)\n", progname);
   printf ("\t a nearly useless program generating many dlopen-ed plugins\n");
   printf ("\t --version | -V : shows version information\n");
-  printf ("\t --help | -h : shows this help\n");
-  printf ("\t -n <count> : set number of generated plugins, default is %d\n",
-	  maxcnt);
+  printf ("\t --help | -h    : shows this help\n");
+  printf ("\t -v             : run verbosely\n");
+  printf ("\t -n <count>  : set number of generated plugins,"
+	  " default is %d\n", maxcnt);
+  printf ("\t -s <mean-size> : set mean size of generated plugins,"
+	  " default is %d\n", meansize);
   printf
-    ("\t -s <size> : set mean length of generated plugins, default is %d\n",
-     meanlen);
-  printf ("\t -j <job> : number of jobs, passed to make, default is %d\n",
-	  makenbjobs);
-  printf ("\t -m <maker> : make program, default is %s\n", makeprog);
-  printf ("\t -S <pluginsuffix> : plugin suffix, default is %s\n",
-	  pluginsuffix);
+    ("\t -j <job>       : number of jobs, passed to make, default is %d\n",
+     makenbjobs);
+  printf ("\t -m <maker>     : make program, default is %s\n", makeprog);
+  printf ("\t -S <p.suffix>  : plugin suffix, default is %s\n", pluginsuffix);
 }				/* end of show_help */
 
 void
@@ -367,9 +372,50 @@ show_version (void)
 
 
 void
-get_options (int argc, char**argv)
+get_options (int argc, char **argv)
 {
-} /* end get_options */
+  int opt = 0;
+  while ((opt = getopt (argc, argv, "hVvn:s:j:m:S:")) > 0)
+    {
+      switch (opt)
+	{
+	case 'h':		/* help */
+	  show_help ();
+	  return;
+	case 'V':		/* version */
+	  show_version ();
+	  return;
+	case 'v':		/* verbose */
+	  verbose = true;
+	  break;
+	case 'n':		/* number of plugins */
+	  maxcnt = atoi (optarg);
+	  if (maxcnt < MINIMAL_COUNT)
+	    {
+	      fprintf (stderr,
+		       "%s: plugin count given by -n should be at least %d\n",
+		       progname, MINIMAL_COUNT);
+	      exit (EXIT_FAILURE);
+	    };
+	  break;
+	case 's':		/* mean size */
+	  meansize = atoi (optarg);
+	  if (meansize < MINIMAL_SIZE)
+	    {
+	      fprintf (stderr,
+		       "%s: mean size given by -s should be at least %d\n",
+		       progname, MINIMAL_SIZE);
+	      exit (EXIT_FAILURE);
+	    }
+	  break;
+	default:
+	  fprintf (stderr, "%s: unexpected option %c\n", progname,
+		   (char) opt);
+	  show_help ();
+	  exit (EXIT_FAILURE);
+	};
+    };
+}				/* end get_options */
 
 
 int
