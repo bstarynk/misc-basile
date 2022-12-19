@@ -637,8 +637,13 @@ generate_all_c_files (void)
       generate_file (curname);
       if (verbose && ix % p == 0 && ix > 10)
 	{
-	  printf ("%s: %d generated C files out of %d (so %.2f %%)\n",
-		  progname, ix, maxcnt, (100.0 * ix) / maxcnt);
+	  double curelapsedclock = my_clock (CLOCK_MONOTONIC);
+	  double curcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+	  printf
+	    ("%s: %d generated C files out of %d (so %.2f %%) in %.3f elapsed, %.3f cpu sec\n",
+	     progname, ix, maxcnt, (100.0 * ix) / maxcnt,
+	     curelapsedclock - startelapsedclock,
+	     curcpuclock - startcpuclock);
 	  fflush (NULL);
 	  sync ();
 	};
