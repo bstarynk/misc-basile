@@ -410,8 +410,10 @@ show_help (void)
   printf ("\t -j <job>         : number of jobs, passed to make,"
 	  " default is %d\n", makenbjobs);
   printf ("\t -m <maker>       : make program, default is %s\n", makeprog);
-  printf ("\t -R <randomseed>  : seed passed to srand48, default is unique\n");
-  printf ("\t -S <p.suffix>    : plugin suffix, default is %s\n", pluginsuffix);
+  printf
+    ("\t -R <randomseed>  : seed passed to srand48, default is unique\n");
+  printf ("\t -S <p.suffix>    : plugin suffix, default is %s\n",
+	  pluginsuffix);
   printf ("\t -C               : clean up the mess (old genf_* files)\n");
 }				/* end of show_help */
 
@@ -432,12 +434,14 @@ cleanup_the_mess (void)
   int nbclean = 0;
   int oldnamsiz = ((2 * maxcnt + 40) | 0x3f) + 1;
   struct dirent *curent = NULL;
+  double startelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   oldnamarr = calloc (oldnamsiz, sizeof (char *));
   if (!oldnamarr)
     {
       fprintf (stderr,
 	       "%s: failed to calloc oldnamarr for %d string pointers (%s)\n",
-	       progname, oldnamsiz, strerror(errno));
+	       progname, oldnamsiz, strerror (errno));
       exit (EXIT_FAILURE);
     };
   memset (cwdbuf, 0, sizeof (cwdbuf));
@@ -451,7 +455,7 @@ cleanup_the_mess (void)
     {
       fprintf (stderr,
 	       "%s: failed to opendir the current directory %s for %d string pointers (%s)\n",
-	       progname, cwdbuf, oldnamsiz, strerror(errno));
+	       progname, cwdbuf, oldnamsiz, strerror (errno));
       exit (EXIT_FAILURE);
     };
   int oldnbnames = 0;
@@ -460,8 +464,9 @@ cleanup_the_mess (void)
       char c = 0;
       int ix = 0;
       int pos = -1;
-      if (curent->d_type == DT_REG	/*regular file */
-	  && curent->d_name[0] == 'g'
+      if (curent->d_type != DT_REG /*not regular file */ )
+	continue;
+      if (curent->d_name[0] == 'g'
 	  && !strncmp (curent->d_name, "genf_", 5)
 	  && sscanf (curent->d_name, "genf_%c_%d%n", &c, &ix, &pos) >= 2
 	  && pos > 0 && curent->d_name[pos] == '.' && c >= 'A' && c <= 'Z')
@@ -488,9 +493,11 @@ cleanup_the_mess (void)
 	    {
 	      fprintf (stderr,
 		       "%s: failed in the current directory %s for %d string pointers to strdup name '%s' (%s)\n",
-		       progname, cwdbuf, oldnamsiz, curent->d_name, strerror(errno));
+		       progname, cwdbuf, oldnamsiz, curent->d_name,
+		       strerror (errno));
 	      break;
 	    }
+	  oldnamarr[oldnbnames++] = dupcurnam;
 	}
     };
   closedir (curdir), curdir = NULL;
@@ -507,8 +514,12 @@ cleanup_the_mess (void)
       free (oldnamarr[k]), oldnamarr[k] = NULL;
     };
   free (oldnamarr), oldnamarr = NULL;
-  printf ("%s: cleaned and removed %d files starting with genf_ in %s\n",
-	  progname, nbclean, cwdbuf);
+  double endelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double endcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  printf
+    ("%s: cleaned and removed %d files starting with genf_ in %s in %.4f elapsed, %.4f cpu sec\n",
+     progname, nbclean, cwdbuf, endelapsedclock - startelapsedclock,
+     endcpuclock - startcpuclock);
 }				/* end cleanup_the_mess */
 
 void
