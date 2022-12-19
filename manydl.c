@@ -39,6 +39,7 @@
 #include <errno.h>
 #include <dlfcn.h>
 #include <time.h>
+#include <ctype.h>
 #include <sys/times.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -407,6 +408,26 @@ get_options (int argc, char **argv)
 		       progname, MINIMAL_SIZE);
 	      exit (EXIT_FAILURE);
 	    }
+	  break;
+	case 'm':		/* make program */
+	  if (strlen (optarg) < 3 || optarg[0] == '.')
+	    {
+	      fprintf (stderr,
+		       "%s: make program given by -m %s should be a command\n"
+		       "... and not starting with a dot\n", progname, optarg);
+	      exit (EXIT_FAILURE);
+	    }
+	  makeprog = optarg;
+	  break;
+	case 'S':		/* plugin suffix */
+	  if (optarg[0] != '.' && !isalpha (optarg[1]))
+	    {
+	      fprintf (stderr,
+		       "%s: plugin suffix given by -S %s should start with a dot\n"
+		       "... then a letter\n", progname, optarg);
+	      exit (EXIT_FAILURE);
+	    }
+	  pluginsuffix = optarg;
 	  break;
 	default:
 	  fprintf (stderr, "%s: unexpected option %c\n", progname,
