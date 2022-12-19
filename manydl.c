@@ -40,6 +40,7 @@
 #include <dlfcn.h>
 #include <time.h>
 #include <ctype.h>
+#include <assert.h>
 #include <sys/times.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -52,6 +53,8 @@
 
 const char manydl_git[] = MANYDL_GIT;
 
+#define NAME_BUFLEN 32
+
 int maxcnt = 100;		/* number of generated plugins */
 #define MINIMAL_COUNT 10
 int meansize = 300;		/* mean size of generated C file */
@@ -61,6 +64,8 @@ int makenbjobs = 4;
 #define MAXIMAL_NBJOBS 50
 
 bool verbose = false;
+
+long random_seed;
 
 const char *pluginsuffix = ".so";
 
@@ -114,9 +119,32 @@ clock_t firstclock;
 
 #define DICE(N) ((int)(lrand48 () % (N)))
 
-/* generate a file containing one single function (named like the
-   file, ie function foo in foo.c), using the lrand48 random number
-   generator; return the size */
+
+void compute_name_for_index (char name[static NAME_BUFLEN], int ix);
+
+
+void
+compute_name_for_index (char name[static NAME_BUFLEN], int ix)
+{
+  assert (ix >= 0 && ix < maxcnt);
+  memset (name, 0, NAME_BUFLEN);
+  if (maxcnt < 1600)
+    snprintf (name, NAME_BUFLEN, "genf_%c_%02d",
+	      "ABCDEFGHIJKLMNOPQ"[ix % 16], ix / 16);
+  else if (maxcnt < 160000)
+    snprintf (name, NAME_BUFLEN, "genf_%c_%04d",
+	      "ABCDEFGHIJKLMNOPQ"[ix % 16], ix / 16);
+  else if (maxcnt < 16000000)
+    snprintf (name, NAME_BUFLEN, "genf_%c_%06d",
+	      "ABCDEFGHIJKLMNOPQ"[ix % 16], ix / 16);
+  else
+    snprintf (name, NAME_BUFLEN, "genf_%c_%08d",
+	      "ABCDEFGHIJKLMNOPQ"[ix % 16], ix / 16);
+}				/* end compute_name_for_index */
+
+/* generate a file containing one single randomly coded function
+   (named like the file, ie function foo in foo.c), using the lrand48
+   random number generator; return the size */
 
 int
 generate_file (const char *name)
@@ -348,18 +376,19 @@ show_help (void)
 {
   printf ("%s usage (MIT licensed, no warranty)\n", progname);
   printf ("\t a nearly useless program generating many dlopen-ed plugins\n");
-  printf ("\t --version | -V : shows version information\n");
-  printf ("\t --help | -h    : shows this help\n");
-  printf ("\t -v             : run verbosely\n");
+  printf ("\t --version | -V   : shows version information\n");
+  printf ("\t --help | -h      : shows this help\n");
+  printf ("\t -v               : run verbosely\n");
   printf ("\t -n <count>  : set number of generated plugins,"
 	  " default is %d\n", maxcnt);
-  printf ("\t -s <mean-size> : set mean size of generated plugins,"
+  printf ("\t -s <mean-size>   : set mean size of generated plugins,"
 	  " default is %d\n", meansize);
-  printf
-    ("\t -j <job>       : number of jobs, passed to make, default is %d\n",
-     makenbjobs);
-  printf ("\t -m <maker>     : make program, default is %s\n", makeprog);
+  printf ("\t -j <job>        : number of jobs, passed to make,"
+	  " default is %d\n", makenbjobs);
+  printf ("\t -m <maker>      : make program, default is %s\n", makeprog);
+  printf ("\t -R <randomseed> : seed passed to srand48, default is unique\n");
   printf ("\t -S <p.suffix>  : plugin suffix, default is %s\n", pluginsuffix);
+
 }				/* end of show_help */
 
 void
@@ -375,8 +404,9 @@ show_version (void)
 void
 get_options (int argc, char **argv)
 {
+  bool seeded = false;
   int opt = 0;
-  while ((opt = getopt (argc, argv, "hVvn:s:j:m:S:")) > 0)
+  while ((opt = getopt (argc, argv, "hVvn:s:j:m:S:R:")) > 0)
     {
       switch (opt)
 	{
@@ -429,15 +459,41 @@ get_options (int argc, char **argv)
 	    }
 	  pluginsuffix = optarg;
 	  break;
+	case 'R':
+	  random_seed = atol (optarg);
+	  seeded = true;
+	  break;
 	default:
 	  fprintf (stderr, "%s: unexpected option %c\n", progname,
 		   (char) opt);
 	  show_help ();
 	  exit (EXIT_FAILURE);
-	};
+	}
     };
+  if (seeded)
+    srand48 (random_seed);
+  else
+    {
+      time_t t = 0;
+      if (!time (&t))
+	perror ("time");
+      long l = ((long) getpid ()) ^ ((long) t);
+      srand48 (l);
+    }
 }				/* end get_options */
 
+
+void
+generate_all_c_files (void)
+{
+  for (int ix = 0; ix < maxcnt; ix++)
+    {
+      char curname[64];
+      memset (curname, 0, sizeof (curname));
+      compute_name_for_index (curname, ix);
+      generate_file (curname);
+    }
+}				/* end generate_all_c_files */
 
 int
 main (int argc, char **argv)
@@ -448,6 +504,8 @@ main (int argc, char **argv)
     show_help ();
   if (argc > 1 && !strcmp (argv[1], "--version"))
     show_version ();
+  get_options (argc, argv);
+  generate_all_c_files ();
 }				/* end of main */
 
 /****************
