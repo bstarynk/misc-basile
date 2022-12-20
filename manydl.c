@@ -343,7 +343,8 @@ generate_file (const char *name)
 	      fprintf (f, " %c = %c;\n", lvar, rvar);
 	    else
 	      fprintf (f, " %c++;\n", lvar);
-	    fprintf (f, " tab[(%c & 0x3ffff) %% %d] %c= ((%c & 0xffff) + %d);\n",
+	    fprintf (f,
+		     " tab[(%c & 0x3ffff) %% %d] %c= ((%c & 0xffff) + %d);\n",
 		     RANVAR, (MAXTAB / 2 + DICE (MAXTAB / 3)) % MAXTAB,
 		     "+-*/%"[DICE (5)], RANVAR, DICE (64) + 4);
 	    fprintf (f, " if (tab[%d] > %c)\n"	//
@@ -357,10 +358,12 @@ generate_file (const char *name)
 	    fprintf (f, "// from %d\n", __LINE__);
 	    int labrank = DICE (MAXLAB);
 	    fprintf (f, " %c = %c + %d;\n", RANVAR, RANVAR, 2 + DICE (5));
-	    if (DICE(3) == 0)
-	      fprintf (f, " %c = (%c + %d) & 0xfffff;\n", RANVAR, RANVAR, 9+DICE(35));
-	    if (DICE(8) == 0)
-	      fprintf (f, " tab[(%c & 0x1fff) %% %d] += %c;\n", RANVAR, DICE(MAXTAB/3) + 1, RANVAR);
+	    if (DICE (3) == 0)
+	      fprintf (f, " %c = (%c + %d) & 0xfffff;\n", RANVAR, RANVAR,
+		       9 + DICE (35));
+	    if (DICE (8) == 0)
+	      fprintf (f, " tab[(%c & 0x1fff) %% %d] += %c;\n", RANVAR,
+		       DICE (MAXTAB / 3) + 1, RANVAR);
 	    fprintf (f, " dynstep++;\n");
 	    fprintf (f, " if (dynstep < initdynstep + %d)\n",
 		     DICE (16384) + 10);
@@ -377,10 +380,11 @@ generate_file (const char *name)
     {
       if (lab[i] == LAB_JUMPED)
 	fprintf (f, " lab%d:\n %c++;\n", i, RANVAR);
-      if (DICE (8) == 0) {
-	char v = RANVAR;
-	fprintf (f, " %c = (%c + %d) & 0xfffff;\n", v, v, 10 + DICE(25));
-      }
+      if (DICE (8) == 0)
+	{
+	  char v = RANVAR;
+	  fprintf (f, " %c = (%c + %d) & 0xfffff;\n", v, v, 10 + DICE (25));
+	}
       if (DICE (4) == 0 || i == MAXLAB / 2)
 	{
 	  fprintf (f, " tab[(%c &0x3fffff) %% %d] += %c;\n", RANVAR, MAXTAB,
@@ -701,6 +705,8 @@ void
 compile_all_plugins (void)
 {
   char buildcmd[128];
+  struct rusage uscompil = { };
+  double childcpuclock = 0.0;
   snprintf (buildcmd, sizeof (buildcmd),
 	    "%s -j%d manydl-plugins", makeprog, makenbjobs);
   printf ("%s start compiling %d plugins\n", progname, maxcnt);
@@ -713,8 +719,16 @@ compile_all_plugins (void)
       fprintf (stderr, "%s failed to run: %s (%d)\n",
 	       progname, buildcmd, buildcode);
     };
+  if (!getrusage (RUSAGE_CHILDREN, &uscompil))
+    {
+      childcpuclock =
+	((double) uscompil.ru_utime.tv_sec +
+	 1.0e-6 * uscompil.ru_utime.tv_usec) +
+	((double) uscompil.ru_stime.tv_sec +
+	 1.0e-6 * uscompil.ru_stime.tv_usec);
+    }
   compile_elapsed_clock = my_clock (CLOCK_MONOTONIC);
-  compile_cpu_clock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  compile_cpu_clock = my_clock (CLOCK_PROCESS_CPUTIME_ID) + childcpuclock;
   printf ("%s compiled %d C files in %.3f elapsed sec (%.4f / file)\n",
 	  progname, maxcnt, compile_elapsed_clock - generate_elapsed_clock,
 	  (compile_elapsed_clock - generate_elapsed_clock) / (double) maxcnt);
@@ -864,6 +878,19 @@ main (int argc, char **argv)
        progname, maxcnt, meansize,
        compile_elapsed_clock - generate_elapsed_clock,
        compile_cpu_clock - generate_cpu_clock);
+  if (!isnan (dlopen_elapsed_clock) && !isnan (dlopen_cpu_clock))
+    printf
+      ("%s: dlopened %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
+       progname, maxcnt, meansize,
+       dlopen_elapsed_clock - compile_elapsed_clock,
+       dlopen_cpu_clock - compile_cpu_clock);
+  if (!isnan (compute_elapsed_clock) && !isnan (compute_cpu_clock))
+    printf
+      ("%s: computed with %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
+       progname, maxcnt, meansize,
+       compute_elapsed_clock - dlopen_elapsed_clock,
+       compute_cpu_clock - dlopen_cpu_clock);
+
   // we don't bother to dlclose
   return 0;
 }				/* end of main */
