@@ -88,6 +88,12 @@ char myhostname[64];
 char *progname;
 #define INDENT_PROGRAM "/usr/bin/indent"
 
+double start_elapsed_clock = NAN, start_cpu_clock = NAN;
+double generate_elapsed_clock = NAN, generate_cpu_clock = NAN;
+double compile_elapsed_clock = NAN, compile_cpu_clock = NAN;
+double dlopen_elapsed_clock = NAN, dlopen_cpu_clock = NAN;
+double compute_elapsed_clock = NAN, compute_cpu_clock = NAN;
+
 extern long dynstep;
 extern void say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d);
 
@@ -672,14 +678,14 @@ generate_all_c_files (void)
 	  sync ();
 	};
     }
-  double endelapsedclock = my_clock (CLOCK_MONOTONIC);
-  double endcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  generate_elapsed_clock = my_clock (CLOCK_MONOTONIC);
+  generate_cpu_clock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   printf ("%s generated %d C files in %.3f elapsed sec (%.4f / file)\n",
-	  progname, maxcnt, endelapsedclock - startelapsedclock,
-	  (endelapsedclock - startelapsedclock) / (double) maxcnt);
+	  progname, maxcnt, generate_elapsed_clock - start_elapsed_clock,
+	  (generate_elapsed_clock - start_elapsed_clock) / (double) maxcnt);
   printf ("%s generated %d C files in %.3f CPU sec (%.4f / file)\n",
-	  progname, maxcnt, endcpuclock - startcpuclock,
-	  (endcpuclock - startcpuclock) / (double) maxcnt);
+	  progname, maxcnt, generate_cpu_clock - start_cpu_clock,
+	  (generate_cpu_clock - start_cpu_clock) / (double) maxcnt);
   fflush (NULL);
 }				/* end generate_all_c_files */
 
@@ -699,6 +705,14 @@ compile_all_plugins (void)
       fprintf (stderr, "%s failed to run: %s (%d)\n",
 	       progname, buildcmd, buildcode);
     };
+  compile_elapsed_clock = my_clock (CLOCK_MONOTONIC);
+  compile_cpu_clock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  printf ("%s compiled %d C files in %.3f elapsed sec (%.4f / file)\n",
+	  progname, maxcnt, compile_elapsed_clock - generate_elapsed_clock,
+	  (compile_elapsed_clock - generate_elapsed_clock) / (double) maxcnt);
+  printf ("%s compiled %d C files in %.3f CPU sec (%.4f / file)\n",
+	  progname, maxcnt, compile_cpu_clock - generate_cpu_clock,
+	  (compile_cpu_clock - generate_cpu_clock) / (double) maxcnt);
 }				/* end compile_all_plugins */
 
 
@@ -771,6 +785,8 @@ dlopen_all_plugins (void)
   printf ("%s dlopen-ed %d plugins in %.3f CPU sec (%.4f / plugin)\n",
 	  progname, maxcnt, endcpuclock - startcpuclock,
 	  (endcpuclock - startcpuclock) / (double) maxcnt);
+  dlopen_elapsed_clock = endelapsedclock;
+  dlopen_cpu_clock = endcpuclock;
   fflush (NULL);
 }				/* end dlopen_all_plugins */
 
@@ -803,6 +819,8 @@ do_the_random_calls_to_dlsymed_functions (void)
   printf ("%s: so %.3f µs elapsed %.3f µs cpu µs per call\n", progname,
 	  1.0e+6 * (endelapsedclock - startelapsedclock) / (double) nbcalls,
 	  1.0e+6 * (endcpuclock - startcpuclock) / (double) nbcalls);
+  compute_elapsed_clock = endelapsedclock;
+  compute_cpu_clock = endcpuclock;
   fflush (NULL);
 }				/* end do_the_random_calls_to_dlsymed_functions */
 
@@ -810,15 +828,10 @@ do_the_random_calls_to_dlsymed_functions (void)
 int
 main (int argc, char **argv)
 {
-  double startelapsedclock = NAN, startcpuclock = NAN;
-  double generateelapsedclock = NAN, generatecpuclock = NAN;
-  double compileelapsedclock = NAN, compilecpuclock = NAN;
-  double dlopenelapsedclock = NAN, dlopencpuclock = NAN;
-  double computeelapsedclock = NAN, computecpuclock = NAN;
   progname = argv[0];
   gethostname (myhostname, sizeof (myhostname) - 1);
-  startelapsedclock = my_clock (CLOCK_MONOTONIC);
-  startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  start_elapsed_clock = my_clock (CLOCK_MONOTONIC);
+  start_cpu_clock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   if (argc > 1 && !strcmp (argv[1], "--help"))
     show_help ();
   if (argc > 1 && !strcmp (argv[1], "--version"))
@@ -827,28 +840,22 @@ main (int argc, char **argv)
   if (didcleanup)
     return 0;
   generate_all_c_files ();
-  generateelapsedclock = my_clock (CLOCK_MONOTONIC);
-  generatecpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   compile_all_plugins ();
-  compileelapsedclock = my_clock (CLOCK_MONOTONIC);
-  compilecpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   dlopen_all_plugins ();
-  dlopenelapsedclock = my_clock (CLOCK_MONOTONIC);
-  dlopencpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   do_the_random_calls_to_dlsymed_functions ();
-  computeelapsedclock = my_clock (CLOCK_MONOTONIC);
-  computecpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  printf ("%s: (git %s built on %s) pid %d ending on %s\n",
+	  progname, MANYDL_GIT, __DATE__ "@" __TIME__, (int) getpid (),
+	  myhostname);
   printf
-    ("%s: (git %s) generated %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
-     progname, MANYDL_GIT, maxcnt, meansize,
-     generateelapsedclock - startelapsedclock,
-     generatecpuclock - startcpuclock);
-  if (!isnan (compileelapsedclock) && !isnan (compilecpuclock))
+    ("%s: generated %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
+     progname, maxcnt, meansize, generate_elapsed_clock - start_elapsed_clock,
+     generate_cpu_clock - start_cpu_clock);
+  if (!isnan (compile_elapsed_clock) && !isnan (compile_cpu_clock))
     printf
-      ("%s: (git %s) compiled %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
-       progname, MANYDL_GIT, maxcnt, meansize,
-       compileelapsedclock - generateelapsedclock,
-       compilecpuclock - generatecpuclock);
+      ("%s: compiled %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
+       progname, maxcnt, meansize,
+       compile_elapsed_clock - generate_elapsed_clock,
+       compile_cpu_clock - generate_cpu_clock);
   // we don't bother to dlclose
   return 0;
 }				/* end of main */
