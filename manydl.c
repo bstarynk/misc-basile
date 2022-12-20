@@ -806,11 +806,19 @@ do_the_random_calls_to_dlsymed_functions (void)
   fflush (NULL);
 }				/* end do_the_random_calls_to_dlsymed_functions */
 
+
 int
 main (int argc, char **argv)
 {
+  double startelapsedclock = NAN, startcpuclock = NAN;
+  double generateelapsedclock = NAN, generatecpuclock = NAN;
+  double compileelapsedclock = NAN, compilecpuclock = NAN;
+  double dlopenelapsedclock = NAN, dlopencpuclock = NAN;
+  double computeelapsedclock = NAN, computecpuclock = NAN;
   progname = argv[0];
   gethostname (myhostname, sizeof (myhostname) - 1);
+  startelapsedclock = my_clock (CLOCK_MONOTONIC);
+  startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   if (argc > 1 && !strcmp (argv[1], "--help"))
     show_help ();
   if (argc > 1 && !strcmp (argv[1], "--version"))
@@ -819,9 +827,28 @@ main (int argc, char **argv)
   if (didcleanup)
     return 0;
   generate_all_c_files ();
+  generateelapsedclock = my_clock (CLOCK_MONOTONIC);
+  generatecpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   compile_all_plugins ();
+  compileelapsedclock = my_clock (CLOCK_MONOTONIC);
+  compilecpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   dlopen_all_plugins ();
+  dlopenelapsedclock = my_clock (CLOCK_MONOTONIC);
+  dlopencpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   do_the_random_calls_to_dlsymed_functions ();
+  computeelapsedclock = my_clock (CLOCK_MONOTONIC);
+  computecpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  printf
+    ("%s: (git %s) generated %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
+     progname, MANYDL_GIT, maxcnt, meansize,
+     generateelapsedclock - startelapsedclock,
+     generatecpuclock - startcpuclock);
+  if (!isnan (compileelapsedclock) && !isnan (compilecpuclock))
+    printf
+      ("%s: (git %s) compiled %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
+       progname, MANYDL_GIT, maxcnt, meansize,
+       compileelapsedclock - generateelapsedclock,
+       compilecpuclock - generatecpuclock);
   // we don't bother to dlclose
   return 0;
 }				/* end of main */
