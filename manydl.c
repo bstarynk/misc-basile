@@ -69,6 +69,12 @@ bool verbose = false;
 
 bool didcleanup = false;
 
+// when fakerun is true, don't compile or dlopen the plugins
+bool fakerun = false;
+
+// a potential script to run on C code
+const char* terminatingscript = NULL;
+
 long random_seed;
 
 const char *pluginsuffix = ".so";
@@ -93,6 +99,7 @@ double generate_elapsed_clock = NAN, generate_cpu_clock = NAN;
 double compile_elapsed_clock = NAN, compile_cpu_clock = NAN;
 double dlopen_elapsed_clock = NAN, dlopen_cpu_clock = NAN;
 double compute_elapsed_clock = NAN, compute_cpu_clock = NAN;
+double terminating_elapsed_clock = NAN, terminating_cpu_clock = NAN;
 
 extern long dynstep;
 extern void say_fun_a_b_c_d (const char *fun, int a, int b, int c, int d);
@@ -447,6 +454,8 @@ show_help (void)
   printf ("\t --version | -V   : shows version information\n");
   printf ("\t --help | -h      : shows this help\n");
   printf ("\t -v               : run verbosely\n");
+  printf ("\t -F               : fake run - dont compile or run plugins,\n"
+	  "\t                    ... just generate C code.\n");
   printf ("\t -n <count>  : set number of generated plugins,"
 	  " default is %d\n", maxcnt);
   printf ("\t -s <mean-size>   : set mean size of generated plugins,"
@@ -458,6 +467,9 @@ show_help (void)
     ("\t -R <randomseed>  : seed passed to srand48, default is unique\n");
   printf ("\t -S <p.suffix>    : plugin suffix, default is %s\n",
 	  pluginsuffix);
+  printf ("\t -T <script>      : terminating popen-ed script\n");
+  printf ("\t                    (could be some external analyzer,\n"
+	  "\t                       ... getting names of generated C files)\n");
   printf ("\t -C               : clean up the mess (old genf_* files)\n");
 }				/* end of show_help */
 
@@ -573,7 +585,7 @@ get_options (int argc, char **argv)
 {
   bool seeded = false;
   int opt = 0;
-  while ((opt = getopt (argc, argv, "hVCvn:s:j:m:S:R:")) > 0)
+  while ((opt = getopt (argc, argv, "hVCFvn:s:j:m:S:R:T:")) > 0)
     {
       switch (opt)
 	{
@@ -585,6 +597,12 @@ get_options (int argc, char **argv)
 	  return;
 	case 'v':		/* verbose */
 	  verbose = true;
+	  break;
+	case 'F':		/* fake run */
+	  fakerun = true;
+	  break;
+	case 'T':
+	  terminatingscript = optarg;
 	  break;
 	case 'C':		/* cleanup - remove all previous plugins
 				   and previously generated genf*.c files */
@@ -847,6 +865,25 @@ do_the_random_calls_to_dlsymed_functions (void)
 }				/* end do_the_random_calls_to_dlsymed_functions */
 
 
+void
+run_terminating_script (void)
+{
+  double startelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  char cwdbuf[128];
+  memset (cwdbuf, 0, sizeof(cwdbuf));
+  if (NULL == getcwd(cwdbuf, sizeof(cwdbuf)))
+    {
+      fprintf(stderr, "%s: failed to getcwd when running terminating script %s (%s)\n",
+	      progname, terminatingscript, strerror(errno));
+      exit (EXIT_FAILURE);
+    };
+#warning run_terminating_script is incomplete
+  // TODO: should putenv -in static buffers- MANYDL_GIT and MANYDL_SIZE and MANYDL_MAXCOUNT etc...
+  // then use popen on the terminatingscript command
+  // and write all the generated C file names to that pipe
+} /* end run_terminating_script */
+
 int
 main (int argc, char **argv)
 {
@@ -862,9 +899,14 @@ main (int argc, char **argv)
   if (didcleanup)
     return 0;
   generate_all_c_files ();
-  compile_all_plugins ();
-  dlopen_all_plugins ();
-  do_the_random_calls_to_dlsymed_functions ();
+  if (!fakerun) {
+    compile_all_plugins ();
+    dlopen_all_plugins ();
+    do_the_random_calls_to_dlsymed_functions ();
+  };
+  if (terminatingscript) {
+    run_terminating_script ();
+  };
   printf ("%s: (git %s built on %s) pid %d ending on %s\n",
 	  progname, MANYDL_GIT, __DATE__ "@" __TIME__, (int) getpid (),
 	  myhostname);
@@ -890,6 +932,12 @@ main (int argc, char **argv)
        progname, maxcnt, meansize,
        compute_elapsed_clock - dlopen_elapsed_clock,
        compute_cpu_clock - dlopen_cpu_clock);
+  if (!isnan (terminating_elapsed_clock) && !isnan (terminating_cpu_clock))
+    printf
+      ("%s: terminating script %s with %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
+       progname, terminatingscript, maxcnt, meansize,
+       terminating_elapsed_clock - dlopen_elapsed_clock,
+       terminating_cpu_clock - dlopen_cpu_clock);
 
   // we don't bother to dlclose
   return 0;
