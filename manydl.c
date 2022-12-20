@@ -278,6 +278,11 @@ generate_file (const char *name)
 	  fprintf (f,
 		   " %c = (%d + ((%c << (1+ (%c & 0x7))) + %c)) & 0xffffff;\n",
 		   RANVAR, DICE (32) + 5, RANVAR, RANVAR, RANVAR);
+	  if (DICE (100) > 10)
+	    fprintf (f,
+		     " %c = (%c %% %d) + tab[(%c & 0xfffff) %% %d];\n",
+		     RANVAR, RANVAR, (DICE (100) + 10),
+		     RANVAR, 2 + DICE (3 * MAXTAB / 4));
 	  break;
 	case 9:
 	  fprintf (f, "// from %d\n", __LINE__);
@@ -296,10 +301,22 @@ generate_file (const char *name)
 	case 11:
 	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f, " %c = %c + %d;\n", RANVAR, RANVAR, (2 + DICE (5)));
+	  fprintf (f, " %c = (%c*%d) + (%c>>%d);\n",
+		   RANVAR, RANVAR, (5 + DICE (32)), RANVAR, (1 + DICE (4)));
+	  fprintf (f,
+		   " if (%c > %d)\n"
+		   "    %c = %c + (tab[%d] %% %d);\n",
+		   RANVAR, DICE (1000) + 100, RANVAR, RANVAR,
+		   DICE (MAXTAB / 2), (2 + DICE (1024)));
 	  break;
 	case 12:
 	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f, " %c = %d;\n", RANVAR, 5 + DICE (20));
+	  fprintf (f,		//
+		   " if (tab[%d] > %c)\n"
+		   "    %c = %c + (tab[%d] & 0xffff);\n",
+		   DICE (MAXTAB / 2), RANVAR,
+		   RANVAR, RANVAR, DICE (MAXTAB / 2));
 	  break;
 	case 13:
 	  {
@@ -320,6 +337,13 @@ generate_file (const char *name)
 	      fprintf (f, " %c = %c;\n", lvar, rvar);
 	    else
 	      fprintf (f, " %c++;\n", lvar);
+	    fprintf (f, " tab[%c %% %d] %c= ((%c & 0xffff) + %d);\n",
+		     RANVAR, MAXTAB / 2 + DICE (MAXTAB / 3),
+		     "+-*/%"[DICE (5)], RANVAR, DICE (64) + 4);
+	    fprintf (f, " if (tab[%d] > %c\n"	//
+		     "   %c = (%c * %d) + tab[%d];\n",
+		     DICE (MAXTAB / 3), RANVAR,
+		     RANVAR, RANVAR, 5 + DICE (50), DICE (2 * MAXTAB / 3));
 	  };
 	  break;
 	case 15:
