@@ -329,8 +329,8 @@ generate_file (const char *name)
 	    fprintf (f, "// from %d\n", __LINE__);
 	    char fvar = RANVAR;
 	    fprintf (f,
-		     " for (%c &= %d; %c>0; %c--) {dynstep++;tab[%c] += (1+(%c&0x1f));};\n",
-		     fvar, MAXTAB - 1, fvar, fvar, fvar, RANVAR);
+		     " for (%c &= %d; %c>0; %c--) {dynstep++;tab[(%c & 0xffff) %% %d] += (1+(%c&0x1f));};\n",
+		     fvar, MAXTAB - 1, fvar, fvar, fvar, MAXTAB, RANVAR);
 	    if (DICE (5) == 0)
 	      fprintf (f, " %c += %d;\n", RANVAR, 5 + DICE (20));
 	  }
@@ -343,12 +343,12 @@ generate_file (const char *name)
 	      fprintf (f, " %c = %c;\n", lvar, rvar);
 	    else
 	      fprintf (f, " %c++;\n", lvar);
-	    fprintf (f, " tab[%c %% %d] %c= ((%c & 0xffff) + %d);\n",
-		     RANVAR, MAXTAB / 2 + DICE (MAXTAB / 3),
+	    fprintf (f, " tab[(%c & 0x3ffff) %% %d] %c= ((%c & 0xffff) + %d);\n",
+		     RANVAR, (MAXTAB / 2 + DICE (MAXTAB / 3)) % MAXTAB,
 		     "+-*/%"[DICE (5)], RANVAR, DICE (64) + 4);
 	    fprintf (f, " if (tab[%d] > %c)\n"	//
 		     "   %c = (%c * %d) + tab[%d];\n",
-		     DICE (MAXTAB / 3), RANVAR,
+		     (2 + DICE (MAXTAB / 3)) % MAXTAB, RANVAR,
 		     RANVAR, RANVAR, 5 + DICE (50), DICE (2 * MAXTAB / 3));
 	  };
 	  break;
@@ -357,6 +357,10 @@ generate_file (const char *name)
 	    fprintf (f, "// from %d\n", __LINE__);
 	    int labrank = DICE (MAXLAB);
 	    fprintf (f, " %c = %c + %d;\n", RANVAR, RANVAR, 2 + DICE (5));
+	    if (DICE(3) == 0)
+	      fprintf (f, " %c = (%c + %d) & 0xfffff;\n", RANVAR, RANVAR, 9+DICE(35));
+	    if (DICE(8) == 0)
+	      fprintf (f, " tab[(%c & 0x1fff) %% %d] += %c;\n", RANVAR, DICE(MAXTAB/3) + 1, RANVAR);
 	    fprintf (f, " dynstep++;\n");
 	    fprintf (f, " if (dynstep < initdynstep + %d)\n",
 		     DICE (16384) + 10);
@@ -372,10 +376,14 @@ generate_file (const char *name)
   for (i = 0; i < MAXLAB; i++)
     {
       if (lab[i] == LAB_JUMPED)
-	fprintf (f, " lab%d: %c++;\n", i, RANVAR);
+	fprintf (f, " lab%d:\n %c++;\n", i, RANVAR);
+      if (DICE (8) == 0) {
+	char v = RANVAR;
+	fprintf (f, " %c = (%c + %d) & 0xfffff;\n", v, v, 10 + DICE(25));
+      }
       if (DICE (4) == 0 || i == MAXLAB / 2)
 	{
-	  fprintf (f, " tab[(%c &0xffffff) %% %d] += %c;\n", RANVAR, MAXTAB,
+	  fprintf (f, " tab[(%c &0x3fffff) %% %d] += %c;\n", RANVAR, MAXTAB,
 		   RANVAR);
 	  fprintf (f, " %c += (%c&0xffff);\n", RANVAR, RANVAR);
 	  fprintf (f, " dynstep++;\n");
