@@ -346,7 +346,7 @@ generate_file (const char *name)
 	    fprintf (f, " tab[%c %% %d] %c= ((%c & 0xffff) + %d);\n",
 		     RANVAR, MAXTAB / 2 + DICE (MAXTAB / 3),
 		     "+-*/%"[DICE (5)], RANVAR, DICE (64) + 4);
-	    fprintf (f, " if (tab[%d] > %c\n"	//
+	    fprintf (f, " if (tab[%d] > %c)\n"	//
 		     "   %c = (%c * %d) + tab[%d];\n",
 		     DICE (MAXTAB / 3), RANVAR,
 		     RANVAR, RANVAR, 5 + DICE (50), DICE (2 * MAXTAB / 3));
