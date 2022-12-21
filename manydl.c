@@ -73,7 +73,7 @@ bool didcleanup = false;
 bool fakerun = false;
 
 // a potential script to run on C code
-const char* terminatingscript = NULL;
+const char *terminatingscript = NULL;
 
 long random_seed;
 
@@ -686,8 +686,9 @@ generate_all_c_files (void)
 {
   double startelapsedclock = my_clock (CLOCK_MONOTONIC);
   double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
-  printf ("%s (git %s, pid %s on %s) start generating %d C files of mean size %d\n",
-	  progname, MANYDL_GIT, (int)getpid(), myhostname, maxcnt, meansize);
+  printf
+    ("%s (git %s, pid %d on %s) start generating %d C files of mean size %d\n",
+     progname, MANYDL_GIT, (int) getpid (), myhostname, maxcnt, meansize);
   fflush (NULL);
   int p = 1 + (((int) sqrt (maxcnt + maxcnt / 8)) | 0x1f);
   for (int ix = 0; ix < maxcnt; ix++)
@@ -832,7 +833,7 @@ dlopen_all_plugins (void)
 }				/* end dlopen_all_plugins */
 
 
-void
+long
 do_the_random_calls_to_dlsymed_functions (void)
 {
   double startelapsedclock = my_clock (CLOCK_MONOTONIC);
@@ -863,6 +864,7 @@ do_the_random_calls_to_dlsymed_functions (void)
   compute_elapsed_clock = endelapsedclock;
   compute_cpu_clock = endcpuclock;
   fflush (NULL);
+  return nbcalls;
 }				/* end do_the_random_calls_to_dlsymed_functions */
 
 
@@ -872,22 +874,102 @@ run_terminating_script (void)
   double startelapsedclock = my_clock (CLOCK_MONOTONIC);
   double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
   char cwdbuf[128];
-  memset (cwdbuf, 0, sizeof(cwdbuf));
-  if (NULL == getcwd(cwdbuf, sizeof(cwdbuf)))
+  memset (cwdbuf, 0, sizeof (cwdbuf));
+  if (NULL == getcwd (cwdbuf, sizeof (cwdbuf)))
     {
-      fprintf(stderr, "%s: failed to getcwd when running terminating script %s (%s)\n",
-	      progname, terminatingscript, strerror(errno));
+      fprintf (stderr,
+	       "%s: failed to getcwd when running terminating script %s (%s)\n",
+	       progname, terminatingscript, strerror (errno));
       exit (EXIT_FAILURE);
     };
-#warning run_terminating_script is incomplete
-  // TODO: should putenv -in static buffers- MANYDL_GIT and MANYDL_SIZE and MANYDL_MAXCOUNT etc...
+  char termcmd[256];
+  memset (termcmd, 0, sizeof (termcmd));
+  snprintf (termcmd, sizeof (termcmd), "%s %d '%s'", terminatingscript,
+	    maxcnt, cwdbuf);
+  // should putenv -in static buffers- MANYDL_GIT and MANYDL_SIZE and MANYDL_MAXCOUNT etc...
+  static char gitenv[64];
+  static char sizenv[64];
+  static char pidenv[64];
+  static char cntenv[64];
+  static char cwdenv[256];
+  snprintf (gitenv, sizeof (gitenv), "MANYDL_GIT=%s", MANYDL_GIT);
+  putenv (gitenv);
+  snprintf (sizenv, sizeof (sizenv), "MANYDL_MEANSIZE=%d", meansize);
+  putenv (sizenv);
+  snprintf (cntenv, sizeof (cntenv), "MANYDL_MAXCOUNT=%d", maxcnt);
+  putenv (cntenv);
+  snprintf (pidenv, sizeof (pidenv), "MANYDL_PID=%d", (int) getpid ());
+  putenv (pidenv);
+  snprintf (cwdenv, sizeof (cwdenv), "MANYDL_CWD=%s", cwdbuf);
+  putenv (cwdenv);
+  if (verbose)
+    printf ("%s: (pid %d on %s) running terminating command %s\n", progname,
+	    (int) getpid (), myhostname, termcmd);
+  fflush (NULL);
+  FILE *pfil = popen (termcmd, "w");
+  if (!pfil)
+    {
+      fprintf (stderr, "%s: failed to popen terminating command %s (%s)\n",
+	       progname, termcmd, strerror (errno));
+      exit (EXIT_FAILURE);
+    }
   // then use popen on the terminatingscript command
   // and write all the generated C file names to that pipe
-} /* end run_terminating_script */
+  for (int ix = 0; ix < maxcnt; ix++)
+    {
+      char nambuf[NAME_BUFLEN + 4];
+      memset (nambuf, 0, sizeof (nambuf));
+      compute_name_for_index (nambuf, ix);
+      fputs (nambuf, pfil);
+      putc ('\n', pfil);
+      if (ix % 16 == 0)
+	{
+	  fflush (pfil);
+	  if (ix % 256 == 0)
+	    usleep (5000);	/// give a chance to the script to run more
+	};
+    }
+  fflush (pfil);
+  usleep (8000);
+  int piperr = pclose (pfil);
+  if (piperr)
+    {
+      if (WIFEXITED (piperr))
+	fprintf (stderr, "%s: failing terminating command %s -exited %d\n",
+		 progname, termcmd, WEXITSTATUS (piperr));
+      else if (WIFSIGNALED (piperr))
+	{
+	  int signum = WTERMSIG (piperr);
+	  if (WCOREDUMP (piperr))
+	    fprintf (stderr,
+		     "%s: failing terminating command %s -got signal#%d (%s) and core dumped\n",
+		     progname, termcmd, signum, strsignal (signum));
+	  else
+	    fprintf (stderr,
+		     "%s: failing terminating command %s -got signal#%d (%s)\n",
+		     progname, termcmd, signum, strsignal (signum));
+	}
+      fflush (stderr);
+      exit (EXIT_FAILURE);
+    }
+  double endelapsedclock = my_clock (CLOCK_MONOTONIC);
+  double endcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
+  terminating_elapsed_clock = endelapsedclock;
+  terminating_cpu_clock = endcpuclock;
+  printf
+    ("%s: (pid %d on %s) done terminating command %s in %.3f elapsed, %.3f cpu sec\n",
+     progname, (int) getpid (), myhostname, termcmd,
+     endelapsedclock - startelapsedclock, endcpuclock - startcpuclock);
+  fflush (NULL);
+}				/* end run_terminating_script */
+
+
+
 
 int
 main (int argc, char **argv)
 {
+  long nbcalls = 0;
   progname = argv[0];
   gethostname (myhostname, sizeof (myhostname) - 1);
   start_elapsed_clock = my_clock (CLOCK_MONOTONIC);
@@ -900,14 +982,22 @@ main (int argc, char **argv)
   if (didcleanup)
     return 0;
   generate_all_c_files ();
-  if (!fakerun) {
-    compile_all_plugins ();
-    dlopen_all_plugins ();
-    do_the_random_calls_to_dlsymed_functions ();
-  };
-  if (terminatingscript) {
-    run_terminating_script ();
-  };
+  if (!fakerun)
+    {
+      compile_all_plugins ();
+      dlopen_all_plugins ();
+      nbcalls = do_the_random_calls_to_dlsymed_functions ();
+    };
+  if (terminatingscript)
+    {
+      if (nbcalls > 0)
+	{
+	  static char callenv[64];
+	  snprintf (callenv, sizeof (callenv), "MANYDL_NBCALLS=%ld", nbcalls);
+	  putenv (callenv);
+	};
+      run_terminating_script ();
+    };
   printf ("%s: (git %s built on %s) pid %d ending on %s\n",
 	  progname, MANYDL_GIT, __DATE__ "@" __TIME__, (int) getpid (),
 	  myhostname);
@@ -929,8 +1019,8 @@ main (int argc, char **argv)
        dlopen_cpu_clock - compile_cpu_clock);
   if (!isnan (compute_elapsed_clock) && !isnan (compute_cpu_clock))
     printf
-      ("%s: computed with %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
-       progname, maxcnt, meansize,
+      ("%s: computed %ld calls with %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
+       progname, nbcalls, maxcnt, meansize,
        compute_elapsed_clock - dlopen_elapsed_clock,
        compute_cpu_clock - dlopen_cpu_clock);
   if (!isnan (terminating_elapsed_clock) && !isnan (terminating_cpu_clock))
