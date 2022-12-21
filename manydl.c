@@ -211,7 +211,7 @@ generate_file (const char *name)
 	case 1:
 	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f,
-		   " %c = (%c * %d + tab[%c & %d] - %c) & 0xffffff; tab[%d]++;\n",
+		   " %c = (%c * %d + tab[%c & %#x] - %c) & 0xffffff; tab[%d]++;\n",
 		   RANVAR, RANVAR, 1 + DICE (16), RANVAR, MAXTAB - 1, RANVAR,
 		   DICE (MAXTAB));
 	  if (DICE (8) == 0)
@@ -221,14 +221,14 @@ generate_file (const char *name)
 	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f,
 		   " if (%c > %c + %d) %c++; else %c=(tab[%d] + %c) & 0xffffff;\n",
-		   RANVAR, RANVAR, DICE (8), RANVAR, RANVAR, DICE (MAXTAB),
+		   RANVAR, RANVAR, 5 + DICE (10), RANVAR, RANVAR, DICE (MAXTAB),
 		   RANVAR);
 	  if (DICE (8) == 0)
 	    fprintf (f, " dynstep++;\n");
 	  break;
 	case 3:
 	  fprintf (f, "// from %d\n", __LINE__);
-	  fprintf (f, " tab[%c & %d] += %d + ((%c - %c) & 0xf); %c++;\n",
+	  fprintf (f, " tab[%c & %#x] += %d + ((%c - %c) & 0x3ff); %c++;\n",
 		   RANVAR, MAXTAB - 1, DICE (8) + 2, RANVAR, RANVAR, RANVAR);
 	  if (DICE (8) == 0)
 	    fprintf (f, " dynstep++;\n");
@@ -289,7 +289,7 @@ generate_file (const char *name)
 	case 8:
 	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f,
-		   " %c = (%d + ((%c << (1+ (%c & 0x7))) + %c)) & 0xffffff;\n",
+		   " %c = (%d + ((%c << (1+ (%c & 0x1f))) + %c)) & 0xffffff;\n",
 		   RANVAR, DICE (32) + 5, RANVAR, RANVAR, RANVAR);
 	  if (DICE (100) > 10)
 	    fprintf (f,
@@ -304,7 +304,7 @@ generate_file (const char *name)
 	  break;
 	case 10:
 	  fprintf (f, "// from %d\n", __LINE__);
-	  fprintf (f, " tab[%d]++, tab[%c & %d] += (%c & 0xff) + %d;\n",
+	  fprintf (f, " tab[%d]++, tab[%c & %#x] += (%c & 0xff) + %d;\n",
 		   DICE (MAXTAB), RANVAR, MAXTAB - 1, RANVAR, DICE (8) + 2);
 	  fprintf (f,
 		   " if (tab[%d] %% %d == 0 && dynstep > initdynstep + %d)\n"
