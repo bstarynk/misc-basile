@@ -686,7 +686,8 @@ generate_all_c_files (void)
 {
   double startelapsedclock = my_clock (CLOCK_MONOTONIC);
   double startcpuclock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
-  printf ("%s start generating %d C files\n", progname, maxcnt);
+  printf ("%s (git %s, pid %s on %s) start generating %d C files of mean size %d\n",
+	  progname, MANYDL_GIT, (int)getpid(), myhostname, maxcnt, meansize);
   fflush (NULL);
   int p = 1 + (((int) sqrt (maxcnt + maxcnt / 8)) | 0x1f);
   for (int ix = 0; ix < maxcnt; ix++)
