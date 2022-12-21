@@ -29,7 +29,7 @@ manydl-plugins: $(patsubst %.c, %.so, $(wildcard genf*.c))
 
 ## this is specific to Linux, change it on other POSIX systems
 genf%.so: genf%.c
-	$(CC) $(GENF_CFLAGS) -shared -o $@ $^
+	time $(CC) $(GENF_CFLAGS) -shared -o $@ $^
 
 indent:
 	for f in $(wildcard *.c) ; do $(INDENT) --gnu-style $$f ; done
