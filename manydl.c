@@ -221,8 +221,8 @@ generate_file (const char *name)
 	  fprintf (f, "// from %d\n", __LINE__);
 	  fprintf (f,
 		   " if (%c > %c + %d) %c++; else %c=(tab[%d] + %c) & 0xffffff;\n",
-		   RANVAR, RANVAR, 5 + DICE (10), RANVAR, RANVAR, DICE (MAXTAB),
-		   RANVAR);
+		   RANVAR, RANVAR, 5 + DICE (10), RANVAR, RANVAR,
+		   DICE (MAXTAB), RANVAR);
 	  if (DICE (8) == 0)
 	    fprintf (f, " dynstep++;\n");
 	  break;
@@ -285,6 +285,11 @@ generate_file (const char *name)
 	  fprintf (f,
 		   " %c = (%c / ((%c & 0xffff) + 2) + %c * %d) & 0xffffff;\n",
 		   RANVAR, RANVAR, RANVAR, RANVAR, DICE (10) + 3);
+	  fprintf (f, " if (%c > %c)\n", RANVAR, RANVAR);
+	  fprintf (f, "    tab[(%c & 0xfffff) %% %#x]++;\n",
+		   RANVAR, MAXTAB - DICE(MAXTAB/10));
+	  if (DICE (100) > 20)
+	    fprintf (f, " %c += %d;\n", RANVAR, DICE (12) + 5);
 	  break;
 	case 8:
 	  fprintf (f, "// from %d\n", __LINE__);
@@ -298,9 +303,18 @@ generate_file (const char *name)
 		     RANVAR, 2 + DICE (3 * MAXTAB / 4));
 	  break;
 	case 9:
-	  fprintf (f, "// from %d\n", __LINE__);
-	  fprintf (f, " %c = (%c * %d + %d) & 0xffffff;\n",
-		   RANVAR, RANVAR, DICE (100) + 7, DICE (200) + 12);
+	  {
+	    char v = RANVAR;
+	    int labrank = DICE (MAXLAB);
+	    fprintf (f, "// from %d\n", __LINE__);
+	    fprintf (f, " %c = (%c * %d + %d) & 0xffffff;\n",
+		     v, RANVAR, DICE (100) + 7, DICE (200) + 12);
+	    fprintf (f,
+		     " if (dynstep++ %% %d == (%c & 0x1ff) && dynstep < initdynstep + %d)\n",
+		     (DICE (50) + 2), v, 100 + DICE (1000));
+	    fprintf (f, "    goto lab%d;\n", labrank);
+	    lab[labrank] = LAB_JUMPED;
+	  }
 	  break;
 	case 10:
 	  fprintf (f, "// from %d\n", __LINE__);
@@ -998,9 +1012,9 @@ main (int argc, char **argv)
 	};
       run_terminating_script ();
     };
-  printf ("%s: (git %s built on %s) pid %d ending on %s\n",
+  printf ("%s: (git %s built on %s) pid %d ending on %s (%s:%d)\n",
 	  progname, MANYDL_GIT, __DATE__ "@" __TIME__, (int) getpid (),
-	  myhostname);
+	  myhostname, __FILE__, __LINE__);
   printf
     ("%s: generated %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
      progname, maxcnt, meansize, generate_elapsed_clock - start_elapsed_clock,
@@ -1016,7 +1030,7 @@ main (int argc, char **argv)
       ("%s: dlopened %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
        progname, maxcnt, meansize,
        dlopen_elapsed_clock - compile_elapsed_clock,
-       dlopen_cpu_clock - compile_cpu_clock);
+       compile_cpu_clock - dlopen_cpu_clock);
   if (!isnan (compute_elapsed_clock) && !isnan (compute_cpu_clock))
     printf
       ("%s: computed %ld calls with %d plugins of mean size %d in %.3f elapsed, %.3f cpu seconds\n",
