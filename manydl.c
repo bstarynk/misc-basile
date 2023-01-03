@@ -159,10 +159,11 @@ compute_name_for_index (char name[static NAME_BUFLEN], int ix)
 	      "ABCDEFGHIJKLMNOPQ"[ix % 16], ix / 16);
 }				/* end compute_name_for_index */
 
+
+
 /* generate a file containing one single randomly coded function
    (named like the file, ie function foo in foo.c), using the lrand48
    random number generator; return the size */
-
 int
 generate_file (const char *name)
 {
@@ -172,10 +173,13 @@ generate_file (const char *name)
   int i = 0;
   int prevjmpix = 0;
 #define MAXLAB 32
-  enum labstate
-  { LAB_NONE = 0, LAB_JUMPED, LAB_DEFINED } lab[MAXLAB];
+  bool definedlab[MAXLAB];
+  bool jumpedlab[MAXLAB];
   memset (pathsrc, 0, sizeof (pathsrc));
-  memset (lab, 0, sizeof (lab));
+  for (int il = 0; il < MAXLAB; il++)
+    definedlab[il] = false;
+  for (int il = 0; il < MAXLAB; il++)
+    jumpedlab[il] = false;
   snprintf (pathsrc, sizeof (pathsrc) - 1, "%s.c", name);
   f = fopen (pathsrc, "w");
   if (!f)
@@ -234,8 +238,8 @@ generate_file (const char *name)
 		{
 		  fprintf (f, "   case %d:\n", ca);
 		  fprintf (f, "   %c %c= (%c & 0xfff) + %d;\n",
-			   "+-"[DICE (2)],
-			   RANVAR, RANVAR, 3 + DICE (15 + nbcas));
+			   RANVAR, "+-"[DICE (2)],
+			   RANVAR, 3 + DICE (15 + nbcas));
 		  fprintf (f, "   break;\n");
 		}
 	      fprintf (f, " } //end switch from %d\n", __LINE__);
@@ -279,20 +283,19 @@ generate_file (const char *name)
 	    int labrank = DICE (MAXLAB);
 	    fprintf (f, " dynstep+=%d;\n", i - prevjmpix);
 	    prevjmpix = i;
-	    switch (lab[labrank])
+	    if (!jumpedlab[labrank])
 	      {
-	      case LAB_NONE:
 		fprintf (f, " if (%d*%c<%d+%c) {%c++; goto lab%d;};\n",
 			 DICE (8) + 2, RANVAR, DICE (10), RANVAR, RANVAR,
 			 labrank);
-		lab[labrank] = LAB_JUMPED;
-		break;
-	      case LAB_JUMPED:
+		jumpedlab[labrank] = true;
+	      }
+	    fprintf (f, "%c--;\n", RANVAR);
+	    if (!definedlab[labrank])
+	      {
 		fprintf (f, "lab%d: %c++;\n", labrank, RANVAR);
-		lab[labrank] = LAB_DEFINED;
-		break;
-	      default:;
-	      };
+		definedlab[labrank] = true;
+	      }
 	  }
 	  break;
 	case 7:
@@ -334,7 +337,7 @@ generate_file (const char *name)
 		     " if (dynstep++ %% %d == (%c & 0x1ff) && dynstep < initdynstep + %d)\n",
 		     (DICE (50) + 2), v, 100 + DICE (1000));
 	    fprintf (f, "    goto lab%d;\n", labrank);
-	    lab[labrank] = LAB_JUMPED;
+	    jumpedlab[labrank] = true;
 	  }
 	  break;
 	case 10:
@@ -410,8 +413,7 @@ generate_file (const char *name)
 	    fprintf (f, " if (dynstep < initdynstep + %d)\n",
 		     DICE (16384) + 10);
 	    fprintf (f, "    goto lab%d;\n", labrank);
-	    if (lab[labrank] == LAB_NONE)
-	      lab[labrank] = LAB_JUMPED;
+	    jumpedlab[labrank] = true;
 	    break;
 	  };
 
@@ -420,7 +422,7 @@ generate_file (const char *name)
     };
   for (i = 0; i < MAXLAB; i++)
     {
-      if (lab[i] == LAB_JUMPED)
+      if (jumpedlab[i] && !definedlab[i])
 	fprintf (f, " lab%d:\n %c++;\n", i, RANVAR);
       if (DICE (8) == 0)
 	{
