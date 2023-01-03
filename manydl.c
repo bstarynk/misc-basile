@@ -225,6 +225,21 @@ generate_file (const char *name)
 		   DICE (MAXTAB), RANVAR);
 	  if (DICE (8) == 0)
 	    fprintf (f, " dynstep++;\n");
+	  if (DICE (5) == 0)
+	    {
+	      char v1 = RANVAR;
+	      int nbcas = DICE (10) + 2;
+	      fprintf (f, " switch ((%c & 0xfff) %% %d) {\n", v1, nbcas);
+	      for (int ca = 0; ca < nbcas; ca++)
+		{
+		  fprintf (f, "   case %d:\n", ca);
+		  fprintf (f, "   %c %c= (%c & 0xfff) + %d;\n",
+			   "+-"[DICE (2)],
+			   RANVAR, RANVAR, 3 + DICE (15 + nbcas));
+		  fprintf (f, "   break;\n");
+		}
+	      fprintf (f, " } //end switch from %d\n", __LINE__);
+	    }
 	  break;
 	case 3:
 	  fprintf (f, "// from %d\n", __LINE__);
@@ -281,15 +296,21 @@ generate_file (const char *name)
 	  }
 	  break;
 	case 7:
-	  fprintf (f, "// from %d\n", __LINE__);
-	  fprintf (f,
-		   " %c = (%c / ((%c & 0xffff) + 2) + %c * %d) & 0xffffff;\n",
-		   RANVAR, RANVAR, RANVAR, RANVAR, DICE (10) + 3);
-	  fprintf (f, " if (%c > %c)\n", RANVAR, RANVAR);
-	  fprintf (f, "    tab[(%c & 0xfffff) %% %#x]++;\n",
-		   RANVAR, MAXTAB - DICE (MAXTAB / 10));
-	  if (DICE (100) > 20)
-	    fprintf (f, " %c += %d;\n", RANVAR, DICE (12) + 5);
+	  {
+	    fprintf (f, "// from %d\n", __LINE__);
+	    fprintf (f,
+		     " %c = (%c / ((%c & 0xffff) + 2) + %c * %d) & 0xffffff;\n",
+		     RANVAR, RANVAR, RANVAR, RANVAR, DICE (10) + 3);
+	    char v1 = RANVAR;
+	    char v2 = RANVAR;
+	    while (v1 == v2)
+	      v2 = RANVAR;
+	    fprintf (f, " if (%c > %c)\n", v1, v2);
+	    fprintf (f, "    tab[(%c & 0xfffff) %% %#x]++;\n",
+		     RANVAR, MAXTAB - DICE (MAXTAB / 10));
+	    if (DICE (100) > 20)
+	      fprintf (f, " %c += %d;\n", RANVAR, DICE (12) + 5);
+	  }
 	  break;
 	case 8:
 	  fprintf (f, "// from %d\n", __LINE__);
@@ -425,7 +446,7 @@ generate_file (const char *name)
 	   " ** Local Variables: ;;\n"	//
     );
   fprintf (f,			//
-	   " ** compile-command: \"make %s.%s\" ;;\n"	//
+	   " ** compile-command: \"make %s%s\" ;;\n"	//
 	   " ** End: ;;\n"	//
 	   " *******/\n", name, pluginsuffix);
   fflush (f);
