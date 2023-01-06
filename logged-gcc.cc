@@ -172,26 +172,26 @@ parse_logged_program_options(int &argc, char**argv,
                 {
 		  char cmdbuf[128];
 		  memset (cmdbuf, 0, sizeof(cmdbuf));
-                    std::clog << argv[0] << " version " << GITID
-                              <<  " of " << __FILE__ << " compiled on "
-                              << __DATE__ "@" __TIME__ << std::endl
-                              << "See https://github.com/bstarynk/misc-basile/ for more"
-                              << std::endl
-                              << " (a logging wrapper to GCC compiler on Linux)" << std::endl
-                              << " so pass --help to get some help and usage." << std::endl
-                              << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl << std::flush;
-		    fflush(nullptr);
-		    if (mygcc) {
-		      snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygcc);
-		      system (cmdbuf);
-		    }
-		    if (mygxx) {
-		      snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygxx);
-		      system (cmdbuf);
-		    }
-                    syslog(LOG_INFO, "version %s of %s from https://github.com/bstarynk/misc-basile/ compiled on %s@%s running %s",
-                           GITID, argv[0], __DATE__, __TIME__, cmdstr.c_str());
-                    exit(EXIT_SUCCESS);
+		  std::cout << argv[0] << " version " << GITID
+			    <<  " of " << __FILE__ << " compiled on "
+			    << __DATE__ "@" __TIME__ << std::endl
+			    << "See https://github.com/bstarynk/misc-basile/ for more"
+			    << std::endl
+			    << " (a logging wrapper to GCC compiler on Linux)" << std::endl
+			    << " so pass --help to get some help and usage." << std::endl
+			    << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl << std::flush;
+		  fflush(nullptr);
+		  if (mygcc) {
+		    snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygcc);
+		    system (cmdbuf);
+		  }
+		  if (mygxx) {
+		    snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygxx);
+		    system (cmdbuf);
+		  }
+		  syslog(LOG_INFO, "version %s of %s from https://github.com/bstarynk/misc-basile/ compiled on %s@%s running %s",
+			 GITID, argv[0], __DATE__, __TIME__, cmdstr.c_str());
+		  exit(EXIT_SUCCESS);
                 }
             else
                 {
@@ -1003,6 +1003,9 @@ main(int argc, char**argv)
   bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (argc==2 && !strcmp(argv[1], "--version"))
     {
+      std::cout << argv[0] << " version gitid " << GITID << "  built " << __DATE__ "@" __TIME__ << std::endl
+		<< "... in github.com/bstarynk/misc-basile/" << __FILE__
+		<< std::endl;
       openlog(argv[0], LOG_PID, LOG_USER);
       syslog(LOG_INFO, "%s (git %s) running version query: %s --version",
              __FILE__, GITID, argv[0]);
