@@ -3,7 +3,7 @@
 
    a wrapper with logging of GCC compilation (for g++ or gcc on Linux)
 
-    ©  Copyright Basile Starynkevitch and CEA 2020 - 2022
+    ©  Copyright Basile Starynkevitch and CEA 2020 - 2023
    program released under GNU General Public License
 
    this is free software; you can redistribute it and/or modify it under
@@ -170,6 +170,8 @@ parse_logged_program_options(int &argc, char**argv,
             else if (!strcmp(argv[ix], "--version")
                      && strstr(argv[0], "logged"))
                 {
+		  char cmdbuf[128];
+		  memset (cmdbuf, 0, sizeof(cmdbuf));
                     std::clog << argv[0] << " version " << GITID
                               <<  " of " << __FILE__ << " compiled on "
                               << __DATE__ "@" __TIME__ << std::endl
@@ -177,7 +179,16 @@ parse_logged_program_options(int &argc, char**argv,
                               << std::endl
                               << " (a logging wrapper to GCC compiler on Linux)" << std::endl
                               << " so pass --help to get some help and usage." << std::endl
-                              << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl;
+                              << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl << std::flush;
+		    fflush(nullptr);
+		    if (mygcc) {
+		      snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygcc);
+		      system (cmdbuf);
+		    }
+		    if (mygxx) {
+		      snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygxx);
+		      system (cmdbuf);
+		    }
                     syslog(LOG_INFO, "version %s of %s from https://github.com/bstarynk/misc-basile/ compiled on %s@%s running %s",
                            GITID, argv[0], __DATE__, __TIME__, cmdstr.c_str());
                     exit(EXIT_SUCCESS);
