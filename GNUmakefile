@@ -11,6 +11,9 @@ CXX=/usr/bin/g++
 RM=/bin/rm -vf
 GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
+
+
+GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
 all: manydl half bwc sync-periodically clever-framac logged-compile  logged-gcc filipe-shell
@@ -29,7 +32,7 @@ manydl-plugins: $(patsubst %.c, %.so, $(wildcard genf*.c))
 
 ## this is specific to Linux, change it on other POSIX systems
 genf%.so: genf%.c
-	time $(CC) $(GENF_CFLAGS) -shared -o $@ $^
+	time $(GENG_CC) $(GENF_CFLAGS) -shared -o $@ $^
 
 indent:
 	for f in $(wildcard *.c) ; do $(INDENT) --gnu-style $$f ; done
