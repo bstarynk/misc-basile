@@ -13,7 +13,7 @@ GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl half bwc sync-periodically clever-framac  logged-gcc filipe-shell
+all: manydl half bwc sync-periodically clever-framac logged-compile  logged-gcc filipe-shell
 
 
 clean:
@@ -51,6 +51,10 @@ filipe-shell: filipe-shell.c
 
 logged-gcc: logged-gcc.cc compile-logged-gcc.sh
 	./compile-logged-gcc.sh
+
+logged-compile: logged-compile.cc
+	$(CXX) $(CFLAGS) $^ -L/usr/local/lib -DGIT_ID='"$(GIT_ID)"' -lsqlite3 -o $@ 
+
 clever-framac: clever-framac.cc build-clever-framac.sh
 	./build-clever-framac.sh
 
