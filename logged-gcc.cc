@@ -170,28 +170,30 @@ parse_logged_program_options(int &argc, char**argv,
             else if (!strcmp(argv[ix], "--version")
                      && strstr(argv[0], "logged"))
                 {
-		  char cmdbuf[128];
-		  memset (cmdbuf, 0, sizeof(cmdbuf));
-		  std::cout << argv[0] << " version " << GITID
-			    <<  " of " << __FILE__ << " compiled on "
-			    << __DATE__ "@" __TIME__ << std::endl
-			    << "See https://github.com/bstarynk/misc-basile/ for more"
-			    << std::endl
-			    << " (a logging wrapper to GCC compiler on Linux)" << std::endl
-			    << " so pass --help to get some help and usage." << std::endl
-			    << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl << std::flush;
-		  fflush(nullptr);
-		  if (mygcc) {
-		    snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygcc);
-		    system (cmdbuf);
-		  }
-		  if (mygxx) {
-		    snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygxx);
-		    system (cmdbuf);
-		  }
-		  syslog(LOG_INFO, "version %s of %s from https://github.com/bstarynk/misc-basile/ compiled on %s@%s running %s",
-			 GITID, argv[0], __DATE__, __TIME__, cmdstr.c_str());
-		  exit(EXIT_SUCCESS);
+                    char cmdbuf[128];
+                    memset (cmdbuf, 0, sizeof(cmdbuf));
+                    std::cout << argv[0] << " version " << GITID
+                              <<  " of " << __FILE__ << " compiled on "
+                              << __DATE__ "@" __TIME__ << std::endl
+                              << "See https://github.com/bstarynk/misc-basile/ for more"
+                              << std::endl
+                              << " (a logging wrapper to GCC compiler on Linux)" << std::endl
+                              << " so pass --help to get some help and usage." << std::endl
+                              << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl << std::flush;
+                    fflush(nullptr);
+                    if (mygcc)
+                        {
+                            snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygcc);
+                            system (cmdbuf);
+                        }
+                    if (mygxx)
+                        {
+                            snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygxx);
+                            system (cmdbuf);
+                        }
+                    syslog(LOG_INFO, "version %s of %s from https://github.com/bstarynk/misc-basile/ compiled on %s@%s running %s",
+                           GITID, argv[0], __DATE__, __TIME__, cmdstr.c_str());
+                    exit(EXIT_SUCCESS);
                 }
             else
                 {
@@ -550,6 +552,7 @@ fork_log_child_process(const char*cmdname, std::string progcmd, double startelap
                                    (int)pid, cmdname, progcmd.c_str());
                             exit(EX_OSERR);
                         };
+                    usleep(10000);
                 };
             double endelapsedtime= get_float_time(CLOCK_MONOTONIC);
             double usertime = 1.0*rus.ru_utime.tv_sec + 1.0e-6*rus.ru_utime.tv_usec;
@@ -1057,6 +1060,14 @@ main(int argc, char**argv)
   }
   if (mysqlitepath)
     initialize_sqlite();
+  else {
+      syslog (LOG_ALERT, "logged compilation %s (git %s) without given SQLITE database;\n"
+	      "\t pass --sqlite=<sqlite-database>,\n"
+	      "\t or set LOGGED_SQLITE environment var;\n"
+	      "\t It should have been initialized.\n",
+	      argv[0], GITID);
+      exit(EXIT_FAILURE);
+  };
   if (for_cxx && access(mygxx, X_OK))
     {
       syslog (LOG_WARNING, "%s is not executable - %m - for %s", mygxx,
