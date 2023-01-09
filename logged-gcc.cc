@@ -229,8 +229,9 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
     sqlite3_str_appendf(str, "BEGIN TRANSACTION;\n");
     sqlite3_str_appendf(str, "INSERT OR IGNORE INTO tb_sourcepath(srcp_realpath) VALUES(%Q);", realpath);
     sqlreq = sqlite3_str_value(str);
-    DEBUGLOG("register_sqlite_source_data realpath=" << realpath << " md5=" << md5
-             << " mtime=" << mtime << " size=" << size << " sqlreq=" << sqlreq);
+    DEBUGLOG("register_sqlite_source_data realpath="
+	     << realpath << " md5=" << md5
+             << " mtime=" << mtime << " size=" << size << " °sqlreq=" << sqlreq);
     int r1 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
     if (r1 != SQLITE_OK)
     {
@@ -247,7 +248,7 @@ register_sqlite_source_data(const char*realpath, const char*md5, long mtime, lon
                         "END TRANSACTION;",
                         serialid, mtime, md5, size);
     sqlreq = sqlite3_str_value(str);
-    DEBUGLOG("register_sqlite_source_data r2 sqlreq=" << sqlreq);
+    DEBUGLOG("register_sqlite_source_data r2 °sqlreq=" << sqlreq);
     int r2 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
     if (r2 != SQLITE_OK)
     {
@@ -284,7 +285,7 @@ register_sqlite_compilation (std::int64_t firstserial, const char*firstmd5, cons
                         firstserial, firstmd5, progstr, startime, elapsedtime, usertime, systime, pageflt, maxrss);
     sqlite3_str_appendf(str, "END TRANSACTION;\n");
     sqlreq = sqlite3_str_value(str);
-    DEBUGLOG("register_sqlite_compilation successful r1 sqlreq:" << sqlreq);
+    DEBUGLOG("register_sqlite_compilation successful r1 °sqlreq:" << sqlreq);
     int r1 = sqlite3_exec(mysqlitedb, sqlreq, nullptr, nullptr, &msgerr);
     if (r1 != SQLITE_OK)
     {
@@ -368,7 +369,7 @@ register_show_md5_mtime(const char*path, time_t mtime, char*firstmd5)
     else
     {
         DEBUGLOG("register_show_md5_mtime path=" << path << " mtime=" << mtime << " firstmd5=" << firstmd5
-                 << " done");
+                 << " done without sqlite");
         return 0;
     }
 } // end register_show_md5_mtime
@@ -470,6 +471,7 @@ stat_input_files(const std::vector<const char*>&progargvec, char*firstmd5)
                     else
                     {
                         syslog(LOG_INFO, "source %s, real %s, has %ld bytes, modified %s", curarg, rp, (long)st.st_size, mtimbuf);
+			DEBUGLOG("stat_input_files registering rp:" << rp);
                         std::int64_t serial = register_show_md5_mtime(rp, mtim, firstmd5);
                         if (nbsrcfiles++ == 0)
                             firstserial = serial;
@@ -819,11 +821,11 @@ Sql_request_data::callback(void*data, int nbcol, char**colname, char**colval)
 } // end Sql_request_data::callback
 
 void
-run_sqlite_request(const char*sqlreq)
+run_sqlite_request(const char*sqlreq, int fromline)
 {
     char*msgerr=nullptr;
     Sql_request_data reqdata(sqlreq);
-    DEBUGLOG("run_sqlite_request sqlreq=" << sqlreq);
+    DEBUGLOG("run_sqlite_request °sqlreq=" << sqlreq << " from line:" << fromline);
     int r = sqlite3_exec(mysqlitedb,
                          sqlreq,
                          Sql_request_data::callback,
@@ -861,7 +863,7 @@ CREATE TABLE IF NOT EXISTS tb_sourcepath (
   srcp_last_compil_time DATETIME NOT NULL
 );
 )!*";
-    DEBUGLOG("create_sqlite_database inireq1=" << inireq1);
+    DEBUGLOG("create_sqlite_database °inireq1=" << inireq1);
     int r1 = sqlite3_exec(mysqlitedb,
 			  inireq1,
 			  nullptr,
@@ -880,7 +882,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ix_sourcepath_realpath ON tb_sourcepath (srcp_
 CREATE INDEX IF NOT EXISTS ix_sourcepath_compilid ON tb_sourcepath (srcp_last_compil_id);
 CREATE INDEX IF NOT EXISTS ix_sourcepath_compiltime ON tb_sourcepath (srcp_last_compil_time);
 )!*";
-    DEBUGLOG("create_sqlite_database inireq2=" << inireq2);
+    DEBUGLOG("create_sqlite_database °inireq2=" << inireq2);
     int r2 = sqlite3_exec(mysqlitedb,
 			  inireq2,
 			  nullptr,
@@ -904,7 +906,7 @@ CREATE TABLE IF NOT EXISTS tb_sourcedata (
 CREATE INDEX IF NOT EXISTS ix_sourcedata_serial ON tb_sourcedata(srcd_path_serial);
 CREATE INDEX IF NOT EXISTS ix_sourcedata_mtime ON tb_sourcedata(srcd_path_mtime);
 )!*";
-    DEBUGLOG("create_sqlite_database inireq3=" << inireq3);
+    DEBUGLOG("create_sqlite_database °inireq3=" << inireq3);
     int r3 = sqlite3_exec(mysqlitedb,
 			  inireq3,
 			  nullptr,
@@ -935,7 +937,7 @@ CREATE INDEX IF NOT EXISTS ix_compilation_id ON tb_successful_compilation(compil
 
 END TRANSACTION;
 )!*";
-    DEBUGLOG("create_sqlite_database inireq4=" << inireq4);
+    DEBUGLOG("create_sqlite_database °inireq4=" << inireq4);
     int r4 = sqlite3_exec(mysqlitedb,
 			  inireq4,
 			  nullptr,
@@ -972,7 +974,7 @@ initialize_sqlite(void)
     create_sqlite_database();
   if (mysqliterequest) {
     DEBUGLOG("initialize_sqlite mysqliterequest=" << mysqliterequest);
-    run_sqlite_request(mysqliterequest);
+    run_sqlite_request(mysqliterequest, __LINE__);
   }
   DEBUGLOG("initialize_sqlite done mysqlitepath=" << mysqlitepath);
 } // end of initialize_sqlite
@@ -1095,6 +1097,7 @@ main(int argc, char**argv)
 	     myprogname, mysqlitepath, err, sqlite3_errstr(err));
       exit(EXIT_FAILURE);
     }
+    DEBUGLOG("closed Sqlite database " << mysqlitepath);
   }
   DEBUGLOG("end of main argc=" << argc << " exitcode=" << exitcode);
   return exitcode;
