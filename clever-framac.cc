@@ -5,7 +5,7 @@
  * Author(s):
  *      Basile Starynkevitch <basile@starynkevitch.net>
  */
-//  © Copyright 2022 Commissariat à l'Energie Atomique
+//  © Copyright 2022 - 2023 Commissariat à l'Energie Atomique
 
 /*************************
  * License:
@@ -28,6 +28,7 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <vector>
 #include <unistd.h>
 #include <getopt.h>
 
@@ -82,7 +83,7 @@ public:
 };				// end Source_file
 
 std::map<std::string, Source_file*> Source_file::srcf_dict;
-
+std::vector<Source_file> my_srcfiles;
 
 enum clever_flags_en
 {
@@ -125,89 +126,96 @@ parse_program_arguments(int argc, char**argv)
     gethostname(myhost, sizeof(myhost)-1);
 #warning incomplete parse_program_arguments in clever-framac.cc
     do
-        {
-            option_index = -1;
-            c = getopt_long(argc, argv,
-                            "VhF:",
-                            long_clever_options, &option_index);
-            if (c<0)
-                break;
-            if (long_clever_options[option_index].flag != nullptr)
-                continue;
-        }
+    {
+        option_index = -1;
+        c = getopt_long(argc, argv,
+                        "VhF:",
+                        long_clever_options, &option_index);
+        if (c<0)
+            break;
+        if (long_clever_options[option_index].flag != nullptr)
+            continue;
+    }
     while (c>=0);
     if (version_opt)
-        {
-            printf("%s: version git %s built %s at %s\n",
-                   progname, GIT_ID, __DATE__, __TIME__);
-        };
+    {
+        printf("%s: version git %s built %s at %s\n",
+               progname, GIT_ID, __DATE__, __TIME__);
+    };
     if (help_opt)
-        {
-            show_help();
-        }
+    {
+        show_help();
+    }
     if (framac_opt)
-        {
-            framacexe = optarg;
-        };
+    {
+        framacexe = optarg;
+    };
     /* Handle any remaining command line arguments (not options). */
     if (optind < argc)
+    {
+        if (verbose_opt)
+            printf("%s: processing %d arguments\n",
+                   progname, argc-optind);
+        while (optind < argc)
         {
-            if (verbose_opt)
-                printf("%s: processing %d arguments\n",
-                       progname, argc-optind);
-            while (optind < argc)
+            const char*curarg = argv[optind];
+            const char*resolvedpath = NULL;
+            enum source_type styp = srcty_NONE;
+            if (curarg[0] == '-')
+            {
+                fprintf(stderr,
+                        "%s: bad file argument#%d: %s (consider giving ./%s instead)\n",
+                        progname, optind, curarg, curarg);
+                exit(EXIT_FAILURE);
+            }
+            if (access(curarg, R_OK))
+            {
+                perror(curarg);
+                exit(EXIT_FAILURE);
+            };
+            int curlen = strlen(curarg);
+            if (curlen < 4)
+            {
+                fprintf(stderr,
+                        "%s: too short argument#%d: %s\n",
+                        progname, optind, curarg);
+                exit(EXIT_FAILURE);
+            };
+            if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
+                styp = srcty_c;
+            else if (curarg[curlen-3] == '.'
+                     && curarg[curlen-2] == 'c' && curarg[curlen-1] == 'c')
+                styp = srcty_cpp;
+            else
+            {
+                fprintf(stderr,
+                        "%s: unexpected argument#%d: %s not ending with .c or .cc\n",
+                        progname, optind, curarg);
+                exit(EXIT_FAILURE);
+            }
+            resolvedpath = realpath(curarg, NULL);
+            // so resolvedpath has been malloced
+            if (strlen(resolvedpath) < 4)
+            {
+                fprintf(stderr,
+                        "%s: too short argument#%d: %s == %s\n",
+                        progname, optind, curarg, resolvedpath);
+                exit(EXIT_FAILURE);
+            };
+            for (const char*pc = resolvedpath; *pc; pc++)
+                if (isspace(*pc))
                 {
-                    const char*curarg = argv[optind];
-                    const char*resolvedpath = NULL;
-                    enum source_type styp = srcty_NONE;
-                    if (access(curarg, R_OK))
-                        {
-                            perror(curarg);
-                            exit(EXIT_FAILURE);
-                        };
-                    int curlen = strlen(curarg);
-                    if (curlen < 4)
-                        {
-                            fprintf(stderr,
-                                    "%s: too short argument#%d: %s\n",
-                                    progname, optind, curarg);
-                            exit(EXIT_FAILURE);
-                        };
-                    if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
-                        styp = srcty_c;
-                    else if (curarg[curlen-3] == '.'
-                             && curarg[curlen-2] == 'c' && curarg[curlen-1] == 'c')
-                        styp = srcty_cpp;
-                    else
-                        {
-                            fprintf(stderr,
-                                    "%s: unexpected argument#%d: %s not ending with .c or .cc\n",
-                                    progname, optind, curarg);
-                            exit(EXIT_FAILURE);
-                        }
-                    resolvedpath = realpath(curarg, NULL);
-                    // so resolvedpath has been malloced
-                    if (strlen(resolvedpath) < 4)
-                        {
-                            fprintf(stderr,
-                                    "%s: too short argument#%d: %s == %s\n",
-                                    progname, optind, curarg, resolvedpath);
-                            exit(EXIT_FAILURE);
-                        };
-                    for (const char*pc = resolvedpath; *pc; pc++)
-                        if (isspace(*pc))
-                            {
-                                fprintf(stderr,
-                                        "%s: unexpected space in argument#%d: %s == %s\n",
-                                        progname, optind, curarg, resolvedpath);
-                                exit(EXIT_FAILURE);
-                            };
-
-#warning parse_program_arguments should do something with resolvedpath
-                    free ((void*)resolvedpath);
-                    optind++;
-                }
+                    fprintf(stderr,
+                            "%s: unexpected space in argument#%d: %s == %s\n",
+                            progname, optind, curarg, resolvedpath);
+                    exit(EXIT_FAILURE);
+                };
+            Source_file cursrcf(resolvedpath, styp);
+            my_srcfiles.push_back(cursrcf);
+            free ((void*)resolvedpath);
+            optind++;
         }
+    }
 } // end parse_program_arguments
 
 
@@ -215,6 +223,8 @@ int
 main(int argc, char*argv[])
 {
     progname = argv[0];
+    if (argc>1 && (!strcmp(argv[1], "--verbose") || !strcmp(argv[1], "-V")))
+        verbose_opt = true;
     parse_program_arguments(argc, argv);
     if (verbose_opt)
         printf("%s running verbosely on %s pid %d git %s\n", progname,
