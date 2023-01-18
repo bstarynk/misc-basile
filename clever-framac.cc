@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
+#include <assert.h>
+#include <sys/stat.h>
 #include <getopt.h>
 
 /*** see getopt(3) man page mentionning
@@ -88,6 +90,53 @@ public:
 std::map<std::string, Source_file*> Source_file::srcf_dict;
 std::vector<Source_file> my_srcfiles;
 
+void
+add_source_file(const char*srcpath)
+{
+    struct stat srcstat = {};
+    assert(srcpath != nullptr);
+    if (stat(srcpath, &srcstat) < 0)
+    {
+        fprintf(stderr, "%s: failed to stat %s on %s (%s)\n",
+                progname, srcpath, myhost, strerror(errno));
+        exit(EXIT_FAILURE);
+    };
+    if (srcstat.st_mode & S_IFMT != S_IFREG)
+    {
+        fprintf(stderr, "%s: source %s is not a regular file on %s\n",
+                progname, srcpath, myhost);
+        exit(EXIT_FAILURE);
+    };
+    const char* rp = realpath(srcpath, nullptr);
+    if (!rp || !rp[0])
+    {
+        fprintf(stderr, "%s: failed to find real path of %s on %s (%s)\n",
+                progname, srcpath, myhost, strerror(errno));
+        exit(EXIT_FAILURE);
+    };
+    int lenrp = strlen(rp);
+    if (lenrp < 4)
+    {
+        fprintf(stderr, "%s: real path of %s on %s is too short: %s\n",
+                progname, srcpath, myhost, rp);
+        exit(EXIT_FAILURE);
+    };
+    if (rp[lenrp-1] == 'c' && rp[lenrp-2] == '.')
+    {
+        /* add a C file */
+        Source_file csrc(rp, srcty_c);
+        my_srcfiles.push_back(csrc);
+    }
+    else if (rp[lenrp-3] == '.'
+             && rp[lenrp-2] == 'c' && rp[lenrp-1] == 'c')
+    {
+        /* add a C++ file */
+        Source_file cppsrc(rp, srcty_cpp);
+        my_srcfiles.push_back(cppsrc);
+    }
+    free((void*)rp);
+} // end add_source_file
+
 enum clever_flags_en
 {
     no_flags=0,
@@ -119,8 +168,8 @@ show_help(void)
            "\t -F|--framac <framac>   # explicit Frama-C to be used\n"
            "\t                        # default is %s\n"
            "\t -l | --sources <slist> # read list of files from file\n"
-           "\t ... <source files>     # sources are C files *.c\n"
-           "\t                        # or C++ files *.cc\n"
+           "\t ... <source files>     # sources are files *.c ...\n"
+           "\t                        # ... or C++ files *.cc\n"
            "\n",
            progname, framacexe);
 } // end show_help
@@ -236,6 +285,7 @@ main(int argc, char*argv[])
     if (verbose_opt)
         printf("%s running verbosely on %s pid %d git %s\n", progname,
                myhost, (int)getpid(), GIT_ID);
+#warning should run framac on the collected source files....
 } // end main
 
 /****************
