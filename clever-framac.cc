@@ -44,6 +44,9 @@ int verbose_opt;
 int version_opt;
 int framac_opt;
 int help_opt;
+int sourcelist_opt;
+
+char* sourcelist_path;
 
 enum source_type
 {
@@ -91,6 +94,7 @@ enum clever_flags_en
     help_flag='h',
     verbose_flag='V',
     framac_flag='F',
+    sourcelist_flag='s',
     version_flag=1000,
 };
 
@@ -100,6 +104,8 @@ const struct option long_clever_options[] =
     {"version", no_argument, &version_opt, version_flag},
     {"help", no_argument, &help_opt, help_flag},
     {"framac", required_argument, &framac_opt, framac_flag},
+    {"sources", required_argument, &sourcelist_opt, sourcelist_flag},
+
     {0,0,0,0}
 };
 
@@ -112,6 +118,7 @@ show_help(void)
            "\t -h|--help              # give this help\n"
            "\t -F|--framac <framac>   # explicit Frama-C to be used\n"
            "\t                        # default is %s\n"
+           "\t -l | --sources <slist> # read list of files from file\n"
            "\t ... <source files>     # sources are C files *.c\n"
            "\t                        # or C++ files *.cc\n"
            "\n",
@@ -129,7 +136,7 @@ parse_program_arguments(int argc, char**argv)
     {
         option_index = -1;
         c = getopt_long(argc, argv,
-                        "VhF:",
+                        "VhF:l:",
                         long_clever_options, &option_index);
         if (c<0)
             break;
