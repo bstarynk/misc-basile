@@ -50,6 +50,8 @@ int sourcelist_opt;
 
 char* sourcelist_path;
 
+std::vector<std::string> my_prepro_options;
+
 enum source_type
 {
     srcty_NONE,
@@ -96,46 +98,95 @@ add_source_file(const char*srcpath)
     struct stat srcstat = {};
     assert(srcpath != nullptr);
     if (stat(srcpath, &srcstat) < 0)
-    {
-        fprintf(stderr, "%s: failed to stat %s on %s (%s)\n",
-                progname, srcpath, myhost, strerror(errno));
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: failed to stat %s on %s (%s)\n",
+                    progname, srcpath, myhost, strerror(errno));
+            exit(EXIT_FAILURE);
+        };
     if (srcstat.st_mode & S_IFMT != S_IFREG)
-    {
-        fprintf(stderr, "%s: source %s is not a regular file on %s\n",
-                progname, srcpath, myhost);
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: source %s is not a regular file on %s\n",
+                    progname, srcpath, myhost);
+            exit(EXIT_FAILURE);
+        };
     const char* rp = realpath(srcpath, nullptr);
     if (!rp || !rp[0])
-    {
-        fprintf(stderr, "%s: failed to find real path of %s on %s (%s)\n",
-                progname, srcpath, myhost, strerror(errno));
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: failed to find real path of %s on %s (%s)\n",
+                    progname, srcpath, myhost, strerror(errno));
+            exit(EXIT_FAILURE);
+        };
     int lenrp = strlen(rp);
     if (lenrp < 4)
-    {
-        fprintf(stderr, "%s: real path of %s on %s is too short: %s\n",
-                progname, srcpath, myhost, rp);
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: real path of %s on %s is too short: %s\n",
+                    progname, srcpath, myhost, rp);
+            exit(EXIT_FAILURE);
+        };
     if (rp[lenrp-1] == 'c' && rp[lenrp-2] == '.')
-    {
-        /* add a C file */
-        Source_file csrc(rp, srcty_c);
-        my_srcfiles.push_back(csrc);
-    }
+        {
+            /* add a C file */
+            Source_file csrc(rp, srcty_c);
+            my_srcfiles.push_back(csrc);
+        }
     else if (rp[lenrp-3] == '.'
              && rp[lenrp-2] == 'c' && rp[lenrp-1] == 'c')
-    {
-        /* add a C++ file */
-        Source_file cppsrc(rp, srcty_cpp);
-        my_srcfiles.push_back(cppsrc);
-    }
+        {
+            /* add a C++ file */
+            Source_file cppsrc(rp, srcty_cpp);
+            my_srcfiles.push_back(cppsrc);
+        }
     free((void*)rp);
 } // end add_source_file
+
+void
+add_sources_list(const char*listpath)
+{
+    char* linbuf = nullptr;
+    size_t sizbuf = 0;
+    assert(listpath != nullptr);
+    bool isapipe = listpath[0] == '!' || listpath[0] == '|';
+    FILE *f = isapipe?popen(listpath+1, "r"):fopen(listpath, "r");
+    if (!f)
+        {
+            fprintf(stderr, "%s: failed to add sources using %s %s (%s)\n",
+                    progname, isapipe?"pipe":"file",
+                    listpath, strerror(errno));
+            exit(EXIT_FAILURE);
+        };
+    const int inisiz=128;
+    linbuf = (char*)calloc(1, inisiz);
+    if (!linbuf)
+        {
+            fprintf(stderr, "%d: failed to allocate line buffer (near %s:%d) of %d bytes (%s)\n",
+                    progname, __FILE__, __LINE__, inisiz, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+    sizbuf = (size_t)inisiz;
+    do
+        {
+            memset (linbuf, 0, sizbuf);
+            ssize_t rsz = getline(&linbuf, &sizbuf, f);
+            if (rsz<0)
+                break;
+            if (linbuf==nullptr)
+                break;
+            if (rsz < sizbuf && linbuf[rsz] == '\n')
+                linbuf[rsz] = (char)0;
+            if (linbuf[0] == '#')
+                continue;
+            if (linbuf[0] == '@')
+                add_sources_list(linbuf+1);
+            else
+                add_source_file(linbuf);
+        }
+    while (!feof(f));
+    free(linbuf);
+    if (isapipe)
+        pclose(f);
+    else
+        fclose(f);
+} // end listpath
 
 enum clever_flags_en
 {
@@ -154,7 +205,6 @@ const struct option long_clever_options[] =
     {"help", no_argument, &help_opt, help_flag},
     {"framac", required_argument, &framac_opt, framac_flag},
     {"sources", required_argument, &sourcelist_opt, sourcelist_flag},
-
     {0,0,0,0}
 };
 
@@ -167,11 +217,18 @@ show_help(void)
            "\t -h|--help              # give this help\n"
            "\t -F|--framac <framac>   # explicit Frama-C to be used\n"
            "\t                        # default is %s\n"
-           "\t -l | --sources <slist> # read list of files from file\n"
+           "\t -I <incldir>           # preprocessing include\n"
+           "\t -D <definition>        # preprocessing definition\n"
+           "\t -U <undefine>          # preprocessing undefine\n"
+           "\t -l | --sources <slist> # read list of files from <sfile>\n"
+           "\t                        # if it starts with ! or | use popen\n"
            "\t ... <source files>     # sources are files *.c ...\n"
            "\t                        # ... or C++ files *.cc\n"
+           " (preprocessing options are passed to Frama-C)\n"
+           "\n See https://frama-c.com/ for details on Frama-C ...\n"
+           "Our gitid is %s (file %s compiled %s)\n"
            "\n",
-           progname, framacexe);
+           progname, framacexe, GIT_ID, __FILE__, __DATE__);
 } // end show_help
 
 void
@@ -182,96 +239,129 @@ parse_program_arguments(int argc, char**argv)
     gethostname(myhost, sizeof(myhost)-1);
 #warning incomplete parse_program_arguments in clever-framac.cc
     do
-    {
-        option_index = -1;
-        c = getopt_long(argc, argv,
-                        "VhF:l:",
-                        long_clever_options, &option_index);
-        if (c<0)
-            break;
-        if (long_clever_options[option_index].flag != nullptr)
-            continue;
-    }
+        {
+            option_index = -1;
+            optarg = nullptr;
+            c = getopt_long(argc, argv,
+                            "VhF:l:U:D:I:",
+                            long_clever_options, &option_index);
+            if (c<0)
+                break;
+            if (c=='V')
+                verbose_opt=(int)true;
+            else if (c=='I' || c=='D' || c=='U')
+                {
+                    if (!optarg)
+                        {
+                            fprintf(stderr,
+                                    "%s: missing preprocessing option #%d (git %s)\n",
+                                    progname, option_index, GIT_ID);
+                            exit(EXIT_FAILURE);
+
+                        }
+                    else if (!optarg[0])
+                        {
+                            fprintf(stderr,
+                                    "%s: empty preprocessing option #%d (git %s)\n",
+                                    progname, option_index, GIT_ID);
+                            exit(EXIT_FAILURE);
+                        }
+                    else
+                        {
+                            std::string opt;
+                            opt.push_back('-');
+                            opt.push_back(c);
+                            opt.append(std::string{optarg});
+                            my_prepro_options.push_back(opt);
+                        }
+                }
+            else if (long_clever_options[option_index].flag != nullptr)
+                continue;
+        }
     while (c>=0);
     if (version_opt)
-    {
-        printf("%s: version git %s built %s at %s\n",
-               progname, GIT_ID, __DATE__, __TIME__);
-    };
+        {
+            printf("%s: version git %s built %s at %s\n",
+                   progname, GIT_ID, __DATE__, __TIME__);
+        };
     if (help_opt)
-    {
-        show_help();
-    }
+        {
+            show_help();
+        }
     if (framac_opt)
-    {
-        framacexe = optarg;
-    };
+        {
+            framacexe = optarg;
+        };
+    if (sourcelist_opt)
+        {
+            add_sources_list(optarg);
+        };
     /* Handle any remaining command line arguments (not options). */
     if (optind < argc)
-    {
-        if (verbose_opt)
-            printf("%s: processing %d arguments\n",
-                   progname, argc-optind);
-        while (optind < argc)
         {
-            const char*curarg = argv[optind];
-            const char*resolvedpath = NULL;
-            enum source_type styp = srcty_NONE;
-            if (curarg[0] == '-')
-            {
-                fprintf(stderr,
-                        "%s: bad file argument#%d: %s (consider giving ./%s instead)\n",
-                        progname, optind, curarg, curarg);
-                exit(EXIT_FAILURE);
-            }
-            if (access(curarg, R_OK))
-            {
-                perror(curarg);
-                exit(EXIT_FAILURE);
-            };
-            int curlen = strlen(curarg);
-            if (curlen < 4)
-            {
-                fprintf(stderr,
-                        "%s: too short argument#%d: %s\n",
-                        progname, optind, curarg);
-                exit(EXIT_FAILURE);
-            };
-            if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
-                styp = srcty_c;
-            else if (curarg[curlen-3] == '.'
-                     && curarg[curlen-2] == 'c' && curarg[curlen-1] == 'c')
-                styp = srcty_cpp;
-            else
-            {
-                fprintf(stderr,
-                        "%s: unexpected argument#%d: %s not ending with .c or .cc\n",
-                        progname, optind, curarg);
-                exit(EXIT_FAILURE);
-            }
-            resolvedpath = realpath(curarg, NULL);
-            // so resolvedpath has been malloced
-            if (strlen(resolvedpath) < 4)
-            {
-                fprintf(stderr,
-                        "%s: too short argument#%d: %s == %s\n",
-                        progname, optind, curarg, resolvedpath);
-                exit(EXIT_FAILURE);
-            };
-            for (const char*pc = resolvedpath; *pc; pc++)
-                if (isspace(*pc))
+            if (verbose_opt)
+                printf("%s: processing %d arguments\n",
+                       progname, argc-optind);
+            while (optind < argc)
                 {
-                    fprintf(stderr,
-                            "%s: unexpected space in argument#%d: %s == %s\n",
-                            progname, optind, curarg, resolvedpath);
-                    exit(EXIT_FAILURE);
-                };
-            Source_file cursrcf(resolvedpath, styp);
-            my_srcfiles.push_back(cursrcf);
-            free ((void*)resolvedpath);
-            optind++;
+                    const char*curarg = argv[optind];
+                    const char*resolvedpath = NULL;
+                    enum source_type styp = srcty_NONE;
+                    if (curarg[0] == '-')
+                        {
+                            fprintf(stderr,
+                                    "%s: bad file argument#%d: %s (consider giving ./%s instead)\n",
+                                    progname, optind, curarg, curarg);
+                            exit(EXIT_FAILURE);
+                        }
+                    if (access(curarg, R_OK))
+                        {
+                            perror(curarg);
+                            exit(EXIT_FAILURE);
+                        };
+                    int curlen = strlen(curarg);
+                    if (curlen < 4)
+                        {
+                            fprintf(stderr,
+                                    "%s: too short argument#%d: %s\n",
+                                    progname, optind, curarg);
+                            exit(EXIT_FAILURE);
+                        };
+                    if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
+                        styp = srcty_c;
+                    else if (curarg[curlen-3] == '.'
+                             && curarg[curlen-2] == 'c' && curarg[curlen-1] == 'c')
+                        styp = srcty_cpp;
+                    else
+                        {
+                            fprintf(stderr,
+                                    "%s: unexpected argument#%d: %s not ending with .c or .cc\n",
+                                    progname, optind, curarg);
+                            exit(EXIT_FAILURE);
+                        }
+                    resolvedpath = realpath(curarg, NULL);
+                    // so resolvedpath has been malloced
+                    if (strlen(resolvedpath) < 4)
+                        {
+                            fprintf(stderr,
+                                    "%s: too short argument#%d: %s == %s\n",
+                                    progname, optind, curarg, resolvedpath);
+                            exit(EXIT_FAILURE);
+                        };
+                    for (const char*pc = resolvedpath; *pc; pc++)
+                        if (isspace(*pc))
+                            {
+                                fprintf(stderr,
+                                        "%s: unexpected space in argument#%d: %s == %s\n",
+                                        progname, optind, curarg, resolvedpath);
+                                exit(EXIT_FAILURE);
+                            };
+                    Source_file cursrcf(resolvedpath, styp);
+                    my_srcfiles.push_back(cursrcf);
+                    free ((void*)resolvedpath);
+                    optind++;
+                }
         }
-    }
 } // end parse_program_arguments
 
 
