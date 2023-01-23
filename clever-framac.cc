@@ -42,16 +42,11 @@
 char myhost[80];
 const char*progname;
 const char*framacexe = "/usr/bin/frama-c";
-int verbose_opt;
-int version_opt;
-int framac_opt;
-int argframac_opt;
-int help_opt;
-int sourcelist_opt;
-
+bool is_verbose;
 char* sourcelist_path;
 
 std::vector<std::string> my_prepro_options;
+std::vector<std::string> my_framac_options;
 
 enum source_type
 {
@@ -173,124 +168,103 @@ parse_program_arguments(int argc, char**argv)
                             long_clever_options, &option_index);
             if (c<0)
                 break;
-            if (c=='V')
-                verbose_opt=(int)true;
-            else if (c=='I' || c=='D' || c=='U')
+            switch (c)
                 {
-                    if (!optarg)
-                        {
-                            fprintf(stderr,
-                                    "%s: missing preprocessing option #%d (git %s)\n",
-                                    progname, option_index, GIT_ID);
-                            exit(EXIT_FAILURE);
-
-                        }
-                    else if (!optarg[0])
-                        {
-                            fprintf(stderr,
-                                    "%s: empty preprocessing option #%d (git %s)\n",
-                                    progname, option_index, GIT_ID);
-                            exit(EXIT_FAILURE);
-                        }
-                    else
-                        {
-                            std::string opt;
-                            opt.push_back('-');
-                            opt.push_back(c);
-                            opt.append(std::string{optarg});
-                            my_prepro_options.push_back(opt);
-                        }
-                }
-            else if (long_clever_options[option_index].flag != nullptr)
-                continue;
-            if (version_opt)
-                {
-                    printf("%s: version git %s built %s at %s\n",
-                           progname, GIT_ID, __DATE__, __TIME__);
-                };
-            if (help_opt)
-                {
+                case 'h': // --help
                     show_help();
-                    help_opt = false;
-                }
-            if (framac_opt)
-                {
-                    framacexe = optarg;
-                    framac_opt = false;
-                };
-            if (sourcelist_opt)
-                {
+                    exit(EXIT_SUCCESS);
+                    return;
+                case 'V': // --verbose
+                    is_verbose=true;
+                    continue;
+                case 'a': // --argframac=<option>
+                    my_framac_options.push_back(optarg);
+                    continue;
+                case 'F': // --framac=<framac>
+                    framacexe=optarg;
+                    continue;
+                case 's': // --sources=<listpath>
                     add_sources_list(optarg);
-                    sourcelist_opt = false;
-                };
-        }
-    while (c>=0);
-    /* Handle any remaining command line arguments (not options). */
-    if (optind < argc)
-        {
-            if (verbose_opt)
-                printf("%s: processing %d arguments\n",
-                       progname, argc-optind);
-            while (optind < argc)
+                    continue;
+                case 'D': // -DPREPROVAR=<something> passed to preprocessor
+                case 'U': // -UPREPROVAR passed to preprocessor
+                case 'I': // -I<incldir> passed to preprocessor
+                    my_prepro_options.push_back(optarg);
+                    continue;
+                case version_flag: // --version
+                    printf("%s git %s built at %s\n", progname, GIT_ID, __DATE__);
+                    exit(EXIT_SUCCESS);
+                    return;
+                }
+            while (c>=0);
+            /* Handle any remaining command line arguments (not options). */
+            if (optind < argc)
                 {
-                    const char*curarg = argv[optind];
-                    const char*resolvedpath = NULL;
-                    enum source_type styp = srcty_NONE;
-                    if (curarg[0] == '-')
+                    if (verbose_flag)
+                        printf("%s: processing %d arguments\n",
+                               progname, argc-optind);
+                    while (optind < argc)
                         {
-                            fprintf(stderr,
-                                    "%s: bad file argument#%d: %s (consider giving ./%s instead)\n",
-                                    progname, optind, curarg, curarg);
-                            exit(EXIT_FAILURE);
+                            const char*curarg = argv[optind];
+                            const char*resolvedpath = NULL;
+                            enum source_type styp = srcty_NONE;
+                            if (curarg[0] == '-')
+                                {
+                                    fprintf(stderr,
+                                            "%s: bad file argument#%d: %s (consider giving ./%s instead)\n",
+                                            progname, optind, curarg, curarg);
+                                    exit(EXIT_FAILURE);
+                                }
+                            if (access(curarg, R_OK))
+                                {
+                                    perror(curarg);
+                                    exit(EXIT_FAILURE);
+                                };
+                            int curlen = strlen(curarg);
+                            if (curlen < 4)
+                                {
+                                    fprintf(stderr,
+                                            "%s: too short argument#%d: %s\n",
+                                            progname, optind, curarg);
+                                    exit(EXIT_FAILURE);
+                                };
+                            if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
+                                styp = srcty_c;
+                            else if (curarg[curlen-3] == '.'
+                                     && curarg[curlen-2] == 'c' && curarg[curlen-1] == 'c')
+                                styp = srcty_cpp;
+                            else
+                                {
+                                    fprintf(stderr,
+                                            "%s: unexpected argument#%d: %s not ending with .c or .cc\n",
+                                            progname, optind, curarg);
+                                    exit(EXIT_FAILURE);
+                                }
+                            resolvedpath = realpath(curarg, NULL);
+                            // so resolvedpath has been malloced
+                            if (strlen(resolvedpath) < 4)
+                                {
+                                    fprintf(stderr,
+                                            "%s: too short argument#%d: %s == %s\n",
+                                            progname, optind, curarg, resolvedpath);
+                                    exit(EXIT_FAILURE);
+                                };
+                            for (const char*pc = resolvedpath; *pc; pc++)
+                                if (isspace(*pc))
+                                    {
+                                        fprintf(stderr,
+                                                "%s: unexpected space in argument#%d: %s == %s\n",
+                                                progname, optind, curarg, resolvedpath);
+                                        exit(EXIT_FAILURE);
+                                    };
+                            Source_file cursrcf(resolvedpath, styp);
+                            my_srcfiles.push_back(cursrcf);
+                            free ((void*)resolvedpath);
+                            optind++;
                         }
-                    if (access(curarg, R_OK))
-                        {
-                            perror(curarg);
-                            exit(EXIT_FAILURE);
-                        };
-                    int curlen = strlen(curarg);
-                    if (curlen < 4)
-                        {
-                            fprintf(stderr,
-                                    "%s: too short argument#%d: %s\n",
-                                    progname, optind, curarg);
-                            exit(EXIT_FAILURE);
-                        };
-                    if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
-                        styp = srcty_c;
-                    else if (curarg[curlen-3] == '.'
-                             && curarg[curlen-2] == 'c' && curarg[curlen-1] == 'c')
-                        styp = srcty_cpp;
-                    else
-                        {
-                            fprintf(stderr,
-                                    "%s: unexpected argument#%d: %s not ending with .c or .cc\n",
-                                    progname, optind, curarg);
-                            exit(EXIT_FAILURE);
-                        }
-                    resolvedpath = realpath(curarg, NULL);
-                    // so resolvedpath has been malloced
-                    if (strlen(resolvedpath) < 4)
-                        {
-                            fprintf(stderr,
-                                    "%s: too short argument#%d: %s == %s\n",
-                                    progname, optind, curarg, resolvedpath);
-                            exit(EXIT_FAILURE);
-                        };
-                    for (const char*pc = resolvedpath; *pc; pc++)
-                        if (isspace(*pc))
-                            {
-                                fprintf(stderr,
-                                        "%s: unexpected space in argument#%d: %s == %s\n",
-                                        progname, optind, curarg, resolvedpath);
-                                exit(EXIT_FAILURE);
-                            };
-                    Source_file cursrcf(resolvedpath, styp);
-                    my_srcfiles.push_back(cursrcf);
-                    free ((void*)resolvedpath);
-                    optind++;
                 }
         }
+    while(c>0);
 } // end parse_program_arguments
 
 
@@ -397,9 +371,9 @@ main(int argc, char*argv[])
 {
     progname = argv[0];
     if (argc>1 && (!strcmp(argv[1], "--verbose") || !strcmp(argv[1], "-V")))
-        verbose_opt = true;
+        is_verbose = true;
     parse_program_arguments(argc, argv);
-    if (verbose_opt)
+    if (verbose_flag)
         printf("%s running verbosely on %s pid %d git %s with %d source files\n", progname,
                myhost, (int)getpid(), GIT_ID, (int) my_srcfiles.size());
 #warning should run framac on the collected source files....
