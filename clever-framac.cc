@@ -104,7 +104,7 @@ void add_source_file(const char*srcpath);
 /// a line starting with | or ! means to popen to get the list of files.
 void add_sources_list(const char*listpath);
 
-
+//// see https://www.gnu.org/software/libc/manual/html_node/Getopt-Long-Options.html
 enum clever_flags_en
 {
     no_flags=0,
@@ -113,18 +113,23 @@ enum clever_flags_en
     argframac_flag='a',
     framacexe_flag='F',
     sourcelist_flag='s',
+    cppdef_flag='D',
+    cppundef_flag='U',
+    cppincl_flag='I',
     version_flag=1000,
 };
 
 const struct option long_clever_options[] =
 {
-    {"verbose", no_argument, &verbose_opt, verbose_flag},
-    {"version", no_argument, &version_opt, version_flag},
-    {"help", no_argument, &help_opt, help_flag},
-    {"framac", required_argument, &framac_opt, framacexe_flag},
-    {"argframac", required_argument, &argframac_opt, argframac_flag},
-    {"sources", required_argument, &sourcelist_opt, sourcelist_flag},
-    {0,0,0,0}
+    {.name= "verbose", .has_arg= no_argument, .flag= nullptr, .val= verbose_flag},
+    {.name="version",  .has_arg=no_argument,  .flag=nullptr, .val=version_flag},
+    {.name="help", .has_arg=no_argument, .flag=nullptr, .val=help_flag},
+    {.name="framac", .has_arg=required_argument, .flag=nullptr, .val=framacexe_flag},
+    {.name="argframac", .has_arg=required_argument, .flag=nullptr, .val=argframac_flag},
+    {.name="sources", .has_arg=required_argument, .flag=nullptr, .val=sourcelist_flag},
+    {.name="cppdefine", .has_arg=required_argument, .flag=nullptr, .val=cppdef_flag},
+    {.name="cppundef", .has_arg=required_argument, .flag=nullptr, .val=cppundef_flag},
+    {}
 };
 
 void
