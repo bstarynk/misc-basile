@@ -198,28 +198,28 @@ parse_program_arguments(int argc, char**argv)
                 }
             else if (long_clever_options[option_index].flag != nullptr)
                 continue;
+            if (version_opt)
+                {
+                    printf("%s: version git %s built %s at %s\n",
+                           progname, GIT_ID, __DATE__, __TIME__);
+                };
+            if (help_opt)
+                {
+                    show_help();
+                    help_opt = false;
+                }
+            if (framac_opt)
+                {
+                    framacexe = optarg;
+                    framac_opt = false;
+                };
+            if (sourcelist_opt)
+                {
+                    add_sources_list(optarg);
+                    sourcelist_opt = false;
+                };
         }
     while (c>=0);
-    if (version_opt)
-        {
-            printf("%s: version git %s built %s at %s\n",
-                   progname, GIT_ID, __DATE__, __TIME__);
-        };
-    if (help_opt)
-        {
-            show_help();
-            help_opt = false;
-        }
-    if (framac_opt)
-        {
-            framacexe = optarg;
-            framac_opt = false;
-        };
-    if (sourcelist_opt)
-        {
-            add_sources_list(optarg);
-            sourcelist_opt = false;
-        };
     /* Handle any remaining command line arguments (not options). */
     if (optind < argc)
         {
