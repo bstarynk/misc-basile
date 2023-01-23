@@ -44,7 +44,7 @@ const char*progname;
 const char*framacexe = "/usr/bin/frama-c";
 bool is_verbose;
 char* sourcelist_path;
-
+bool do_list_framac_plugins;
 std::vector<std::string> my_prepro_options;
 std::vector<std::string> my_framac_options;
 
@@ -112,6 +112,7 @@ enum clever_flags_en
     cppundef_flag='U',
     cppincl_flag='I',
     version_flag=1000,
+    listplugins_flag,
 };
 
 const struct option long_clever_options[] =
@@ -124,6 +125,7 @@ const struct option long_clever_options[] =
     {.name="sources", .has_arg=required_argument, .flag=nullptr, .val=sourcelist_flag},
     {.name="cppdefine", .has_arg=required_argument, .flag=nullptr, .val=cppdef_flag},
     {.name="cppundef", .has_arg=required_argument, .flag=nullptr, .val=cppundef_flag},
+    {.name="list-plugins", .has_arg=no_argument, .flag=nullptr, .val=listplugins_flag},
     {}
 };
 
@@ -140,6 +142,7 @@ show_help(void)
            "\t -I <incldir>           # preprocessing include\n"
            "\t -D <definition>        # preprocessing definition\n"
            "\t -U <undefine>          # preprocessing undefine\n"
+           "\t --list-plugins         # passed to Frama-C\n"
            "\t -l | --sources <slist> # read list of files (one per line) from <sfile>\n"
            "\t                        # if it starts with ! or | use popen\n"
            "\t                        # if it starts with @ it a list of files\n"
@@ -195,6 +198,9 @@ parse_program_arguments(int argc, char**argv)
                     printf("%s git %s built at %s\n", progname, GIT_ID, __DATE__);
                     exit(EXIT_SUCCESS);
                     return;
+                case listplugins_flag:
+                    do_list_framac_plugins=true;
+                    continue;
                 }
             while (c>=0);
             /* Handle any remaining command line arguments (not options). */
