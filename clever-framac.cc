@@ -45,6 +45,7 @@ const char*framacexe = "/usr/bin/frama-c";
 int verbose_opt;
 int version_opt;
 int framac_opt;
+int argframac_opt;
 int help_opt;
 int sourcelist_opt;
 
@@ -109,7 +110,8 @@ enum clever_flags_en
     no_flags=0,
     help_flag='h',
     verbose_flag='V',
-    framac_flag='F',
+    argframac_flag='a',
+    framacexe_flag='F',
     sourcelist_flag='s',
     version_flag=1000,
 };
@@ -119,7 +121,8 @@ const struct option long_clever_options[] =
     {"verbose", no_argument, &verbose_opt, verbose_flag},
     {"version", no_argument, &version_opt, version_flag},
     {"help", no_argument, &help_opt, help_flag},
-    {"framac", required_argument, &framac_opt, framac_flag},
+    {"framac", required_argument, &framac_opt, framacexe_flag},
+    {"argframac", required_argument, &argframac_opt, argframac_flag},
     {"sources", required_argument, &sourcelist_opt, sourcelist_flag},
     {0,0,0,0}
 };
@@ -133,6 +136,7 @@ show_help(void)
            "\t -h|--help              # give this help\n"
            "\t -F|--framac <framac>   # explicit Frama-C to be used\n"
            "\t                        # default is %s\n"
+           "\t -a|--argframac <arg>   # argument to Frama-C\n"
            "\t -I <incldir>           # preprocessing include\n"
            "\t -D <definition>        # preprocessing definition\n"
            "\t -U <undefine>          # preprocessing undefine\n"
@@ -160,7 +164,7 @@ parse_program_arguments(int argc, char**argv)
             option_index = -1;
             optarg = nullptr;
             c = getopt_long(argc, argv,
-                            "VhF:l:U:D:I:",
+                            "VhF:a:l:U:D:I:",
                             long_clever_options, &option_index);
             if (c<0)
                 break;
@@ -204,14 +208,17 @@ parse_program_arguments(int argc, char**argv)
     if (help_opt)
         {
             show_help();
+            help_opt = false;
         }
     if (framac_opt)
         {
             framacexe = optarg;
+            framac_opt = false;
         };
     if (sourcelist_opt)
         {
             add_sources_list(optarg);
+            sourcelist_opt = false;
         };
     /* Handle any remaining command line arguments (not options). */
     if (optind < argc)
