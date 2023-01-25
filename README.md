@@ -45,12 +45,15 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
   and extract some primes from the stream of primes producing it.
 
 * `sync-periodically.c` runs periodically the
-  [sync(2)](http://man7.org/linux/man-pages/man2/sync.2.html). Please
-  glance inside the source code. Our `/etc/crontab` might have a line like
-
-```
-@reboot   sync    /usr/local/bin/sync-periodically 3 2000
-```
+  [sync(2)](http://man7.org/linux/man-pages/man2/sync.2.html), is
+  GPLv3+ licensed (so without warranty), and accepts both `--version`
+  and `--help` program arguments. It might be useful (to avoid losing
+  a lot of data in kernel file buffers) on power cuts, and don't
+  consume lot of resources. Please glance inside the source code. Your
+  `/etc/crontab` might have a line like ``` @reboot sync
+  /usr/local/bin/sync-periodically --log-period=600 --sync-period=3
+  --daemon --pid-file=/var/run/sync-periodically.pid ``` and we wrote
+  (for `systemd`) some `sync-periodically.service`
 
 * `qfontdialog-example.cc` is a tiny improvement over [this `QFontDialog` example](http://www.codebind.com/cpp-tutorial/qt-tutorial/qt-tutorials-for-beginners-qfontdialog-example/)
 
@@ -80,7 +83,8 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
   [syslog(3)](https://man7.org/linux/man-pages/man3/syslog.3.html)
   and/or some [Sqlite](http://sqlite.org/) database. You will compile
   it using `compile-logged-gcc.sh`.  See also
-  [this](https://unix.stackexchange.com/questions/605505/how-to-log-compilation-commands-on-linux-with-gcc).
+  [this](https://unix.stackexchange.com/questions/605505/how-to-log-compilation-commands-on-linux-with-gcc). It
+  could need improvements in start of 2023.
 
 ## Using `logged-gcc`
 
