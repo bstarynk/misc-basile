@@ -25,6 +25,8 @@
 
 #include <fstream>
 #include <iostream>
+#include <ostream>
+#include <sstream>
 #include <cstring>
 #include <map>
 #include <string>
@@ -32,6 +34,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <getopt.h>
 
 /*** see getopt(3) man page mentionning
@@ -47,6 +50,18 @@ char* sourcelist_path;
 bool do_list_framac_plugins;
 std::vector<std::string> my_prepro_options;
 std::vector<std::string> my_framac_options;
+extern "C" [[noreturn]] void cfr_fatal_error_at(const char*fil, int lin);
+#define CFR_FATAL_AT(Fil,Lin,Log) do {			\
+    std::ostringstream out##Lin;			\
+    out##Lin << Log << std::endl;			\
+    std::clog << "FATAL ERROR (" << progname << ") "	\
+	     << Log << std::endl;			\
+    cfr_fatal_error_at(Fil,Lin);			\
+  } while(0)
+
+#define CFR_BISFATAL_AT(Fil,Lin,Log) CFR_FATAL_AT((Fil),Lin,Log)
+
+#define CFR_FATAL(Log) CFR_BISFATAL_AT(__FILE__,__LINE__,Log)
 
 enum source_type
 {
@@ -144,13 +159,49 @@ const struct option long_clever_options[] =
         .flag=nullptr,
         .val=help_flag
     },
-    {.name="framac", .has_arg=required_argument, .flag=nullptr, .val=framacexe_flag},
-    {.name="argframac", .has_arg=required_argument, .flag=nullptr, .val=argframac_flag},
-    {.name="negframac", .has_arg=required_argument, .flag=nullptr, .val=negframac_flag},
-    {.name="sources", .has_arg=required_argument, .flag=nullptr, .val=sourcelist_flag},
-    {.name="cppdefine", .has_arg=required_argument, .flag=nullptr, .val=cppdef_flag},
-    {.name="cppundef", .has_arg=required_argument, .flag=nullptr, .val=cppundef_flag},
-    {.name="list-plugins", .has_arg=no_argument, .flag=nullptr, .val=listplugins_flag},
+    /// --framac=<Frama-C-executable>
+    {
+        .name="framac",
+        .has_arg=required_argument,
+        .flag=nullptr,
+        .val=framacexe_flag
+    },
+    {
+        .name="argframac",
+        .has_arg=required_argument,
+        .flag=nullptr,
+        .val=argframac_flag
+    },
+    {
+        .name="negframac",
+        .has_arg=required_argument,
+        .flag=nullptr,
+        .val=negframac_flag
+    },
+    {
+        .name="sources",
+        .has_arg=required_argument,
+        .flag=nullptr,
+        .val=sourcelist_flag
+    },
+    {
+        .name="cppdefine",
+        .has_arg=required_argument,
+        .flag=nullptr,
+        .val=cppdef_flag
+    },
+    {
+        .name="cppundef",
+        .has_arg=required_argument,
+        .flag=nullptr,
+        .val=cppundef_flag
+    },
+    {
+        .name="list-plugins",
+        .has_arg=no_argument,
+        .flag=nullptr,
+        .val=listplugins_flag
+    },
     {}
 };
 
@@ -180,6 +231,14 @@ show_help(void)
            "\n",
            progname, framacexe, GIT_ID, __FILE__, __DATE__);
 } // end show_help
+
+void
+cfr_fatal_error_at(const char*fil, int lin)
+{
+    std::clog << "FATAL ERROR from " << fil << ":" << lin
+              << " in " << progname << " git " << GIT_ID << std::endl;
+    abort();
+} // end cfr_fatal_error_at
 
 void
 parse_program_arguments(int argc, char**argv)
@@ -244,23 +303,22 @@ parse_program_arguments(int argc, char**argv)
                             enum source_type styp = srcty_NONE;
                             if (curarg[0] == '-')
                                 {
-                                    fprintf(stderr,
-                                            "%s: bad file argument#%d: %s (consider giving ./%s instead)\n",
-                                            progname, optind, curarg, curarg);
-                                    exit(EXIT_FAILURE);
+                                    CFR_FATAL("bad file argument #" << optind
+                                              << ": " << curarg
+                                              << std::endl
+                                              << "... consider giving its absolute path");
                                 }
                             if (access(curarg, R_OK))
                                 {
-                                    perror(curarg);
-                                    exit(EXIT_FAILURE);
+                                    int e=errno;
+                                    CFR_FATAL("cannot access file argument #" << optind << ": " << curarg
+                                              << " . " << strerror(e));
                                 };
                             int curlen = strlen(curarg);
                             if (curlen < 4)
                                 {
-                                    fprintf(stderr,
-                                            "%s: too short argument#%d: %s\n",
-                                            progname, optind, curarg);
-                                    exit(EXIT_FAILURE);
+                                    CFR_FATAL("too short file argument #"
+                                              << optind << ": " << curarg);
                                 };
                             if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
                                 styp = srcty_c;
@@ -269,27 +327,25 @@ parse_program_arguments(int argc, char**argv)
                                 styp = srcty_cpp;
                             else
                                 {
-                                    fprintf(stderr,
-                                            "%s: unexpected argument#%d: %s not ending with .c or .cc\n",
-                                            progname, optind, curarg);
-                                    exit(EXIT_FAILURE);
+                                    CFR_FATAL("unexpected file argument #"
+                                              << optind << ": " << curarg
+                                              << std::endl
+                                              <<"It should end with .c or .cc");
                                 }
                             resolvedpath = realpath(curarg, NULL);
                             // so resolvedpath has been malloced
                             if (strlen(resolvedpath) < 4)
                                 {
-                                    fprintf(stderr,
-                                            "%s: too short argument#%d: %s == %s\n",
-                                            progname, optind, curarg, resolvedpath);
-                                    exit(EXIT_FAILURE);
+                                    CFR_FATAL("too short file argument #"
+                                              << optind << ": " << curarg
+                                              << " resolved to " << resolvedpath);
                                 };
                             for (const char*pc = resolvedpath; *pc; pc++)
                                 if (isspace(*pc))
                                     {
-                                        fprintf(stderr,
-                                                "%s: unexpected space in argument#%d: %s == %s\n",
-                                                progname, optind, curarg, resolvedpath);
-                                        exit(EXIT_FAILURE);
+                                        CFR_FATAL("file argument #"
+                                                  << optind << ": " << curarg
+                                                  << " resolved to unexpected " << resolvedpath);
                                     };
                             Source_file cursrcf(resolvedpath, styp);
                             my_srcfiles.push_back(cursrcf);
@@ -417,30 +473,102 @@ try_run_framac(const char*arg1, const char*arg2,
             const char*pc=nullptr;
             const char*colon=nullptr;
             int slenframac = strlen(framacexe);
-            if (!envpath)
+            if (!envpath) /// very unlikely!
                 envpath="/bin:/usr/bin:/usr/local/bin";
-            char pathbuf[256];
-            memset (pathbuf, 0, sizeof(pathbuf));
             for (pc=envpath; pc && *pc; pc=colon?colon+1:nullptr)
                 {
+                    char* dynpathbuf=nullptr;
+                    // https://man7.org/linux/man-pages/man3/asprintf.3.html
                     int cplen = 0;
                     colon=strchr(pc, ':');
-                    memset (pathbuf, 0, sizeof(pathbuf));
                     if (colon)
                         cplen = colon-pc-1;
                     else
                         cplen = strlen(pc);
-                    if (cplen + slenframac + 2 < sizeof(pathbuf))
+                    int nbytes= asprintf(&dynpathbuf, "%.*s/%s",
+                                         cplen, pc, framacexe);
+                    if (nbytes<0 || dynpathbuf==nullptr)
                         {
-                            strncpy(pathbuf, pc, cplen);
-                            strcat(pathbuf, "/");
-                        }
-                    else
-                        {
+                            int e = errno;
+                            CFR_FATAL("asprintf failed in try_run_framac "
+                                      << arg1 << ": " << strerror(e));
                         };
-                }
-#warning try_run_framac is incomplete should use asprintf
-            /* should snprintf in pathbuf, then use access(2), then fork & execve */
+                    if (!access(dynpathbuf, X_OK))
+                        {
+                            /// should fork and execve
+                            pid_t childpid = fork();
+                            if (childpid<0)
+                                {
+                                    int e= errno;
+                                    CFR_FATAL("try_run_framac " << arg1 << " failed to fork "
+                                              << strerror(e));
+                                };
+                            if (childpid==0)
+                                {
+                                    // in child
+                                    execl(dynpathbuf, arg1, arg2, arg3, arg4, arg5,
+                                          nullptr);
+                                    /// should almost never happen
+                                    abort();
+                                }
+                            /// in parent
+                            int wstatus= 0;
+                            bool okwait=false;
+                            do
+                                {
+                                    pid_t wpid = waitpid(childpid, &wstatus, 0);
+                                    int e = errno;
+                                    if (wpid<0)
+                                        {
+                                            if (e == EINTR)
+                                                {
+                                                    usleep(50*1000);
+                                                    continue;
+                                                };
+                                            CFR_FATAL("try_run_framac " << arg1
+                                                      << " failed to waitpid process " << childpid
+                                                      << " " << strerror(e));
+                                        };
+                                    // here waitpid succeeded
+                                    if (wstatus == 0)
+                                        {
+                                            free (dynpathbuf);
+                                            okwait= true;
+                                            return;
+                                        };
+                                    if (WIFEXITED(wstatus))
+                                        {
+                                            int ex= WEXITSTATUS(wstatus);
+                                            if (ex>0)
+                                                CFR_FATAL("try_run_framac " << arg1
+                                                          << " running " << dynpathbuf
+                                                          << " process " << childpid
+                                                          << " exited " << WEXITSTATUS(ex));
+                                            okwait = true;
+                                        }
+                                    else if (WIFSIGNALED(wstatus))
+                                        {
+                                            bool dumpedcore = WCOREDUMP(wstatus);
+                                            int sig = WTERMSIG(wstatus);
+                                            if (dumpedcore)
+                                                CFR_FATAL("try_run_framac " << arg1
+                                                          << " running " << dynpathbuf
+                                                          << " process " << childpid
+                                                          << " dumped core for signal#" << sig << "="
+                                                          << strsignal(sig));
+                                            else
+                                                CFR_FATAL("try_run_framac " << arg1
+                                                          << " running " << dynpathbuf
+                                                          << " process " << childpid
+                                                          << " terminated on signal#" << sig << "="
+                                                          << strsignal(sig));
+                                            okwait = true; // probably not reached
+                                        }
+                                }
+                            while (okwait);
+                        }
+                    free(dynpathbuf);
+                } // end for pc...
         }
 } // end try_run_framac
 
