@@ -88,6 +88,10 @@ public:
 std::map<std::string, Source_file*> Source_file::srcf_dict;
 std::vector<Source_file> my_srcfiles;
 
+/// try to run Frama-C with a few arguments
+void try_run_framac(const char*arg1, const char*arg2=nullptr,
+                    const char*arg3=nullptr, const char*arg4=nullptr,
+                    const char*arg5=nullptr);
 
 /// add a source file to analyze
 void add_source_file(const char*srcpath);
@@ -106,6 +110,7 @@ enum clever_flags_en
     help_flag='h',
     verbose_flag='V',
     argframac_flag='a',
+    negframac_flag='n',
     framacexe_flag='F',
     sourcelist_flag='s',
     cppdef_flag='D',
@@ -117,11 +122,31 @@ enum clever_flags_en
 
 const struct option long_clever_options[] =
 {
-    {.name= "verbose", .has_arg= no_argument, .flag= nullptr, .val= verbose_flag},
-    {.name="version",  .has_arg=no_argument,  .flag=nullptr, .val=version_flag},
-    {.name="help", .has_arg=no_argument, .flag=nullptr, .val=help_flag},
+    /// --verbose to increase verbosity
+    {
+        .name= "verbose",
+        .has_arg= no_argument,
+        .flag= nullptr,
+        .val= verbose_flag
+    },
+    /// --version to show the version of this clever-framac and of
+    /// the Frama-C tool iteself
+    {
+        .name="version",
+        .has_arg=no_argument,
+        .flag=nullptr,
+        .val=version_flag
+    },
+    /// --help to give help and also for Frama-C
+    {
+        .name="help",
+        .has_arg=no_argument,
+        .flag=nullptr,
+        .val=help_flag
+    },
     {.name="framac", .has_arg=required_argument, .flag=nullptr, .val=framacexe_flag},
     {.name="argframac", .has_arg=required_argument, .flag=nullptr, .val=argframac_flag},
+    {.name="negframac", .has_arg=required_argument, .flag=nullptr, .val=negframac_flag},
     {.name="sources", .has_arg=required_argument, .flag=nullptr, .val=sourcelist_flag},
     {.name="cppdefine", .has_arg=required_argument, .flag=nullptr, .val=cppdef_flag},
     {.name="cppundef", .has_arg=required_argument, .flag=nullptr, .val=cppundef_flag},
@@ -135,6 +160,7 @@ show_help(void)
     printf("%s usage:\n"
            "\t -V|--verbose           # output more messages\n"
            "\t --version              # give version information\n"
+           "\t                        # also for Frama-C\n"
            "\t -h|--help              # give this help\n"
            "\t -F|--framac <framac>   # explicit Frama-C to be used\n"
            "\t                        # default is %s\n"
@@ -175,6 +201,7 @@ parse_program_arguments(int argc, char**argv)
                 {
                 case 'h': // --help
                     show_help();
+                    try_run_framac("-help");
                     exit(EXIT_SUCCESS);
                     return;
                 case 'V': // --verbose
@@ -196,6 +223,7 @@ parse_program_arguments(int argc, char**argv)
                     continue;
                 case version_flag: // --version
                     printf("%s git %s built at %s\n", progname, GIT_ID, __DATE__);
+                    try_run_framac("-version");
                     exit(EXIT_SUCCESS);
                     return;
                 case listplugins_flag:
@@ -371,6 +399,42 @@ add_sources_list(const char*listpath)
 } // end add_sources_list
 
 
+void
+try_run_framac(const char*arg1, const char*arg2,
+               const char*arg3, const char*arg4,
+               const char*arg5)
+{
+    const char*realframac=nullptr;
+    assert(framacexe != nullptr);
+    if (strchr(framacexe, '/'))
+        {
+            realframac= realpath(framacexe, nullptr);
+        }
+    else
+        {
+            // find $framacexe in our $PATH
+            const char*envpath = getenv("PATH");
+            const char*pc=nullptr;
+            const char*colon=nullptr;
+            int slenframac = strlen(framacexe);
+            if (!envpath)
+                envpath="/bin:/usr/bin:/usr/local/bin";
+            char pathbuf[256];
+            memset (pathbuf, 0, sizeof(pathbuf));
+            for (pc=envpath; pc && *pc; pc=colon?colon+1:nullptr)
+                {
+                    int cplen = 0;
+                    colon=strchr(pc, ':');
+                    memset (pathbuf, 0, sizeof(pathbuf));
+                    if (colon)
+                        cplen = colon-pc-1;
+                    else
+                        cplen = strlen(pc);
+                }
+#warning try_run_framac is incomplete
+            /* should snprintf in pathbuf, then use access(2), then fork & execve */
+        }
+} // end try_run_framac
 
 int
 main(int argc, char*argv[])
