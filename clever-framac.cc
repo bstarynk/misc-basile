@@ -430,8 +430,16 @@ try_run_framac(const char*arg1, const char*arg2,
                         cplen = colon-pc-1;
                     else
                         cplen = strlen(pc);
+                    if (cplen + slenframac + 2 < sizeof(pathbuf))
+                        {
+                            strncpy(pathbuf, pc, cplen);
+                            strcat(pathbuf, "/");
+                        }
+                    else
+                        {
+                        };
                 }
-#warning try_run_framac is incomplete
+#warning try_run_framac is incomplete should use asprintf
             /* should snprintf in pathbuf, then use access(2), then fork & execve */
         }
 } // end try_run_framac
