@@ -45,6 +45,8 @@
 char myhost[80];
 const char*progname;
 const char*framacexe = "/usr/bin/frama-c";
+const char*realframac;
+
 bool is_verbose;
 char* sourcelist_path;
 bool do_list_framac_plugins;
@@ -460,14 +462,10 @@ add_sources_list(const char*listpath)
         fclose(f);
 } // end add_sources_list
 
-
 void
-try_run_framac(const char*arg1, const char*arg2,
-               const char*arg3, const char*arg4,
-               const char*arg5)
+compute_real_framac(void)
 {
-    const char*realframac=nullptr;
-    assert(framacexe != nullptr);
+    if (realframac) return;
     //// compute into realframac the malloc-ed string of Frama-C executable
     if (strchr(framacexe, '/'))
         {
@@ -497,8 +495,8 @@ try_run_framac(const char*arg1, const char*arg2,
                     if (nbytes<0 || dynpathbuf==nullptr)
                         {
                             int e = errno;
-                            CFR_FATAL("asprintf failed in try_run_framac "
-                                      << arg1 << ": " << strerror(e));
+                            CFR_FATAL("asprintf failed in compute_real_framac: "
+                                      << strerror(e));
                         };
                     if (!access(dynpathbuf, X_OK))
                         {
@@ -507,6 +505,15 @@ try_run_framac(const char*arg1, const char*arg2,
                         };
                 } // end for pc...
         }
+} // end compute_real_framac
+void
+try_run_framac(const char*arg1, const char*arg2,
+               const char*arg3, const char*arg4,
+               const char*arg5)
+{
+    assert(framacexe != nullptr);
+    if (!realframac)
+        compute_real_framac();
     ////
     /// should fork and execve
     if (is_verbose)
@@ -626,7 +633,12 @@ main(int argc, char*argv[])
                myhost, (int)getpid(), GIT_ID, (int) my_srcfiles.size());
     if (do_list_framac_plugins)
         try_run_framac("-plugins");
-    std::clog << __FILE__ << " is incomplete at " << __LINE__ << " should run " << framacexe << std::endl;
+    if (!realframac)
+        compute_real_framac();
+    if (is_verbose)
+        {
+        }
+    std::clog << __FILE__ << " is incomplete at " << __LINE__ << " should run " << realframac << std::endl;
 #warning should run framac on the collected source files....
 } // end main
 
