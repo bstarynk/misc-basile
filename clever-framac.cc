@@ -545,7 +545,7 @@ try_run_framac(const char*arg1, const char*arg2,
     if (childpid==0)
         {
             // in child
-            execl(realframac, arg1, arg2, arg3, arg4, arg5,
+            execl(realframac, realframac, arg1, arg2, arg3, arg4, arg5,
                   nullptr);
             /// should almost never happen
             abort();
@@ -607,6 +607,8 @@ try_run_framac(const char*arg1, const char*arg2,
                 }
         }
     while (okwait);
+    if (is_verbose)
+        std::cout << std::endl << progname << " did run " << realframac << std::endl;
     free((void*)realframac);
     std::cout << std::endl << std::flush;
 } // end try_run_framac
@@ -617,12 +619,14 @@ main(int argc, char*argv[])
     progname = argv[0];
     if (argc>1 && (!strcmp(argv[1], "--verbose") || !strcmp(argv[1], "-V")))
         is_verbose = true;
+    ///
     parse_program_arguments(argc, argv);
-    if (verbose_flag)
+    if (is_verbose)
         printf("%s running verbosely on %s pid %d git %s with %d source files\n", progname,
                myhost, (int)getpid(), GIT_ID, (int) my_srcfiles.size());
     if (do_list_framac_plugins)
         try_run_framac("-plugins");
+    std::clog << __FILE__ << " is incomplete at " << __LINE__ << " should run " << framacexe << std::endl;
 #warning should run framac on the collected source files....
 } // end main
 
