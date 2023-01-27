@@ -246,7 +246,6 @@ parse_program_arguments(int argc, char**argv)
     int c=0;
     int option_index= -1;
     gethostname(myhost, sizeof(myhost)-1);
-#warning incomplete parse_program_arguments in clever-framac.cc
     do
         {
             option_index = -1;
@@ -260,7 +259,14 @@ parse_program_arguments(int argc, char**argv)
                 {
                 case 'h': // --help
                     show_help();
+                    std::cout << std::flush;
+                    std::cerr << std::flush;
+                    std::clog << std::flush;
+                    fflush(nullptr);
+                    std::cout << std::endl;
+                    std::cout << framacexe << " help:::" << std::endl;
                     try_run_framac("-help");
+                    try_run_framac("-kernel-h");
                     exit(EXIT_SUCCESS);
                     return;
                 case 'V': // --verbose
@@ -462,6 +468,7 @@ try_run_framac(const char*arg1, const char*arg2,
 {
     const char*realframac=nullptr;
     assert(framacexe != nullptr);
+    //// compute into realframac the malloc-ed string of Frama-C executable
     if (strchr(framacexe, '/'))
         {
             realframac= realpath(framacexe, nullptr);
@@ -495,81 +502,85 @@ try_run_framac(const char*arg1, const char*arg2,
                         };
                     if (!access(dynpathbuf, X_OK))
                         {
-                            /// should fork and execve
-                            pid_t childpid = fork();
-                            if (childpid<0)
-                                {
-                                    int e= errno;
-                                    CFR_FATAL("try_run_framac " << arg1 << " failed to fork "
-                                              << strerror(e));
-                                };
-                            if (childpid==0)
-                                {
-                                    // in child
-                                    execl(dynpathbuf, arg1, arg2, arg3, arg4, arg5,
-                                          nullptr);
-                                    /// should almost never happen
-                                    abort();
-                                }
-                            /// in parent
-                            int wstatus= 0;
-                            bool okwait=false;
-                            do
-                                {
-                                    pid_t wpid = waitpid(childpid, &wstatus, 0);
-                                    int e = errno;
-                                    if (wpid<0)
-                                        {
-                                            if (e == EINTR)
-                                                {
-                                                    usleep(50*1000);
-                                                    continue;
-                                                };
-                                            CFR_FATAL("try_run_framac " << arg1
-                                                      << " failed to waitpid process " << childpid
-                                                      << " " << strerror(e));
-                                        };
-                                    // here waitpid succeeded
-                                    if (wstatus == 0)
-                                        {
-                                            free (dynpathbuf);
-                                            okwait= true;
-                                            return;
-                                        };
-                                    if (WIFEXITED(wstatus))
-                                        {
-                                            int ex= WEXITSTATUS(wstatus);
-                                            if (ex>0)
-                                                CFR_FATAL("try_run_framac " << arg1
-                                                          << " running " << dynpathbuf
-                                                          << " process " << childpid
-                                                          << " exited " << WEXITSTATUS(ex));
-                                            okwait = true;
-                                        }
-                                    else if (WIFSIGNALED(wstatus))
-                                        {
-                                            bool dumpedcore = WCOREDUMP(wstatus);
-                                            int sig = WTERMSIG(wstatus);
-                                            if (dumpedcore)
-                                                CFR_FATAL("try_run_framac " << arg1
-                                                          << " running " << dynpathbuf
-                                                          << " process " << childpid
-                                                          << " dumped core for signal#" << sig << "="
-                                                          << strsignal(sig));
-                                            else
-                                                CFR_FATAL("try_run_framac " << arg1
-                                                          << " running " << dynpathbuf
-                                                          << " process " << childpid
-                                                          << " terminated on signal#" << sig << "="
-                                                          << strsignal(sig));
-                                            okwait = true; // probably not reached
-                                        }
-                                }
-                            while (okwait);
-                        }
-                    free(dynpathbuf);
+                            realframac = dynpathbuf;
+                            break;
+                        };
                 } // end for pc...
         }
+    ////
+    /// should fork and execve
+    pid_t childpid = fork();
+    if (childpid<0)
+        {
+            int e= errno;
+            CFR_FATAL("try_run_framac " << arg1 << " failed to fork "
+                      << strerror(e));
+        };
+    if (childpid==0)
+        {
+            // in child
+            execl(realframac, arg1, arg2, arg3, arg4, arg5,
+                  nullptr);
+            /// should almost never happen
+            abort();
+        }
+    /// in parent
+    int wstatus= 0;
+    bool okwait=false;
+    do
+        {
+            pid_t wpid = waitpid(childpid, &wstatus, 0);
+            int e = errno;
+            if (wpid<0)
+                {
+                    if (e == EINTR)
+                        {
+                            usleep(50*1000);
+                            continue;
+                        };
+                    CFR_FATAL("try_run_framac " << arg1
+                              << " failed to waitpid process " << childpid
+                              << " " << strerror(e));
+                };
+            // here waitpid succeeded
+            if (wstatus == 0)
+                {
+                    free ((void*)realframac);
+                    realframac=nullptr;
+                    okwait= true;
+                    return;
+                };
+            if (WIFEXITED(wstatus))
+                {
+                    int ex= WEXITSTATUS(wstatus);
+                    if (ex>0)
+                        CFR_FATAL("try_run_framac " << arg1
+                                  << " running " << realframac
+                                  << " process " << childpid
+                                  << " exited " << WEXITSTATUS(ex));
+                    okwait = true;
+                }
+            else if (WIFSIGNALED(wstatus))
+                {
+                    bool dumpedcore = WCOREDUMP(wstatus);
+                    int sig = WTERMSIG(wstatus);
+                    if (dumpedcore)
+                        CFR_FATAL("try_run_framac " << arg1
+                                  << " running " << realframac
+                                  << " process " << childpid
+                                  << " dumped core for signal#" << sig << "="
+                                  << strsignal(sig));
+                    else
+                        CFR_FATAL("try_run_framac " << arg1
+                                  << " running " << realframac
+                                  << " process " << childpid
+                                  << " terminated on signal#" << sig << "="
+                                  << strsignal(sig));
+                    okwait = true; // probably not reached
+                }
+        }
+    while (okwait);
+    free((void*)realframac);
 } // end try_run_framac
 
 int
@@ -582,6 +593,8 @@ main(int argc, char*argv[])
     if (verbose_flag)
         printf("%s running verbosely on %s pid %d git %s with %d source files\n", progname,
                myhost, (int)getpid(), GIT_ID, (int) my_srcfiles.size());
+    if (do_list_framac_plugins)
+        try_run_framac("-plugins");
 #warning should run framac on the collected source files....
 } // end main
 
