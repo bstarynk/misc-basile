@@ -509,6 +509,29 @@ try_run_framac(const char*arg1, const char*arg2,
         }
     ////
     /// should fork and execve
+    if (is_verbose)
+        std::cout << progname << " is running " << realframac;
+    if (arg1)
+        {
+            std::cout << ' ' << arg1;
+            if (arg2)
+                {
+                    std::cout << ' ' << arg2;
+                    if (arg3)
+                        {
+                            std::cout << ' ' << arg3;
+                            if (arg4)
+                                {
+                                    std::cout << ' ' << arg4;
+                                    if (arg5)
+                                        {
+                                            std::cout << ' ' << arg5;
+                                        }
+                                }
+                        }
+                }
+        }
+    std::cout << std::endl;
     pid_t childpid = fork();
     if (childpid<0)
         {
