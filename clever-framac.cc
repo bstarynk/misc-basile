@@ -532,6 +532,9 @@ try_run_framac(const char*arg1, const char*arg2,
                 }
         }
     std::cout << std::endl;
+    std::cout << std::flush;
+    std::cerr << std::flush;
+    std::clog << std::flush;
     pid_t childpid = fork();
     if (childpid<0)
         {
@@ -546,6 +549,7 @@ try_run_framac(const char*arg1, const char*arg2,
                   nullptr);
             /// should almost never happen
             abort();
+            return;
         }
     /// in parent
     int wstatus= 0;
@@ -604,6 +608,7 @@ try_run_framac(const char*arg1, const char*arg2,
         }
     while (okwait);
     free((void*)realframac);
+    std::cout << std::endl << std::flush;
 } // end try_run_framac
 
 int
