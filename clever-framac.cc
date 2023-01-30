@@ -100,16 +100,21 @@ public:
     {
         return srcf_type;
     };
-  const char*type_cname() const {
-    switch (srcf_type) {
-    case srcty_NONE: return "*none*";
-    case srcty_c: return "C";
-    case srcty_cpp: return "C++";
-    default:
-      CFR_FATAL("source " << path() << " has invalid type #"
-		<< (int)srcf_type);
-    }
-  };
+    const char*type_cname() const
+    {
+        switch (srcf_type)
+            {
+            case srcty_NONE:
+                return "*none*";
+            case srcty_c:
+                return "C";
+            case srcty_cpp:
+                return "C++";
+            default:
+                CFR_FATAL("source " << path() << " has invalid type #"
+                          << (int)srcf_type);
+            }
+    };
     Source_file& operator = (Source_file&) = default;
 };				// end Source_file
 
@@ -652,14 +657,20 @@ main(int argc, char*argv[])
             printf("%s running verbosely on %s pid %d git %s\n"
                    "... with the following %d source files:\n",
                    progname, myhost, (int)getpid(), GIT_ID, nbsrc);
-            for (int sx=0; sx<nbsrc; sx++) {
-	      printf(" %s [%s]\n", my_srcfiles[sx].path().c_str(),
-		     );
+            for (int sx=0; sx<nbsrc; sx++)
+                {
+                    printf(" %s [%s]\n", my_srcfiles[sx].path().c_str(),
+                           my_srcfiles[sx].type_cname());
+                }
+            int nbprepro = (int) my_prepro_options.size();
+            printf("With %d preprocessor options:\n", nbprepro);
+            for (int px=0; px<nbprepro; px++)
+                printf(" %s\n", my_prepro_options[px].c_str());
             int nbargs = (int) my_framac_options.size();
             printf("Specified %d options to %s:\n", realframac, nbargs);
             for (int ax=0; ax<nbargs; ax++)
                 {
-		  printf(" %s\n", my_framac_options[ax].c_str());
+                    printf(" %s\n", my_framac_options[ax].c_str());
                 }
         }
     std::clog << __FILE__ << " is incomplete at " << __LINE__ << " should run " << realframac << std::endl;
