@@ -673,6 +673,19 @@ main(int argc, char*argv[])
                     printf(" %s\n", my_framac_options[ax].c_str());
                 }
         }
+    std::vector<std::string> framaexecargs;
+    framaexecargs.push_back(std::string{realframac});
+    int nbargs = (int) my_framac_options.size();
+    for (int aix=0; aix<nbargs; aix++)
+        {
+            framaexecargs.push_back(my_framac_options[aix]);
+        };
+    int nbprepro = (int) my_prepro_options.size();
+    if (nbprepro>0)
+        {
+#warning incomplete clever-framac.cc
+        }
+#warning should execvp the Frama-C process
     std::clog << __FILE__ << " is incomplete at " << __LINE__ << " should run " << realframac << std::endl;
 #warning should run framac on the collected source files....
 } // end main
