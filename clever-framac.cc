@@ -4,6 +4,7 @@
 /*
  * Author(s):
  *      Basile Starynkevitch <basile@starynkevitch.net>
+ *      or (before november 2023) <basile.starynkevitch@cea.fr>
  */
 //  © Copyright 2022 - 2023 Commissariat à l'Energie Atomique
 
@@ -99,6 +100,16 @@ public:
     {
         return srcf_type;
     };
+  const char*type_cname() const {
+    switch (srcf_type) {
+    case srcty_NONE: return "*none*";
+    case srcty_c: return "C";
+    case srcty_cpp: return "C++";
+    default:
+      CFR_FATAL("source " << path() << " has invalid type #"
+		<< (int)srcf_type);
+    }
+  };
     Source_file& operator = (Source_file&) = default;
 };				// end Source_file
 
@@ -637,6 +648,19 @@ main(int argc, char*argv[])
         compute_real_framac();
     if (is_verbose)
         {
+            int nbsrc = (int) my_srcfiles.size();
+            printf("%s running verbosely on %s pid %d git %s\n"
+                   "... with the following %d source files:\n",
+                   progname, myhost, (int)getpid(), GIT_ID, nbsrc);
+            for (int sx=0; sx<nbsrc; sx++) {
+	      printf(" %s [%s]\n", my_srcfiles[sx].path().c_str(),
+		     );
+            int nbargs = (int) my_framac_options.size();
+            printf("Specified %d options to %s:\n", realframac, nbargs);
+            for (int ax=0; ax<nbargs; ax++)
+                {
+		  printf(" %s\n", my_framac_options[ax].c_str());
+                }
         }
     std::clog << __FILE__ << " is incomplete at " << __LINE__ << " should run " << realframac << std::endl;
 #warning should run framac on the collected source files....
