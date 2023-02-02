@@ -683,11 +683,48 @@ main(int argc, char*argv[])
     int nbprepro = (int) my_prepro_options.size();
     if (nbprepro>0)
         {
-#warning incomplete clever-framac.cc
-        }
-#warning should execvp the Frama-C process
-    std::clog << __FILE__ << " is incomplete at " << __LINE__ << " should run " << realframac << std::endl;
-#warning should run framac on the collected source files....
+            const char*cppenv = getenv("CPP");
+            const char*mycpp = cppenv?cppenv:"/usr/bin/cpp";
+            std::string cppcmd=mycpp;
+            for (int ipx = 0; ipx < my_prepro_options.size(); ipx++)
+                {
+                    cppcmd += ' ';
+                    cppcmd += my_prepro_options[ipx];
+                }
+            cppcmd += "%1 -o %2";
+            framaexecargs.push_back("-cpp-command");
+            framaexecargs.push_back(cppcmd);
+        };
+    int nbsrc =  my_srcfiles.size();
+    for (int six = 0; six < nbsrc; six++)
+        {
+            framaexecargs.push_back(my_srcfiles[six].path());
+        };
+    int cmdlen = framaexecargs.size();
+    char**framargv = //
+        (char**)calloc(cmdlen+2, sizeof(char*));
+    if (is_verbose)
+        {
+            printf ("%s will run command with %d arguments:",
+                    progname, cmdlen);
+            for (int cix = 0; cix < cmdlen; cix++)
+                printf(" %s", framaexecargs[cix].c_str());
+            putc('\n', stdout);
+            fflush(nullptr);
+            if (!framargv)
+                CFR_FATAL("failed to calloc " << (cmdlen+2) << " pointers:"
+                          << strerror(errno));
+            for (int i=0; i<cmdlen; i++)
+                framargv[i] = (char*) (framaexecargs[i].c_str());
+
+        };
+    fflush(nullptr);
+    execvp(realframac, framargv);
+    // should not be reached, but if it is....
+    fprintf(stderr, "%s: execvp %s with %d arguments failed (%s)\n",
+            progname, realframac, cmdlen, strerror(errno));
+    fflush(nullptr);
+    exit(EXIT_FAILURE);
 } // end main
 
 /****************
