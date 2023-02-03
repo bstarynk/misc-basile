@@ -47,7 +47,7 @@ char myhost[80];
 const char*progname;
 const char*framacexe = "/usr/bin/frama-c";
 const char*realframac;
-
+void compute_real_framac(void);
 bool is_verbose;
 char* sourcelist_path;
 bool do_list_framac_plugins;
@@ -281,6 +281,7 @@ parse_program_arguments(int argc, char**argv)
                     std::cerr << std::flush;
                     std::clog << std::flush;
                     fflush(nullptr);
+                    compute_real_framac();
                     std::cout << std::endl;
                     std::cout << framacexe << " help:::" << std::endl;
                     try_run_framac("-help");
@@ -305,8 +306,11 @@ parse_program_arguments(int argc, char**argv)
                     my_prepro_options.push_back(optarg);
                     continue;
                 case version_flag: // --version
-                    printf("%s git %s built at %s\n", progname, GIT_ID, __DATE__);
+                    printf("%s: git %s built at %s\n", progname, GIT_ID, __DATE__);
+                    compute_real_framac();
+                    printf("%s: running %s -version\n", progname, realframac);
                     try_run_framac("-version");
+                    putc('\n', stdout);
                     exit(EXIT_SUCCESS);
                     return;
                 case listplugins_flag:
@@ -533,28 +537,30 @@ try_run_framac(const char*arg1, const char*arg2,
     ////
     /// should fork and execve
     if (is_verbose)
-        std::cout << progname << " is running " << realframac;
-    if (arg1)
         {
-            std::cout << ' ' << arg1;
-            if (arg2)
+            std::cout << progname << " is running " << realframac;
+            if (arg1)
                 {
-                    std::cout << ' ' << arg2;
-                    if (arg3)
+                    std::cout << ' ' << arg1;
+                    if (arg2)
                         {
-                            std::cout << ' ' << arg3;
-                            if (arg4)
+                            std::cout << ' ' << arg2;
+                            if (arg3)
                                 {
-                                    std::cout << ' ' << arg4;
-                                    if (arg5)
+                                    std::cout << ' ' << arg3;
+                                    if (arg4)
                                         {
-                                            std::cout << ' ' << arg5;
+                                            std::cout << ' ' << arg4;
+                                            if (arg5)
+                                                {
+                                                    std::cout << ' ' << arg5;
+                                                }
                                         }
                                 }
                         }
                 }
-        }
-    std::cout << std::endl;
+            std::cout << std::endl;
+        };
     std::cout << std::flush;
     std::cerr << std::flush;
     std::clog << std::flush;
