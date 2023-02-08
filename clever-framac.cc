@@ -38,6 +38,10 @@
 #include <sys/wait.h>
 #include <getopt.h>
 
+// GNU guile Scheme interpreter. See
+// https://www.gnu.org/software/guile/manual/html_node/Linking-Programs-With-Guile.html
+#include "libguile.h"
+
 /*** see getopt(3) man page mentionning
  *      extern char *optarg;
  *      extern int optind, opterr, optopt;
@@ -53,6 +57,7 @@ char* sourcelist_path;
 bool do_list_framac_plugins;
 std::vector<std::string> my_prepro_options;
 std::vector<std::string> my_framac_options;
+std::vector<std::string> my_guile_files;
 extern "C" [[noreturn]] void cfr_fatal_error_at(const char*fil, int lin);
 #define CFR_FATAL_AT(Fil,Lin,Log) do {			\
     std::ostringstream out##Lin;			\
@@ -129,6 +134,9 @@ void try_run_framac(const char*arg1, const char*arg2=nullptr,
 /// add a source file to analyze
 void add_source_file(const char*srcpath);
 
+
+/// add a GNU guile script file
+void add_guile_code(const char*guilepath);
 
 /// Add a file containing the list of files to analyze;  empty lines
 /// and lines starting with an hash # are skipped, per Unix tradition.
@@ -227,22 +235,23 @@ void
 show_help(void)
 {
     printf("%s usage:\n"
-           "\t -V|--verbose           # output more messages\n"
-           "\t --version              # give version information\n"
-           "\t                        # also for Frama-C\n"
-           "\t -h|--help              # give this help\n"
-           "\t -F|--framac <framac>   # explicit Frama-C to be used\n"
-           "\t                        # default is %s\n"
-           "\t -a|--argframac <arg>   # argument to Frama-C\n"
-           "\t -I <incldir>           # preprocessing include\n"
-           "\t -D <definition>        # preprocessing definition\n"
-           "\t -U <undefine>          # preprocessing undefine\n"
-           "\t --list-plugins         # passed to Frama-C\n"
-           "\t -l | --sources <slist> # read list of files (one per line) from <sfile>\n"
-           "\t                        # if it starts with ! or | use popen\n"
-           "\t                        # if it starts with @ it a list of files\n"
-           "\t ... <source files>     # sources are files *.c ...\n"
-           "\t                        # ... or C++ files *.cc\n"
+           "\t -V|--verbose             # output more messages\n"
+           "\t --version                # give version information\n"
+           "\t                          # also for Frama-C\n"
+           "\t -h|--help                # give this help\n"
+           "\t -F|--framac <framac>     # explicit Frama-C to be used\n"
+           "\t                          # default is %s\n"
+           "\t -G|--guile <scheme-code> # Use GNU guile with this code\n"
+           "\t -a|--argframac <arg>     # argument to Frama-C\n"
+           "\t -I <incldir>             # preprocessing include\n"
+           "\t -D <definition>          # preprocessing definition\n"
+           "\t -U <undefine>            # preprocessing undefine\n"
+           "\t --list-plugins           # passed to Frama-C\n"
+           "\t -l | --sources <slist>   # read list of files (one per line) from <sfile>\n"
+           "\t                          # if it starts with ! or | use popen\n"
+           "\t                          # if it starts with @ it a list of files\n"
+           "\t ... <source files>       # analyzed sources are C *.c ...\n"
+           "\t                          # ... or C++ files *.cc\n"
            " (preprocessing options are passed to Frama-C)\n"
            "\n See https://frama-c.com/ for details on Frama-C ...\n"
            "Our gitid is %s (file %s compiled %s)\n"
@@ -269,7 +278,7 @@ parse_program_arguments(int argc, char**argv)
             option_index = -1;
             optarg = nullptr;
             c = getopt_long(argc, argv,
-                            "VhF:a:l:U:D:I:",
+                            "VhF:a:l:U:D:I:G:",
                             long_clever_options, &option_index);
             if (c<0)
                 break;
@@ -296,6 +305,9 @@ parse_program_arguments(int argc, char**argv)
                     continue;
                 case 'F': // --framac=<framac>
                     framacexe=optarg;
+                    continue;
+                case 'G': // --guile=<scheme-code>
+                    add_guile_code(optarg);
                     continue;
                 case 's': // --sources=<listpath>
                     add_sources_list(optarg);
@@ -432,6 +444,29 @@ add_source_file(const char*srcpath)
         }
     free((void*)rp);
 } // end add_source_file
+
+void
+add_guile_code(const char*scmpath)
+{
+    struct stat scmstat = {};
+    assert(scmpath != nullptr);
+    if (stat(scmpath, &scmstat) < 0)
+        {
+            fprintf(stderr, "%s: failed to stat Guile code %s on %s (%s)\n",
+                    progname, scmpath, myhost, strerror(errno));
+            exit(EXIT_FAILURE);
+        };
+    if (scmstat.st_mode & S_IFMT != S_IFREG)
+        {
+            fprintf(stderr, "%s: Guile script %s is not a regular file on %s\n",
+                    progname, scmpath, myhost);
+            exit(EXIT_FAILURE);
+        };
+    const char* rp = realpath(scmpath, nullptr);
+    std::string guilestr(rp);
+    my_guile_files.push_back(guilestr);
+    free ((void*)scmpath);
+} // end add_guile_code
 
 void
 add_sources_list(const char*listpath)
@@ -642,6 +677,22 @@ try_run_framac(const char*arg1, const char*arg2,
     std::cout << std::endl << std::flush;
 } // end try_run_framac
 
+
+void inner_guile(void*guileclosure, int argc, char**argv)
+{
+    CFR_FATAL("unimplemented inner_guile");
+#warning unimplemented inner_guile
+    // see https://www.gnu.org/software/guile/manual/html_node/A-Sample-Guile-Main-Program.html
+}
+void
+do_use_guile(int argc, char*argv[], int nbguile)
+{
+#warning unimplemented do_use_guile
+    CFR_FATAL("unimplemented do_use_guile for " << nbguile << " Scheme scripts");
+    /// perhaps scm_boot_guile is wrong...
+    scm_boot_guile (argc, argv, inner_guile, 0);
+} // end do_use_guile
+
 int
 main(int argc, char*argv[])
 {
@@ -650,9 +701,12 @@ main(int argc, char*argv[])
         is_verbose = true;
     ///
     parse_program_arguments(argc, argv);
+    int nbguile = (int)my_guile_files.size();
     if (is_verbose)
         printf("%s running verbosely on %s pid %d git %s with %d source files\n", progname,
                myhost, (int)getpid(), GIT_ID, (int) my_srcfiles.size());
+    if (nbguile>0)
+        do_use_guile(argc, argv, nbguile);
     if (do_list_framac_plugins)
         try_run_framac("-plugins");
     if (!realframac)
@@ -673,10 +727,15 @@ main(int argc, char*argv[])
             for (int px=0; px<nbprepro; px++)
                 printf(" %s\n", my_prepro_options[px].c_str());
             int nbargs = (int) my_framac_options.size();
-            printf("Specified %d options to %s:\n", realframac, nbargs);
+            printf("Specified %d options to %s:\n", nbargs, realframac);
             for (int ax=0; ax<nbargs; ax++)
                 {
                     printf(" %s\n", my_framac_options[ax].c_str());
+                }
+            printf("Specified %d Guile scripts to %s:\n", nbguile, realframac);
+            for (int gx=0; gx<nbguile; gx++)
+                {
+                    printf(" %s\n", my_guile_files[gx].c_str());
                 }
         }
     std::vector<std::string> framaexecargs;
@@ -701,6 +760,12 @@ main(int argc, char*argv[])
             framaexecargs.push_back("-cpp-command");
             framaexecargs.push_back(cppcmd);
         };
+    if (nbguile>0)
+        {
+#warning unimplemented use Guile here
+            CFR_FATAL("not yet implemented Guile scripts handling of "
+                      << nbguile << " Scheme scripts");
+        }
     int nbsrc =  my_srcfiles.size();
     for (int six = 0; six < nbsrc; six++)
         {

@@ -13,6 +13,7 @@ GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 
 
+
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 

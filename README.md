@@ -45,16 +45,27 @@ of the Ocaml stdlib/map.ml file, which I might simplify a bit.
 * `makeprimes.c` uses the very clever BSD `/usr/games/primes` program
   and extract some primes from the stream of primes producing it.
 
+
+* `clever-framac.cc` is a clever C++ wrapper for
+  [Frama-C](https://frama-c.com/) static source code analyzer. It uses
+  [GNU guile](https://www.gnu.org/software/guile/) version 3, so the
+  `guile-3.0-dev` Debian package.
+
 * `sync-periodically.c` runs periodically the
   [sync(2)](http://man7.org/linux/man-pages/man2/sync.2.html), is
   GPLv3+ licensed (so without warranty), and accepts both `--version`
   and `--help` program arguments. It might be useful (to avoid losing
   a lot of data in kernel file buffers) on power cuts, and don't
   consume lot of resources. Please glance inside the source code. Your
-  `/etc/crontab` might have a line like ``` @reboot sync
-  /usr/local/bin/sync-periodically --log-period=600 --sync-period=3
-  --daemon --pid-file=/var/run/sync-periodically.pid ``` and we wrote
+  `/etc/crontab` might have a line like
+
+```
+@reboot sync /usr/local/bin/sync-periodically --log-period=600 --sync-period=3  --daemon --pid-file=/var/run/sync-periodically.pid
+```
+
+and we wrote
   (for `systemd`) some `sync-periodically.service`
+
 
 * `qfontdialog-example.cc` is a tiny improvement over [this `QFontDialog` example](http://www.codebind.com/cpp-tutorial/qt-tutorial/qt-tutorials-for-beginners-qfontdialog-example/)
 
