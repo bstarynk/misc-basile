@@ -138,6 +138,9 @@ void add_source_file(const char*srcpath);
 /// add a GNU guile script file
 void add_guile_script(const char*guilepath);
 
+/// evaluate a GNU guile expression
+void do_evaluate_guile(const char*guiletext);
+
 /// Add a file containing the list of files to analyze;  empty lines
 /// and lines starting with an hash # are skipped, per Unix tradition.
 /// a line starting with @ means that it is a list of files
@@ -160,6 +163,7 @@ enum clever_flags_en
     cppincl_flag='I',
     version_flag=1000,
     listplugins_flag,
+    evalguile_flag,
 };
 
 const struct option long_clever_options[] =
@@ -235,6 +239,12 @@ const struct option long_clever_options[] =
         .flag=nullptr,
         .val=guilescript_flag /// -G<script>
     },
+    {
+        .name="eval-guile",
+        .has_arg=required_argument,
+        .flag=nullptr,
+        .val=evalguile_flag
+    },
     {}
 };
 
@@ -249,6 +259,7 @@ show_help(void)
            "\t -F|--framac <framac>         # explicit Frama-C to be used\n"
            "\t                              # default is %s\n"
            "\t -G |--guile-script <script>  # Use GNU guile with this script\n"
+           "\t --eval-guile=<guile-expr>    # evaluate with GNU guile\n"
            "\t -a|--argframac <arg>         # argument to Frama-C\n"
            "\t -I <incldir>                 # preprocessing include\n"
            "\t -D <definition>              # preprocessing definition\n"
@@ -334,6 +345,9 @@ parse_program_arguments(int argc, char**argv)
                     return;
                 case listplugins_flag:
                     do_list_framac_plugins=true;
+                    continue;
+                case evalguile_flag:
+                    do_evaluate_guile(optarg);
                     continue;
                 }
             while (c>=0);
@@ -474,6 +488,14 @@ add_guile_script(const char*scmpath)
     my_guile_files.push_back(guilestr);
     free ((void*)scmpath);
 } // end add_guile_script
+
+
+void
+do_evaluate_guile(const char*guiletext)
+{
+#warning do_evaluate_guile unimplemented
+    CFR_FATAL("unimplemented do_evaluate_guile " << guiletext);
+} // end do_evaluate_guile
 
 void
 add_sources_list(const char*listpath)
