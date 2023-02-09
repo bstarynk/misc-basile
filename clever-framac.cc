@@ -53,6 +53,7 @@ const char*framacexe = "/usr/bin/frama-c";
 const char*realframac;
 void compute_real_framac(void);
 bool is_verbose;
+bool guile_has_been_initialized;
 char* sourcelist_path;
 bool do_list_framac_plugins;
 std::vector<std::string> my_prepro_options;
@@ -493,6 +494,12 @@ add_guile_script(const char*scmpath)
 void
 do_evaluate_guile(const char*guiletext)
 {
+    if (!guile_has_been_initialized)
+        {
+            guile_has_been_initialized=true;
+#warning BUG here related to guile
+            //scm_init_eval();
+        };
 #warning do_evaluate_guile unimplemented
     CFR_FATAL("unimplemented do_evaluate_guile " << guiletext);
 } // end do_evaluate_guile
@@ -791,6 +798,12 @@ main(int argc, char*argv[])
         };
     if (nbguile>0)
         {
+            if (!guile_has_been_initialized)
+                {
+                    guile_has_been_initialized=true;
+#warning BUG here related to guile
+                    //scm_init_eval();
+                };
 #warning unimplemented use Guile here
             CFR_FATAL("not yet implemented Guile scripts handling of "
                       << nbguile << " Scheme scripts");
