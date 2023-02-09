@@ -41,6 +41,7 @@
 // GNU guile Scheme interpreter. See
 // https://www.gnu.org/software/guile/manual/html_node/Linking-Programs-With-Guile.html
 #include "libguile.h"
+#include "libguile/init.h"
 
 /*** see getopt(3) man page mentionning
  *      extern char *optarg;
@@ -497,10 +498,9 @@ do_evaluate_guile(const char*guiletext)
     if (!guile_has_been_initialized)
         {
             guile_has_been_initialized=true;
-#warning BUG here related to guile
-            //scm_init_eval();
+            /// https://lists.gnu.org/archive/html/guile-user/2023-02/msg00019.html
+            scm_init_guile();
         };
-#warning do_evaluate_guile unimplemented
     CFR_FATAL("unimplemented do_evaluate_guile " << guiletext);
 } // end do_evaluate_guile
 
@@ -523,7 +523,7 @@ add_sources_list(const char*listpath)
     linbuf = (char*)calloc(1, inisiz);
     if (!linbuf)
         {
-            fprintf(stderr, "%d: failed to allocate line buffer (near %s:%d) of %d bytes (%s)\n",
+            fprintf(stderr, "%s: (near %s:%d)  failed to allocate line bufferof %d bytes (%s)\n",
                     progname, __FILE__, __LINE__, inisiz, strerror(errno));
             exit(EXIT_FAILURE);
         }
@@ -801,8 +801,7 @@ main(int argc, char*argv[])
             if (!guile_has_been_initialized)
                 {
                     guile_has_been_initialized=true;
-#warning BUG here related to guile
-                    //scm_init_eval();
+                    scm_init_guile ();
                 };
 #warning unimplemented use Guile here
             CFR_FATAL("not yet implemented Guile scripts handling of "
