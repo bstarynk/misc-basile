@@ -136,7 +136,7 @@ void add_source_file(const char*srcpath);
 
 
 /// add a GNU guile script file
-void add_guile_code(const char*guilepath);
+void add_guile_script(const char*guilepath);
 
 /// Add a file containing the list of files to analyze;  empty lines
 /// and lines starting with an hash # are skipped, per Unix tradition.
@@ -154,6 +154,7 @@ enum clever_flags_en
     negframac_flag='n',
     framacexe_flag='F',
     sourcelist_flag='s',
+    guilescript_flag='G',
     cppdef_flag='D',
     cppundef_flag='U',
     cppincl_flag='I',
@@ -168,7 +169,7 @@ const struct option long_clever_options[] =
         .name= "verbose",
         .has_arg= no_argument,
         .flag= nullptr,
-        .val= verbose_flag
+        .val= verbose_flag // -V
     },
     /// --version to show the version of this clever-framac and of
     /// the Frama-C tool iteself
@@ -183,50 +184,56 @@ const struct option long_clever_options[] =
         .name="help",
         .has_arg=no_argument,
         .flag=nullptr,
-        .val=help_flag
+        .val=help_flag // -h
     },
     /// --framac=<Frama-C-executable>
     {
         .name="framac",
         .has_arg=required_argument,
         .flag=nullptr,
-        .val=framacexe_flag
+        .val=framacexe_flag // -F...
     },
     {
         .name="argframac",
         .has_arg=required_argument,
         .flag=nullptr,
-        .val=argframac_flag
+        .val=argframac_flag // -a...
     },
     {
         .name="negframac",
         .has_arg=required_argument,
         .flag=nullptr,
-        .val=negframac_flag
+        .val=negframac_flag // -n...
     },
     {
         .name="sources",
         .has_arg=required_argument,
         .flag=nullptr,
-        .val=sourcelist_flag
+        .val=sourcelist_flag // -s...
     },
     {
         .name="cppdefine",
         .has_arg=required_argument,
         .flag=nullptr,
-        .val=cppdef_flag
+        .val=cppdef_flag // -D...
     },
     {
         .name="cppundef",
         .has_arg=required_argument,
         .flag=nullptr,
-        .val=cppundef_flag
+        .val=cppundef_flag // -U...
     },
     {
         .name="list-plugins",
         .has_arg=no_argument,
         .flag=nullptr,
         .val=listplugins_flag
+    },
+    {
+        .name="guile-script",
+        .has_arg=required_argument,
+        .flag=nullptr,
+        .val=guilescript_flag /// -G<script>
     },
     {}
 };
@@ -235,23 +242,23 @@ void
 show_help(void)
 {
     printf("%s usage:\n"
-           "\t -V|--verbose             # output more messages\n"
-           "\t --version                # give version information\n"
-           "\t                          # also for Frama-C\n"
-           "\t -h|--help                # give this help\n"
-           "\t -F|--framac <framac>     # explicit Frama-C to be used\n"
-           "\t                          # default is %s\n"
-           "\t -G|--guile <scheme-code> # Use GNU guile with this code\n"
-           "\t -a|--argframac <arg>     # argument to Frama-C\n"
-           "\t -I <incldir>             # preprocessing include\n"
-           "\t -D <definition>          # preprocessing definition\n"
-           "\t -U <undefine>            # preprocessing undefine\n"
-           "\t --list-plugins           # passed to Frama-C\n"
-           "\t -l | --sources <slist>   # read list of files (one per line) from <sfile>\n"
-           "\t                          # if it starts with ! or | use popen\n"
-           "\t                          # if it starts with @ it a list of files\n"
-           "\t ... <source files>       # analyzed sources are C *.c ...\n"
-           "\t                          # ... or C++ files *.cc\n"
+           "\t -V|--verbose                 # output more messages\n"
+           "\t --version                    # give version information\n"
+           "\t                              # also for Frama-C\n"
+           "\t -h|--help                    # give this help\n"
+           "\t -F|--framac <framac>         # explicit Frama-C to be used\n"
+           "\t                              # default is %s\n"
+           "\t -G |--guile-script <script>  # Use GNU guile with this script\n"
+           "\t -a|--argframac <arg>         # argument to Frama-C\n"
+           "\t -I <incldir>                 # preprocessing include\n"
+           "\t -D <definition>              # preprocessing definition\n"
+           "\t -U <undefine>                # preprocessing undefine\n"
+           "\t --list-plugins               # passed to Frama-C\n"
+           "\t -l | --sources <slist>       # read list of files (one per line) from <sfile>\n"
+           "\t                              # if it starts with ! or | use popen\n"
+           "\t                              # if it starts with @ it a list of files\n"
+           "\t ... <source files>           # analyzed sources are C *.c ...\n"
+           "\t                              # ... or C++ files *.cc\n"
            " (preprocessing options are passed to Frama-C)\n"
            "\n See https://frama-c.com/ for details on Frama-C ...\n"
            "Our gitid is %s (file %s compiled %s)\n"
@@ -307,7 +314,7 @@ parse_program_arguments(int argc, char**argv)
                     framacexe=optarg;
                     continue;
                 case 'G': // --guile=<scheme-code>
-                    add_guile_code(optarg);
+                    add_guile_script(optarg);
                     continue;
                 case 's': // --sources=<listpath>
                     add_sources_list(optarg);
@@ -446,13 +453,13 @@ add_source_file(const char*srcpath)
 } // end add_source_file
 
 void
-add_guile_code(const char*scmpath)
+add_guile_script(const char*scmpath)
 {
     struct stat scmstat = {};
     assert(scmpath != nullptr);
     if (stat(scmpath, &scmstat) < 0)
         {
-            fprintf(stderr, "%s: failed to stat Guile code %s on %s (%s)\n",
+            fprintf(stderr, "%s: failed to stat Guile script file %s on %s (%s)\n",
                     progname, scmpath, myhost, strerror(errno));
             exit(EXIT_FAILURE);
         };
@@ -466,7 +473,7 @@ add_guile_code(const char*scmpath)
     std::string guilestr(rp);
     my_guile_files.push_back(guilestr);
     free ((void*)scmpath);
-} // end add_guile_code
+} // end add_guile_script
 
 void
 add_sources_list(const char*listpath)
