@@ -501,7 +501,15 @@ do_evaluate_guile(const char*guiletext)
             /// https://lists.gnu.org/archive/html/guile-user/2023-02/msg00019.html
             scm_init_guile();
         };
-    CFR_FATAL("unimplemented do_evaluate_guile " << guiletext);
+    SCM guilestr = scm_from_locale_string(guiletext);
+    if (guilestr == nullptr)
+        CFR_FATAL("do_evaluate_guile failed to get GUILE string from " << guiletext);
+    SCM guilenv = scm_interaction_environment ();
+    if (guilenv == nullptr)
+        CFR_FATAL("do_evaluate_guile failed to get GUILE interaction environment");
+    SCM guilres = scm_eval_string_in_module (guilestr, guilenv);
+    CFR_FATAL("incomplete do_evaluate_guile " << guiletext);
+#warning incomplete do_evaluate_guile (should use guilres)
 } // end do_evaluate_guile
 
 void
