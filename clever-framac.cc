@@ -137,6 +137,9 @@ void try_run_framac(const char*arg1, const char*arg2=nullptr,
 void add_source_file(const char*srcpath);
 
 
+SCM get_my_guile_environment_at(const char*csrc, int clineno);
+#define GET_MY_GUILE_ENVIRONMENT() get_my_guile_environment_at(__FILE__,__LINE__)
+
 /// add a GNU guile script file
 void add_guile_script(const char*guilepath);
 
@@ -492,22 +495,31 @@ add_guile_script(const char*scmpath)
 } // end add_guile_script
 
 
+SCM
+get_my_guile_environment_at (const char*cfile, int clineno)
+{
+    SCM guilenv = scm_interaction_environment ();
+    if (guilenv == nullptr)
+        CFR_FATAL("get_my_guile_environment_at failed to get GUILE interaction environment at " << cfile << ":" << clineno);
+#warning unimplemented get_my_guile_environment_at should extend the environment
+    CFR_FATAL("unimplemented get_my_guile_environment_at at " << cfile << ":" << clineno);
+} // end get_my_guile_environment_at
+
 void
 do_evaluate_guile(const char*guiletext)
 {
+    SCM curguilenv = nullptr;
     if (!guile_has_been_initialized)
         {
             guile_has_been_initialized=true;
-            /// https://lists.gnu.org/archive/html/guile-user/2023-02/msg00019.html
             scm_init_guile();
-        };
+            curguilenv = GET_MY_GUILE_ENVIRONMENT();
+        }
+    /// https://lists.gnu.org/archive/html/guile-user/2023-02/msg00019.html
     SCM guilestr = scm_from_locale_string(guiletext);
     if (guilestr == nullptr)
         CFR_FATAL("do_evaluate_guile failed to get GUILE string from " << guiletext);
-    SCM guilenv = scm_interaction_environment ();
-    if (guilenv == nullptr)
-        CFR_FATAL("do_evaluate_guile failed to get GUILE interaction environment");
-    SCM guilres = scm_eval_string_in_module (guilestr, guilenv);
+    SCM guilres = scm_eval_string_in_module (guilestr, curguilenv);
     CFR_FATAL("incomplete do_evaluate_guile " << guiletext);
 #warning incomplete do_evaluate_guile (should use guilres)
 } // end do_evaluate_guile
