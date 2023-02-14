@@ -169,6 +169,7 @@ enum clever_flags_en
     version_flag=1000,
     listplugins_flag,
     evalguile_flag,
+    printinfo_flag,
 };
 
 const struct option long_clever_options[] =
@@ -250,6 +251,12 @@ const struct option long_clever_options[] =
         .flag=nullptr,
         .val=evalguile_flag
     },
+    {
+        .name="print-info",
+        .has_arg=no_argument,
+        .flag=nullptr,
+        .val=printinfo_flag
+    },
     {}
 };
 
@@ -270,6 +277,7 @@ show_help(void)
            "\t -D <definition>              # preprocessing definition\n"
            "\t -U <undefine>                # preprocessing undefine\n"
            "\t --list-plugins               # passed to Frama-C\n"
+           "\t --print-info                 # print information\n"
            "\t -l | --sources <slist>       # read list of files (one per line) from <sfile>\n"
            "\t                              # if it starts with ! or | use popen\n"
            "\t                              # if it starts with @ it a list of files\n"
@@ -289,6 +297,17 @@ cfr_fatal_error_at(const char*fil, int lin)
               << " in " << progname << " git " << GIT_ID << std::endl;
     abort();
 } // end cfr_fatal_error_at
+
+void
+do_print_information(int argc, char**argv)
+{
+    std::ostringstream outs;
+    for (int i=0; i<argc; i++)
+        outs << ' ' << argv[i];
+    outs<<std::flush;
+    CFR_FATAL("unimplemented do_print_information argc=" << argc
+              << " arguments:" << outs.str() << '.');
+} // end do_print_information
 
 void
 parse_program_arguments(int argc, char**argv)
@@ -353,6 +372,9 @@ parse_program_arguments(int argc, char**argv)
                     continue;
                 case evalguile_flag:
                     do_evaluate_guile(optarg);
+                    continue;
+                case printinfo_flag:
+                    do_print_information(argc, argv);
                     continue;
                 }
             while (c>=0);
