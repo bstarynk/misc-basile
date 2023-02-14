@@ -44,6 +44,7 @@
 #include "libguile/init.h"
 #include "libguile/gsubr.h"
 #include "libguile/numbers.h"
+#include "libguile/boolean.h"
 
 /*** see getopt(3) man page mentionning
  *      extern char *optarg;
@@ -579,6 +580,23 @@ myscm_get_nb_prepro_options(void)
     return scm_from_signed_integer(my_prepro_options.size());
 } // end myscm_get_nb_prepro_options
 
+// Guile primitive to query the Nth preprocessor options or else #f
+// in Guile (get_nth_prepro_option <number>)
+SCM
+myscm_get_nth_prepro_option(SCM nguile)
+{
+    if (scm_is_integer (nguile))
+        {
+            int n = scm_to_int(nguile);
+            int nbprepro = (int)  my_prepro_options.size();
+            if (n<0)
+                n += nbprepro;
+            if (n >= 0 && n<nbprepro)
+                return scm_from_utf8_string(my_prepro_options[n].c_str());
+        }
+    return scm_from_bool(false);
+} // end myscm_get_nth_prepro_option
+
 SCM
 get_my_guile_environment_at (const char*cfile, int clineno)
 {
@@ -592,6 +610,9 @@ get_my_guile_environment_at (const char*cfile, int clineno)
     scm_c_define_gsubr("get_nb_prepro_options",
                        /*required#*/0, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_nb_prepro_options);
+    scm_c_define_gsubr("get_nth_prepro_option",
+                       /*required#*/0, /*optional#*/0, /*variadic?*/0,
+                       (scm_t_subr)myscm_get_nth_prepro_option);
 #warning unimplemented get_my_guile_environment_at should extend the environment
     CFR_FATAL("unimplemented get_my_guile_environment_at at " << cfile << ":" << clineno);
 } // end get_my_guile_environment_at
