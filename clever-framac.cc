@@ -110,17 +110,17 @@ public:
     const char*type_cname() const
     {
         switch (srcf_type)
-        {
-        case srcty_NONE:
-            return "*none*";
-        case srcty_c:
-            return "C";
-        case srcty_cpp:
-            return "C++";
-        default:
-            CFR_FATAL("source " << path() << " has invalid type #"
-                      << (int)srcf_type);
-        }
+            {
+            case srcty_NONE:
+                return "*none*";
+            case srcty_c:
+                return "C";
+            case srcty_cpp:
+                return "C++";
+            default:
+                CFR_FATAL("source " << path() << " has invalid type #"
+                          << (int)srcf_type);
+            }
     };
     Source_file& operator = (Source_file&) = default;
 };				// end Source_file
@@ -306,6 +306,8 @@ do_print_information(int argc, char**argv)
     for (int i=0; i<argc; i++)
         outs << ' ' << argv[i];
     outs<<std::flush;
+    if (!realframac)
+        compute_real_framac();
     std::cout << "Information about " << progname << " git " << GIT_ID
               << " pid " << (int)getpid() << " on host " << myhost
               << " with " << argc << " program arguments:"
@@ -317,6 +319,11 @@ do_print_information(int argc, char**argv)
               << " environment variables:" << std::endl;
     for (int i=0; i<envsiz; i++)
         std::cout << " " << environ[i] << std::endl;
+    std::cout << progname << " using Frama-C on " << realframac << " with " << my_framac_options.size() << " options:" << std::endl;
+    for (std::string curfropt : my_framac_options)
+        std::cout << ' ' << curfropt;
+    std::cout << std::endl;
+    std::cout << progname << " with " << my_prepro_options.size() << " preprocessor options:" << std::endl;
 #warning do_print_information should print a lot more...
 } // end do_print_information
 
@@ -327,132 +334,132 @@ parse_program_arguments(int argc, char**argv)
     int option_index= -1;
     gethostname(myhost, sizeof(myhost)-1);
     do
-    {
-        option_index = -1;
-        optarg = nullptr;
-        c = getopt_long(argc, argv,
-                        "VhF:a:l:U:D:I:G:",
-                        long_clever_options, &option_index);
-        if (c<0)
-            break;
-        switch (c)
         {
-        case 'h': // --help
-            show_help();
-            std::cout << std::flush;
-            std::cerr << std::flush;
-            std::clog << std::flush;
-            fflush(nullptr);
-            compute_real_framac();
-            std::cout << std::endl;
-            std::cout << framacexe << " help:::" << std::endl;
-            try_run_framac("-help");
-            try_run_framac("-kernel-h");
-            exit(EXIT_SUCCESS);
-            return;
-        case 'V': // --verbose
-            is_verbose=true;
-            continue;
-        case 'a': // --argframac=<option>
-            my_framac_options.push_back(optarg);
-            continue;
-        case 'F': // --framac=<framac>
-            framacexe=optarg;
-            continue;
-        case 'G': // --guile=<scheme-code>
-            add_guile_script(optarg);
-            continue;
-        case 's': // --sources=<listpath>
-            add_sources_list(optarg);
-            continue;
-        case 'D': // -DPREPROVAR=<something> passed to preprocessor
-        case 'U': // -UPREPROVAR passed to preprocessor
-        case 'I': // -I<incldir> passed to preprocessor
-            my_prepro_options.push_back(optarg);
-            continue;
-        case version_flag: // --version
-            printf("%s: git %s built at %s\n", progname, GIT_ID, __DATE__);
-            compute_real_framac();
-            printf("%s: running %s -version\n", progname, realframac);
-            try_run_framac("-version");
-            putc('\n', stdout);
-            exit(EXIT_SUCCESS);
-            return;
-        case listplugins_flag:
-            do_list_framac_plugins=true;
-            continue;
-        case evalguile_flag:
-            do_evaluate_guile(optarg);
-            continue;
-        case printinfo_flag:
-            do_print_information(argc, argv);
-            continue;
-        }
-        while (c>=0);
-        /* Handle any remaining command line arguments (not options). */
-        if (optind < argc)
-        {
-            if (verbose_flag)
-                printf("%s: processing %d arguments\n",
-                       progname, argc-optind);
-            while (optind < argc)
-            {
-                const char*curarg = argv[optind];
-                const char*resolvedpath = NULL;
-                enum source_type styp = srcty_NONE;
-                if (curarg[0] == '-')
+            option_index = -1;
+            optarg = nullptr;
+            c = getopt_long(argc, argv,
+                            "VhF:a:l:U:D:I:G:",
+                            long_clever_options, &option_index);
+            if (c<0)
+                break;
+            switch (c)
                 {
-                    CFR_FATAL("bad file argument #" << optind
-                              << ": " << curarg
-                              << std::endl
-                              << "... consider giving its absolute path");
+                case 'h': // --help
+                    show_help();
+                    std::cout << std::flush;
+                    std::cerr << std::flush;
+                    std::clog << std::flush;
+                    fflush(nullptr);
+                    compute_real_framac();
+                    std::cout << std::endl;
+                    std::cout << framacexe << " help:::" << std::endl;
+                    try_run_framac("-help");
+                    try_run_framac("-kernel-h");
+                    exit(EXIT_SUCCESS);
+                    return;
+                case 'V': // --verbose
+                    is_verbose=true;
+                    continue;
+                case 'a': // --argframac=<option>
+                    my_framac_options.push_back(optarg);
+                    continue;
+                case 'F': // --framac=<framac>
+                    framacexe=optarg;
+                    continue;
+                case 'G': // --guile=<scheme-code>
+                    add_guile_script(optarg);
+                    continue;
+                case 's': // --sources=<listpath>
+                    add_sources_list(optarg);
+                    continue;
+                case 'D': // -DPREPROVAR=<something> passed to preprocessor
+                case 'U': // -UPREPROVAR passed to preprocessor
+                case 'I': // -I<incldir> passed to preprocessor
+                    my_prepro_options.push_back(optarg);
+                    continue;
+                case version_flag: // --version
+                    printf("%s: git %s built at %s\n", progname, GIT_ID, __DATE__);
+                    compute_real_framac();
+                    printf("%s: running %s -version\n", progname, realframac);
+                    try_run_framac("-version");
+                    putc('\n', stdout);
+                    exit(EXIT_SUCCESS);
+                    return;
+                case listplugins_flag:
+                    do_list_framac_plugins=true;
+                    continue;
+                case evalguile_flag:
+                    do_evaluate_guile(optarg);
+                    continue;
+                case printinfo_flag:
+                    do_print_information(argc, argv);
+                    continue;
                 }
-                if (access(curarg, R_OK))
+            while (c>=0);
+            /* Handle any remaining command line arguments (not options). */
+            if (optind < argc)
                 {
-                    int e=errno;
-                    CFR_FATAL("cannot access file argument #" << optind << ": " << curarg
-                              << " . " << strerror(e));
-                };
-                int curlen = strlen(curarg);
-                if (curlen < 4)
-                {
-                    CFR_FATAL("too short file argument #"
-                              << optind << ": " << curarg);
-                };
-                if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
-                    styp = srcty_c;
-                else if (curarg[curlen-3] == '.'
-                         && curarg[curlen-2] == 'c' && curarg[curlen-1] == 'c')
-                    styp = srcty_cpp;
-                else
-                {
-                    CFR_FATAL("unexpected file argument #"
-                              << optind << ": " << curarg
-                              << std::endl
-                              <<"It should end with .c or .cc");
+                    if (verbose_flag)
+                        printf("%s: processing %d arguments\n",
+                               progname, argc-optind);
+                    while (optind < argc)
+                        {
+                            const char*curarg = argv[optind];
+                            const char*resolvedpath = NULL;
+                            enum source_type styp = srcty_NONE;
+                            if (curarg[0] == '-')
+                                {
+                                    CFR_FATAL("bad file argument #" << optind
+                                              << ": " << curarg
+                                              << std::endl
+                                              << "... consider giving its absolute path");
+                                }
+                            if (access(curarg, R_OK))
+                                {
+                                    int e=errno;
+                                    CFR_FATAL("cannot access file argument #" << optind << ": " << curarg
+                                              << " . " << strerror(e));
+                                };
+                            int curlen = strlen(curarg);
+                            if (curlen < 4)
+                                {
+                                    CFR_FATAL("too short file argument #"
+                                              << optind << ": " << curarg);
+                                };
+                            if (curarg[curlen-2] == '.' && curarg[curlen-1] == 'c')
+                                styp = srcty_c;
+                            else if (curarg[curlen-3] == '.'
+                                     && curarg[curlen-2] == 'c' && curarg[curlen-1] == 'c')
+                                styp = srcty_cpp;
+                            else
+                                {
+                                    CFR_FATAL("unexpected file argument #"
+                                              << optind << ": " << curarg
+                                              << std::endl
+                                              <<"It should end with .c or .cc");
+                                }
+                            resolvedpath = realpath(curarg, NULL);
+                            // so resolvedpath has been malloced
+                            if (strlen(resolvedpath) < 4)
+                                {
+                                    CFR_FATAL("too short file argument #"
+                                              << optind << ": " << curarg
+                                              << " resolved to " << resolvedpath);
+                                };
+                            for (const char*pc = resolvedpath; *pc; pc++)
+                                if (isspace(*pc))
+                                    {
+                                        CFR_FATAL("file argument #"
+                                                  << optind << ": " << curarg
+                                                  << " resolved to unexpected " << resolvedpath);
+                                    };
+                            Source_file cursrcf(resolvedpath, styp);
+                            my_srcfiles.push_back(cursrcf);
+                            free ((void*)resolvedpath);
+                            optind++;
+                        }
                 }
-                resolvedpath = realpath(curarg, NULL);
-                // so resolvedpath has been malloced
-                if (strlen(resolvedpath) < 4)
-                {
-                    CFR_FATAL("too short file argument #"
-                              << optind << ": " << curarg
-                              << " resolved to " << resolvedpath);
-                };
-                for (const char*pc = resolvedpath; *pc; pc++)
-                    if (isspace(*pc))
-                    {
-                        CFR_FATAL("file argument #"
-                                  << optind << ": " << curarg
-                                  << " resolved to unexpected " << resolvedpath);
-                    };
-                Source_file cursrcf(resolvedpath, styp);
-                my_srcfiles.push_back(cursrcf);
-                free ((void*)resolvedpath);
-                optind++;
-            }
         }
-    }
     while(c>0);
 } // end parse_program_arguments
 
@@ -463,44 +470,44 @@ add_source_file(const char*srcpath)
     struct stat srcstat = {};
     assert(srcpath != nullptr);
     if (stat(srcpath, &srcstat) < 0)
-    {
-        fprintf(stderr, "%s: failed to stat %s on %s (%s)\n",
-                progname, srcpath, myhost, strerror(errno));
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: failed to stat %s on %s (%s)\n",
+                    progname, srcpath, myhost, strerror(errno));
+            exit(EXIT_FAILURE);
+        };
     if (srcstat.st_mode & S_IFMT != S_IFREG)
-    {
-        fprintf(stderr, "%s: source %s is not a regular file on %s\n",
-                progname, srcpath, myhost);
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: source %s is not a regular file on %s\n",
+                    progname, srcpath, myhost);
+            exit(EXIT_FAILURE);
+        };
     const char* rp = realpath(srcpath, nullptr);
     if (!rp || !rp[0])
-    {
-        fprintf(stderr, "%s: failed to find real path of %s on %s (%s)\n",
-                progname, srcpath, myhost, strerror(errno));
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: failed to find real path of %s on %s (%s)\n",
+                    progname, srcpath, myhost, strerror(errno));
+            exit(EXIT_FAILURE);
+        };
     int lenrp = strlen(rp);
     if (lenrp < 4)
-    {
-        fprintf(stderr, "%s: real path of %s on %s is too short: %s\n",
-                progname, srcpath, myhost, rp);
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: real path of %s on %s is too short: %s\n",
+                    progname, srcpath, myhost, rp);
+            exit(EXIT_FAILURE);
+        };
     if (rp[lenrp-1] == 'c' && rp[lenrp-2] == '.')
-    {
-        /* add a C file */
-        Source_file csrc(rp, srcty_c);
-        my_srcfiles.push_back(csrc);
-    }
+        {
+            /* add a C file */
+            Source_file csrc(rp, srcty_c);
+            my_srcfiles.push_back(csrc);
+        }
     else if (rp[lenrp-3] == '.'
              && rp[lenrp-2] == 'c' && rp[lenrp-1] == 'c')
-    {
-        /* add a C++ file */
-        Source_file cppsrc(rp, srcty_cpp);
-        my_srcfiles.push_back(cppsrc);
-    }
+        {
+            /* add a C++ file */
+            Source_file cppsrc(rp, srcty_cpp);
+            my_srcfiles.push_back(cppsrc);
+        }
     free((void*)rp);
 } // end add_source_file
 
@@ -510,17 +517,17 @@ add_guile_script(const char*scmpath)
     struct stat scmstat = {};
     assert(scmpath != nullptr);
     if (stat(scmpath, &scmstat) < 0)
-    {
-        fprintf(stderr, "%s: failed to stat Guile script file %s on %s (%s)\n",
-                progname, scmpath, myhost, strerror(errno));
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: failed to stat Guile script file %s on %s (%s)\n",
+                    progname, scmpath, myhost, strerror(errno));
+            exit(EXIT_FAILURE);
+        };
     if (scmstat.st_mode & S_IFMT != S_IFREG)
-    {
-        fprintf(stderr, "%s: Guile script %s is not a regular file on %s\n",
-                progname, scmpath, myhost);
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: Guile script %s is not a regular file on %s\n",
+                    progname, scmpath, myhost);
+            exit(EXIT_FAILURE);
+        };
     const char* rp = realpath(scmpath, nullptr);
     std::string guilestr(rp);
     my_guile_files.push_back(guilestr);
@@ -543,11 +550,11 @@ do_evaluate_guile(const char*guiletext)
 {
     SCM curguilenv = nullptr;
     if (!guile_has_been_initialized)
-    {
-        guile_has_been_initialized=true;
-        scm_init_guile();
-        curguilenv = GET_MY_GUILE_ENVIRONMENT();
-    }
+        {
+            guile_has_been_initialized=true;
+            scm_init_guile();
+            curguilenv = GET_MY_GUILE_ENVIRONMENT();
+        }
     /// https://lists.gnu.org/archive/html/guile-user/2023-02/msg00019.html
     SCM guilestr = scm_from_locale_string(guiletext);
     if (guilestr == nullptr)
@@ -566,38 +573,38 @@ add_sources_list(const char*listpath)
     bool isapipe = listpath[0] == '!' || listpath[0] == '|';
     FILE *f = isapipe?popen(listpath+1, "r"):fopen(listpath, "r");
     if (!f)
-    {
-        fprintf(stderr, "%s: failed to add sources using %s %s (%s)\n",
-                progname, isapipe?"pipe":"file",
-                listpath, strerror(errno));
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: failed to add sources using %s %s (%s)\n",
+                    progname, isapipe?"pipe":"file",
+                    listpath, strerror(errno));
+            exit(EXIT_FAILURE);
+        };
     const int inisiz=128;
     linbuf = (char*)calloc(1, inisiz);
     if (!linbuf)
-    {
-        fprintf(stderr, "%s: (near %s:%d)  failed to allocate line bufferof %d bytes (%s)\n",
-                progname, __FILE__, __LINE__, inisiz, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+        {
+            fprintf(stderr, "%s: (near %s:%d)  failed to allocate line bufferof %d bytes (%s)\n",
+                    progname, __FILE__, __LINE__, inisiz, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
     sizbuf = (size_t)inisiz;
     do
-    {
-        memset (linbuf, 0, sizbuf);
-        ssize_t rsz = getline(&linbuf, &sizbuf, f);
-        if (rsz<0)
-            break;
-        if (linbuf==nullptr)
-            break;
-        if (rsz < sizbuf && linbuf[rsz] == '\n')
-            linbuf[rsz] = (char)0;
-        if (linbuf[0] == '#')
-            continue;
-        if (linbuf[0] == '@')
-            add_sources_list(linbuf+1);
-        else
-            add_source_file(linbuf);
-    }
+        {
+            memset (linbuf, 0, sizbuf);
+            ssize_t rsz = getline(&linbuf, &sizbuf, f);
+            if (rsz<0)
+                break;
+            if (linbuf==nullptr)
+                break;
+            if (rsz < sizbuf && linbuf[rsz] == '\n')
+                linbuf[rsz] = (char)0;
+            if (linbuf[0] == '#')
+                continue;
+            if (linbuf[0] == '@')
+                add_sources_list(linbuf+1);
+            else
+                add_source_file(linbuf);
+        }
     while (!feof(f));
     free(linbuf);
     if (isapipe)
@@ -612,43 +619,43 @@ compute_real_framac(void)
     if (realframac) return;
     //// compute into realframac the malloc-ed string of Frama-C executable
     if (strchr(framacexe, '/'))
-    {
-        realframac= realpath(framacexe, nullptr);
-    }
-    else
-    {
-        // find $framacexe in our $PATH
-        const char*envpath = getenv("PATH");
-        const char*pc=nullptr;
-        const char*colon=nullptr;
-        int slenframac = strlen(framacexe);
-        if (!envpath) /// very unlikely!
-            envpath="/bin:/usr/bin:/usr/local/bin";
-        for (pc=envpath; pc && *pc; pc=colon?colon+1:nullptr)
         {
-            char* dynpathbuf=nullptr;
-            // https://man7.org/linux/man-pages/man3/asprintf.3.html
-            int cplen = 0;
-            colon=strchr(pc, ':');
-            if (colon)
-                cplen = colon-pc-1;
-            else
-                cplen = strlen(pc);
-            int nbytes= asprintf(&dynpathbuf, "%.*s/%s",
-                                 cplen, pc, framacexe);
-            if (nbytes<0 || dynpathbuf==nullptr)
-            {
-                int e = errno;
-                CFR_FATAL("asprintf failed in compute_real_framac: "
-                          << strerror(e));
-            };
-            if (!access(dynpathbuf, X_OK))
-            {
-                realframac = dynpathbuf;
-                break;
-            };
-        } // end for pc...
-    }
+            realframac= realpath(framacexe, nullptr);
+        }
+    else
+        {
+            // find $framacexe in our $PATH
+            const char*envpath = getenv("PATH");
+            const char*pc=nullptr;
+            const char*colon=nullptr;
+            int slenframac = strlen(framacexe);
+            if (!envpath) /// very unlikely!
+                envpath="/bin:/usr/bin:/usr/local/bin";
+            for (pc=envpath; pc && *pc; pc=colon?colon+1:nullptr)
+                {
+                    char* dynpathbuf=nullptr;
+                    // https://man7.org/linux/man-pages/man3/asprintf.3.html
+                    int cplen = 0;
+                    colon=strchr(pc, ':');
+                    if (colon)
+                        cplen = colon-pc-1;
+                    else
+                        cplen = strlen(pc);
+                    int nbytes= asprintf(&dynpathbuf, "%.*s/%s",
+                                         cplen, pc, framacexe);
+                    if (nbytes<0 || dynpathbuf==nullptr)
+                        {
+                            int e = errno;
+                            CFR_FATAL("asprintf failed in compute_real_framac: "
+                                      << strerror(e));
+                        };
+                    if (!access(dynpathbuf, X_OK))
+                        {
+                            realframac = dynpathbuf;
+                            break;
+                        };
+                } // end for pc...
+        }
 } // end compute_real_framac
 void
 try_run_framac(const char*arg1, const char*arg2,
@@ -661,104 +668,104 @@ try_run_framac(const char*arg1, const char*arg2,
     ////
     /// should fork and execve
     if (is_verbose)
-    {
-        std::cout << progname << " is running " << realframac;
-        if (arg1)
         {
-            std::cout << ' ' << arg1;
-            if (arg2)
-            {
-                std::cout << ' ' << arg2;
-                if (arg3)
+            std::cout << progname << " is running " << realframac;
+            if (arg1)
                 {
-                    std::cout << ' ' << arg3;
-                    if (arg4)
-                    {
-                        std::cout << ' ' << arg4;
-                        if (arg5)
+                    std::cout << ' ' << arg1;
+                    if (arg2)
                         {
-                            std::cout << ' ' << arg5;
+                            std::cout << ' ' << arg2;
+                            if (arg3)
+                                {
+                                    std::cout << ' ' << arg3;
+                                    if (arg4)
+                                        {
+                                            std::cout << ' ' << arg4;
+                                            if (arg5)
+                                                {
+                                                    std::cout << ' ' << arg5;
+                                                }
+                                        }
+                                }
                         }
-                    }
                 }
-            }
-        }
-        std::cout << std::endl;
-    };
+            std::cout << std::endl;
+        };
     std::cout << std::flush;
     std::cerr << std::flush;
     std::clog << std::flush;
     pid_t childpid = fork();
     if (childpid<0)
-    {
-        int e= errno;
-        CFR_FATAL("try_run_framac " << arg1 << " failed to fork "
-                  << strerror(e));
-    };
+        {
+            int e= errno;
+            CFR_FATAL("try_run_framac " << arg1 << " failed to fork "
+                      << strerror(e));
+        };
     if (childpid==0)
-    {
-        // in child
-        execl(realframac, realframac, arg1, arg2, arg3, arg4, arg5,
-              nullptr);
-        /// should almost never happen
-        abort();
-        return;
-    }
+        {
+            // in child
+            execl(realframac, realframac, arg1, arg2, arg3, arg4, arg5,
+                  nullptr);
+            /// should almost never happen
+            abort();
+            return;
+        }
     /// in parent
     int wstatus= 0;
     bool okwait=false;
     do
-    {
-        pid_t wpid = waitpid(childpid, &wstatus, 0);
-        int e = errno;
-        if (wpid<0)
         {
-            if (e == EINTR)
-            {
-                usleep(50*1000);
-                continue;
-            };
-            CFR_FATAL("try_run_framac " << arg1
-                      << " failed to waitpid process " << childpid
-                      << " " << strerror(e));
-        };
-        // here waitpid succeeded
-        if (wstatus == 0)
-        {
-            free ((void*)realframac);
-            realframac=nullptr;
-            okwait= true;
-            return;
-        };
-        if (WIFEXITED(wstatus))
-        {
-            int ex= WEXITSTATUS(wstatus);
-            if (ex>0)
-                CFR_FATAL("try_run_framac " << arg1
-                          << " running " << realframac
-                          << " process " << childpid
-                          << " exited " << WEXITSTATUS(ex));
-            okwait = true;
+            pid_t wpid = waitpid(childpid, &wstatus, 0);
+            int e = errno;
+            if (wpid<0)
+                {
+                    if (e == EINTR)
+                        {
+                            usleep(50*1000);
+                            continue;
+                        };
+                    CFR_FATAL("try_run_framac " << arg1
+                              << " failed to waitpid process " << childpid
+                              << " " << strerror(e));
+                };
+            // here waitpid succeeded
+            if (wstatus == 0)
+                {
+                    free ((void*)realframac);
+                    realframac=nullptr;
+                    okwait= true;
+                    return;
+                };
+            if (WIFEXITED(wstatus))
+                {
+                    int ex= WEXITSTATUS(wstatus);
+                    if (ex>0)
+                        CFR_FATAL("try_run_framac " << arg1
+                                  << " running " << realframac
+                                  << " process " << childpid
+                                  << " exited " << WEXITSTATUS(ex));
+                    okwait = true;
+                }
+            else if (WIFSIGNALED(wstatus))
+                {
+                    bool dumpedcore = WCOREDUMP(wstatus);
+                    int sig = WTERMSIG(wstatus);
+                    if (dumpedcore)
+                        CFR_FATAL("try_run_framac " << arg1
+                                  << " running " << realframac
+                                  << " process " << childpid
+                                  << " dumped core for signal#" << sig << "="
+                                  << strsignal(sig));
+                    else
+                        CFR_FATAL("try_run_framac " << arg1
+                                  << " running " << realframac
+                                  << " process " << childpid
+                                  << " terminated on signal#" << sig << "="
+                                  << strsignal(sig));
+                    okwait = true; // probably not reached
+                }
         }
-        else if (WIFSIGNALED(wstatus))
-        {
-            bool dumpedcore = WCOREDUMP(wstatus);
-            int sig = WTERMSIG(wstatus);
-            if (dumpedcore)
-                CFR_FATAL("try_run_framac " << arg1
-                          << " running " << realframac
-                          << " process " << childpid
-                          << " dumped core for signal#" << sig << "="
-                          << strsignal(sig));
-            else
-                CFR_FATAL("try_run_framac " << arg1
-                          << " running " << realframac
-                          << " process " << childpid
-                          << " terminated on signal#" << sig << "="
-                          << strsignal(sig));
-            okwait = true; // probably not reached
-        }
-    }
     while (okwait);
     if (is_verbose)
         std::cout << std::endl << progname << " did run " << realframac << std::endl;
@@ -801,88 +808,88 @@ main(int argc, char*argv[])
     if (!realframac)
         compute_real_framac();
     if (is_verbose)
-    {
-        int nbsrc = (int) my_srcfiles.size();
-        printf("%s running verbosely on %s pid %d git %s\n"
-               "... with the following %d source files:\n",
-               progname, myhost, (int)getpid(), GIT_ID, nbsrc);
-        for (int sx=0; sx<nbsrc; sx++)
         {
-            printf(" %s [%s]\n", my_srcfiles[sx].path().c_str(),
-                   my_srcfiles[sx].type_cname());
+            int nbsrc = (int) my_srcfiles.size();
+            printf("%s running verbosely on %s pid %d git %s\n"
+                   "... with the following %d source files:\n",
+                   progname, myhost, (int)getpid(), GIT_ID, nbsrc);
+            for (int sx=0; sx<nbsrc; sx++)
+                {
+                    printf(" %s [%s]\n", my_srcfiles[sx].path().c_str(),
+                           my_srcfiles[sx].type_cname());
+                }
+            int nbprepro = (int) my_prepro_options.size();
+            printf("With %d preprocessor options:\n", nbprepro);
+            for (int px=0; px<nbprepro; px++)
+                printf(" %s\n", my_prepro_options[px].c_str());
+            int nbargs = (int) my_framac_options.size();
+            printf("Specified %d options to %s:\n", nbargs, realframac);
+            for (int ax=0; ax<nbargs; ax++)
+                {
+                    printf(" %s\n", my_framac_options[ax].c_str());
+                }
+            printf("Specified %d Guile scripts to %s:\n", nbguile, realframac);
+            for (int gx=0; gx<nbguile; gx++)
+                {
+                    printf(" %s\n", my_guile_files[gx].c_str());
+                }
         }
-        int nbprepro = (int) my_prepro_options.size();
-        printf("With %d preprocessor options:\n", nbprepro);
-        for (int px=0; px<nbprepro; px++)
-            printf(" %s\n", my_prepro_options[px].c_str());
-        int nbargs = (int) my_framac_options.size();
-        printf("Specified %d options to %s:\n", nbargs, realframac);
-        for (int ax=0; ax<nbargs; ax++)
-        {
-            printf(" %s\n", my_framac_options[ax].c_str());
-        }
-        printf("Specified %d Guile scripts to %s:\n", nbguile, realframac);
-        for (int gx=0; gx<nbguile; gx++)
-        {
-            printf(" %s\n", my_guile_files[gx].c_str());
-        }
-    }
     std::vector<std::string> framaexecargs;
     framaexecargs.push_back(std::string{realframac});
     int nbargs = (int) my_framac_options.size();
     for (int aix=0; aix<nbargs; aix++)
-    {
-        framaexecargs.push_back(my_framac_options[aix]);
-    };
+        {
+            framaexecargs.push_back(my_framac_options[aix]);
+        };
     int nbprepro = (int) my_prepro_options.size();
     if (nbprepro>0)
-    {
-        const char*cppenv = getenv("CPP");
-        const char*mycpp = cppenv?cppenv:"/usr/bin/cpp";
-        std::string cppcmd=mycpp;
-        for (int ipx = 0; ipx < my_prepro_options.size(); ipx++)
         {
-            cppcmd += ' ';
-            cppcmd += my_prepro_options[ipx];
-        }
-        cppcmd += "%1 -o %2";
-        framaexecargs.push_back("-cpp-command");
-        framaexecargs.push_back(cppcmd);
-    };
-    if (nbguile>0)
-    {
-        if (!guile_has_been_initialized)
-        {
-            guile_has_been_initialized=true;
-            scm_init_guile ();
+            const char*cppenv = getenv("CPP");
+            const char*mycpp = cppenv?cppenv:"/usr/bin/cpp";
+            std::string cppcmd=mycpp;
+            for (int ipx = 0; ipx < my_prepro_options.size(); ipx++)
+                {
+                    cppcmd += ' ';
+                    cppcmd += my_prepro_options[ipx];
+                }
+            cppcmd += "%1 -o %2";
+            framaexecargs.push_back("-cpp-command");
+            framaexecargs.push_back(cppcmd);
         };
+    if (nbguile>0)
+        {
+            if (!guile_has_been_initialized)
+                {
+                    guile_has_been_initialized=true;
+                    scm_init_guile ();
+                };
 #warning unimplemented use Guile here
-        CFR_FATAL("not yet implemented Guile scripts handling of "
-                  << nbguile << " Scheme scripts");
-    }
+            CFR_FATAL("not yet implemented Guile scripts handling of "
+                      << nbguile << " Scheme scripts");
+        }
     int nbsrc =  my_srcfiles.size();
     for (int six = 0; six < nbsrc; six++)
-    {
-        framaexecargs.push_back(my_srcfiles[six].path());
-    };
+        {
+            framaexecargs.push_back(my_srcfiles[six].path());
+        };
     int cmdlen = framaexecargs.size();
     char**framargv = //
         (char**)calloc(cmdlen+2, sizeof(char*));
     if (is_verbose)
-    {
-        printf ("%s will run command with %d arguments:",
-                progname, cmdlen);
-        for (int cix = 0; cix < cmdlen; cix++)
-            printf(" %s", framaexecargs[cix].c_str());
-        putc('\n', stdout);
-        fflush(nullptr);
-        if (!framargv)
-            CFR_FATAL("failed to calloc " << (cmdlen+2) << " pointers:"
-                      << strerror(errno));
-        for (int i=0; i<cmdlen; i++)
-            framargv[i] = (char*) (framaexecargs[i].c_str());
+        {
+            printf ("%s will run command with %d arguments:",
+                    progname, cmdlen);
+            for (int cix = 0; cix < cmdlen; cix++)
+                printf(" %s", framaexecargs[cix].c_str());
+            putc('\n', stdout);
+            fflush(nullptr);
+            if (!framargv)
+                CFR_FATAL("failed to calloc " << (cmdlen+2) << " pointers:"
+                          << strerror(errno));
+            for (int i=0; i<cmdlen; i++)
+                framargv[i] = (char*) (framaexecargs[i].c_str());
 
-    };
+        };
     fflush(nullptr);
     execvp(realframac, framargv);
     // should not be reached, but if it is....
