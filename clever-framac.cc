@@ -42,6 +42,7 @@
 // https://www.gnu.org/software/guile/manual/html_node/Linking-Programs-With-Guile.html
 #include "libguile.h"
 #include "libguile/init.h"
+#include "libguile/gsubr.h"
 
 /*** see getopt(3) man page mentionning
  *      extern char *optarg;
@@ -564,12 +565,21 @@ add_guile_script(const char*scmpath)
 
 
 SCM
+myscm_get_git_id(void)
+{
+    return scm_from_utf8_string(GIT_ID);
+} // end myscm_git_id
+
+SCM
 get_my_guile_environment_at (const char*cfile, int clineno)
 {
     /// called from the GET_MY_GUILE_ENVIRONMENT macro....
     SCM guilenv = scm_interaction_environment ();
     if (guilenv == nullptr)
         CFR_FATAL("get_my_guile_environment_at failed to get GUILE interaction environment at " << cfile << ":" << clineno);
+    scm_c_define_gsubr("get_git_id",
+                       /*required#*/0, /*optional#*/0, /*variadic?*/0,
+                       (scm_t_subr)myscm_get_git_id);
 #warning unimplemented get_my_guile_environment_at should extend the environment
     CFR_FATAL("unimplemented get_my_guile_environment_at at " << cfile << ":" << clineno);
 } // end get_my_guile_environment_at
