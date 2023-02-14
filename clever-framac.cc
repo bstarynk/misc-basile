@@ -324,6 +324,34 @@ do_print_information(int argc, char**argv)
         std::cout << ' ' << curfropt;
     std::cout << std::endl;
     std::cout << progname << " with " << my_prepro_options.size() << " preprocessor options:" << std::endl;
+    for (std::string curprepopt : my_prepro_options)
+        std::cout << ' ' << curprepopt << std::endl;
+    int nbguile = (int)my_guile_files.size();
+    if (nbguile>0)
+        {
+            std::cout << progname << " with " << nbguile << " guile script files:" << std::endl;
+            for (std::string curguilfil : my_guile_files)
+                std::cout << " " << curguilfil << std::endl;
+        }
+    else
+        std::cout << progname << " without guile script." << std::endl;
+    int nbsrc = (int) my_srcfiles.size();
+    if (nbsrc > 0)
+        {
+            int nbc = 0;
+            int nbcpp = 0;
+            for (Source_file& cursrc : my_srcfiles)
+                {
+                    if (cursrc.type() == srcty_c) nbc++;
+                    else if (cursrc.type() == srcty_cpp) nbcpp++;
+                    else CFR_FATAL("source file " << cursrc.path() << " has invalid type.");
+                }
+            std::cout << progname << " with " << nbc << " C files and " << nbcpp << " C++ files to analyze:" << std::endl;
+            for (Source_file& cursrc : my_srcfiles)
+                std::cout << ' ' << cursrc.path() << "\t" << cursrc.type_cname() << std::endl;
+        }
+    else
+        std::cout << progname << " without analyzed sources." << std::endl;
 #warning do_print_information should print a lot more...
 } // end do_print_information
 
@@ -538,6 +566,7 @@ add_guile_script(const char*scmpath)
 SCM
 get_my_guile_environment_at (const char*cfile, int clineno)
 {
+    /// called from the GET_MY_GUILE_ENVIRONMENT macro....
     SCM guilenv = scm_interaction_environment ();
     if (guilenv == nullptr)
         CFR_FATAL("get_my_guile_environment_at failed to get GUILE interaction environment at " << cfile << ":" << clineno);
