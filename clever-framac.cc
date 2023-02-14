@@ -43,6 +43,7 @@
 #include "libguile.h"
 #include "libguile/init.h"
 #include "libguile/gsubr.h"
+#include "libguile/numbers.h"
 
 /*** see getopt(3) man page mentionning
  *      extern char *optarg;
@@ -564,11 +565,19 @@ add_guile_script(const char*scmpath)
 } // end add_guile_script
 
 
+// Guile primitive to query the git id (get_git_id)
 SCM
 myscm_get_git_id(void)
 {
     return scm_from_utf8_string(GIT_ID);
 } // end myscm_git_id
+
+// Guile primitive to query the number of preprocessor options
+SCM
+myscm_get_nb_prepro_options(void)
+{
+    return scm_from_signed_integer(my_prepro_options.size());
+} // end myscm_get_nb_prepro_options
 
 SCM
 get_my_guile_environment_at (const char*cfile, int clineno)
@@ -580,6 +589,9 @@ get_my_guile_environment_at (const char*cfile, int clineno)
     scm_c_define_gsubr("get_git_id",
                        /*required#*/0, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_git_id);
+    scm_c_define_gsubr("get_nb_prepro_options",
+                       /*required#*/0, /*optional#*/0, /*variadic?*/0,
+                       (scm_t_subr)myscm_get_nb_prepro_options);
 #warning unimplemented get_my_guile_environment_at should extend the environment
     CFR_FATAL("unimplemented get_my_guile_environment_at at " << cfile << ":" << clineno);
 } // end get_my_guile_environment_at
