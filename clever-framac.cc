@@ -566,12 +566,6 @@ add_guile_script(const char*scmpath)
 } // end add_guile_script
 
 
-// Guile primitive to query the git id (get_git_id)
-SCM
-myscm_get_git_id(void)
-{
-    return scm_from_utf8_string(GIT_ID);
-} // end myscm_git_id
 
 // Guile primitive to query the number of preprocessor options
 SCM
@@ -597,6 +591,16 @@ myscm_get_nth_prepro_option(SCM nguile)
     return scm_from_bool(false);
 } // end myscm_get_nth_prepro_option
 
+
+// Guile primitive to query the real Frama-C path as a string
+SCM
+myscm_get_real_framac_path(void)
+{
+    if (!realframac)
+        compute_real_framac();
+    return scm_from_utf8_string(realframac);
+} // end myscm_get_real_framac_path
+
 SCM
 get_my_guile_environment_at (const char*cfile, int clineno)
 {
@@ -604,17 +608,18 @@ get_my_guile_environment_at (const char*cfile, int clineno)
     SCM guilenv = scm_interaction_environment ();
     if (guilenv == nullptr)
         CFR_FATAL("get_my_guile_environment_at failed to get GUILE interaction environment at " << cfile << ":" << clineno);
-    scm_c_define_gsubr("get_git_id",
-                       /*required#*/0, /*optional#*/0, /*variadic?*/0,
-                       (scm_t_subr)myscm_get_git_id);
+    scm_c_define("git_id", scm_from_utf8_string(GIT_ID));
     scm_c_define_gsubr("get_nb_prepro_options",
                        /*required#*/0, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_nb_prepro_options);
     scm_c_define_gsubr("get_nth_prepro_option",
-                       /*required#*/0, /*optional#*/0, /*variadic?*/0,
+                       /*required#*/1, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_nth_prepro_option);
+    scm_c_define_gsubr("get_real_framac_path",
+                       /*required#*/0, /*optional#*/0, /*variadic?*/0,
+                       (scm_t_subr)myscm_get_real_framac_path);
 #warning unimplemented get_my_guile_environment_at should extend the environment
-    CFR_FATAL("unimplemented get_my_guile_environment_at at " << cfile << ":" << clineno);
+    std::clog << "incomplete GET_MY_GUILE_ENVIRONMENT from " << cfile << ":" << clineno << std::endl;
 } // end get_my_guile_environment_at
 
 void
