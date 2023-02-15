@@ -42,9 +42,12 @@
 // https://www.gnu.org/software/guile/manual/html_node/Linking-Programs-With-Guile.html
 #include "libguile.h"
 #include "libguile/init.h"
+#include "libguile/symbols.h"
 #include "libguile/gsubr.h"
 #include "libguile/numbers.h"
 #include "libguile/boolean.h"
+#include "libguile/ports.h"
+#include "libguile/load.h"
 
 /*** see getopt(3) man page mentionning
  *      extern char *optarg;
@@ -68,7 +71,7 @@ extern "C" [[noreturn]] void cfr_fatal_error_at(const char*fil, int lin);
     std::ostringstream out##Lin;			\
     out##Lin << Log << std::endl;			\
     std::clog << "FATAL ERROR (" << progname << ") "	\
-	     << Log << std::endl;			\
+	      << Log << std::endl;			\
     cfr_fatal_error_at(Fil,Lin);			\
   } while(0)
 
@@ -82,6 +85,9 @@ enum source_type
     srcty_c,
     srcty_cpp
 };				// end source_type
+
+SCM myscm_symb_c;
+SCM myscm_symb_cpp;
 
 class Source_file
 {
@@ -109,6 +115,18 @@ public:
     source_type type() const
     {
         return srcf_type;
+    };
+    SCM guile_type() const
+    {
+        switch (srcf_type)
+            {
+            case srcty_c:
+                return myscm_symb_c;
+            case srcty_cpp:
+                return myscm_symb_cpp;
+            default:
+                return scm_from_bool(false);
+            };
     };
     const char*type_cname() const
     {
@@ -609,6 +627,10 @@ get_my_guile_environment_at (const char*cfile, int clineno)
     if (guilenv == nullptr)
         CFR_FATAL("get_my_guile_environment_at failed to get GUILE interaction environment at " << cfile << ":" << clineno);
     scm_c_define("git_id", scm_from_utf8_string(GIT_ID));
+    scm_c_define("c_origin_file", scm_from_utf8_string(cfile));
+    scm_c_define("c_origin_line", scm_from_int(clineno));
+    myscm_symb_c =  scm_from_utf8_symbol ("c");
+    myscm_symb_cpp = scm_from_utf8_symbol("c++");
     scm_c_define_gsubr("get_nb_prepro_options",
                        /*required#*/0, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_nb_prepro_options);
@@ -620,6 +642,7 @@ get_my_guile_environment_at (const char*cfile, int clineno)
                        (scm_t_subr)myscm_get_real_framac_path);
 #warning unimplemented get_my_guile_environment_at should extend the environment
     std::clog << "incomplete GET_MY_GUILE_ENVIRONMENT from " << cfile << ":" << clineno << std::endl;
+    return guilenv;
 } // end get_my_guile_environment_at
 
 void
@@ -637,8 +660,11 @@ do_evaluate_guile(const char*guiletext)
     if (guilestr == nullptr)
         CFR_FATAL("do_evaluate_guile failed to get GUILE string from " << guiletext);
     SCM guilres = scm_eval_string_in_module (guilestr, curguilenv);
-    CFR_FATAL("incomplete do_evaluate_guile " << guiletext);
-#warning incomplete do_evaluate_guile (should use guilres)
+    fflush(nullptr);
+    printf("Guile evaluation of expression %s gives:", guiletext);
+    fflush(stdout);
+    scm_display(guilres, scm_current_output_port());
+    fflush(nullptr);
 } // end do_evaluate_guile
 
 void
@@ -935,14 +961,26 @@ main(int argc, char*argv[])
         };
     if (nbguile>0)
         {
+            SCM curguilenv = nullptr;
             if (!guile_has_been_initialized)
                 {
                     guile_has_been_initialized=true;
                     scm_init_guile ();
+                    curguilenv = GET_MY_GUILE_ENVIRONMENT();
                 };
-#warning unimplemented use Guile here
-            CFR_FATAL("not yet implemented Guile scripts handling of "
-                      << nbguile << " Scheme scripts");
+            for (int gix=0; gix<nbguile; gix++)
+                {
+                    std::string curguilefilepath = my_guile_files[gix];
+                    if (access(curguilefilepath.c_str(), R_OK))
+                        CFR_FATAL("cannot access Guile file#" << gix << ": " << curguilefilepath << " - " << strerror(errno));
+                    fflush(nullptr);
+                    SCM guilecurload = scm_c_primitive_load(curguilefilepath.c_str());
+                    fflush(nullptr);
+                    printf("Guile loading of script#%d: %s gave ", gix, curguilefilepath.c_str());
+                    scm_display(guilecurload, scm_current_output_port());
+                    fflush(nullptr);
+                    fflush(stdout);
+                }
         }
     int nbsrc =  my_srcfiles.size();
     for (int six = 0; six < nbsrc; six++)
