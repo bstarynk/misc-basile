@@ -664,6 +664,7 @@ do_evaluate_guile(const char*guiletext)
     printf("Guile evaluation of expression %s gives:", guiletext);
     fflush(stdout);
     scm_display(guilres, scm_current_output_port());
+    fputc('\n', stdout);
     fflush(nullptr);
 } // end do_evaluate_guile
 
@@ -979,6 +980,7 @@ main(int argc, char*argv[])
                     printf("Guile loading of script#%d: %s gave ", gix, curguilefilepath.c_str());
                     scm_display(guilecurload, scm_current_output_port());
                     fflush(nullptr);
+                    fputc('\n', stdout);
                     fflush(stdout);
                 }
         }
