@@ -301,7 +301,7 @@ show_help(void)
            "\t --print-info                 # print information\n"
            "\t -l | --sources <slist>       # read list of files (one per line) from <sfile>\n"
            "\t                              # if it starts with ! or | use popen\n"
-           "\t                              # if it starts with @ it a list of files\n"
+           "\t                              # if it starts with @ it is a list of files\n"
            "\t ... <source files>           # analyzed sources are C *.c ...\n"
            "\t                              # ... or C++ files *.cc\n"
            " (preprocessing options are passed to Frama-C)\n"
