@@ -32,6 +32,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <stdarg.h>
 #include <unistd.h>
 #include <assert.h>
 #include <sys/stat.h>
@@ -54,6 +55,7 @@ const char*realframac;
 void compute_real_framac(void);
 bool is_verbose;
 bool guile_has_been_initialized;
+bool guile_did_run_framac;
 char* sourcelist_path;
 bool do_list_framac_plugins;
 std::vector<std::string> my_prepro_options;
@@ -625,6 +627,105 @@ myscm_get_real_framac_path(void)
     return scm_from_utf8_string(realframac);
 } // end myscm_get_real_framac_path
 
+extern "C" SCM myscm_get_frama_c_argvec(void);
+extern "C" SCM myscm_reset_frama_c_argvec(void);
+
+SCM
+myscm_reset_frama_c_argvec(void)
+{
+    my_framac_options.clear();
+    my_framac_options.push_back(realframac);
+    return myscm_get_frama_c_argvec();
+} // end myscm_reset_frama_c_argvec
+
+// Guile primitive to query the current Frama-C arguments as a Guile vector
+SCM
+myscm_get_frama_c_argvec(void)
+{
+    SCM resvec = nullptr;
+    if (!realframac)
+        compute_real_framac();
+    if (my_framac_options.empty())
+        my_framac_options.push_back(realframac);
+    int siz = my_framac_options.size();
+    resvec = scm_c_make_vector(siz, SCM_UNSPECIFIED);
+    for (int i=0; i<siz; i++)
+        {
+            scm_c_vector_set_x(resvec, i, scm_from_utf8_string(my_framac_options[i].c_str()));
+        }
+    return resvec;
+} // end myscm_get_frama_c_argvec
+
+// Guile primitive to query the current preprocessor arguments as a Guile vector
+SCM
+myscm_get_prepro_argvec(void)
+{
+    SCM resvec = nullptr;
+    int siz = my_prepro_options.size();
+    resvec = scm_c_make_vector(siz, SCM_UNSPECIFIED);
+    for (int i=0; i<siz; i++)
+        {
+            scm_c_vector_set_x(resvec, i, scm_from_utf8_string(my_prepro_options[i].c_str()));
+        }
+    return resvec;
+} // end myscm_get_prepro_argvec
+
+
+static void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM val);
+
+/// variadic Guile primitive
+SCM myscm_run_frama_c(SCM first, ...)
+{
+    va_list args;
+    int nbargs= 0;
+    SCM elt = nullptr;
+    std::vector<std::string> framargvec;
+    compute_real_framac();
+    framargvec.push_back(realframac);
+    if (first != SCM_UNDEFINED && !SCM_UNBNDP(first))
+        {
+            va_start (args, first);
+            while ((elt = va_arg(args, SCM)) != nullptr && !SCM_UNBNDP(elt))
+                nbargs++;
+            va_end (args);
+            add_frama_c_guile_arg(framargvec, 0, first);
+            va_start (args, first);
+            while ((elt = va_arg(args, SCM)) != nullptr && !SCM_UNBNDP(elt))
+                add_frama_c_guile_arg(framargvec, 0, elt);
+            va_end (args);
+        }
+    CFR_FATAL("unimplemented myscm_run_frama_c");
+} // end myscm_run_frama_c
+
+#define MAX_CALL_DEPTH 256
+
+void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM val)
+{
+    const int maxargsize = 2048;
+    if (depth > MAX_CALL_DEPTH)
+        CFR_FATAL("add_frama_c_guile_arg too deep at " << depth);
+    if (argv.size() > maxargsize)
+        CFR_FATAL("add_frama_c_guile_arg too many arguments " << argv.size()
+                  << " at depth of " << depth);
+    if (scm_is_integer(val))
+      {
+	char numbuf[16];
+	memset(numbuf, 0, sizeof(numbuf));
+	snprintf(numbuf, "%ld", (long) scm_to_int(val));
+	argv.push_back(std::string{numbuf});
+      }
+    else if (scm_is_symbol(val)) {
+      const char*symname = scm_i_symbol_chars(val);
+      argv.push_back(std::string{symname});
+    }
+    else if (scm_is_string(val)) {
+      argv.push_back(std::string{scm_to_utf8_string(val)});
+    }
+    else if (scm_is_list(val)) {
+    }
+} // end add_frama_c_guile_arg
+
+
 SCM
 get_my_guile_environment_at (const char*cfile, int clineno)
 {
@@ -646,9 +747,21 @@ get_my_guile_environment_at (const char*cfile, int clineno)
     scm_c_define_gsubr("add_prepro_option",
                        /*required#*/1, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_add_prepro_option);
+    scm_c_define_gsubr("get_prepro_argvec",
+                       /*required#*/0, /*optional#*/0, /*variadic?*/0,
+                       (scm_t_subr)myscm_get_prepro_argvec);
     scm_c_define_gsubr("get_real_framac_path",
                        /*required#*/0, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_real_framac_path);
+    scm_c_define_gsubr("run_frama_c",
+                       /*required#*/1, /*optional#*/0, /*variadic?*/1,
+                       (scm_t_subr)myscm_run_frama_c);
+    scm_c_define_gsubr("get_frama_c_argvec",
+                       /*required#*/0, /*optional#*/0, /*variadic?*/0,
+                       (scm_t_subr)myscm_get_frama_c_argvec);
+    scm_c_define_gsubr("reset_frama_c_argvec",
+                       /*required#*/0, /*optional#*/0, /*variadic?*/0,
+                       (scm_t_subr)myscm_reset_frama_c_argvec);
 #warning unimplemented get_my_guile_environment_at should extend the environment
     std::clog << "incomplete GET_MY_GUILE_ENVIRONMENT from " << cfile << ":" << clineno << std::endl;
     return guilenv;
@@ -887,21 +1000,6 @@ try_run_framac(const char*arg1, const char*arg2,
 } // end try_run_framac
 
 
-void inner_guile(void*guileclosure, int argc, char**argv)
-{
-    CFR_FATAL("unimplemented inner_guile");
-#warning unimplemented inner_guile
-    // see https://www.gnu.org/software/guile/manual/html_node/A-Sample-Guile-Main-Program.html
-}
-void
-do_use_guile(int argc, char*argv[], int nbguile)
-{
-#warning unimplemented do_use_guile
-    CFR_FATAL("unimplemented do_use_guile for " << nbguile << " Scheme scripts");
-    /// perhaps scm_boot_guile is wrong...
-    scm_boot_guile (argc, argv, inner_guile, 0);
-} // end do_use_guile
-
 int
 main(int argc, char*argv[])
 {
@@ -914,8 +1012,6 @@ main(int argc, char*argv[])
     if (is_verbose)
         printf("%s running verbosely on %s pid %d git %s with %d source files\n", progname,
                myhost, (int)getpid(), GIT_ID, (int) my_srcfiles.size());
-    if (nbguile>0)
-        do_use_guile(argc, argv, nbguile);
     if (do_list_framac_plugins)
         try_run_framac("-plugins");
     if (!realframac)
@@ -993,6 +1089,13 @@ main(int argc, char*argv[])
                     fflush(stdout);
                 }
         }
+    if (guile_did_run_framac)
+        {
+            if (is_verbose)
+                printf ("%s has run %s thru Guile scripts or expressions.\n", progname, realframac);
+            exit(EXIT_SUCCESS);
+        };
+
     int nbsrc =  my_srcfiles.size();
     for (int six = 0; six < nbsrc; six++)
         {
