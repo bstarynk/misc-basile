@@ -41,13 +41,6 @@
 // GNU guile Scheme interpreter. See
 // https://www.gnu.org/software/guile/manual/html_node/Linking-Programs-With-Guile.html
 #include "libguile.h"
-#include "libguile/init.h"
-#include "libguile/symbols.h"
-#include "libguile/gsubr.h"
-#include "libguile/numbers.h"
-#include "libguile/boolean.h"
-#include "libguile/ports.h"
-#include "libguile/load.h"
 
 /*** see getopt(3) man page mentionning
  *      extern char *optarg;
@@ -355,7 +348,7 @@ do_print_information(int argc, char**argv)
                 std::cout << " " << curguilfil << std::endl;
         }
     else
-        std::cout << progname << " without guile script." << std::endl;
+        std::cout << progname << " without any guile script." << std::endl;
     int nbsrc = (int) my_srcfiles.size();
     if (nbsrc > 0)
         {
@@ -609,6 +602,19 @@ myscm_get_nth_prepro_option(SCM nguile)
     return scm_from_bool(false);
 } // end myscm_get_nth_prepro_option
 
+SCM
+myscm_add_prepro_option(SCM arg)
+{
+    if (scm_is_string (arg))
+        {
+            char*s = scm_to_utf8_string(arg);
+            std::string str(s);
+            my_prepro_options.push_back(str);
+            return arg;
+        }
+    else
+        return scm_from_bool(false);
+} // end myscm_add_prepro_option
 
 // Guile primitive to query the real Frama-C path as a string
 SCM
@@ -637,6 +643,9 @@ get_my_guile_environment_at (const char*cfile, int clineno)
     scm_c_define_gsubr("get_nth_prepro_option",
                        /*required#*/1, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_nth_prepro_option);
+    scm_c_define_gsubr("add_prepro_option",
+                       /*required#*/1, /*optional#*/0, /*variadic?*/0,
+                       (scm_t_subr)myscm_add_prepro_option);
     scm_c_define_gsubr("get_real_framac_path",
                        /*required#*/0, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_real_framac_path);
