@@ -735,8 +735,11 @@ void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM val)
 {
     const int maxargsize = 2048;
     long l = -2;
+    SCM curelem = nullptr;
     if (depth > MAX_CALL_DEPTH)
         CFR_FATAL("add_frama_c_guile_arg too deep at " << depth);
+    if (SCM_NULL_OR_NIL_P(val))
+        return;
     if (argv.size() > maxargsize)
         CFR_FATAL("add_frama_c_guile_arg too many arguments " << argv.size()
                   << " at depth of " << depth);
@@ -744,7 +747,8 @@ void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM val)
         {
             char numbuf[16];
             memset(numbuf, 0, sizeof(numbuf));
-            snprintf(numbuf, sizeof(numbuf), "%ld", (long) scm_to_int(val));
+            snprintf(numbuf, sizeof(numbuf), "%ld",
+                     (long) scm_to_int(val));
             argv.push_back(std::string{numbuf});
         }
     else if (scm_is_symbol(val))
@@ -760,7 +764,28 @@ void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM val)
     else if ((l = scm_ilength(val))>=0)
         {
             // val is a proper list
-#warning missing code in add_frama_c_guile_arg for proper list val
+            SCM curpair = val;
+            curelem = nullptr;
+            while (scm_is_pair(curpair))
+                {
+                    curelem = SCM_CAR(curpair);
+                    if (!SCM_NULL_OR_NIL_P(curelem))
+                        add_frama_c_guile_arg(argv, depth+1, curelem);
+                    curelem = nullptr;
+                    curpair = SCM_CDR(curpair);
+                }
+        }
+    else if (scm_is_vector(val))
+        {
+            l = scm_c_vector_length(val);
+            curelem = nullptr;
+            for (long i=0; i<l; i++)
+                {
+                    curelem= scm_c_vector_ref(val, i);
+                    if (!SCM_NULL_OR_NIL_P(curelem))
+                        add_frama_c_guile_arg(argv, depth+1, curelem);
+                    curelem = nullptr;
+                }
         }
 } // end add_frama_c_guile_arg
 
