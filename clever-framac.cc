@@ -74,6 +74,40 @@ extern "C" [[noreturn]] void cfr_fatal_error_at(const char*fil, int lin);
 
 #define CFR_FATAL(Log) CFR_BISFATAL_AT(__FILE__,__LINE__,Log)
 
+///// declaration of our Guile primitives, conventionally named
+///// myscm_<cname>
+
+extern "C" {
+    //°Guile (get_nb_prepro_options)
+    SCM myscm_get_nb_prepro_options(void);
+
+    //°Guile (get_nth_prepro_option <int>)
+    SCM myscm_get_nth_prepro_option(SCM nguile);
+
+    //°Guile (add_prepro_option <string>)
+    SCM myscm_add_prepro_option(SCM arg);
+
+    //°Guile (get_real_frama_c_path)
+    SCM myscm_get_real_frama_c_path(void);
+
+    //°Guile (get_prepro_argvec)
+    SCM myscm_get_prepro_argvec(void);
+
+    //°Guile (reset_frama_c_argvec)
+    SCM myscm_reset_frama_c_argvec(void);
+
+// Guile primitive to query the current preprocessor arguments as a
+// Guile vector
+    //°Guile (get_prepro_argvec)
+    SCM myscm_get_prepro_argvec(void);
+// Guile primitive to query the current Frama-C arguments as a Guile vector
+    //°Guile (get_frama_c_argvec)
+    SCM myscm_get_frama_c_argvec(void);
+
+    /// variadic Guile primitive
+    SCM myscm_run_frama_c(SCM first, ...);
+};
+
 enum source_type
 {
     srcty_NONE,
@@ -620,15 +654,13 @@ myscm_add_prepro_option(SCM arg)
 
 // Guile primitive to query the real Frama-C path as a string
 SCM
-myscm_get_real_framac_path(void)
+myscm_get_real_frama_c_path(void)
 {
     if (!realframac)
         compute_real_framac();
     return scm_from_utf8_string(realframac);
 } // end myscm_get_real_framac_path
 
-extern "C" SCM myscm_get_frama_c_argvec(void);
-extern "C" SCM myscm_reset_frama_c_argvec(void);
 
 SCM
 myscm_reset_frama_c_argvec(void)
@@ -702,27 +734,34 @@ SCM myscm_run_frama_c(SCM first, ...)
 void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM val)
 {
     const int maxargsize = 2048;
+    long l = -2;
     if (depth > MAX_CALL_DEPTH)
         CFR_FATAL("add_frama_c_guile_arg too deep at " << depth);
     if (argv.size() > maxargsize)
         CFR_FATAL("add_frama_c_guile_arg too many arguments " << argv.size()
                   << " at depth of " << depth);
     if (scm_is_integer(val))
-      {
-	char numbuf[16];
-	memset(numbuf, 0, sizeof(numbuf));
-	snprintf(numbuf, "%ld", (long) scm_to_int(val));
-	argv.push_back(std::string{numbuf});
-      }
-    else if (scm_is_symbol(val)) {
-      const char*symname = scm_i_symbol_chars(val);
-      argv.push_back(std::string{symname});
-    }
-    else if (scm_is_string(val)) {
-      argv.push_back(std::string{scm_to_utf8_string(val)});
-    }
-    else if (scm_is_list(val)) {
-    }
+        {
+            char numbuf[16];
+            memset(numbuf, 0, sizeof(numbuf));
+            snprintf(numbuf, sizeof(numbuf), "%ld", (long) scm_to_int(val));
+            argv.push_back(std::string{numbuf});
+        }
+    else if (scm_is_symbol(val))
+        {
+            const char*symname =
+                scm_to_utf8_string(scm_symbol_to_string(val));
+            argv.push_back(std::string{symname});
+        }
+    else if (scm_is_string(val))
+        {
+            argv.push_back(std::string{scm_to_utf8_string(val)});
+        }
+    else if ((l = scm_ilength(val))>=0)
+        {
+            // val is a proper list
+#warning missing code in add_frama_c_guile_arg for proper list val
+        }
 } // end add_frama_c_guile_arg
 
 
@@ -750,9 +789,9 @@ get_my_guile_environment_at (const char*cfile, int clineno)
     scm_c_define_gsubr("get_prepro_argvec",
                        /*required#*/0, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_prepro_argvec);
-    scm_c_define_gsubr("get_real_framac_path",
+    scm_c_define_gsubr("get_real_frama_c_path",
                        /*required#*/0, /*optional#*/0, /*variadic?*/0,
-                       (scm_t_subr)myscm_get_real_framac_path);
+                       (scm_t_subr)myscm_get_real_frama_c_path);
     scm_c_define_gsubr("run_frama_c",
                        /*required#*/1, /*optional#*/0, /*variadic?*/1,
                        (scm_t_subr)myscm_run_frama_c);
