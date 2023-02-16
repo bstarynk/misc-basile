@@ -32,6 +32,9 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <atomic>
+#include <memory>
+
 #include <stdarg.h>
 #include <unistd.h>
 #include <assert.h>
@@ -58,9 +61,12 @@ bool guile_has_been_initialized;
 bool guile_did_run_framac;
 char* sourcelist_path;
 bool do_list_framac_plugins;
-std::vector<std::string> my_prepro_options;
-std::vector<std::string> my_framac_options;
-std::vector<std::string> my_guile_files;
+typedef std::vector<std::string> my_vector_of_strings_t;
+my_vector_of_strings_t my_prepro_options;
+my_vector_of_strings_t my_framac_options;
+my_vector_of_strings_t  my_guile_files;
+extern "C" std::atomic<my_vector_of_strings_t*> my_framargvec_ptr;
+
 extern "C" [[noreturn]] void cfr_fatal_error_at(const char*fil, int lin);
 #define CFR_FATAL_AT(Fil,Lin,Log) do {			\
     std::ostringstream out##Lin;			\
@@ -704,7 +710,8 @@ myscm_get_prepro_argvec(void)
 
 
 static void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM val);
-
+//std::atomic<std::shared_ptr<std::vector<std::string>>> my_framargvec_ptr;
+std::atomic<my_vector_of_strings_t*> my_framargvec_ptr;
 /// variadic Guile primitive
 SCM myscm_run_frama_c(SCM first, ...)
 {
@@ -712,20 +719,24 @@ SCM myscm_run_frama_c(SCM first, ...)
     int nbargs= 0;
     SCM elt = nullptr;
     std::vector<std::string> framargvec;
+#warning should use my_framargvec_ptr here
     compute_real_framac();
     framargvec.push_back(realframac);
     if (first != SCM_UNDEFINED && !SCM_UNBNDP(first))
         {
             va_start (args, first);
-            while ((elt = va_arg(args, SCM)) != nullptr && !SCM_UNBNDP(elt))
+            while ((elt = va_arg(args, SCM)) != nullptr //
+                    && !SCM_UNBNDP(elt))
                 nbargs++;
             va_end (args);
             add_frama_c_guile_arg(framargvec, 0, first);
             va_start (args, first);
-            while ((elt = va_arg(args, SCM)) != nullptr && !SCM_UNBNDP(elt))
+            while ((elt = va_arg(args, SCM)) != nullptr //
+                    && !SCM_UNBNDP(elt))
                 add_frama_c_guile_arg(framargvec, 0, elt);
             va_end (args);
         }
+#warning should restore my_framargvec_ptr here
     CFR_FATAL("unimplemented myscm_run_frama_c");
 } // end myscm_run_frama_c
 
