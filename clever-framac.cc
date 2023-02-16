@@ -751,6 +751,8 @@ void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM val)
                      (long) scm_to_int(val));
             argv.push_back(std::string{numbuf});
         }
+    else if (scm_is_bool_or_nil(val))
+        return;
     else if (scm_is_symbol(val))
         {
             const char*symname =
@@ -782,6 +784,28 @@ void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM val)
             for (long i=0; i<l; i++)
                 {
                     curelem= scm_c_vector_ref(val, i);
+                    if (!SCM_NULL_OR_NIL_P(curelem))
+                        add_frama_c_guile_arg(argv, depth+1, curelem);
+                    curelem = nullptr;
+                }
+        }
+    else if (scm_is_true (scm_procedure_p (val)))
+        {
+            curelem = scm_call_0(val);
+            if (!SCM_NULL_OR_NIL_P(curelem))
+                add_frama_c_guile_arg(argv, depth+1, curelem);
+            curelem = nullptr;
+        }
+    else if (scm_is_array(val))
+        {
+            int rk = scm_c_array_rank(val);
+            if (rk != 1)
+                CFR_FATAL("add_frama_c_guile_arg at depth " << depth
+                          << " cannot handle multi-dimensional array of " << rk);
+            long len = scm_c_array_length(val);
+            for (long i=0; i<len; i++)
+                {
+                    curelem = scm_c_array_ref_1(val, i);
                     if (!SCM_NULL_OR_NIL_P(curelem))
                         add_frama_c_guile_arg(argv, depth+1, curelem);
                     curelem = nullptr;
