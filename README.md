@@ -6,8 +6,11 @@ Email me to
 feedback and questions. See
 [starynkevitch.net/Basile](http://starynkevitch.net/Basile/) for more
 about me, with [this](http://starynkevitch.net/Basile/index_en.html)
-being in English. My pet project is
+being in English. My pet free software project is
 [RefPerSys](http://refpersys.org/).
+
+Some of these files are coded at work, so copyrighted by my employer
+[CEA](https://www.cea.fr/).
 
 Several single source file programs usually for
 GNU/Linux/Debian/x86-64. Their compilation command is generally given
