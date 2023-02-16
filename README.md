@@ -10,7 +10,9 @@ being in English. My pet free software project is
 [RefPerSys](http://refpersys.org/).
 
 Some of these files are coded at work, so copyrighted by my employer
-[CEA](https://www.cea.fr/).
+[CEA](https://www.cea.fr/). My office email is there (before
+nov. 2023, when I reach retirement)
+[basile.starynkevitch@cea.fr](mailto:basile.starynkevitch@cea.fr).
 
 Several single source file programs usually for
 GNU/Linux/Debian/x86-64. Their compilation command is generally given
