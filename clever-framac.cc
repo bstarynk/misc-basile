@@ -38,6 +38,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <assert.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <getopt.h>
@@ -123,6 +124,10 @@ enum source_type
 
 SCM myscm_symb_c;
 SCM myscm_symb_cpp;
+SCM myscm_symb_core;
+#define CLEVERFRAMAC_LASTSIG 64
+SCM myscm_symb_signal[CLEVERFRAMAC_LASTSIG];
+
 
 class Source_file
 {
@@ -719,6 +724,7 @@ SCM myscm_run_frama_c(SCM first, ...)
     va_list args;
     int nbargs= 0;
     SCM elt = nullptr;
+    SCM result = nullptr;
     std::vector<std::string> framargvec;
     my_vector_of_strings_t* oldptr = my_framargvec_ptr.exchange(&framargvec);
 #warning should use my_framargvec_ptr here
@@ -738,10 +744,71 @@ SCM myscm_run_frama_c(SCM first, ...)
                 add_frama_c_guile_arg(framargvec, 0, elt);
             va_end (args);
         }
+    const char**frargv = (const char**) (calloc (framargvec.size() + 1, sizeof(char*)));
+    if (!frargv)
+        CFR_FATAL("myscm_run_frama_c failed to calloc " << (framargvec.size()+1) << " words: " << strerror(errno));
+    int frcntarg = 0;
+    for (std::string curargstr : framargvec)
+        frargv[frcntarg++] = curargstr.c_str();
+    std::cout << std::flush;
+    std::cerr << std::flush;
+    std::clog << std::flush;
+    fflush(nullptr);
+    pid_t pid = fork();
+    if (pid<0)
+        CFR_FATAL("myscm_run_frama_c failed to fork " << strerror(errno));
+    else if (pid==0)   /// child process should run Frama-C
+        {
+            nice (1);
+            // According to Julien Seignole, Frama-C never reads its stdin..., so
+            close(STDIN_FILENO);
+            int nfd = open("/dev/null", O_RDONLY);
+            if (nfd>0 && nfd!= STDIN_FILENO)
+                {
+                    dup2(nfd, STDIN_FILENO);
+                    close(nfd);
+                }
+            execv(realframac, (char**)frargv);
+            // Should in practice never be reached, but just in case...
+            perror(realframac);
+            abort();
+            exit(EXIT_FAILURE);
+        }
+    else // pid>0, parent process
+        {
+            int ws = 0;
+            usleep (10*1024);	// pause for ten milliseconds to let Frama-C start
+            while (ws=0, errno=0, ((-1==waitpid(pid, &ws, 0)) && errno == EINTR))
+                usleep(1024);
+            if (ws==0)
+                result = scm_from_bool(true);
+            else if (WIFEXITED(ws) && WEXITSTATUS(ws) == EXIT_FAILURE)
+                result = scm_from_bool(false);
+            else if (WIFEXITED(ws) && WEXITSTATUS(ws) > 1)
+                result = scm_from_int(WEXITSTATUS(ws));
+            else if (WIFSIGNALED(ws))
+                {
+                    bool dumpedcore = WCOREDUMP(ws);
+                    int nsig = WTERMSIG(ws);
+                    if (nsig>0 && nsig<CLEVERFRAMAC_LASTSIG && myscm_symb_signal[nsig])
+                        {
+                            if (dumpedcore)
+                                result = scm_cons(myscm_symb_signal[nsig], myscm_symb_core);
+                            else
+                                result = myscm_symb_signal[nsig];
+                        }
+                    else
+                        {
+                            if (dumpedcore)
+                                result = scm_cons(scm_from_int(nsig), myscm_symb_core);
+                            else
+                                result = scm_from_int(nsig);
+                        }
+                }
+        };
+    free (frargv);
     my_framargvec_ptr.store(oldptr);
-#warning should fork then wait Frama-C in myscm_run_frama_c
-    CRF_FATAL("myscm_run_frama_c is incomplete and should fork " << realframac);
-    return scm_from_bool(true);
+    return result;
 } // end myscm_run_frama_c
 
 #define MAX_CALL_DEPTH 256
@@ -841,6 +908,13 @@ get_my_guile_environment_at (const char*cfile, int clineno)
     scm_c_define("c_origin_line", scm_from_int(clineno));
     myscm_symb_c =  scm_from_utf8_symbol ("c");
     myscm_symb_cpp = scm_from_utf8_symbol("c++");
+    myscm_symb_core = scm_from_utf8_symbol("core");
+    for (int nsig = 1; nsig < CLEVERFRAMAC_LASTSIG; nsig++)
+        {
+            const char* absig = sigdescr_np(nsig);
+            if (!absig) continue;
+            myscm_symb_signal[nsig] = scm_from_utf8_symbol(absig);
+        };
     scm_c_define_gsubr("get_nb_prepro_options",
                        /*required#*/0, /*optional#*/0, /*variadic?*/0,
                        (scm_t_subr)myscm_get_nb_prepro_options);
