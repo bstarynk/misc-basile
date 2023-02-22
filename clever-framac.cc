@@ -713,12 +713,14 @@ static void add_frama_c_guile_arg(std::vector<std::string>& argv, int depth, SCM
 //std::atomic<std::shared_ptr<std::vector<std::string>>> my_framargvec_ptr;
 std::atomic<my_vector_of_strings_t*> my_framargvec_ptr;
 /// variadic Guile primitive
+/// Guile arguments have been evaluated by called.
 SCM myscm_run_frama_c(SCM first, ...)
 {
     va_list args;
     int nbargs= 0;
     SCM elt = nullptr;
     std::vector<std::string> framargvec;
+    my_vector_of_strings_t* oldptr = my_framargvec_ptr.exchange(&framargvec);
 #warning should use my_framargvec_ptr here
     compute_real_framac();
     framargvec.push_back(realframac);
@@ -736,8 +738,10 @@ SCM myscm_run_frama_c(SCM first, ...)
                 add_frama_c_guile_arg(framargvec, 0, elt);
             va_end (args);
         }
-#warning should restore my_framargvec_ptr here
-    CFR_FATAL("unimplemented myscm_run_frama_c");
+    my_framargvec_ptr.store(oldptr);
+#warning should fork then wait Frama-C in myscm_run_frama_c
+    CRF_FATAL("myscm_run_frama_c is incomplete and should fork " << realframac);
+    return scm_from_bool(true);
 } // end myscm_run_frama_c
 
 #define MAX_CALL_DEPTH 256
