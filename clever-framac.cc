@@ -47,6 +47,13 @@
 // https://www.gnu.org/software/guile/manual/html_node/Linking-Programs-With-Guile.html
 #include "libguile.h"
 
+#ifndef FULL_CLEVER_FRAMAC_SOURCE
+#error compilation command should define FULL_CLEVER_FRAMAC_SOURCE
+#endif //FULL_CLEVER_FRAMAC_SOURCE
+
+extern "C" const char my_full_clever_framac_source[];
+const char my_full_clever_framac_source[] = FULL_CLEVER_FRAMAC_SOURCE;
+
 /*** see getopt(3) man page mentionning
  *      extern char *optarg;
  *      extern int optind, opterr, optopt;
@@ -346,9 +353,9 @@ show_help(void)
            "\t                              # ... or C++ files *.cc\n"
            " (preprocessing options are passed to Frama-C)\n"
            "\n See https://frama-c.com/ for details on Frama-C ...\n"
-           "Our gitid is %s (file %s compiled %s)\n"
+           "Our gitid is %s (file %s compiled %s at %s)\n"
            "\n",
-           progname, framacexe, GIT_ID, __FILE__, __DATE__);
+           progname, framacexe, GIT_ID, __FILE__, __DATE__, __TIME__);
 } // end show_help
 
 void
@@ -754,6 +761,7 @@ SCM myscm_run_frama_c(SCM first, ...)
     std::cerr << std::flush;
     std::clog << std::flush;
     fflush(nullptr);
+#pragma message "the fork of Frama-C is here"
     pid_t pid = fork();
     if (pid<0)
         CFR_FATAL("myscm_run_frama_c failed to fork " << strerror(errno));
@@ -903,6 +911,8 @@ get_my_guile_environment_at (const char*cfile, int clineno)
     SCM guilenv = scm_interaction_environment ();
     if (guilenv == nullptr)
         CFR_FATAL("get_my_guile_environment_at failed to get GUILE interaction environment at " << cfile << ":" << clineno);
+    scm_c_define("self_cpp_source",
+                 scm_from_utf8_string(my_full_clever_framac_source));
     scm_c_define("git_id", scm_from_utf8_string(GIT_ID));
     scm_c_define("c_origin_file", scm_from_utf8_string(cfile));
     scm_c_define("c_origin_line", scm_from_int(clineno));
@@ -1185,6 +1195,10 @@ main(int argc, char*argv[])
         is_verbose = true;
     ///
     parse_program_arguments(argc, argv);
+    if (access(my_full_clever_framac_source, R_OK))
+        CFR_FATAL("missing source file for " << __FILE__
+                  << " in " << my_full_clever_framac_source
+                  << ":" << strerror(errno));
     int nbguile = (int)my_guile_files.size();
     if (is_verbose)
         printf("%s running verbosely on %s pid %d git %s with %d source files\n", progname,
