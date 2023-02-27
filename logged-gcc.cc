@@ -121,6 +121,8 @@ say_usage(const char*progname)
     std::clog << "If unset and $HOME/logged-gcc-db.sqlite exists it is used." << std::endl;
     std::clog << "To dump that database, try probably some command like:" << std::endl
 	     << "    sqlite3 $HOME/logged-gcc-db.sqlite .dump" << std::endl << std::endl;
+    std::clog << "$LOGGED_DIGEST should probably be never set, using the default crypto digest " << std::endl;
+#warning missing C++ code for crypto digest
 } // end say_usage
 
 std::vector<const char*>
@@ -1022,6 +1024,7 @@ main(int argc, char**argv)
     perror("EVP_MD_CTX_create");
     exit(EXIT_FAILURE);
   };
+  OpenSSL_add_all_digests();
   bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (argc==2 && !strcmp(argv[1], "--version"))
     {
@@ -1049,7 +1052,7 @@ main(int argc, char**argv)
         }
       else
         syslog(LOG_INFO, "running native version for %s", argv[0]);
-    };
+    };				// end handling --version
   int nbgccarg=0;
   std::vector<const char*> argvec
     = parse_logged_program_options(argc, argv, argstr, nbgccarg);
