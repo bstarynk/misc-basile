@@ -121,7 +121,7 @@ say_usage(const char*progname)
     std::clog << "If unset and $HOME/logged-gcc-db.sqlite exists it is used." << std::endl;
     std::clog << "To dump that database, try probably some command like:" << std::endl
 	     << "    sqlite3 $HOME/logged-gcc-db.sqlite .dump" << std::endl << std::endl;
-    std::clog << "$LOGGED_DIGEST should probably be never set, using the default crypto digest " << std::endl;
+    std::clog << "$LOGGED_DIGEST should probably be never set, using the default crypto digest " << (EVP_MD_CTX_get0_name(mymdctx)?:"??") << std::endl;
 #warning missing C++ code for crypto digest
 } // end say_usage
 
@@ -961,7 +961,7 @@ END TRANSACTION;
       exit(EXIT_FAILURE);	   
     }
   }
-  syslog(LOG_INFO, "create_sqlite_database initialized database %s", mysqlitepath);
+  syslog(LOG_INFO, "create_sqlite_database initialized database %s\n", mysqlitepath);
   DEBUGLOG("create_sqlite_database initialized database " << mysqlitepath);
 } // end create_sqlite_database
 
@@ -1004,6 +1004,12 @@ main(int argc, char**argv)
     };
   if (argc >= 2 && !strcmp(argv[1], "--debug"))
     debug_enabled = true;
+  OpenSSL_add_all_digests();
+  mymdctx = EVP_MD_CTX_create();
+  if (!mymdctx) {
+    perror("EVP_MD_CTX_create");
+    exit(EXIT_FAILURE);
+  };
   openlog(argv[0], LOG_PERROR|LOG_PID, LOG_USER);
   std::string argstr;
   if (!mygcc)
@@ -1019,12 +1025,6 @@ main(int argc, char**argv)
     mygxx = GXX_EXEC;
   mysqlitepath = getenv("LOGGED_SQLITE");
   DEBUGLOG("main mygcc=" << (mygcc?:"*nul*") << " mygxx=" << (mygxx?:"*nul*") << " mysqlitepath=" << (mysqlitepath?:"*nul*"));
-  mymdctx = EVP_MD_CTX_create();
-  if (!mymdctx) {
-    perror("EVP_MD_CTX_create");
-    exit(EXIT_FAILURE);
-  };
-  OpenSSL_add_all_digests();
   bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (argc==2 && !strcmp(argv[1], "--version"))
     {
