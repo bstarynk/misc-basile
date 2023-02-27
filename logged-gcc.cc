@@ -36,6 +36,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <openssl/md5.h>
+#include <openssl/evp.h>
 #include <sqlite3.h>
 
 #ifndef GCC_EXEC
@@ -54,6 +55,7 @@ const char* mysqliterequest;
 sqlite3* mysqlitedb;
 bool debug_enabled;
 int exitcode;
+EVP_MD_CTX* mymdctx;
 
 #define DEBUGLOG_AT(Lin,Log) do {if (debug_enabled) \
       std::clog << "¤¤" <<__FILE__<< ":" << Lin << " " << Log << std::endl; } while(0)
@@ -1015,6 +1017,11 @@ main(int argc, char**argv)
     mygxx = GXX_EXEC;
   mysqlitepath = getenv("LOGGED_SQLITE");
   DEBUGLOG("main mygcc=" << (mygcc?:"*nul*") << " mygxx=" << (mygxx?:"*nul*") << " mysqlitepath=" << (mysqlitepath?:"*nul*"));
+  mymdctx = EVP_MD_CTX_create();
+  if (!mymdctx) {
+    perror("EVP_MD_CTX_create");
+    exit(EXIT_FAILURE);
+  };
   bool for_cxx = strstr(argv[0], "++") != nullptr;
   if (argc==2 && !strcmp(argv[1], "--version"))
     {
@@ -1107,6 +1114,7 @@ main(int argc, char**argv)
     }
     DEBUGLOG("closed Sqlite database " << mysqlitepath);
   }
+  EVP_MD_CTX_destroy(mymdctx);
   DEBUGLOG("end of main argc=" << argc << " exitcode=" << exitcode);
   return exitcode;
 } /* end main */
