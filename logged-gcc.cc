@@ -96,21 +96,29 @@ say_usage(const char*progname)
               << " is a logging wrapper to gcc or g++ compilers for Linux." << std::endl
               << "  (see http://gcc.gnu.org/ and file " __FILE__ " on https://github.com/bstarynk/misc-basile/ for more)" << std::endl;
     std::clog << "A GPLv3+ licensed free software, see https://www.gnu.org/licenses/ for more" << std::endl;
-    std::clog << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ email <basile@starynkevitch.net>), France" << std::endl;
+    std::clog << " by Basile Starynkevitch (see http://starynkevitch.net/Basile/ ...)" << std::endl
+	      << " email <basile@starynkevitch.net> or <basile.starynkevitch@cea.fr>" << std::endl;
     std::clog << " Acceptable options include:" << std::endl
               << " --debug #output debug messages to std::clog" << std::endl
-              << " --gcc=<some-executable> #e.g. --gcc=/usr/bin/gcc-11, overridding $LOGGED_GCC" << std::endl
-              << " --g++=<some-executable> #e.g. --g++=/usr/bin/g++-11, overridding $LOGGED_GXX" << std::endl
-              << " --sqlite=<some-sqlite-file> #e.g. --sqlite=$HOME/tmp/loggedgcc.sqlite, overridding $LOGGED_SQLITE" << std::endl
+              << " --gcc=<some-executable> #e.g. --gcc=/usr/bin/gcc-12, overridding $LOGGED_GCC" << std::endl
+              << " --g++=<some-executable> #e.g. --g++=/usr/bin/g++-12, overridding $LOGGED_GXX" << std::endl
+              << " --sqlite=<some-sqlite-file> #e.g. --sqlite=$HOME/l-gcc.sqlite, overridding $LOGGED_SQLITE" << std::endl
               << " --dosql=<some-sqlite-request> #e.g. --dosql='SELECT * FROM tb_sourcepath' for advanced users." << std::endl
               <<  "followed by program options passed to the GCC compiler..." << std::endl;
-    std::clog << " Relevant environment variables are $LOGGED_GCC and $LOGGED_GXX for the compilers (when --gcc=... or --g++=... is not given)." << std::endl
-              << " When provided, the $LOGGED_CFLAGS may contain space-separated initial program options passed just after the C compiler $LOGGED_GCC." << std::endl
-              << " When provided, the $LOGGED_CXXFLAGS may contain space-separated initial program options passed just after the C++ compiler $LOGGED_GXX." << std::endl
-              << " When provided, the $LOGGED_LINKFLAGS may contain space-separated final program options passed just after the C or C++ compiler above." << std::endl;
-    std::clog << " When provided, the $LOGGED_SQLITE should give some initialized Sqlite database, with a previous run " << myprogname << " --sqlite=<sqlite-database-file>" << std::endl;
-    std::clog << " if unset and $HOME/logged-gcc-db.sqlite exists it is used."
-              << std::endl;
+    std::clog << " Relevant environment variables are $LOGGED_GCC and $LOGGED_GXX for the compilers" << std::endl
+	      << "    (when --gcc=... or --g++=... is not given)." << std::endl
+              << " When provided, the $LOGGED_CFLAGS may contain space-separated initial program options" << std::endl
+	      << "passed just after the C compiler $LOGGED_GCC." << std::endl
+              << " When provided, the $LOGGED_CXXFLAGS may contain space-separated initial program options" << std::endl
+	      << "passed just after the C++ compiler $LOGGED_GXX." << std::endl
+              << " When provided, the $LOGGED_LINKFLAGS may contain space-separated final program options" << std::endl
+	      << "passed just after the C or C++ compiler above." << std::endl;
+    std::clog << " When provided, the $LOGGED_SQLITE should give some Sqlite database," << std::endl
+	      << "which should have been initialized with a previous run" << std::endl
+	      << myprogname << " --sqlite=<sqlite-database-file>" << std::endl;
+    std::clog << "If unset and $HOME/logged-gcc-db.sqlite exists it is used." << std::endl;
+    std::clog << "To dump that database, try probably some command like:" << std::endl
+	     << "    sqlite3 $HOME/logged-gcc-db.sqlite .dump" << std::endl << std::endl;
 } // end say_usage
 
 std::vector<const char*>
