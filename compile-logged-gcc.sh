@@ -13,4 +13,10 @@ export MYPACKAGES='openssl sqlite3'
 	     logged-gcc.cc \
 	     $(pkg-config --libs $MYPACKAGES) -lstdc++ && /bin/mv -v  logged-gcc_$$ logged-gcc
 
-[ -f logged-g++ ] || ln -sv logged-gcc logged-g++
+compcode=$?
+if [ $compcode -ne 0 ]; then
+    exit $compcode
+fi
+
+
+[ -L logged-g++ ] || ln -svf logged-gcc logged-g++
