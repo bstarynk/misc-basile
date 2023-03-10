@@ -78,4 +78,4 @@ framac-half:
 	$(FRAMAC) -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2  half.c
 
 valgrind-logged-gcc: logged-gcc sync-periodically.c
-	$(VALGRIND) ./logged-gcc  $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' sync-periodically.c  -o /tmp/sync-periodically
+	$(VALGRIND) ./logged-gcc --debug $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' sync-periodically.c  -o /tmp/sync-periodically
