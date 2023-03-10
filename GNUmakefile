@@ -25,6 +25,7 @@ clean:
 	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically filipe-shell
 	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
 	$(RM) genf*.c
+	$(RM) logged-gcc_*
 ## on non Linux, change .so to whatever can be dlopen-esd
 	$(RM) genf*.so
 
@@ -78,4 +79,4 @@ framac-half:
 	$(FRAMAC) -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2  half.c
 
 valgrind-logged-gcc: logged-gcc sync-periodically.c
-	$(VALGRIND) ./logged-gcc --debug $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' sync-periodically.c  -o /tmp/sync-periodically
+	$(VALGRIND) --verbose --leak-check=full ./logged-gcc --debug $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' sync-periodically.c  -o /tmp/sync-periodically
