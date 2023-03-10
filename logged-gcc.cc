@@ -318,6 +318,12 @@ register_sqlite_compilation (std::int64_t firstserial, const char*firstmd5, cons
 std::int64_t
 register_show_md5_mtime(const char*path, time_t mtime, char*firstmd5)
 {
+    char buf[1024];
+    unsigned char md5dig[MD5_DIGEST_LENGTH+4];
+    char md5buf[2*sizeof(md5dig)+16];
+    memset (md5dig, 0, sizeof(md5dig));
+    memset (md5buf, 0, sizeof(md5buf));
+    memset(buf, 0, sizeof(buf));
     assert (path != nullptr && path[0] != (char)0);
     assert (mtime != 0);
     FILE* fil = fopen(path, "rm");
@@ -333,11 +339,6 @@ register_show_md5_mtime(const char*path, time_t mtime, char*firstmd5)
         syslog(LOG_WARNING, "register_show_md5_mtime failed to MD5_Init @%p for %s - %m", (void*)&ctx, path);
         return -1;
     };
-    char buf[1024];
-    unsigned char md5dig[MD5_DIGEST_LENGTH+4];
-    char md5buf[2*sizeof(md5dig)+16];
-    memset (md5dig, 0, sizeof(md5dig));
-    memset (md5buf, 0, sizeof(md5buf));
     long off = 0;
     do
     {
@@ -504,133 +505,136 @@ stat_input_files(const std::vector<const char*>&progargvec, char*firstmd5)
 
 
 void
-fork_log_child_process(const char*cmdname, std::string progcmd, double startelapsedtime, std::vector<const char*>progargvec)
+fork_log_child_process(const char*cmdname, std::string progcmd, double startelapsedtime, std::vector<const char*>progargvec, int lineno=0)
 {
-    DEBUGLOG("fork_log_child_process start cmdname=" << cmdname
-             << " progcmd=" << progcmd
-             << " startelapsedtime=" << startelapsedtime
-             << " progargvec.siz=" << (progargvec.size())
-             << ":"
-             << Do_Output([&](std::ostream&out)
+  DEBUGLOG("fork_log_child_process start cmdname=" << cmdname
+	   << " progcmd=" << progcmd << " lineno=" << lineno
+	   << " startelapsedtime=" << startelapsedtime
+	   << " progargvec.siz=" << (progargvec.size())
+	   << ":"
+	   << Do_Output([&](std::ostream&out)
+	   {
+	     int sz = (int)progargvec.size();
+	     for (int ix=0; ix<sz; ix++)
+	       {
+		 const char* curarg=progargvec[ix];
+		 if (ix>0) out << ", ";
+		 if (curarg) out << "[" << ix << "]='" << curarg << "' ";
+		 else out <<  "[" << ix << "]*nul*";
+	       }
+	   })
+	   );
+  if (progargvec.size() <= 1)
     {
-        int sz = (int)progargvec.size();
-        for (int ix=0; ix<sz; ix++)
+      syslog(LOG_WARNING, "no arguments given to command %s (prog %s)", cmdname, progcmd.c_str());
+      return;
+    }
+  syslog(LOG_INFO,
+	 "(L¤%d) starting compilation %s of command %s with %d prog.arg", __LINE__,
+	 cmdname, progcmd.c_str(), (int)(progargvec.size()));
+  char firstmd5[MD5_DIGEST_LENGTH+4];
+  memset(firstmd5, 0, sizeof(firstmd5));
+  std::int64_t firstserial = stat_input_files(progargvec, firstmd5);
+  time_t startime = time(nullptr);
+  DEBUGLOG("fork_log_child_process startime=" << (long) startime << " before fork");
+  std::clog << std::flush;
+  std::cerr << std::flush;
+  std::cout << std::flush;
+  fflush(nullptr);
+  auto pid = fork();
+  if (pid<0)
+    {
+      syslog(LOG_ALERT, "fork failed for %s - %m", progcmd.c_str());
+      exit(EX_OSERR);
+    }
+  else if (pid==0)
+    {
+      // child process
+      execv(cmdname, (char* const*) (progargvec.data()));
+      perror(cmdname);
+      syslog(LOG_ALERT, "exec of %s failed for %s - %m", cmdname, progcmd.c_str());
+      exit (EX_SOFTWARE);
+    }
+  else   // father process
+    {
+      DEBUGLOG("fork_log_child_process from lineno:" << lineno << " cmdname=" << cmdname << " pid:" << (int)pid);
+      fflush(nullptr);
+      struct rusage rus = {};
+      int wst = 0;
+      memset (&rus, 0, sizeof(rus));
+      /// the below loop is likely to run once
+      for(;;)
         {
-            const char* curarg=progargvec[ix];
-            if (ix>0) out << ", ";
-            if (curarg) out << "[" << ix << "]='" << curarg << "' ";
-            else out <<  "[" << ix << "]*nul*";
-        }
-    })
-            );
-    if (progargvec.size() <= 1)
-    {
-        syslog(LOG_WARNING, "no arguments given to command %s (prog %s)", cmdname, progcmd.c_str());
-        return;
-    }
-    syslog(LOG_INFO,
-           "(L¤%d) starting compilation %s of command %s with %d prog.arg", __LINE__,
-           cmdname, progcmd.c_str(), (int)(progargvec.size()));
-    char firstmd5[MD5_DIGEST_LENGTH+4];
-    memset(firstmd5, 0, sizeof(firstmd5));
-    std::int64_t firstserial = stat_input_files(progargvec, firstmd5);
-    time_t startime = time(nullptr);
-    DEBUGLOG("fork_log_child_process startime=" << (long) startime << " before fork");
-    std::clog << std::flush;
-    std::cerr << std::flush;
-    std::cout << std::flush;
-    fflush(nullptr);
-    auto pid = fork();
-    if (pid<0)
-    {
-        syslog(LOG_ALERT, "fork failed for %s - %m", progcmd.c_str());
-        exit(EX_OSERR);
-    }
-    else if (pid==0)
-    {
-        // child process
-        execv(cmdname, (char* const*) (progargvec.data()));
-        perror(cmdname);
-        syslog(LOG_ALERT, "exec of %s failed for %s - %m", cmdname, progcmd.c_str());
-        exit (EX_SOFTWARE);
-    }
-    else   // father process
-    {
-        struct rusage rus = {};
-        int wst = 0;
-        memset (&rus, 0, sizeof(rus));
-        /// the below loop is likely to run once
-        for(;;)
-        {
-            auto wpid = wait4(pid, &wst, WUNTRACED, &rus);
-            if (wpid == pid)
-                break;
-            if (wpid < 0)
+	  auto wpid = wait4(pid, &wst, WUNTRACED, &rus);
+	  if (wpid == pid)
+	    break;
+	  if (wpid < 0)
             {
-                syslog(LOG_ALERT,
-                       "wait of pid %d for %s failed for %s - %m",
-                       (int)pid, cmdname, progcmd.c_str());
-                exit(EX_OSERR);
+	      syslog(LOG_ALERT,
+		     "wait of pid %d for %s failed for %s - %m",
+		     (int)pid, cmdname, progcmd.c_str());
+	      exit(EX_OSERR);
             };
-            usleep(10000);
+	  usleep(10000);
         };
-        double endelapsedtime= get_float_time(CLOCK_MONOTONIC);
-        double usertime = 1.0*rus.ru_utime.tv_sec + 1.0e-6*rus.ru_utime.tv_usec;
-        double systime = 1.0*rus.ru_stime.tv_sec + 1.0e-6*rus.ru_stime.tv_usec;
-        long maxrss = rus.ru_maxrss; //kilobytes
-        long pageflt = rus.ru_minflt + rus.ru_majflt;
-        DEBUGLOG("fork_log_child_process wst=" << wst
-                 << " endelapsedtime=" << endelapsedtime
-                 << " usertime=" << usertime
-                 << " systime=" << systime
-                 << " maxrss=" << maxrss
-                 << " pageflt=" << pageflt);
-        if (wst==0)
+      double endelapsedtime= get_float_time(CLOCK_MONOTONIC);
+      double usertime = 1.0*rus.ru_utime.tv_sec + 1.0e-6*rus.ru_utime.tv_usec;
+      double systime = 1.0*rus.ru_stime.tv_sec + 1.0e-6*rus.ru_stime.tv_usec;
+      long maxrss = rus.ru_maxrss; //kilobytes
+      long pageflt = rus.ru_minflt + rus.ru_majflt;
+      DEBUGLOG("fork_log_child_process wst=" << wst
+	       << " endelapsedtime=" << endelapsedtime
+	       << " usertime=" << usertime
+	       << " systime=" << systime
+	       << " maxrss=" << maxrss
+	       << " pageflt=" << pageflt);
+      if (wst==0)
         {
-            syslog(LOG_INFO, "%s completed successfully compilation %s in %.4g elapsed seconds, %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d)",
-                   cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
-                   usertime, systime, maxrss, pageflt,
-                   (int)pid);
-            if (mysqlitedb && firstserial>0)
-                register_sqlite_compilation (firstserial, firstmd5, progcmd.c_str(), startime, endelapsedtime-startelapsedtime,
-                                             usertime, systime, maxrss, pageflt);
-            return;
+	  syslog(LOG_INFO, "%s completed successfully compilation %s in %.4g elapsed seconds, %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d) from line %d",
+		 cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
+		 usertime, systime, maxrss, pageflt,
+		 (int)pid, lineno);
+	  if (mysqlitedb && firstserial>0)
+	    register_sqlite_compilation (firstserial, firstmd5, progcmd.c_str(), startime, endelapsedtime-startelapsedtime,
+					 usertime, systime, maxrss, pageflt);
+	  return;
         }
-        /// GCC compilation failed somehow.....
+      /// GCC compilation failed somehow.....
+      {
+	std::clog << __FILE__ ": failed compilation (l¤" << __LINE__ << ") from line " << lineno << std::endl;
+	int nbarg = (int)(progargvec.size());
+	for (int ix=0; ix<nbarg; ix++)
+	  {
+	    auto curarg = progargvec[ix];
+	    if (curarg)
+	      std::clog << " [" << ix << "]: '" << curarg << '\'' << std::endl;
+	    else
+	      std::clog << " [" << ix << "] *nul*" << std::endl;
+	  };
+	std::clog << std::flush;
+      }
+      if (WIFEXITED(wst))
         {
-            std::clog << __FILE__ ": failed compilation (l¤" << __LINE__ << "):" << std::endl;
-            int nbarg = (int)(progargvec.size());
-            for (int ix=0; ix<nbarg; ix++)
-            {
-                auto curarg = progargvec[ix];
-                if (curarg)
-                    std::clog << " [" << ix << "]: '" << curarg << '\'' << std::endl;
-                else
-                    std::clog << " [" << ix << "] *nul*" << std::endl;
-            };
-            std::clog << std::flush;
+	  syslog(LOG_WARNING, "(l¤%d) %s failed compilation %s in %.4g elapsed seconds,"
+		 " %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, exited %d)",
+		 __LINE__,
+		 cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
+		 usertime, systime, maxrss, pageflt, WEXITSTATUS(wst),
+		 (int)pid);
+	  exitcode = WEXITSTATUS(wst);
         }
-        if (WIFEXITED(wst))
+      else if (WIFSIGNALED(wst))
         {
-            syslog(LOG_WARNING, "(l¤%d) %s failed compilation %s in %.4g elapsed seconds,"
-                   " %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, exited %d)",
-                   __LINE__,
-                   cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
-                   usertime, systime, maxrss, pageflt, WEXITSTATUS(wst),
-                   (int)pid);
-            exitcode = WEXITSTATUS(wst);
-        }
-        else if (WIFSIGNALED(wst))
-        {
-            syslog(LOG_ERR, "%s crashed compilation %s in %.4g elapsed seconds, %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, signal %d=%s)",
-                   cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
-                   usertime, systime, maxrss, pageflt,
-                   (int)pid,
-                   WTERMSIG(wst),
-                   strsignal(WTERMSIG(wst)));
-            exitcode = 127;
+	  syslog(LOG_ERR, "%s crashed compilation %s in %.4g elapsed seconds, %.4g user, %.4g sys cpu seconds, %ld Kbytes RSS, %ld pages faults (pid %d, signal %d=%s)",
+		 cmdname, progcmd.c_str(), endelapsedtime-startelapsedtime,
+		 usertime, systime, maxrss, pageflt,
+		 (int)pid,
+		 WTERMSIG(wst),
+		 strsignal(WTERMSIG(wst)));
+	  exitcode = 127;
         }
     }
+  DEBUGLOG("fork_log_child_process ending cmdname=" << cmdname << " from lineno:" << lineno);
 } // end fork_log_child_process
 
 void
@@ -710,7 +714,7 @@ do_c_compilation(std::vector<const char*>argvec, std::string cmdstr, const char*
     progargvec.push_back(nullptr);
     syslog (LOG_INFO, "(l¤%d) %s running C compilation %s for %s", __LINE__,
             argvec[0], progcmd.c_str(), cmdstr.c_str());
-    fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec);
+    fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec, __LINE__);
 } // end do_c_compilation
 
 void
@@ -771,7 +775,7 @@ do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const ch
     progargvec.push_back(nullptr);
     syslog (LOG_INFO, "%s running C++ compilation %s - %s", progargvec[0], progcmd.c_str(),
             cmdstr.c_str());
-    fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec);
+    fork_log_child_process(mygcc, progcmd, startelapsedtime, progargvec, __LINE__);
 } // end do_cxx_compilation
 
 
