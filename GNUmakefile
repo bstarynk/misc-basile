@@ -1,11 +1,12 @@
 ## file misc-basile/Makefile
 ## on https://github.com/bstarynk/
 
-.PHONY: all clean indent manydl-plugins analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac
+.PHONY: all clean indent manydl-plugins analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac valgrind-logged-gcc
 
 FRAMAC=/usr/bin/frama-c
 FRAMALIBC=/usr/share/frama-c/libc/
 INDENT=/usr/bin/indent
+VALGRIND=/usr/bin/valgrind
 CC=/usr/bin/gcc
 CXX=/usr/bin/g++
 RM=/bin/rm -vf
@@ -75,3 +76,6 @@ framac-manydl:
 
 framac-half:
 	$(FRAMAC) -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2  half.c
+
+valgrind-logged-gcc: logged-gcc sync-periodically.c
+	$(VALGRIND) ./logged-gcc  $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' sync-periodically.c  -o /tmp/sync-periodically
