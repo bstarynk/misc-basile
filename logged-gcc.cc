@@ -196,12 +196,16 @@ parse_logged_program_options(int &argc, char**argv,
             if (mygcc)
             {
                 snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygcc);
-                system (cmdbuf);
+                int vc = system (cmdbuf);
+		if (vc != 0)
+		  exit(EXIT_FAILURE);
             }
             if (mygxx)
             {
                 snprintf(cmdbuf, sizeof(cmdbuf), "%s --version", mygxx);
-                system (cmdbuf);
+		int vc = system (cmdbuf);
+		if (vc != 0)
+		  exit(EXIT_FAILURE);
             }
             syslog(LOG_INFO, "version %s of %s from https://github.com/bstarynk/misc-basile/ compiled on %s@%s running %s",
                    GITID, argv[0], __DATE__, __TIME__, cmdstr.c_str());
@@ -331,7 +335,7 @@ register_show_md5_mtime(const char*path, time_t mtime, char*firstmd5)
     };
     char buf[1024];
     unsigned char md5dig[MD5_DIGEST_LENGTH+4];
-    char md5buf[2*sizeof(md5dig)+10];
+    char md5buf[2*sizeof(md5dig)+16];
     memset (md5dig, 0, sizeof(md5dig));
     memset (md5buf, 0, sizeof(md5buf));
     long off = 0;
@@ -688,6 +692,13 @@ do_c_compilation(std::vector<const char*>argvec, std::string cmdstr, const char*
     for (auto itlfla : linkflagvec)
         progargvec.push_back(itlfla);
     std::string progcmd;
+    assert(mygcc != nullptr);
+    int progcmdlen = strlen(mygcc);
+    for (const char* itarg: progargvec) {
+      assert (itarg != nullptr);
+      progcmdlen += 1 + strlen(itarg);
+    };
+    progcmd.reserve(1+((progcmdlen+20)|0xf));
     int cnt=0;
     for (auto itarg: progargvec)
     {
@@ -743,6 +754,12 @@ do_cxx_compilation(std::vector<const char*>argvec, std::string cmdstr,  const ch
     for (auto itlfla : linkflagvec)
         progargvec.push_back(itlfla);
     std::string progcmd;
+    int progcmdlen = strlen(mygxx);
+    for (const char* itarg: progargvec) {
+      assert (itarg != nullptr);
+      progcmdlen += 1 + strlen(itarg);
+    };
+    progcmd.reserve(1+((progcmdlen+20)|0xf));
     int cnt = 0;
     for (auto itarg: progargvec)
     {
