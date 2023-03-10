@@ -9,7 +9,7 @@ export MYPACKAGES='openssl sqlite3'
 /usr/bin/g++ -o logged-gcc_$$ -Wall -Wextra -rdynamic \
 	     -L /usr/local/lib/ \
 	     $(pkg-config --cflags $MYPACKAGES) \
-	     -O2 -g -std=gnu++17 -DGITID=\"$GITID\" \
+	     -O1 -g3 -std=gnu++17 -DGITID=\"$GITID\" \
 	     logged-gcc.cc \
 	     $(pkg-config --libs $MYPACKAGES) -lstdc++ && /bin/mv -v  logged-gcc_$$ logged-gcc
 
