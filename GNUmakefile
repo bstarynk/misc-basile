@@ -1,11 +1,12 @@
 ## file misc-basile/Makefile
 ## on https://github.com/bstarynk/
 
-.PHONY: all clean indent manydl-plugins analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac
+.PHONY: all clean indent manydl-plugins analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac valgrind-logged-gcc
 
 FRAMAC=/usr/bin/frama-c
 FRAMALIBC=/usr/share/frama-c/libc/
 INDENT=/usr/bin/indent
+VALGRIND=/usr/bin/valgrind
 CC=/usr/bin/gcc
 CXX=/usr/bin/g++
 RM=/bin/rm -vf
@@ -24,6 +25,7 @@ clean:
 	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically filipe-shell
 	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
 	$(RM) genf*.c
+	$(RM) logged-gcc_*
 ## on non Linux, change .so to whatever can be dlopen-esd
 	$(RM) genf*.so
 
@@ -75,3 +77,6 @@ framac-manydl:
 
 framac-half:
 	$(FRAMAC) -cpp-command '$(CC) -C -E -I /usr/share/frama-c/libc/ -I. -I/usr/include -x c'  -eva  -eva-verbose 2  half.c
+
+valgrind-logged-gcc: logged-gcc sync-periodically.c
+	$(VALGRIND) --verbose --leak-check=full ./logged-gcc --debug $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' sync-periodically.c  -o /tmp/sync-periodically

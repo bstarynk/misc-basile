@@ -767,7 +767,7 @@ SCM myscm_run_frama_c(SCM first, ...)
         CFR_FATAL("myscm_run_frama_c failed to fork " << strerror(errno));
     else if (pid==0)   /// child process should run Frama-C
         {
-            nice (1);
+            (void) nice (1);
             // According to Julien Seignole, Frama-C never reads its stdin..., so
             close(STDIN_FILENO);
             int nfd = open("/dev/null", O_RDONLY);
