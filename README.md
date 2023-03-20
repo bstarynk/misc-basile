@@ -137,4 +137,6 @@ If you want to use `logged-gcc` with some *Sqlite* database such as
 `logged-gcc --sqlite=/tmp/logged-gcc.sqlite` (before any
 `/tmp/logged-gcc.sqlite` file exists), and then set the environment
 variable `$LOGGED_SQLITE` to `/tmp/logged-gcc.sqlite`. Only successful
-[GCC](http://gcc.gnu.org/) compilations go into that database.
+[GCC](http://gcc.gnu.org/) compilations go into that database.  It is
+suggested to initialize once then use the default SQLite database
+`$HOME/logged-gcc-db.sqlite` ....
