@@ -1,0 +1,41 @@
+
+\documentclass[xcolor=svgnames,final,smaller,a4]{beamer}
+\usepackage{relsize}
+\usepackage{luacode}
+\usepackage{xcolor}
+\usepackage{alltt}
+\usepackage{wasysym}
+\usepackage{hyperref}
+\usepackage{newunicodechar}
+
+\hypersetup{
+  colorlinks   = true, %Colours links instead of ugly boxes
+  urlcolor     = NavyBlue, %Colour for external hyperlinks
+  linkcolor    = DarkGreen, %Colour of internal links
+  citecolor   = DarkMagenta, %Colour of citations
+  frenchlinks = true,
+}
+\begin{document}
+ \begin{luacode*}
+   local gitpip=io.popen("git log --no-color --format=oneline -1 --abbrev=16 --abbrev-commit -q | cut -d' ' -f1")
+   gitid=gitpip:read()
+   gitpip:close()
+ \end{luacode*}
+ \newcommand{\mygitid}{\luadirect{tex.print(gitid)}}
+
+
+ \begin{frame}
+   {compléments sur les architectures}
+
+   \begin{center}
+     Basile \textsc{Starynkévitch} - mars 2023
+
+     git {\texttt \mygitid}
+   \end{center}
+ \end{frame}
+\end{document}
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#% Local Variables: ;;
+#% compile-command: "./build-archi2023.sh" ;;
+#% End: ;;
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
