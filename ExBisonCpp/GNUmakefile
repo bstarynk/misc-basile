@@ -15,5 +15,13 @@ clean:
 
 mytest: testbisoncp.o maintestb.o
 	$(CXX) $(CFLAGS)  testbisoncp.o maintestb.o -o mytest
+
+testbisoncp.cc: testbisoncp.yy
+	$(BISONCPP) --verbose --thread-safe $^
+
 indent:
 	$(ASTYLE) -v  --style=gnu  maintestb.cc
+	$(ASTYLE) -v  --style=gnu  testb.hh
+
+
+## end of file misc-basile/ExBisonCpp/GNUmakefile
