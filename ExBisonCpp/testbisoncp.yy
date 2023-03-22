@@ -22,4 +22,12 @@
 input: // empty
 ;
 
+%%
+// epilogue of testbisoncp.yy
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "make" ;;
+ ** End: ;;
+ ****************/
 ///// end of file misc-basile/ExBisonCpp/testbisoncp.yy
