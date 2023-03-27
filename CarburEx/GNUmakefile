@@ -1,7 +1,7 @@
 ## file misc-basile/CarburEx/GNUMakefile
 
 # the Carburetta parser generator from https://carburetta.com/
-CARBURETTA= /usr/local/bin/CARBURETTA
+CARBURETTA= /usr/local/bin/carburetta
 GITID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CXX= g++-12
 CXXFLAGS= -O -g -Wall -Wextra -std=gnu++14 -DGITID=\"$(GITID)\"
