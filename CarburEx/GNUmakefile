@@ -16,6 +16,10 @@ all: carbex
 carbex: carbex_parser.o main.o
 	$(LINK.cc) $^ -o $@
 
+main.o: main.cc carbex.hh carbex_parser.hh
+
+carbex_parser.o: carbex_parser.cc carbex.hh
+
 carbex_parser.cc carbex_parser.hh: carbex_parser.cbrt
 	$(CARBURETTA) $^ --c carbex_parser.cc --h  carbex_parser.hh --x-utf8 
 
