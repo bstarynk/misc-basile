@@ -22,6 +22,11 @@ enum TokType
   tky_string,
   //  tky_name,
 };
+
+/// In simple cases, we could just use std::variant, but this code is
+/// an exercise for the rule of five. See
+/// https://en.cppreference.com/w/cpp/language/rule_of_three and
+/// https://www.codementor.io/@sandesh87/the-rule-of-five-in-c-1pdgpzb04f
 class Tok
 {
   enum TokType tk_type;
