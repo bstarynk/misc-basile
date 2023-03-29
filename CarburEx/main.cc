@@ -21,15 +21,20 @@ Tok::~Tok()
       tk_string.~Tk_stdstring_t();
       break;
     };
+  tk_type = tky_none;
+  tk_ptr = nullptr;
 } // end destructor of Tok
 
-Tok::Tok(const Tok& ts) :
-  Tok(nullptr)
+
+
+Tok::Tok(const Tok& ts) : // copy constructor
+  Tok::Tok(nullptr)
 {
   if (&ts == this) return;
   switch (ts.tk_type)
     {
     case tky_none:
+      tk_ptr = nullptr;
       return;
     case tky_int:
       tk_type = tky_int;
@@ -46,6 +51,30 @@ Tok::Tok(const Tok& ts) :
     }
 }
 
+Tok::Tok(Tok&&ts) : // move constructor
+  Tok::Tok(nullptr)
+{
+  if (&ts == this) return;
+  switch (ts.tk_type)
+    {
+    case tky_none:
+      tk_ptr = nullptr;
+      tk_type = tky_none;
+      return;
+    case tky_int:
+      tk_type = tky_int;
+      tk_int = ts.tk_int;
+      break;
+    case tky_double:
+      tk_type = tky_double;
+      tk_double = ts.tk_double;
+      break;
+    case tky_string:
+      tk_type = tky_string;
+      new (&tk_string) std::string(ts.tk_string);
+      break;
+    }
+} // end move constructor
 
 void
 show_version(void)

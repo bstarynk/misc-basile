@@ -32,12 +32,13 @@ class Tok
   enum TokType tk_type;
   union
   {
+    void* tk_ptr;
     int tk_int;
     double tk_double;
     std::string tk_string;
   };
 protected:
-  Tok(nullptr) : tk_type(tky_none), tk_double(0.0) {};
+  Tok(nullptr_t) : tk_type(tky_none), tk_ptr(nullptr) {};
   Tok(TokType ty, int n): tk_type(ty), tk_int(n) {};
   Tok(TokType ty, double d): tk_type(ty), tk_double(d) {};
   Tok(TokType ty, std::string s): tk_type(ty), tk_string(s) {};
@@ -51,9 +52,10 @@ public:
   Tok(int n) : Tok(tky_int, n) {};
   Tok(double d) : Tok(tky_double, d) {};
   Tok(std::string s): Tok(tky_string, s) {};
-  Tok(const Tok&);
-  Tok(Tok&&);
-  Tok&operator = (Tok&&r);
+  Tok(const Tok&);		// copy constructor
+  Tok(Tok&&);			// move constructor
+  Tok& operator = (const Tok&); // copy assignment
+  Tok& operator = (Tok&&r); 	// move assignment
 };
 
 using Tk_stdstring_t = std::string;
