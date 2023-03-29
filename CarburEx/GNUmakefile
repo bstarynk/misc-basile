@@ -7,6 +7,7 @@ CXX= g++-12
 CXXFLAGS= -O -g -Wall -Wextra -std=gnu++14 -DGITID=\"$(GITID)\"
 ASTYLE= astyle
 ASTYLEFLAGS= --verbose   --style=gnu  --indent=spaces=2
+RM= /bin/rm -vf
 
 .PHONY: all clean indent
 
@@ -26,3 +27,9 @@ carbex_parser.cc carbex_parser.hh: carbex_parser.cbrt
 indent:
 	$(ASTYLE) $(ASTYLEFLAGS) carbex.hh
 	$(ASTYLE) $(ASTYLEFLAGS) main.cc
+
+clean:
+	$(RM) *~ *.orig
+	$(RM) *.o
+	$(RM) carbex_parser.cc carbex_parser.hh
+	$(RM) carbex
