@@ -8,6 +8,8 @@ Tok::~Tok()
 {
   switch (tk_type)
     {
+    case tky_none:
+      return;
     case tky_int:
       tk_int=0;
       break;
@@ -16,9 +18,34 @@ Tok::~Tok()
       break;
     case tky_string:
       tk_string.empty();
+      tk_string.~Tk_stdstring_t();
       break;
     };
 } // end destructor of Tok
+
+Tok::Tok(const Tok& ts) :
+  Tok(nullptr)
+{
+  if (&ts == this) return;
+  switch (ts.tk_type)
+    {
+    case tky_none:
+      return;
+    case tky_int:
+      tk_type = tky_int;
+      tk_int = ts.tk_int;
+      break;
+    case tky_double:
+      tk_type = tky_double;
+      tk_double = ts.tk_double;
+      break;
+    case tky_string:
+      tk_type = tky_string;
+      new (&tk_string) std::string(ts.tk_string);
+      break;
+    }
+}
+
 
 void
 show_version(void)

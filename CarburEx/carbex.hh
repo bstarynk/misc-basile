@@ -32,14 +32,25 @@ class Tok
     std::string tk_string;
   };
 protected:
+  Tok(nullptr) : tk_type(tky_none), tk_double(0.0) {};
   Tok(TokType ty, int n): tk_type(ty), tk_int(n) {};
   Tok(TokType ty, double d): tk_type(ty), tk_double(d) {};
   Tok(TokType ty, std::string s): tk_type(ty), tk_string(s) {};
 public:
+  enum TokType get_type(void) const
+  {
+    return tk_type;
+  };
   virtual ~Tok();
+#warning should follow the rule of five
   Tok(int n) : Tok(tky_int, n) {};
   Tok(double d) : Tok(tky_double, d) {};
   Tok(std::string s): Tok(tky_string, s) {};
+  Tok(const Tok&);
+  Tok(Tok&&);
+  Tok&operator = (Tok&&r);
 };
+
+using Tk_stdstring_t = std::string;
 
 #endif /*CARBEX_INCLUDED*/
