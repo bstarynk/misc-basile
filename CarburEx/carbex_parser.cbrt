@@ -1,1 +1,16 @@
 // file carbex_parser.cbrt
+
+// this is the prologue of the parser file carbex_parser.cbrt for Carburetta
+#include "carbex.hh"
+
+%scanner%
+/* this is the scanner section of the parser file  carbex_parser.cbrt */
+
+%grammar%
+/* this is the grammar section of the parser file carbex_parser.cbrt */
+
+%%
+/* this is the epilogue part of the parser file carbex_parser.cbrt */
+
+
+/// end of file carbex_parser.cbrt

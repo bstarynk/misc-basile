@@ -60,4 +60,25 @@ public:
 
 using Tk_stdstring_t = std::string;
 
+class TokNull : public Tok {
+public:
+  TokNull() : Tok(nullptr) {};
+};
+
+class TokInt : public Tok {
+public:
+  TokInt(int n) : Tok(tky_int, n) {};
+};
+
+class TokDouble : public Tok{
+public:
+  TokDouble(double d) : Tok(tky_double, d) {};
+};
+
+class  TokString : public Tok {
+public:
+  TokString(const std::string&s) : Tok(tky_string, s) {};
+  TokString(const char*s) : TokString(std::string(s)) {};
+};
+
 #endif /*CARBEX_INCLUDED*/
