@@ -10,6 +10,7 @@ VALGRIND=/usr/bin/valgrind
 CC=/usr/bin/gcc
 CXX=/usr/bin/g++
 RM=/bin/rm -vf
+GENG_CC ?= $(CC)
 GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 
