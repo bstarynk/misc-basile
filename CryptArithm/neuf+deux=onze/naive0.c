@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
 #include <string.h>
@@ -101,6 +102,20 @@ main (int argc, char **argv)
   int nbsol = 0;
   progname = (argc > 0) ? argv[0] : __FILE__;
   struct assign_st a;
+  struct timespec ts_elapsed_start = { 0, 0 };
+  struct timespec ts_elapsed_end = { 0, 0 };
+  struct timespec ts_cpu_start = { 0, 0 };
+  struct timespec ts_cpu_end = { 0, 0 };
+  if (clock_gettime (CLOCK_MONOTONIC, &ts_elapsed_start))
+    {
+      perror ("clock_gettime CLOCK_MONOTONIC start");
+      exit (EXIT_FAILURE);
+    };
+  if (clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &ts_cpu_start))
+    {
+      perror ("clock_gettime CLOCK_PROCESS_CPUTIME_ID start");
+      exit (EXIT_FAILURE);
+    };
   memset (&a, 0, sizeof (a));
   for (uint8_t nD = 0; nD <= 9; nD++)
     {
@@ -131,7 +146,7 @@ main (int argc, char **argv)
 				  if (good_solution (&a))
 				    {
 				      nbsol++;
-				      printf ("\n CNT:%ld SOL#%d", cnt,
+				      printf ("\nCNT:%ld SOL#%d:\n", cnt,
 					      nbsol);
 				      print_solution (&a);
 				      putchar ('\n');
@@ -145,6 +160,24 @@ main (int argc, char **argv)
 	    }
 	}
     }
+  if (clock_gettime (CLOCK_MONOTONIC, &ts_elapsed_end))
+    {
+      perror ("clock_gettime CLOCK_MONOTONIC end");
+      exit (EXIT_FAILURE);
+    };
+  if (clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &ts_cpu_end))
+    {
+      perror ("clock_gettime CLOCK_PROCESS_CPUTIME_ID end");
+      exit (EXIT_FAILURE);
+    };
+  printf ("%s found %d solutions in %f elapsed, %f CPU seconds\n",
+	  progname, nbsol,
+	  (double) (ts_elapsed_end.tv_sec - ts_elapsed_start.tv_sec)
+	  + 1.0e-9 * (ts_elapsed_end.tv_nsec - ts_elapsed_start.tv_nsec),
+	  (double) (ts_cpu_end.tv_sec - ts_cpu_start.tv_sec)
+	  + 1.0e-9 * (ts_cpu_end.tv_nsec - ts_cpu_start.tv_nsec));
+  fflush (NULL);
+  return 0;
 }				/* end main */
 
 
