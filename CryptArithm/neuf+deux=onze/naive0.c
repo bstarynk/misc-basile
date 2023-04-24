@@ -12,6 +12,9 @@
 #include <time.h>
 #include <string.h>
 
+
+char *progname;
+
 enum letters_en
 {
   l_D,
@@ -56,14 +59,99 @@ good_solution (struct assign_st *a)
 	  return false;
     }
   // the number NEUF
-  int neuf = (a->l_N * 1000) + (a->l_E * 100) + (a->l_U * 10) + (a->l_F);
+  int neuf =			//
+    (a->v[l_N] * 1000) + (a->v[l_E] * 100) + (a->v[l_U] * 10) + (a->v[l_F]);
   // the number DEUX
-  int deux = (a->l_D * 1000) + (a->l_E * 100) + (a->l_U * 10) + (a->l_X);
+  int deux =			//
+    (a->v[l_D] * 1000) + (a->v[l_E] * 100) + (a->v[l_U] * 10) + (a->v[l_X]);
   if (neuf == deux)
     return false;
   // the number ONZE
-  int onze = (a->l_O * 1000) + (a->l_N * 100) + (a->l_Z * 10) + (a->l_E);
+  int onze =
+    (a->v[l_O] * 1000) + (a->v[l_N] * 100) + (a->v[l_Z] * 10) + (a->v[l_E]);
   if (neuf + deux != onze)
     return false;
   return true;
-} /* end good_solution */
+}				/* end good_solution */
+
+
+void
+print_solution (struct assign_st *a)
+{
+  if (!a)
+    return;
+  if (a->magic != MAGIC_ASSIGN)
+    return;
+#define P(Letter) do {printf("%s = %d\n", #Letter, a->v[l_##Letter]);}while(0)
+  P (D);
+  P (E);
+  P (F);
+  P (N);
+  P (O);
+  P (U);
+  P (X);
+  P (Z);
+  fflush (stdout);
+}				/* end print_solution */
+
+int
+main (int argc, char **argv)
+{
+  int64_t cnt = 0;
+  int nbsol = 0;
+  progname = (argc > 0) ? argv[0] : __FILE__;
+  struct assign_st a;
+  memset (&a, 0, sizeof (a));
+  for (uint8_t nD = 0; nD <= 9; nD++)
+    {
+      for (uint8_t nE = 0; nE <= 9; nE++)
+	{
+	  for (uint8_t nF = 0; nF <= 9; nF++)
+	    {
+	      for (uint8_t nN = 0; nN <= 9; nN++)
+		{
+		  for (uint8_t nO = 0; nO <= 9; nO++)
+		    {
+		      for (uint8_t nU = 0; nU <= 9; nU++)
+			{
+			  for (uint8_t nX = 0; nX <= 9; nX++)
+			    {
+			      for (uint8_t nZ = 0; nZ <= 9; nZ++)
+				{
+				  cnt++;
+				  a.magic = MAGIC_ASSIGN;
+				  a.v[l_D] = nD;
+				  a.v[l_E] = nE;
+				  a.v[l_F] = nF;
+				  a.v[l_N] = nN;
+				  a.v[l_O] = nO;
+				  a.v[l_U] = nU;
+				  a.v[l_X] = nX;
+				  a.v[l_Z] = nZ;
+				  if (good_solution (&a))
+				    {
+				      nbsol++;
+				      printf ("\n CNT:%ld SOL#%d", cnt,
+					      nbsol);
+				      print_solution (&a);
+				      putchar ('\n');
+				      fflush (stdout);
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+}				/* end main */
+
+
+/***
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "gcc -Wall -Wextra -O3 -g naive0.c -o naive0" ;;
+ ** End: ;;
+ **
+ ***/
