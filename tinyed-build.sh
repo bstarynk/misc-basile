@@ -1,6 +1,6 @@
 #!/bin/bash -x
 # file misc-basile/tinyed-build.sh
-CXX=g++
+CXX=g++-13
 ASTYLE=astyle
 ASTYLEFLAGS='--verbose --indent=spaces=2  --style=gnu'
 $ASTYLE $ASTYLEFLAGS fox-tinyed.cc

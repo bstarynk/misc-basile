@@ -1,6 +1,6 @@
 // file misc-basile/fox-tinyed.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
-//  © Copyright 2022 Basile Starynkevitch (&Jeroen van der Zijp)
+//  © Copyright 2022 - 2023 Basile Starynkevitch (&Jeroen van der Zijp)
 //  some code taken from fox-toolkit.org Adie
 #include <fstream>
 #include <iostream>
@@ -82,13 +82,13 @@ TinyTextWindow::TinyTextWindow(FXApp* theapp)
   editorframe = //
     new FXHorizontalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
                           |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
-                          1, 1, // x,y
+                          2, 2, // x,y
                           448, 330 //w,h
                          );
   editor = //
     new FXText (editorframe, 0,
                 TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
-                2, 2, //x,y
+                6, 6, //x,y
                 444, 320 //w,h
                );
   editor->setText("Text in Tiny ");
@@ -105,14 +105,14 @@ TinyTextWindow::~TinyTextWindow()
 int
 main(int argc, char*argv[])
 {
-  FXApp the_app("fox-tinyed","FOX tinyed (Basile)");
+  FXApp the_app("fox-tinyed","FOX tinyed (Basile Starynkevitch)");
   the_app.init(argc, argv);
   the_app.create();
   auto mywin = new TinyTextWindow(&the_app);
   mywin->create();
   mywin->layout();
   mywin->show();
-  //mywin->enable();
+  mywin->enable();
   std::cout << __FILE__ ":" << __LINE__ << " "
             << "mywin:" << mywin << std::endl;
   return the_app.run();

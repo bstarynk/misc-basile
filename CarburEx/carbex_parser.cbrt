@@ -1,10 +1,22 @@
 // file carbex_parser.cbrt
 
+
+/// Carburetta is a C++ parser generator on https://carburetta.com/
 // this is the prologue of the parser file carbex_parser.cbrt for Carburetta
 #include "carbex.hh"
 
+static int cur_lineno = 1;
+
 %scanner%
 /* this is the scanner section of the parser file  carbex_parser.cbrt */
+%prefix carbex_
+
+ 
+: [\ \t\r\f]+; /* skip whitespace */
+
+: [\n] {
+  cur_lineno++; 
+}
 
 %grammar%
 /* this is the grammar section of the parser file carbex_parser.cbrt */

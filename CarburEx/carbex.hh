@@ -30,6 +30,7 @@ enum TokType
 class Tok
 {
   enum TokType tk_type;
+  int tk_lineno;
   union
   {
     void* tk_ptr;
@@ -38,16 +39,17 @@ class Tok
     std::string tk_string;
   };
 protected:
-  Tok(nullptr_t) : tk_type(tky_none), tk_ptr(nullptr) {};
-  Tok(TokType ty, int n): tk_type(ty), tk_int(n) {};
-  Tok(TokType ty, double d): tk_type(ty), tk_double(d) {};
-  Tok(TokType ty, std::string s): tk_type(ty), tk_string(s) {};
+  Tok(nullptr_t) : tk_type(tky_none), tk_lineno(0), tk_ptr(nullptr) {};
+  Tok(TokType ty, int n): tk_type(ty),  tk_lineno(0), tk_int(n) {};
+  Tok(TokType ty, double d): tk_type(ty),  tk_lineno(0), tk_double(d) {};
+  Tok(TokType ty, std::string s): tk_type(ty),  tk_lineno(0), tk_string(s) {};
 public:
   enum TokType get_type(void) const
   {
     return tk_type;
   };
   virtual ~Tok();
+  void set_lineno(int ln) { if (tk_lineno==0) tk_lineno=ln; };
 #warning should follow the rule of five
   Tok(int n) : Tok(tky_int, n) {};
   Tok(double d) : Tok(tky_double, d) {};
@@ -56,6 +58,7 @@ public:
   Tok(Tok&&);			// move constructor
   Tok& operator = (const Tok&); // copy assignment
   Tok& operator = (Tok&&r); 	// move assignment
+  int lineno(void) const { return tk_lineno; };
 };
 
 using Tk_stdstring_t = std::string;

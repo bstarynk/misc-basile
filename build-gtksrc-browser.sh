@@ -8,14 +8,12 @@
 ## consider export DEBUGINFOD_URLS="https://debuginfod.debian.net"
 CC=gcc
 MYGITID=$(git log -1|head -1|cut -b9-20)
-OPTIMFLAGS=-Og
+OPTIMFLAGS=-O1
 indent -gnu gtksrc-browser.c
 $CC $OPTIMFLAGS -Wall -Wextra -g -Wmissing-prototypes \
     -DGIT_ID=\"$MYGITID\" \
-    $(pkg-config --cflags \
-	 glib-2.0  gobject-2.0 	gio-2.0  gtk+-3.0 pango gtksourceview-4) \
+    $(pkg-config --cflags  glib-2.0  gobject-2.0 gio-2.0  gtk+-3.0 pango gtksourceview-4) \
     gtksrc-browser.c  \
     -L /usr/local/lib/ \
-    $(pkg-config --libs \
-	 glib-2.0  gobject-2.0 	gio-2.0  gtk+-3.0 pango gtksourceview-4) \
+    $(pkg-config --libs  glib-2.0  gobject-2.0 	gio-2.0  gtk+-3.0 pango gtksourceview-4) \
     -o gtksrc-browser

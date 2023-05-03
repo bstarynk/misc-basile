@@ -2,8 +2,8 @@
 // file misc-basile/gtksrc-browser.c
 // © 2022 copyright : unknown user & CEA & Basile Starynkevitch
 /***
-    © Copyright  1998-2022 by unknown and Basile Starynkevitch and CEA
-   program released under GNU general public license
+    © Copyright  1998-2023 by unknown and Basile Starynkevitch and CEA
+   program released under GNU General Public License v3+
 
    this is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
