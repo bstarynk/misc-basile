@@ -34,13 +34,14 @@ extern "C" const char my_buildtime[];
 #endif
 
 const char my_gitid[]=GIT_ID;
-const char my_buildtime=__DATE__ "@" __TIME__;
+const char my_buildtime[]=__DATE__ "@" __TIME__;
 
 const char*progname;
 
 int main(int argc, const char**argv)
 {
   progname = argv[0];
+  FXApp application("browserfox");
 } // end main
 
 /****************
