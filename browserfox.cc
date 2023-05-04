@@ -1,6 +1,6 @@
 // file misc-basile/browserfox.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
-// © 2022 copyright CEA & Basile Starynkevitch
+// © 2022 - 2023 copyright CEA & Basile Starynkevitch
 
 /****
 * This program is free software: you can redistribute it and/or modify          *
@@ -17,13 +17,30 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.         *
 ****/
 
+#include <unistd.h>
+#include <iostream>
+
 
 #include "fx.h"
 #include "fxkeys.h"
 
+extern "C" const char*progname;
+
+extern "C" const char my_gitid[];
+extern "C" const char my_buildtime[];
+
+#ifndef GIT_ID
+#error GIT_ID should be provided in compilation command
+#endif
+
+const char my_gitid[]=GIT_ID;
+const char my_buildtime=__DATE__ "@" __TIME__;
+
+const char*progname;
 
 int main(int argc, const char**argv)
 {
+  progname = argv[0];
 } // end main
 
 /****************

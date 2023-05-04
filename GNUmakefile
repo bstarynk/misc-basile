@@ -19,7 +19,7 @@ CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl half bwc sync-periodically clever-framac logged-compile  logged-gcc filipe-shell
+all: manydl half bwc sync-periodically clever-framac logged-compile  logged-gcc filipe-shell browserfox
 
 
 clean:
@@ -33,6 +33,9 @@ clean:
 
 ## on non Linux systems, change the .so suffix to whatever can be dlopen-ed
 manydl-plugins: $(patsubst %.c, %.so, $(wildcard genf*.c))
+
+browserfox: browserfox.cc build-browserfox.sh logged-g++
+	./build-browserfox.sh
 
 ## this is specific to Linux, change it on other POSIX systems
 genf%.so: genf%.c
