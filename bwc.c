@@ -58,7 +58,7 @@ count_lines (FILE * f, char *name)
   while (!feof (f));
   clock_t stf = clock ();
   double cput = (stf - stc) * 1.0e-6;
-  printf ("%s: %ld lines, maxwidth %ld, %ld bytes in %.4f cpu sec, %.3f µs/l\n",
+  printf ("%s: %ld lines, maxwidth %ld, %ld bytes in %.5f cpu sec, %.3f µs/l\n",
 	  name, lincnt, linwidth, off, cput, (cput * 1.0e6) / lincnt);
   free (linbuf);
 }				/* end count_lines */
