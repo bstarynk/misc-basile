@@ -31,6 +31,7 @@ count_lines (FILE * f, char *name)
   char *linbuf = malloc (linsiz);
   long lincnt = 0;
   long linwidth = 0;
+  long off = 0;
   if (!linbuf)
     {
       perror ("malloc linbuf");
@@ -39,9 +40,11 @@ count_lines (FILE * f, char *name)
   memset (linbuf, 0, linsiz);
   do
     {
+      off = ftell(f);
       ssize_t linlen = getline (&linbuf, &linsiz, f);
       if (linlen < 0)
 	break;
+      off += linlen;
       lincnt++;
       if (linwidth < linlen)
 	linwidth = linlen;
@@ -55,8 +58,8 @@ count_lines (FILE * f, char *name)
   while (!feof (f));
   clock_t stf = clock ();
   double cput = (stf - stc) * 1.0e-6;
-  printf ("%s: %ld lines, maxwidth %ld in %.4f cpu sec, %.3f µs/l\n",
-	  name, lincnt, linwidth, cput, (cput * 1.0e6) / lincnt);
+  printf ("%s: %ld lines, maxwidth %ld, %ld bytes in %.4f cpu sec, %.3f µs/l\n",
+	  name, lincnt, linwidth, off, cput, (cput * 1.0e6) / lincnt);
   free (linbuf);
 }				/* end count_lines */
 
