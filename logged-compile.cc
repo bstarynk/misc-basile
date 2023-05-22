@@ -105,7 +105,8 @@ get_float_time(clockid_t cid)
         return NAN;
 };				// end get_float_time
 
-enum {
+enum
+{
     MYOPT__NONE,
     MYOPT_DEBUG=1000,
     MYOPT_COMPILER,
@@ -186,12 +187,12 @@ main(int argc, char**argv)
     int firstix = -1;
     int argerr = argp_parse(&my_argp, argc, argv, 0, &firstix, NULL);
     if (argerr > 0)
-    {
-        fprintf(stderr, "%s: failed to parse program arguments\n",
-                myprogname);
-        argp_help (&my_argp, stderr, 0, myprogname);
-        exit(EXIT_FAILURE);
-    };
+        {
+            fprintf(stderr, "%s: failed to parse program arguments\n",
+                    myprogname);
+            argp_help (&my_argp, stderr, 0, myprogname);
+            exit(EXIT_FAILURE);
+        };
 }
 
 

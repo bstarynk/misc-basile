@@ -9,6 +9,7 @@ INDENT=/usr/bin/indent
 VALGRIND=/usr/bin/valgrind
 CC=/usr/bin/gcc
 CXX=/usr/bin/g++
+ASTYLE=/usr/bin/astyle
 RM=/bin/rm -vf
 GENG_CC ?= $(CC)
 GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
@@ -43,6 +44,7 @@ genf%.so: genf%.c
 
 indent:
 	for f in $(wildcard *.c) ; do $(INDENT) --gnu-style $$f ; done
+	for f in $(wildcard *.cc) ; do $(ASTYLE) --style=gnu $$f ; done
 
 manydl: manydl.c
 	$(CC) $(CFLAGS) -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -lm -ldl -o $@

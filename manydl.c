@@ -1025,28 +1025,29 @@ main (int argc, char **argv)
   gethostname (myhostname, sizeof (myhostname) - 1);
   start_elapsed_clock = my_clock (CLOCK_MONOTONIC);
   start_cpu_clock = my_clock (CLOCK_PROCESS_CPUTIME_ID);
-  if (uname (&my_uts)) {
-    fprintf(stderr, "%s: uname failed on %s (%m)\n",
-	    progname, myhostname);
-    exit(EXIT_FAILURE);
-  };
+  if (uname (&my_uts))
+    {
+      fprintf (stderr, "%s: uname failed on %s (%m)\n", progname, myhostname);
+      exit (EXIT_FAILURE);
+    };
   if (argc > 1 && !strcmp (argv[1], "--help"))
     show_help ();
   if (argc > 1 && !strcmp (argv[1], "--version"))
     show_version ();
   get_options (argc, argv);
-  if (verbose) {
-    printf("%s runs on %s git %s pid %d, uname:\n",
-	   progname, myhostname, manydl_git, (int)getpid());
-    printf("\t sysname: %s\n", my_uts.sysname);
-    printf("\t nodename: %s\n", my_uts.nodename);
-    printf("\t release: %s\n", my_uts.release);
-    printf("\t version: %s\n", my_uts.version);
-    printf("\t machine: %s\n", my_uts.machine);
+  if (verbose)
+    {
+      printf ("%s runs on %s git %s pid %d, uname:\n",
+	      progname, myhostname, manydl_git, (int) getpid ());
+      printf ("\t sysname: %s\n", my_uts.sysname);
+      printf ("\t nodename: %s\n", my_uts.nodename);
+      printf ("\t release: %s\n", my_uts.release);
+      printf ("\t version: %s\n", my_uts.version);
+      printf ("\t machine: %s\n", my_uts.machine);
 #ifdef _GNU_SOURCE
-    printf("\t domainname: %s\n", my_uts.domainname);
+      printf ("\t domainname: %s\n", my_uts.domainname);
 #endif
-  };
+    };
   if (didcleanup)
     return 0;
   generate_all_c_files ();

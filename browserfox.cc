@@ -40,8 +40,8 @@ const char*progname;
 
 int main(int argc, const char**argv)
 {
-  progname = argv[0];
-  FXApp application("browserfox");
+    progname = argv[0];
+    FXApp application("browserfox");
 } // end main
 
 /****************
