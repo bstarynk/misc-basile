@@ -46,6 +46,8 @@ private:
 protected:
   BfWindow() {};
 public:
+  static constexpr int bf_width=800;
+  static constexpr int bf_height=650;
   BfWindow(FXApp*app);
   virtual ~BfWindow();
   virtual void create();
@@ -58,7 +60,8 @@ FXDEFMAP(BfWindow) BfWindowMap[]=
 
 ////////////////////////////////////////////////////////////////
 BfWindow::BfWindow(FXApp*app)
-  : FXMainWindow(app, "browserfox")
+  : FXMainWindow(app, "browserfox",nullptr,nullptr,DECOR_ALL,0,0,
+                 bf_width,bf_height)
 {
 }; // end BfWindow::BfWindow
 
@@ -79,6 +82,7 @@ int main(int argc, char**argv)
   FXApp application("browserfox");
   application.init(argc, argv);
   BfWindow win(&application);
+  return application.run();
 } // end main
 
 /****************
