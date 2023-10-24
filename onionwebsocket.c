@@ -49,7 +49,7 @@ onion_connection_status websocket_example_cont (void *data,
 						ssize_t data_ready_len);
 
 onion_connection_status
-websocket_example (void *data, onion_request * req, onion_response * res)
+websocket_example (void *data, onion_request *req, onion_response *res)
 {
   ONION_INFO ("%s: start req method %s path '%s' fullpath '%s'",
 	      __func__,
@@ -111,7 +111,7 @@ websocket_example (void *data, onion_request * req, onion_response * res)
 
 
 onion_connection_status
-websocket_example_cont (void *data, onion_websocket * ws,
+websocket_example_cont (void *data, onion_websocket *ws,
 			ssize_t data_ready_len)
 {
   ONION_INFO ("%s: ws@%p data_ready_len=%ld", __func__, ws,

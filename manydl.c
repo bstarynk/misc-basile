@@ -114,6 +114,14 @@ int tab[MAXTAB];		/* a table */
 
 extern int tab[MAXTAB];
 
+extern int add_x_3_y (int, int);
+
+int
+add_x_3_y (int x, int y)
+{
+  return x + 3 * y;
+}				/* end add_x_3_y */
+
 extern double my_clock (clockid_t);
 
 double
@@ -1020,6 +1028,7 @@ run_terminating_script (void)
 int
 main (int argc, char **argv)
 {
+  void *selfhandle = NULL;
   long nbcalls = 0;
   progname = argv[0];
   gethostname (myhostname, sizeof (myhostname) - 1);
@@ -1050,6 +1059,25 @@ main (int argc, char **argv)
     };
   if (didcleanup)
     return 0;
+  {
+    selfhandle = dlopen (NULL, RTLD_NOW);
+    if (!selfhandle)
+      {
+	fprintf (stderr, "%s failed to dlopen NULL : %s\n",
+		 progname, dlerror ());
+	exit (EXIT_FAILURE);
+      };
+    void *ad = dlsym (selfhandle, "add_x_3_y");
+    if (!ad)
+      {
+	fprintf (stderr, "%s failed to dlsym add_x_3_y in self: %s\n",
+		 progname, dlerror ());
+      };
+    funptr_t f = (funptr_t) ad;
+    int z = (*f) (2, 5);
+    printf ("%s:%d: ad@%p, add_x_3_y@%p, z=%d\n", __FILE__, __LINE__,
+	    ad, (void *) &add_x_3_y, z);
+  };
   generate_all_c_files ();
   if (!fakerun)
     {

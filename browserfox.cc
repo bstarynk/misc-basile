@@ -41,16 +41,16 @@ const char*progname;
 
 class BfWindow: public FXMainWindow
 {
-  FXDECLARE(BfWindow)
+    FXDECLARE(BfWindow)
 private:
 protected:
-  BfWindow() {};
+    BfWindow() {};
 public:
-  static constexpr int bf_width=800;
-  static constexpr int bf_height=650;
-  BfWindow(FXApp*app);
-  virtual ~BfWindow();
-  virtual void create();
+    static constexpr int bf_width=800;
+    static constexpr int bf_height=650;
+    BfWindow(FXApp*app);
+    virtual ~BfWindow();
+    virtual void create();
 };				// end class BfWindow
 FXDEFMAP(BfWindow) BfWindowMap[]=
 {
@@ -60,8 +60,8 @@ FXDEFMAP(BfWindow) BfWindowMap[]=
 
 ////////////////////////////////////////////////////////////////
 BfWindow::BfWindow(FXApp*app)
-  : FXMainWindow(app, "browserfox",nullptr,nullptr,DECOR_ALL,0,0,
-                 bf_width,bf_height)
+    : FXMainWindow(app, "browserfox",nullptr,nullptr,DECOR_ALL,0,0,
+                   bf_width,bf_height)
 {
 }; // end BfWindow::BfWindow
 
@@ -78,11 +78,11 @@ FXIMPLEMENT(BfWindow,FXMainWindow,BfWindowMap,ARRAYNUMBER(BfWindowMap));
 
 int main(int argc, char**argv)
 {
-  progname = argv[0];
-  FXApp application("browserfox");
-  application.init(argc, argv);
-  BfWindow win(&application);
-  return application.run();
+    progname = argv[0];
+    FXApp application("browserfox");
+    application.init(argc, argv);
+    BfWindow win(&application);
+    return application.run();
 } // end main
 
 /****************

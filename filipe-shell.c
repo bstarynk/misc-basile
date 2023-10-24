@@ -86,7 +86,7 @@ create_cmd_line ()
  * @param command     String that will be copied to the cmd_line buffer
  */
 void
-set_cmd_line_command (cmd_line_t * cmd_line, char *command)
+set_cmd_line_command (cmd_line_t *cmd_line, char *command)
 {
   assert (cmd_line != NULL);
   assert (command != NULL);
@@ -106,7 +106,7 @@ set_cmd_line_command (cmd_line_t * cmd_line, char *command)
  * @param nargs       Number of arguments in the array
  */
 void
-init_cmd_line_args (cmd_line_t * cmd_line, size_t nargs)
+init_cmd_line_args (cmd_line_t *cmd_line, size_t nargs)
 {
   assert (cmd_line != NULL);
   assert (nargs > 0);
@@ -127,7 +127,7 @@ init_cmd_line_args (cmd_line_t * cmd_line, size_t nargs)
  * @param argi        Index of the argument in the args array of the cmd_line_t struct buffer
  */
 void
-set_cmd_line_arg (cmd_line_t * cmd_line, char *arg, size_t argi)
+set_cmd_line_arg (cmd_line_t *cmd_line, char *arg, size_t argi)
 {
   assert (cmd_line != NULL);
   assert (arg != NULL);
@@ -147,7 +147,7 @@ set_cmd_line_arg (cmd_line_t * cmd_line, char *arg, size_t argi)
  * @param cmd_line    Pointer to the working cmd_line_t struct buffer
  */
 void
-destroy_cmd_line (cmd_line_t * cmd_line)
+destroy_cmd_line (cmd_line_t *cmd_line)
 {
   assert (cmd_line != NULL);
 
@@ -243,7 +243,7 @@ read_token (char *str)
  * @param argi        Index of the argument read in each recursive call. It must start at 0.
  */
 void
-read_args (cmd_line_t * cmd_line, size_t argi)
+read_args (cmd_line_t *cmd_line, size_t argi)
 {
   assert (cmd_line != NULL);
   assert (argi >= 0);
@@ -283,7 +283,7 @@ read_args (cmd_line_t * cmd_line, size_t argi)
  * @param cmd_line    Pointer to the working cmd_line_t struct buffer.
  */
 void
-read_cmd_line (cmd_line_t * cmd_line)
+read_cmd_line (cmd_line_t *cmd_line)
 {
   assert (cmd_line != NULL);
 
@@ -305,7 +305,7 @@ read_cmd_line (cmd_line_t * cmd_line)
  * @param cmd_line    Pointer to the working cmd_line_t struct buffer.
  */
 void
-print_cmd_line (cmd_line_t * cmd_line)
+print_cmd_line (cmd_line_t *cmd_line)
 {
   assert (cmd_line != NULL);
 
@@ -415,7 +415,7 @@ create_alphabetical_tree ()
 
 #if 0				//unused code
 void
-destroy_alphabetical_subtree (alphabetical_tree_node_t * node)
+destroy_alphabetical_subtree (alphabetical_tree_node_t *node)
 {
   if (node != NULL)
     {
@@ -429,7 +429,7 @@ destroy_alphabetical_subtree (alphabetical_tree_node_t * node)
 }
 
 void
-destroy_alphabetical_tree (alphabetical_tree_header_t * h)
+destroy_alphabetical_tree (alphabetical_tree_header_t *h)
 {
   assert (h != NULL);
 
@@ -446,7 +446,7 @@ destroy_alphabetical_tree (alphabetical_tree_header_t * h)
  * @param text   Text content of the token node
  */
 void
-insert_token_in_tree (alphabetical_tree_header_t * h, char *token,
+insert_token_in_tree (alphabetical_tree_header_t *h, char *token,
 		      void (*callback) (cmd_line_t *), char *text)
 {
   assert (h != NULL);
@@ -496,7 +496,7 @@ insert_token_in_tree (alphabetical_tree_header_t * h, char *token,
  * @return A pointer to the node found, or NULL if token has not found.
  */
 alphabetical_tree_node_t *
-find_token_in_tree (alphabetical_tree_header_t * h, char *token)
+find_token_in_tree (alphabetical_tree_header_t *h, char *token)
 {
   assert (h != NULL);
   assert (token != NULL);
@@ -537,7 +537,7 @@ find_token_in_tree (alphabetical_tree_header_t * h, char *token)
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-run_command (alphabetical_tree_header_t * h, cmd_line_t * cmd_line)
+run_command (alphabetical_tree_header_t *h, cmd_line_t *cmd_line)
 {
   assert (h != NULL);
   assert (cmd_line != NULL);
@@ -568,7 +568,7 @@ alphabetical_tree_header_t *variables = NULL;	//variables
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-pwd_command (cmd_line_t * cmd_line)
+pwd_command (cmd_line_t *cmd_line)
 {
   if (cmd_line->nargs != 0)
     {
@@ -589,7 +589,7 @@ pwd_command (cmd_line_t * cmd_line)
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-cd_command (cmd_line_t * cmd_line)
+cd_command (cmd_line_t *cmd_line)
 {
   if (cmd_line->nargs != 1)
     {
@@ -610,7 +610,7 @@ cd_command (cmd_line_t * cmd_line)
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-exit_command (cmd_line_t * cmd_line)
+exit_command (cmd_line_t *cmd_line)
 {
   if (cmd_line->nargs != 0)
     {
@@ -714,7 +714,7 @@ print_entries (void *buffer, size_t n_entries)
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-ls_command (cmd_line_t * cmd_line)
+ls_command (cmd_line_t *cmd_line)
 {
   assert (cmd_line != NULL);
 
@@ -770,7 +770,7 @@ ls_command (cmd_line_t * cmd_line)
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-exec_command (cmd_line_t * cmd_line)
+exec_command (cmd_line_t *cmd_line)
 {
   assert (cmd_line != NULL);
 
@@ -818,7 +818,7 @@ exec_command (cmd_line_t * cmd_line)
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-set_command (cmd_line_t * cmd_line)
+set_command (cmd_line_t *cmd_line)
 {
   assert (cmd_line != NULL);
   assert (variables != NULL);
@@ -876,7 +876,7 @@ set_command (cmd_line_t * cmd_line)
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-print_command (cmd_line_t * cmd_line)
+print_command (cmd_line_t *cmd_line)
 {
   assert (cmd_line != NULL);
 
@@ -938,7 +938,7 @@ print_command (cmd_line_t * cmd_line)
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-uv_command (cmd_line_t * cmd_line)
+uv_command (cmd_line_t *cmd_line)
 {
   assert (cmd_line != NULL);
 
@@ -993,7 +993,7 @@ uv_command (cmd_line_t * cmd_line)
  * @param node  Pointer to the root of the alphabetical subtree
  */
 void
-print_subtree_texts (alphabetical_tree_node_t * node)
+print_subtree_texts (alphabetical_tree_node_t *node)
 {
   if (node != NULL)
     {
@@ -1010,7 +1010,7 @@ print_subtree_texts (alphabetical_tree_node_t * node)
  * @param cmd_line  Pointer to the cmd_line_t struct buffer with the command token and its arguments.
  */
 void
-help_command (cmd_line_t * cmd_line)
+help_command (cmd_line_t *cmd_line)
 {
   assert (cmd_line != NULL);
 

@@ -68,12 +68,12 @@ my_sview_insert_at_cursor_cb (GtkTextView * self,
 
 
 gboolean
-show_version_cb (const gchar * option_name
+show_version_cb (const gchar *option_name
 		 __attribute__((unused)),
-		 const gchar * value
+		 const gchar *value
 		 __attribute__((unused)),
 		 gpointer data
-		 __attribute__((unused)), GError ** error
+		 __attribute__((unused)), GError **error
 		 __attribute__((unused)))
 {
   printf ("%s: version compiled %s git %s\n",
@@ -111,7 +111,7 @@ static const GOptionEntry prog_options_arr[] = {
 };
 
 gboolean
-keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,	//
+keypress_srcview_cb (GtkWidget *widg, GdkEventKey *evk,	//
 		     gpointer data __attribute__((unused)))
 {
   assert (evk != NULL);
@@ -151,8 +151,8 @@ keypress_srcview_cb (GtkWidget * widg, GdkEventKey * evk,	//
 
 
 void
-my_sview_insert_at_cursor_cb (GtkTextView * self,
-			      gchar * string,
+my_sview_insert_at_cursor_cb (GtkTextView *self,
+			      gchar *string,
 			      gpointer user_data __attribute__((unused)))
 {
   assert (string != NULL);
@@ -237,7 +237,7 @@ main (int argc, char *argv[])
 
 static const int buffer_byte_size = 4096;
 static gboolean
-open_file (GtkSourceBuffer * sBuf, const gchar * filename)
+open_file (GtkSourceBuffer *sBuf, const gchar *filename)
 {
   GtkSourceLanguageManager *lm;
   GtkSourceLanguage *language = NULL;

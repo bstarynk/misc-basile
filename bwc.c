@@ -24,7 +24,7 @@
 const char *progname = NULL;
 
 void
-count_lines (FILE * f, char *name)
+count_lines (FILE *f, char *name)
 {
   size_t linsiz = 256;
   clock_t stc = clock ();

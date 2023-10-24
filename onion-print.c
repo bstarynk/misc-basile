@@ -187,8 +187,7 @@ typedef struct
 } upload_file_data;
 
 onion_connection_status
-upload_file (upload_file_data * data,
-	     onion_request * req, onion_response * res)
+upload_file (upload_file_data *data, onion_request *req, onion_response *res)
 {
   if (onion_request_get_flags (req) & OR_POST)
     {
@@ -210,7 +209,7 @@ upload_file (upload_file_data * data,
 
 /// Footer that allows to upload files.
 void
-upload_file_footer (onion_response * res, const char *dirname)
+upload_file_footer (onion_response *res, const char *dirname)
 {
   onion_response_write0 (res,
 			 "<p><table><tr><th>Upload a file: <form method=\"POST\" enctype=\"multipart/form-data\">"
