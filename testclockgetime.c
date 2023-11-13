@@ -30,7 +30,7 @@ main (int argc, char **argv)
   clock_gettime (CLOCK_MONOTONIC, &tendreal);
   clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &tendcpu);
   double dendreal = tendreal.tv_sec * 1.0 + 1.0e-9 * tendreal.tv_nsec;
-  double dendcpu = tendreal.tv_sec * 1.0 + 1.0e-9 * tendcpu.tv_nsec;
+  double dendcpu = tendcpu.tv_sec * 1.0 + 1.0e-9 * tendcpu.tv_nsec;
   printf ("%s ending in %g real %g cpu sec, nbt=%ld count=%ld\n"
 	  "... %g real %g cpu sec/iter\n",
 	  argv[0], (dendreal - dstartreal), (dendcpu - dstartcpu), nbt, cnt,
