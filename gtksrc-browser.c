@@ -178,8 +178,7 @@ main (int argc, char *argv[])
   GtkSourceLanguageManager *lm = NULL;
   GtkSourceBuffer *sBuf = NULL;
   GError *initerr = NULL;
-  if (argc > 1
-      && (!strcmp (argv[1], "-D") || !strcmp (argv[1], "--debug")))
+  if (argc > 1 && (!strcmp (argv[1], "-D") || !strcmp (argv[1], "--debug")))
     debug_wanted = true;
   if (!gtk_init_with_args (&argc, &argv, "gtksrc-browser",	//
 			   prog_options_arr,	//
