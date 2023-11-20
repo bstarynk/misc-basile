@@ -43,7 +43,7 @@ static char *prog_name;
 char my_host_name[48];
 gboolean debug_wanted;
 
-GtkWidget *window, *pScrollWin, *sView;
+GtkWidget *mainWindow, *pScrollWin, *sView;
 
 #define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {			\
     if (debug_wanted) {						\
@@ -90,7 +90,7 @@ static const GOptionEntry prog_options_arr[] = {
    .arg = G_OPTION_ARG_CALLBACK,	//
    .arg_data = (void *) &show_version_cb,	///
    .description = "show version information",	///
-   .arg_description = "~~",
+   .arg_description = NULL,
    },
   // --debug enable a lot of debug messages
   {.long_name = "debug",	//
@@ -139,7 +139,8 @@ keypress_srcview_cb (GtkWidget *widg, GdkEventKey *evk,	//
   int curlin = gtk_text_iter_get_line (&curtxtiter);
   int curcol = gtk_text_iter_get_line_offset (&curtxtiter);
   int bytix = gtk_text_iter_get_line_index (&curtxtiter);
-  /// now x,y are the absolute screen position... How to get a position inside our window?
+  /// now x,y are the absolute screen position...
+  /// How to get a position inside our mainWindow?
   printf
     ("keypress_srcview_cb [%s:%d] evk cursor L%dC%d(bytix%d) keyval %#x ctrl:%s shift:%s mouse(x=%d,y=%d)\n",
      __FILE__, __LINE__,
@@ -177,6 +178,9 @@ main (int argc, char *argv[])
   GtkSourceLanguageManager *lm = NULL;
   GtkSourceBuffer *sBuf = NULL;
   GError *initerr = NULL;
+  if (argc > 1
+      && (!strcmp (argv[1], "-D") || !strcmp (argv[1], "--debug")))
+    debug_wanted = true;
   if (!gtk_init_with_args (&argc, &argv, "gtksrc-browser",	//
 			   prog_options_arr,	//
 			   NULL,	//translation domain
@@ -191,12 +195,12 @@ main (int argc, char *argv[])
   DBGEPRINTF ("start %s on %s pid #%d", prog_name, my_host_name,
 	      (int) getpid ());
   /* Create a Window. */
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  g_signal_connect (G_OBJECT (window),
+  mainWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  g_signal_connect (G_OBJECT (mainWindow),
 		    "destroy", G_CALLBACK (gtk_main_quit), NULL);
-  gtk_container_set_border_width (GTK_CONTAINER (window), 10);
-  gtk_window_set_default_size (GTK_WINDOW (window), 760, 500);
-  gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
+  gtk_container_set_border_width (GTK_CONTAINER (mainWindow), 10);
+  gtk_window_set_default_size (GTK_WINDOW (mainWindow), 760, 500);
+  gtk_window_set_position (GTK_WINDOW (mainWindow), GTK_WIN_POS_CENTER);
   /* Create a Scrolled Window that will contain the GtkSourceView */
   pScrollWin = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy
@@ -227,11 +231,11 @@ main (int argc, char *argv[])
   /* Attach the GtkSourceView to the scrolled Window */
   gtk_container_add (GTK_CONTAINER (pScrollWin), GTK_WIDGET (sView));
   /* And the Scrolled Window to the main Window */
-  gtk_container_add (GTK_CONTAINER (window), pScrollWin);
+  gtk_container_add (GTK_CONTAINER (mainWindow), pScrollWin);
   gtk_widget_show_all (pScrollWin);
   /* Finally load our own file to see how it works */
   open_file (sBuf, __FILE__);
-  gtk_widget_show (window);
+  gtk_widget_show (mainWindow);
   gtk_main ();
   return 0;
 }				/* end main */
