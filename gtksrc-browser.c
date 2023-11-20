@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // file misc-basile/gtksrc-browser.c
-// © 2022 copyright : unknown user & CEA & Basile Starynkevitch
 /***
     © Copyright  1998-2023 by unknown and Basile Starynkevitch and CEA
    program released under GNU General Public License v3+
@@ -44,6 +43,7 @@ static char *prog_name;
 char my_host_name[48];
 gboolean debug_wanted;
 
+GtkWidget *window, *pScrollWin, *sView;
 
 #define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {			\
     if (debug_wanted) {						\
@@ -165,12 +165,14 @@ my_sview_insert_at_cursor_cb (GtkTextView *self,
 
 
 static gboolean open_file (GtkSourceBuffer * sBuf, const gchar * filename);
+
+
+
 int
 main (int argc, char *argv[])
 {
   prog_name = basename (argv[0]);
   gethostname (my_host_name, sizeof (my_host_name));
-  static GtkWidget *window, *pScrollWin, *sView;
   PangoFontDescription *font_desc = NULL;
   GtkSourceLanguageManager *lm = NULL;
   GtkSourceBuffer *sBuf = NULL;
