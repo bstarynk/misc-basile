@@ -87,6 +87,6 @@ framac-half:
 valgrind-logged-gcc: logged-gcc sync-periodically.c
 	$(VALGRIND) --verbose --leak-check=full ./logged-gcc --debug $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' sync-periodically.c  -o /tmp/sync-periodically
 
-onionrefpersys: onionrefpersys.c | GNUmakefile
-	$(CC)  $(CFLAGS) -DGITID='"$(GIT_ID)"' $^ -L/usr/local/lib \
-           -Bstatic -lonion_static -Bdynamic -lsystemd -lgcrypt -lgnutls -o $@
+onionrefpersys: onionrefpersys.c  GNUmakefile
+	$(CC)  $(CFLAGS) -DGITID='"$(GIT_ID)"' $<  -L/usr/local/lib \
+           -static -lonion_static -lsystemd -lgcrypt -lgnutls -lgmp -Bdynamic -o $@
