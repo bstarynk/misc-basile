@@ -164,12 +164,11 @@ keypress_srcview_cb (GtkWidget *widg, GdkEventKey *evk,	//
   int bytix = gtk_text_iter_get_line_index (&curtxtiter);
   /// now x,y are the absolute screen position...
   /// How to get a position inside our mainWindow?
-  printf
-    ("keypress_srcview_cb [%s:%d] evk cursor L%dC%d(bytix%d) keyval %#x ctrl:%s shift:%s mouse(x=%d,y=%d)\n",
-     __FILE__, __LINE__,
-     curlin, curcol, bytix,
-     evk->keyval, (withctrl ? "yes" : "no"),
-     (withshift ? "yes" : "no"), (int) x, (int) y);
+  DBGEPRINTF ("keypress_srcview_cb  evk cursor L%dC%d(bytix%d) keyval %#x\n"
+	      "\t ctrl:%s shift:%s mouse(x=%d,y=%d)",
+	      curlin, curcol, bytix,
+	      evk->keyval, (withctrl ? "yes" : "no"),
+	      (withshift ? "yes" : "no"), (int) x, (int) y);
   return FALSE;			/* to propagate the event */
 }				/* end  keypress_srcview_cb */
 
