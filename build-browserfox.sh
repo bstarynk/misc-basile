@@ -15,5 +15,5 @@ ASTYLEFLAGS='--verbose --indent=spaces=2  --style=gnu'
 $ASTYLE $ASTYLEFLAGS browserfox.cc
 CXXFLAGS=(-Wall  -Wextra -Woverloaded-virtual -Wshadow -O1 -g)
 
-$CXX  -DGIT_ID=\"$GITID\" $CXXFLAGS $(pkg-config --cflags fox17) browserfox.cc $(pkg-config --libs fox17) \
+$CXX -O -g -Wall -Wextra  -DGIT_ID=\"$GITID\" $CXXFLAGS $(pkg-config --cflags fox) browserfox.cc $(pkg-config --libs fox) \
     -o browserfox
