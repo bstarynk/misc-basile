@@ -26,6 +26,9 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 
 /// cJSON is the JSON library that Abhishek prefers to use.
@@ -95,10 +98,16 @@ jsonrpc_fifo_cb (const gchar *option_name UNUSED,	//
 		 const gchar *value,
 		 gpointer data UNUSED, GError **error UNUSED)
 {
+  GString *cmdstr = g_string_new (value);
+  GString *outstr = g_string_new (value);
+  g_string_append (cmdstr, "cmd");	/// read by the GUI
+  g_string_append (outstr, "out");	/// written by the GUI
   printf
-    ("%s: git %s dont implement the --jsonrpc-fifo program option with %s\n",
-     prog_name, GIT_ID, value);
+    ("%s: git %s dont implement the --jsonrpc-fifo program option with %s cmd %s out %s\n",
+     prog_name, GIT_ID, value, cmdstr->str, outstr->str);
 #warning incomplete jsonrpc_fifo_cb
+  g_string_free (cmdstr, TRUE);
+  g_string_free (outstr, TRUE);
   return TRUE;
 }				/* end  jsonrpc_fifo_cb  */
 
