@@ -26,6 +26,8 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+
+#include "cJSON.h"
 #include "gtksourceview/gtksource.h"
 //#include "gtksourceview/gtksourcebuffer.h"
 //#include "gtksourceview/gtksourcelanguage.h"
@@ -179,9 +181,11 @@ my_sview_insert_at_cursor_cb (GtkTextView *self,
 {
   assert (string != NULL);
   /// temporary, to see if it works
-  printf ("my_sview_insert_at_cursor_cb [%s:%d] string=%s\n", __FILE__,
-	  __LINE__, string);
   GtkSourceView *srcview = GTK_SOURCE_VIEW (self);
+  GtkTextView *txtview = GTK_TEXT_VIEW (srcview);
+  GtkTextBuffer *txtbuf = gtk_text_view_get_buffer (txtview);
+  DBGEPRINTF ("my_sview_insert_at_cursor_cb string=%s", string);
+  gtk_text_buffer_insert_at_cursor (txtbuf, string, strlen (string));
   assert (srcview != NULL);
 }				/* end my_sview_insert_at_cursor_cb */
 
