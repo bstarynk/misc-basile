@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // file misc-basile/gtksrc-browser.c
 /***
-    © Copyright  1998-2023 by unknown and Basile Starynkevitch and CEA
+    © Copyright  1998-2024 by unknown and Basile Starynkevitch and CEA
    program released under GNU General Public License v3+
 
    this is free software; you can redistribute it and/or modify it under
@@ -38,6 +38,7 @@
 #define GIT_ID "???????"
 #endif
 
+#define UNUSED __attribute__((unused))
 static char *prog_name;
 
 char my_host_name[48];
@@ -62,25 +63,38 @@ extern gboolean show_version_cb (const gchar * option_name,
 				 const gchar * value,
 				 gpointer data, GError ** error);
 
+extern gboolean jsonrpc_fifo_cb (const gchar * option_name,
+				 const gchar * value,
+				 gpointer data, GError ** error);
+
 extern void
 my_sview_insert_at_cursor_cb (GtkTextView * self,
 			      gchar * string, gpointer user_data);
 
 
 gboolean
-show_version_cb (const gchar *option_name
-		 __attribute__((unused)),
-		 const gchar *value
-		 __attribute__((unused)),
-		 gpointer data
-		 __attribute__((unused)), GError **error
-		 __attribute__((unused)))
+show_version_cb (const gchar *option_name UNUSED,	//
+		 const gchar *value UNUSED,	//
+		 gpointer data UNUSED,	//
+		 GError **error UNUSED)
 {
   printf ("%s: version compiled %s git %s\n",
 	  prog_name, __DATE__ "@" __TIME__, GIT_ID);
   fflush (NULL);
   return TRUE;
 }				/* end show_version_cb */
+
+gboolean
+jsonrpc_fifo_cb (const gchar *option_name UNUSED,	//
+		 const gchar *value,
+		 gpointer data UNUSED, GError **error UNUSED)
+{
+  printf
+    ("%s: git %s dont implement the --jsonrpc-fifo program option with %s\n",
+     prog_name, GIT_ID, value);
+#warning incomplete jsonrpc_fifo_cb
+  return TRUE;
+}				/* end  jsonrpc_fifo_cb  */
 
 static const GOptionEntry prog_options_arr[] = {
   // --version print the version information
@@ -90,6 +104,15 @@ static const GOptionEntry prog_options_arr[] = {
    .arg = G_OPTION_ARG_CALLBACK,	//
    .arg_data = (void *) &show_version_cb,	///
    .description = "show version information",	///
+   .arg_description = NULL,
+   },
+  // --jsonrpc-fifo sets the JSONRPC fifo
+  {.long_name = "jsonrpc-fifo",	//
+   .short_name = 'J',		//
+   .flags = G_OPTION_FLAG_NONE,	//
+   .arg = G_OPTION_ARG_CALLBACK,	//
+   .arg_data = (void *) &jsonrpc_fifo_cb,	///
+   .description = "sets the JSONRPC fifo",	///
    .arg_description = NULL,
    },
   // --debug enable a lot of debug messages
@@ -112,7 +135,7 @@ static const GOptionEntry prog_options_arr[] = {
 
 gboolean
 keypress_srcview_cb (GtkWidget *widg, GdkEventKey *evk,	//
-		     gpointer data __attribute__((unused)))
+		     gpointer data UNUSED)
 {
   assert (evk != NULL);
   GtkSourceView *srcview = GTK_SOURCE_VIEW (widg);
@@ -153,8 +176,7 @@ keypress_srcview_cb (GtkWidget *widg, GdkEventKey *evk,	//
 
 void
 my_sview_insert_at_cursor_cb (GtkTextView *self,
-			      gchar *string,
-			      gpointer user_data __attribute__((unused)))
+			      gchar *string, gpointer user_data UNUSED)
 {
   assert (string != NULL);
   /// temporary, to see if it works
@@ -163,7 +185,6 @@ my_sview_insert_at_cursor_cb (GtkTextView *self,
   GtkSourceView *srcview = GTK_SOURCE_VIEW (self);
   assert (srcview != NULL);
 }				/* end my_sview_insert_at_cursor_cb */
-
 
 static gboolean open_file (GtkSourceBuffer * sBuf, const gchar * filename);
 
