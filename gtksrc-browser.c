@@ -27,7 +27,11 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 
+
+/// cJSON is the JSON library that Abhishek prefers to use.
+/// see https://github.com/DaveGamble/cJSON
 #include "cJSON.h"
+
 #include "gtksourceview/gtksource.h"
 //#include "gtksourceview/gtksourcebuffer.h"
 //#include "gtksourceview/gtksourcelanguage.h"
@@ -43,7 +47,7 @@
 #define UNUSED __attribute__((unused))
 static char *prog_name;
 
-char my_host_name[48];
+char my_host_name[64];
 gboolean debug_wanted;
 
 GtkWidget *mainWindow, *pScrollWin, *sView;
