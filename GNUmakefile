@@ -20,7 +20,7 @@ CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl half bwc sync-periodically clever-framac logged-compile  logged-gcc filipe-shell browserfox onionrefpersys
+all: manydl half bwc gtksrc-browser sync-periodically logged-compile  logged-gcc filipe-shell browserfox onionrefpersys
 
 
 clean:
@@ -67,7 +67,7 @@ logged-gcc: logged-gcc.cc compile-logged-gcc.sh
 logged-compile: logged-compile.cc
 	$(CXX) $(CFLAGS) $^ -L/usr/local/lib -DGIT_ID='"$(GIT_ID)"' -lsqlite3 -o $@ 
 
-clever-framac: clever-framac.cc build-clever-framac.sh
+clever-framac: clever-framac.cc |build-clever-framac.sh GNUmakefile
 	./build-clever-framac.sh
 
 analyze-framac:  framac-bwc framac-sync-periodically framac-manydl framac-half
@@ -90,3 +90,6 @@ valgrind-logged-gcc: logged-gcc sync-periodically.c
 onionrefpersys: onionrefpersys.c  GNUmakefile
 	$(CC)  $(CFLAGS) -DGITID='"$(GIT_ID)"' $<  -L/usr/local/lib \
            -lonion_static -lsystemd -lgcrypt -lgnutls -lgmp -Bdynamic -o $@
+
+gtksrc-browser: gtksrc-browser.c build-gtksrc-browser.sh  |GNUmakefile
+	./build-gtksrc-browser.sh
