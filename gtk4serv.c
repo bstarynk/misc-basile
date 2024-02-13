@@ -35,8 +35,29 @@ extern char my_host_name[64];
 extern gboolean my_debug_wanted;
 extern GtkApplication *my_app;
 
+#define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {                     \
+    if (my_debug_wanted) {					\
+      fprintf(stderr, "@¤%s:%d:", (Fil), (Lin));                \
+      fprintf(stderr, Fmt, ##__VA_ARGS__);                      \
+      fputc('\n', stderr); fflush(stderr); }} while(false)
 
+#define DBGEPRINTF(Fmt,...) DBGEPRINTF_AT(__FILE__,__LINE__,\
+  (Fmt), ##__VA_ARGS__)
 
+static void
+my_activate_app (GApplication *app)
+{
+  DBGEPRINTF ("my_activate app%p", app);
+#warning incomplete my_activate_app
+}				/* end my_activate */
+
+static int
+my_command_line (GApplication *app, GApplicationCommandLine *cmdline)
+{
+  DBGEPRINTF ("my_command_line app%p", app);
+#warning incomplete my_command_line
+  return 0;
+}				/* end my_command_line */
 
 int
 main (int argc, char *argv[])
@@ -56,6 +77,17 @@ main (int argc, char *argv[])
 				 /*description: */
 				 "Gives version information",
 				 /*arg_description: */ NULL);
+  g_application_add_main_option (G_APPLICATION (my_app),
+				 /*long_name: */ "debug",
+				 /*short_name: */ (char) 'D',
+				 /*flag: */ G_OPTION_FLAG_NONE,
+				 /*arg: */ G_OPTION_ARG_NONE,
+				 /*description: */
+				 "Show debugging messages",
+				 /*arg_description: */ NULL);
+  g_signal_connect (my_app, "activate", G_CALLBACK (my_activate_app), NULL);
+  g_signal_connect (my_app, "command-line", G_CALLBACK (my_command_line),
+		    NULL);
   status = g_application_run (G_APPLICATION (my_app), argc, argv);
   g_object_unref (my_app);
   return status;
