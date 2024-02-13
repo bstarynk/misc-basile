@@ -48,6 +48,14 @@ main (int argc, char *argv[])
     my_debug_wanted = true;
   my_app = gtk_application_new ("org.refpersys.gtk4serv",
 				G_APPLICATION_DEFAULT_FLAGS);
+  g_application_add_main_option (G_APPLICATION (my_app),
+				 /*long_name: */ "version",
+				 /*short_name: */ (char) 0,
+				 /*flag: */ G_OPTION_FLAG_NONE,
+				 /*arg: */ G_OPTION_ARG_NONE,
+				 /*description: */
+				 "Gives version information",
+				 /*arg_description: */ NULL);
   status = g_application_run (G_APPLICATION (my_app), argc, argv);
   g_object_unref (my_app);
   return status;
