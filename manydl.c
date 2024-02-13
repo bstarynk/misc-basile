@@ -5,7 +5,7 @@
  *  generating lots of C functions, and dynamically compiling and loading them
  *  this is completely useless, except for testing & benchmarking 
  *  
- *  © Copyright Basile Starynkevitch 2004- 2023
+ *  © Copyright Basile Starynkevitch 2004- 2024
  *
  *  This was released up to december 18th 2022 under GPLv3+ license.
  *  On Dec 19, 2022 relicensed under MIT licence
@@ -157,16 +157,16 @@ compute_name_for_index (char name[static NAME_BUFLEN], int ix)
   assert (ix >= 0 && ix < maxcnt);
   memset (name, 0, NAME_BUFLEN);
   if (maxcnt < 1600)
-    snprintf (name, NAME_BUFLEN, "genf_%c_%02d",
+    snprintf (name, NAME_BUFLEN, "_genf_%c_%02d",
 	      "ABCDEFGHIJKLMNOPQ"[ix % 16], ix / 16);
   else if (maxcnt < 160000)
-    snprintf (name, NAME_BUFLEN, "genf_%c_%04d",
+    snprintf (name, NAME_BUFLEN, "_genf_%c_%04d",
 	      "ABCDEFGHIJKLMNOPQ"[ix % 16], ix / 16);
   else if (maxcnt < 16000000)
-    snprintf (name, NAME_BUFLEN, "genf_%c_%06d",
+    snprintf (name, NAME_BUFLEN, "_genf_%c_%06d",
 	      "ABCDEFGHIJKLMNOPQ"[ix % 16], ix / 16);
   else
-    snprintf (name, NAME_BUFLEN, "genf_%c_%08d",
+    snprintf (name, NAME_BUFLEN, "_genf_%c_%08d",
 	      "ABCDEFGHIJKLMNOPQ"[ix % 16], ix / 16);
 }				/* end compute_name_for_index */
 
@@ -529,7 +529,7 @@ show_help (void)
   printf ("\t -T <script>      : terminating popen-ed script\n");
   printf ("\t                    (could be some external analyzer,\n"
 	  "\t                       ... getting names of generated C files)\n");
-  printf ("\t -C               : clean up the mess (old genf_* files)\n");
+  printf ("\t -C               : clean up the mess (old _genf_* files)\n");
 }				/* end of show_help */
 
 void
@@ -1094,7 +1094,31 @@ main (int argc, char **argv)
 	  putenv (callenv);
 	};
       run_terminating_script ();
-    };
+    }
+  else
+    {
+      char pmapout[64];
+      char pmapcmd[128];
+      memset (pmapout, 0, sizeof (pmapout));
+      snprintf (pmapout, sizeof (pmapout), "_pmap_manydl_%d_git%s",
+		(int) getpid (), MANYDL_GIT);
+      snprintf (pmapcmd, sizeof (pmapcmd), "/usr/bin/pmap -p %d > %s",
+		(int) getpid (), pmapout);
+      fflush (NULL);
+      int bad = system (pmapcmd);
+      if (bad)
+	{
+	  fprintf (stderr,
+		   "%s: (git %s pid %d) failed to run %s (exited %d)\n",
+		   progname, MANYDL_GIT, (int) getpid (), pmapcmd, bad);
+	}
+      else
+	{
+	  printf ("%s: (git %s pid %d) ran %s\n",
+		  progname, MANYDL_GIT, (int) getpid (), pmapcmd);
+	}
+    }
+  fflush (NULL);
   printf ("%s: (git %s built on %s) pid %d ending on %s (%s:%d)\n",
 	  progname, MANYDL_GIT, __DATE__ "@" __TIME__, (int) getpid (),
 	  myhostname, __FILE__, __LINE__);
