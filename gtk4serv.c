@@ -56,18 +56,44 @@ my_command_line (GApplication *app, GApplicationCommandLine *cmdline)
 {
   gchar **argv = NULL;
   gint argc = 0;
-  DBGEPRINTF ("my_command_line app%p", app);
+  DBGEPRINTF ("my_command_line %s: app%p", my_prog_name, app);
   argv = g_application_command_line_get_arguments (cmdline, &argc);
+  DBGEPRINTF ("my_command_line argc=%d", argc);
   g_application_command_line_print (cmdline,
 				    "%s: with %d arguments",
 				    my_prog_name, argc);
-
   for (int i = 0; i < argc; i++)
-    g_print ("argument %d: %s\n", i, argv[i]);
+    {
+      g_print ("argument %d: %s\n", i, argv[i]);
+      DBGEPRINTF ("my_command_line argv[%d]=%s", i, argv[i]);
+    };
   g_strfreev (argv);
 #warning incomplete my_command_line
-  return 0;
+  return TRUE;
 }				/* end my_command_line */
+
+static void
+my_print_version (void)
+{
+  printf ("%s version git %s built %s\n",
+	  my_prog_name, my_git_id, __DATE__ "@" __TIME__);
+}				/* end my_print_version */
+
+static int
+my_local_options (GApplication *app, GVariantDict *options, gpointer data)
+{
+  gboolean version = FALSE;
+  DBGEPRINTF ("%s: my_local_options start", my_prog_name);
+  g_variant_dict_lookup (options, "version", "b", &version);
+
+  if (version)
+    {
+      my_print_version ();
+      return 0;
+    }
+
+  return -1;
+}
 
 int
 main (int argc, char *argv[])
@@ -77,6 +103,8 @@ main (int argc, char *argv[])
   gethostname (my_host_name, sizeof (my_host_name));
   if (argc > 1 && (!strcmp (argv[1], "-D") || !strcmp (argv[1], "--debug")))
     my_debug_wanted = true;
+  DBGEPRINTF ("%s on %s git %s pid %d argc %d", my_prog_name, my_host_name,
+	      my_git_id, (int) getpid (), argc);
   my_app = gtk_application_new ("org.refpersys.gtk4serv",
 				G_APPLICATION_DEFAULT_FLAGS);
   g_application_add_main_option (G_APPLICATION (my_app),
@@ -96,8 +124,10 @@ main (int argc, char *argv[])
 				 "Show debugging messages",
 				 /*arg_description: */ NULL);
   g_signal_connect (my_app, "activate", G_CALLBACK (my_activate_app), NULL);
-  g_signal_connect (my_app, "command-line", G_CALLBACK (my_command_line),
-		    NULL);
+  g_signal_connect (my_app, "command-line",
+		    G_CALLBACK (my_command_line), NULL);
+  g_signal_connect (my_app, "handle-local-options",
+		    G_CALLBACK (my_local_options), NULL);
   status = g_application_run (G_APPLICATION (my_app), argc, argv);
   g_object_unref (my_app);
   return status;
