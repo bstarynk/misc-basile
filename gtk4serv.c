@@ -54,7 +54,17 @@ my_activate_app (GApplication *app)
 static int
 my_command_line (GApplication *app, GApplicationCommandLine *cmdline)
 {
+  gchar **argv = NULL;
+  gint argc = 0;
   DBGEPRINTF ("my_command_line app%p", app);
+  argv = g_application_command_line_get_arguments (cmdline, &argc);
+  g_application_command_line_print (cmdline,
+				    "%s: with %d arguments",
+				    my_prog_name, argc);
+
+  for (int i = 0; i < argc; i++)
+    g_print ("argument %d: %s\n", i, argv[i]);
+  g_strfreev (argv);
 #warning incomplete my_command_line
   return 0;
 }				/* end my_command_line */
