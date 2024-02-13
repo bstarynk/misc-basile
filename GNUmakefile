@@ -14,32 +14,34 @@ RM=/bin/rm -vf
 GENG_CC ?= $(CC)
 GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
-
+GTK4SERV_PACKAGES= gtk4 glib-2.0 gobject-2.0 gio-2.0
 
 
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl half bwc gtksrc-browser sync-periodically logged-compile  logged-gcc filipe-shell browserfox onionrefpersys
+all: manydl half bwc gtksrc-browser sync-periodically logged-compile  logged-gcc filipe-shell browserfox onionrefpersys gtk4serv
 
 
 clean:
 	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically filipe-shell
 	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
-	$(RM) genf*.c
-	$(RM) logged-gcc_*
+	$(RM) _genf*.c
+	$(RM) _logged-gcc_*
 ## on non Linux, change .so to whatever can be dlopen-esd
-	$(RM) genf*.so
+	$(RM) _genf*.so
+	$(RM) _pmap*
 
 
 ## on non Linux systems, change the .so suffix to whatever can be dlopen-ed
-manydl-plugins: $(patsubst %.c, %.so, $(wildcard genf*.c))
+manydl-plugins: $(patsubst %.c, %.so, $(wildcard _genf*.c))
 
 browserfox: browserfox.cc build-browserfox.sh logged-g++
 	./build-browserfox.sh
 
-## this is specific to Linux, change it on other POSIX systems
-genf%.so: genf%.c
+## this is specific to Linux, related to manydl.c, change it on other
+## POSIX systems
+_genf%.so: _genf%.c
 	time $(GENG_CC) $(GENF_CFLAGS) -shared -o $@ $^
 
 indent:
@@ -93,3 +95,8 @@ onionrefpersys: onionrefpersys.c  GNUmakefile
 
 gtksrc-browser: gtksrc-browser.c build-gtksrc-browser.sh  |GNUmakefile
 	./build-gtksrc-browser.sh
+
+gtk4serv: gtk4serv.c  |GNUmakefile
+	$(CC) -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
+	$(shell pkg-config --cflags $(GTK4SERV_PACKAGES)) $< \
+	$(shell pkg-config --libs $(GTK4SERV_PACKAGES)) -o $@
