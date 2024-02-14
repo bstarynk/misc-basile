@@ -32,8 +32,11 @@
 extern char *my_prog_name;
 extern const char my_git_id[];
 extern char my_host_name[64];
+extern char my_jsonrpc_prefix[128];
 extern gboolean my_debug_wanted;
 extern GtkApplication *my_app;
+extern int my_fifo_cmd_wfd; /// fifo file descriptor, commands written by gtk4serv
+extern int my_fifo_out_rfd; /// fifo file descriptor, outputs from refpersys read by gtk4serv
 
 #define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {                     \
     if (my_debug_wanted) {					\
@@ -96,7 +99,15 @@ my_local_options (GApplication *app, GVariantDict *options,
   char *jsonrpc = NULL;
   if (g_variant_dict_lookup (options, "jsonrpc", "s", &jsonrpc))
     {
+      char jrbuf[sizeof(my_jsonrpc_prefix)+16];
+      memset (jrbuf, 0, sizeof(jrbuf));
       DBGEPRINTF ("%s: my_local_options jsonrpc %s", my_prog_name, jsonrpc);
+      /// create the $JSONRPC.cmd fifo for commands
+      strncpy(my_jsonrpc_prefix, jsonrpc, sizeof(my_jsonrpc_prefix)-1);
+      snprintf (jrbuf, sizeof(jrbuf), "%s.cmd", jsonrpc);
+      /// create the $JSONRPC.out fifo for outputs
+      snprintf (jrbuf, sizeof(jrbuf), "%s.out", jsonrpc);
+#warning my_local_options needs code to create the JSONRPC fifos
       return 0;
     }
   return -1;
@@ -131,7 +142,11 @@ main (int argc, char *argv[])
      /*flag: */ G_OPTION_FLAG_NONE,
      /*arg: */ G_OPTION_ARG_STRING,
      /*description: */
-     "Use the given FIFONAME.cmd & FIFONAME.out for JsonRpc fifos",
+     "Use the given $FIFONAME.cmd & $FIFONAME.out for JsonRpc fifos\n"
+     "\tThey are created if needed, and useful for refpersys.org\n"
+     "\t$FIFONAME.cmd is read by refpersys, written by this gtk4serv program.\n"
+     "\t$FIFONAME.out is written by refpersys and read by this gtk4serv program\n"
+     "\t... see file utilities_rps.cc of RefPerSys",
      /*arg_description: */ "FIFONAME");
   g_application_add_main_option	//
     (G_APPLICATION (my_app),
@@ -156,9 +171,13 @@ main (int argc, char *argv[])
 //// define global variables, those declared in the beginning of that file
 char *my_prog_name;
 char my_host_name[64];
+char my_jsonrpc_prefix[128];
 const char my_git_id[] = GITID;
 gboolean my_debug_wanted;
 GtkApplication *my_app;
+int my_fifo_cmd_wfd= -1; /// fifo file descriptor, commands written by gtk4serv
+int my_fifo_out_rfd= -1; /// fifo file descriptor, outputs from refpersys read by gtk4serv
+
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
