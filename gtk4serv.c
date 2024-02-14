@@ -27,6 +27,7 @@
 #include <gdk/gdk.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #define UNUSED __attribute__((unused))
 extern char *my_prog_name;
@@ -35,8 +36,8 @@ extern char my_host_name[64];
 extern char my_jsonrpc_prefix[128];
 extern gboolean my_debug_wanted;
 extern GtkApplication *my_app;
-extern int my_fifo_cmd_wfd; /// fifo file descriptor, commands written by gtk4serv
-extern int my_fifo_out_rfd; /// fifo file descriptor, outputs from refpersys read by gtk4serv
+extern int my_fifo_cmd_wfd;	/// fifo file descriptor, commands written by gtk4serv
+extern int my_fifo_out_rfd;	/// fifo file descriptor, outputs from refpersys read by gtk4serv
 
 #define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {                     \
     if (my_debug_wanted) {					\
@@ -50,7 +51,13 @@ extern int my_fifo_out_rfd; /// fifo file descriptor, outputs from refpersys rea
 static void
 my_activate_app (GApplication *app)
 {
-  DBGEPRINTF ("my_activate app%p", app);
+  DBGEPRINTF ("my_activate app%p my_fifo_cmd_wfd=%d my_fifo_out_rfd=%d",
+	      app, my_fifo_cmd_wfd, my_fifo_out_rfd);
+  /// should probably register the fifo file descriptors for polling them
+  if (my_fifo_cmd_wfd > 0) {
+  };
+  if (my_fifo_out_rfd > 0) {
+  };
 #warning incomplete my_activate_app
 }				/* end my_activate */
 
@@ -99,15 +106,43 @@ my_local_options (GApplication *app, GVariantDict *options,
   char *jsonrpc = NULL;
   if (g_variant_dict_lookup (options, "jsonrpc", "s", &jsonrpc))
     {
-      char jrbuf[sizeof(my_jsonrpc_prefix)+16];
-      memset (jrbuf, 0, sizeof(jrbuf));
+      int fd = -1;
+      char jrbuf[sizeof (my_jsonrpc_prefix) + 16];
+      memset (jrbuf, 0, sizeof (jrbuf));
       DBGEPRINTF ("%s: my_local_options jsonrpc %s", my_prog_name, jsonrpc);
-      /// create the $JSONRPC.cmd fifo for commands
-      strncpy(my_jsonrpc_prefix, jsonrpc, sizeof(my_jsonrpc_prefix)-1);
-      snprintf (jrbuf, sizeof(jrbuf), "%s.cmd", jsonrpc);
-      /// create the $JSONRPC.out fifo for outputs
-      snprintf (jrbuf, sizeof(jrbuf), "%s.out", jsonrpc);
-#warning my_local_options needs code to create the JSONRPC fifos
+      /// open or create the $JSONRPC.cmd fifo for refpersys commands, it will be written by gtk4serv
+      strncpy (my_jsonrpc_prefix, jsonrpc, sizeof (my_jsonrpc_prefix) - 1);
+      snprintf (jrbuf, sizeof (jrbuf), "%s.cmd", jsonrpc);
+      errno = 0;
+      fd = open (jrbuf, O_CLOEXEC | O_WRONLY);
+      if (fd < 0)
+	{
+	  fd = mkfifo (jrbuf, O_CLOEXEC | O_WRONLY | S_IRUSR | S_IWUSR);
+	};
+      if (fd < 0)
+	{
+	  g_error
+	    ("failed to get JSONRPC command fifo %s writtenby gtk4serv to refpersys",
+	     jrbuf);
+	  return -1;		// not reached
+	};
+      my_fifo_cmd_wfd = fd;
+      /// open or create the $JSONRPC.out fifo for refpersys outputs, it will be read by gtk4serv
+      snprintf (jrbuf, sizeof (jrbuf), "%s.out", jsonrpc);
+      errno = 0;
+      fd = open (jrbuf, O_CLOEXEC | O_RDONLY);
+      if (fd < 0)
+	{
+	  fd = mkfifo (jrbuf, O_CLOEXEC | O_RDONLY | S_IRUSR | S_IWUSR);
+	};
+      if (fd < 0)
+	{
+	  g_error
+	    ("failed to get JSONRPC output fifo %s read by gtk4serv from refpersys",
+	     jrbuf);
+	  return -1;		// not reached
+	};
+      my_fifo_out_rfd = fd;
       return 0;
     }
   return -1;
@@ -175,8 +210,8 @@ char my_jsonrpc_prefix[128];
 const char my_git_id[] = GITID;
 gboolean my_debug_wanted;
 GtkApplication *my_app;
-int my_fifo_cmd_wfd= -1; /// fifo file descriptor, commands written by gtk4serv
-int my_fifo_out_rfd= -1; /// fifo file descriptor, outputs from refpersys read by gtk4serv
+int my_fifo_cmd_wfd = -1;	/// fifo file descriptor, commands written by gtk4serv
+int my_fifo_out_rfd = -1;	/// fifo file descriptor, outputs from refpersys read by gtk4serv
 
 /****************
  **                           for Emacs...
