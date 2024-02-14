@@ -29,6 +29,13 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+/*** Food for thought (Feb 14, 2024):
+ *
+ * A possible approach could be that in some cases, the gtk4serv
+ * executable generates a temporary plugin as C code whose first
+ * lines are copied up to the sentinel line ///@@@ below and compile
+ * then dlopens that temporary plugin.
+ ***/
 #define UNUSED __attribute__((unused))
 extern char *my_prog_name;
 extern const char my_git_id[];
@@ -38,6 +45,8 @@ extern gboolean my_debug_wanted;
 extern GtkApplication *my_app;
 extern int my_fifo_cmd_wfd;	/// fifo file descriptor, commands written by gtk4serv
 extern int my_fifo_out_rfd;	/// fifo file descriptor, outputs from refpersys read by gtk4serv
+extern GIOChannel *my_fifo_cmd_wchan;	/* channel to write JSONRPC commands to */
+extern GIOChannel *my_fifo_out_rchan;	/* channel to write JSONRPC commands to */
 
 #define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {                     \
     if (my_debug_wanted) {					\
@@ -48,16 +57,44 @@ extern int my_fifo_out_rfd;	/// fifo file descriptor, outputs from refpersys rea
 #define DBGEPRINTF(Fmt,...) DBGEPRINTF_AT(__FILE__,__LINE__,\
   (Fmt), ##__VA_ARGS__)
 
+
+
+
+//////@@@@@@@@@@
+// the above line is a sentinel, see Food for thought comment above.
+
 static void
 my_activate_app (GApplication *app)
 {
   DBGEPRINTF ("my_activate app%p my_fifo_cmd_wfd=%d my_fifo_out_rfd=%d",
 	      app, my_fifo_cmd_wfd, my_fifo_out_rfd);
   /// should probably register the fifo file descriptors for polling them
-  if (my_fifo_cmd_wfd > 0) {
-  };
-  if (my_fifo_out_rfd > 0) {
-  };
+  if (my_fifo_cmd_wfd > 0)
+    {
+      my_fifo_cmd_wchan = g_io_channel_unix_new (my_fifo_cmd_wfd);
+      DBGEPRINTF ("my_activate my_fifo_cmdw_chan@%p", my_fifo_cmd_wchan);
+      if (!my_fifo_cmd_wchan)
+	{
+	  g_error
+	    ("failed to get JSONRPC writable command channel for fd#%d",
+	     my_fifo_cmd_wfd);
+	  abort ();
+	}
+#warning should call g_io_add_watch (my_fifo_cmd_wchan, G_IO_OUT, writercb, data...)
+    };
+  if (my_fifo_out_rfd > 0)
+    {
+      my_fifo_out_rchan = g_io_channel_unix_new (my_fifo_out_rfd);
+      DBGEPRINTF ("my_activate my_fifo_out_rchan@%p", my_fifo_out_rchan);
+      if (!my_fifo_out_rchan)
+	{
+	  g_error
+	    ("failed to get JSONRPC readable output channel for fd#%d",
+	     my_fifo_out_rfd);
+	  abort ();
+	}
+#warning should call g_io_add_watch (my_fifo_out_rchan, G_IO_IN, readercb, data...)
+    };
 #warning incomplete my_activate_app
 }				/* end my_activate */
 
@@ -212,7 +249,8 @@ gboolean my_debug_wanted;
 GtkApplication *my_app;
 int my_fifo_cmd_wfd = -1;	/// fifo file descriptor, commands written by gtk4serv
 int my_fifo_out_rfd = -1;	/// fifo file descriptor, outputs from refpersys read by gtk4serv
-
+GIOChannel *my_fifo_cmd_wchan;	/* channel to write JSONRPC commands to */
+GIOChannel *my_fifo_out_rchan;	/* channel to write JSONRPC commands to */
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
