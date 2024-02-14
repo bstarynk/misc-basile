@@ -80,10 +80,11 @@ my_print_version (void)
 }				/* end my_print_version */
 
 static int
-my_local_options (GApplication *app, GVariantDict *options, gpointer data)
+my_local_options (GApplication *app, GVariantDict *options,
+		  gpointer data UNUSED)
 {
   gboolean version = FALSE;
-  DBGEPRINTF ("%s: my_local_options start", my_prog_name);
+  DBGEPRINTF ("%s: my_local_options start app@%p", my_prog_name, app);
   g_variant_dict_lookup (options, "version", "b", &version);
 
   if (version)
@@ -92,8 +93,14 @@ my_local_options (GApplication *app, GVariantDict *options, gpointer data)
       return 0;
     }
 
+  char *jsonrpc = NULL;
+  if (g_variant_dict_lookup (options, "jsonrpc", "s", &jsonrpc))
+    {
+      DBGEPRINTF ("%s: my_local_options jsonrpc %s", my_prog_name, jsonrpc);
+      return 0;
+    }
   return -1;
-}
+}				// end of my_local_options
 
 int
 main (int argc, char *argv[])
@@ -101,34 +108,47 @@ main (int argc, char *argv[])
   int status = 0;
   my_prog_name = basename (argv[0]);
   gethostname (my_host_name, sizeof (my_host_name));
+  /// special handing of debug flag when passed first!
   if (argc > 1 && (!strcmp (argv[1], "-D") || !strcmp (argv[1], "--debug")))
     my_debug_wanted = true;
   DBGEPRINTF ("%s on %s git %s pid %d argc %d", my_prog_name, my_host_name,
 	      my_git_id, (int) getpid (), argc);
   my_app = gtk_application_new ("org.refpersys.gtk4serv",
 				G_APPLICATION_DEFAULT_FLAGS);
-  g_application_add_main_option (G_APPLICATION (my_app),
-				 /*long_name: */ "version",
-				 /*short_name: */ (char) 0,
-				 /*flag: */ G_OPTION_FLAG_NONE,
-				 /*arg: */ G_OPTION_ARG_NONE,
-				 /*description: */
-				 "Gives version information",
-				 /*arg_description: */ NULL);
-  g_application_add_main_option (G_APPLICATION (my_app),
-				 /*long_name: */ "debug",
-				 /*short_name: */ (char) 'D',
-				 /*flag: */ G_OPTION_FLAG_NONE,
-				 /*arg: */ G_OPTION_ARG_NONE,
-				 /*description: */
-				 "Show debugging messages",
-				 /*arg_description: */ NULL);
+  g_application_add_main_option	//
+    (G_APPLICATION (my_app),
+     /*long_name: */ "version",
+     /*short_name: */ (char) 0,
+     /*flag: */ G_OPTION_FLAG_NONE,
+     /*arg: */ G_OPTION_ARG_NONE,
+     /*description: */
+     "Gives version information",
+     /*arg_description: */ NULL);
+  g_application_add_main_option	//
+    (G_APPLICATION (my_app),
+     /*long_name: */ "jsonrpc",
+     /*short_name: */ (char) 'J',
+     /*flag: */ G_OPTION_FLAG_NONE,
+     /*arg: */ G_OPTION_ARG_STRING,
+     /*description: */
+     "Use the given FIFONAME.cmd & FIFONAME.out for JsonRpc fifos",
+     /*arg_description: */ "FIFONAME");
+  g_application_add_main_option	//
+    (G_APPLICATION (my_app),
+     /*long_name: */ "debug",
+     /*short_name: */ (char) 'D',
+     /*flag: */ G_OPTION_FLAG_NONE,
+     /*arg: */ G_OPTION_ARG_NONE,
+     /*description: */
+     "Show debugging messages",
+     /*arg_description: */ NULL);
   g_signal_connect (my_app, "activate", G_CALLBACK (my_activate_app), NULL);
   g_signal_connect (my_app, "command-line",
 		    G_CALLBACK (my_command_line), NULL);
   g_signal_connect (my_app, "handle-local-options",
 		    G_CALLBACK (my_local_options), NULL);
   status = g_application_run (G_APPLICATION (my_app), argc, argv);
+  DBGEPRINTF ("ending main with app@%p git %s", my_app, my_git_id);
   g_object_unref (my_app);
   return status;
 }				/// end main
