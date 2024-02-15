@@ -45,8 +45,12 @@ extern gboolean my_debug_wanted;
 extern GtkApplication *my_app;
 extern int my_fifo_cmd_wfd;	/// fifo file descriptor, commands written by gtk4serv
 extern int my_fifo_out_rfd;	/// fifo file descriptor, outputs from refpersys read by gtk4serv
-extern GIOChannel *my_fifo_cmd_wchan;	/* channel to write JSONRPC commands to */
-extern GIOChannel *my_fifo_out_rchan;	/* channel to write JSONRPC commands to */
+extern GIOChannel *my_fifo_cmd_wchan;	/* channel to write JSONRPC commands to refpersys */
+extern GIOChannel *my_fifo_out_rchan;	/* channel to read JSONRPC outputs from refpersys */
+extern int my_fifo_cmd_watchid;	/// watcher id for JSONRPC commands to refpersys
+extern int my_fifo_out_watchid;	/// watcher id for JSONRPC outputs from refpersys
+
+
 
 #define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {                     \
     if (my_debug_wanted) {					\
@@ -63,12 +67,40 @@ extern GIOChannel *my_fifo_out_rchan;	/* channel to write JSONRPC commands to */
 //////@@@@@@@@@@
 // the above line is a sentinel, see Food for thought comment above.
 
+static int
+my_fifo_cmd_writer_cb (GIOChannel *src, GIOCondition cond,
+		       gpointer data UNUSED)
+{
+
+  DBGEPRINTF ("%s: my_fifo_cmd_writer_cb start src@%p", my_prog_name, src);
+  g_assert (cond == G_IO_OUT);
+  g_assert (my_fifo_cmd_wfd > 0);
+#warning unimplemented my_fifo_cmd_writer_cb
+  g_error("%s unimplemented my_fifo_cmd_writer_cb for fd#%d",
+	  my_prog_name, my_fifo_cmd_wfd);
+  /// The function should return FALSE if the event source should be removed.
+}				/* end of my_fifo_cmd_writer_cb */
+
+static int
+my_fifo_out_reader_cb (GIOChannel *src, GIOCondition cond,
+		       gpointer data UNUSED)
+{
+
+  DBGEPRINTF ("%s: my_fifo_out_reader_cb start src@%p", my_prog_name, src);
+  g_assert (cond == G_IO_IN);
+  g_assert (my_fifo_out_rfd > 0);
+#warning unimplemented my_fifo_out_reader_cb
+  g_error("%s unimplemented my_fifo_out_reader_cb for fd#%d",
+	  my_prog_name, my_fifo_out_rfd);
+  /// The function should return FALSE if the event source should be removed.
+}				/* end of my_fifo_out_reader_cb */
+
 static void
 my_activate_app (GApplication *app)
 {
   DBGEPRINTF ("my_activate app%p my_fifo_cmd_wfd=%d my_fifo_out_rfd=%d",
 	      app, my_fifo_cmd_wfd, my_fifo_out_rfd);
-  /// should probably register the fifo file descriptors for polling them
+  /// should register the fifo file descriptors for polling them
   if (my_fifo_cmd_wfd > 0)
     {
       my_fifo_cmd_wchan = g_io_channel_unix_new (my_fifo_cmd_wfd);
@@ -80,7 +112,9 @@ my_activate_app (GApplication *app)
 	     my_fifo_cmd_wfd);
 	  abort ();
 	}
-#warning should call g_io_add_watch (my_fifo_cmd_wchan, G_IO_OUT, writercb, data...)
+      my_fifo_cmd_watchid =	//
+	g_io_add_watch (my_fifo_cmd_wchan, G_IO_OUT, my_fifo_cmd_writer_cb,
+			NULL);
     };
   if (my_fifo_out_rfd > 0)
     {
@@ -93,7 +127,9 @@ my_activate_app (GApplication *app)
 	     my_fifo_out_rfd);
 	  abort ();
 	}
-#warning should call g_io_add_watch (my_fifo_out_rchan, G_IO_IN, readercb, data...)
+      my_fifo_out_watchid =	//
+	g_io_add_watch (my_fifo_out_rchan, G_IO_IN, my_fifo_out_reader_cb,
+			NULL);
     };
 #warning incomplete my_activate_app
 }				/* end my_activate */
@@ -251,6 +287,9 @@ int my_fifo_cmd_wfd = -1;	/// fifo file descriptor, commands written by gtk4serv
 int my_fifo_out_rfd = -1;	/// fifo file descriptor, outputs from refpersys read by gtk4serv
 GIOChannel *my_fifo_cmd_wchan;	/* channel to write JSONRPC commands to */
 GIOChannel *my_fifo_out_rchan;	/* channel to write JSONRPC commands to */
+int my_fifo_cmd_watchid;	/// watcher id for JSONRPC commands to refpersys
+int my_fifo_out_watchid;	/// watcher id for JSONRPC outputs from refpersys
+
 /****************
  **                           for Emacs...
  ** Local Variables: ;;
