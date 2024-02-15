@@ -279,6 +279,7 @@ main (int argc, char *argv[])
     };
   my_app = gtk_application_new ("org.refpersys.gtk4serv",
 				G_APPLICATION_DEFAULT_FLAGS);
+  DBGEPRINTF("%s: my_app@%p", my_prog_name, my_app);
   g_application_add_main_option	//
     (G_APPLICATION (my_app),
      /*long_name: */ "version",
