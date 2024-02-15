@@ -200,9 +200,14 @@ my_local_options (GApplication *app, GVariantDict *options,
       DBGEPRINTF ("%s: my_local_options cmdfifo %s", my_prog_name, jrbuf);
       if (access (jrbuf, F_OK))
 	{
+	  DBGEPRINTF ("%s: my_local_options cmdfifo %s inaccessible %m",
+		      my_prog_name, jrbuf);
 	  if (mkfifo (jrbuf, O_CLOEXEC | S_IRUSR | S_IWUSR))
 	    MY_FATAL ("%s: my_local_options failed to mkfifo command %s (%s)",
 		      my_prog_name, jrbuf, strerror (errno));
+	  else
+	    DBGEPRINTF ("%s: my_local_options made cmdfifo %s",
+			my_prog_name, jrbuf);
 	}
       else
 	DBGEPRINTF ("%s: existing cmdfifo %s", my_prog_name, jrbuf);
@@ -224,9 +229,14 @@ my_local_options (GApplication *app, GVariantDict *options,
       DBGEPRINTF ("%s: my_local_options outfifo %s", my_prog_name, jrbuf);
       if (access (jrbuf, F_OK))
 	{
+	  DBGEPRINTF ("%s: my_local_options outfifo %s inaccessible %m",
+		      my_prog_name, jrbuf);
 	  if (mkfifo (jrbuf, O_CLOEXEC | S_IRUSR | S_IWUSR))
 	    MY_FATAL ("%s: my_local_options failed to mkfifo output %s (%s)",
 		      my_prog_name, jrbuf, strerror (errno));
+	  else
+	    DBGEPRINTF ("%s: my_local_options made outfifo %s",
+			my_prog_name, jrbuf);
 	};
       fd = open (jrbuf, O_CLOEXEC | O_RDONLY | O_NONBLOCK);
       if (fd < 0)
