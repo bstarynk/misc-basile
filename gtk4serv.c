@@ -206,7 +206,7 @@ my_local_options (GApplication *app, GVariantDict *options,
 	    MY_FATAL ("%s: my_local_options failed to mkfifo command %s (%s)",
 		      my_prog_name, jrbuf, strerror (errno));
 	  else
-	    DBGEPRINTF ("%s: my_local_options made cmdfifo %s",
+	    DBGEPRINTF ("%s: my_local_options made cmdfifo %s (writable)",
 			my_prog_name, jrbuf);
 	}
       else
@@ -237,7 +237,7 @@ my_local_options (GApplication *app, GVariantDict *options,
 	    MY_FATAL ("%s: my_local_options failed to mkfifo output %s (%s)",
 		      my_prog_name, jrbuf, strerror (errno));
 	  else
-	    DBGEPRINTF ("%s: my_local_options made outfifo %s",
+	    DBGEPRINTF ("%s: my_local_options made outfifo %s readable",
 			my_prog_name, jrbuf);
 	}
       else
@@ -269,6 +269,14 @@ main (int argc, char *argv[])
     my_debug_wanted = true;
   DBGEPRINTF ("%s on %s git %s pid %d argc %d", my_prog_name, my_host_name,
 	      my_git_id, (int) getpid (), argc);
+  if (my_debug_wanted)
+    {
+      fprintf (stderr, "@@%s:%d: running", __FILE__, __LINE__);
+      for (int i = 0; i < argc; i++)
+	fprintf (stderr, " %s", argv[i]);
+      fputc ('\n', stderr);
+      fflush (NULL);
+    };
   my_app = gtk_application_new ("org.refpersys.gtk4serv",
 				G_APPLICATION_DEFAULT_FLAGS);
   g_application_add_main_option	//
