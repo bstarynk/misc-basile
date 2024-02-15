@@ -87,7 +87,7 @@ my_fifo_cmd_writer_cb (GIOChannel *src, GIOCondition cond,
   g_assert (my_fifo_cmd_wfd > 0);
 #warning unimplemented my_fifo_cmd_writer_cb
   MY_FATAL ("%s unimplemented my_fifo_cmd_writer_cb for fd#%d",
-	   my_prog_name, my_fifo_cmd_wfd);
+	    my_prog_name, my_fifo_cmd_wfd);
   /// The function should return FALSE if the event source should be removed.
 }				/* end of my_fifo_cmd_writer_cb */
 
@@ -100,7 +100,7 @@ my_fifo_out_reader_cb (GIOChannel *src, GIOCondition cond,
   g_assert (my_fifo_out_rfd > 0);
 #warning unimplemented my_fifo_out_reader_cb
   MY_FATAL ("%s unimplemented my_fifo_out_reader_cb for fd#%d",
-	   my_prog_name, my_fifo_out_rfd);
+	    my_prog_name, my_fifo_out_rfd);
   /// The function should return FALSE if the event source should be removed.
 }				/* end of my_fifo_out_reader_cb */
 
@@ -192,39 +192,47 @@ my_local_options (GApplication *app, GVariantDict *options,
       char jrbuf[sizeof (my_jsonrpc_prefix) + 16];
       memset (jrbuf, 0, sizeof (jrbuf));
       DBGEPRINTF ("%s: my_local_options jsonrpc %s", my_prog_name, jsonrpc);
-      /// open or create the $JSONRPC.cmd fifo for refpersys commands, it will be written by gtk4serv
+      /// open or create the $JSONRPC.cmd fifo for refpersys commands,
+      /// ... it will be written by gtk4serv
       strncpy (my_jsonrpc_prefix, jsonrpc, sizeof (my_jsonrpc_prefix) - 1);
       snprintf (jrbuf, sizeof (jrbuf), "%s.cmd", jsonrpc);
       errno = 0;
       DBGEPRINTF ("%s: my_local_options cmdfifo %s", my_prog_name, jrbuf);
+      if (access (jrbuf, F_OK))
+	{
+	  if (mkfifo (jrbuf, O_CLOEXEC | S_IRUSR | S_IWUSR))
+	    MY_FATAL ("%s: my_local_options failed to mkfifo command %s (%s)",
+		      my_prog_name, jrbuf, strerror (errno));
+	}
+      else
+	DBGEPRINTF ("%s: existing cmdfifo %s", my_prog_name, jrbuf);
       fd = open (jrbuf, O_CLOEXEC | O_WRONLY | O_NONBLOCK);
       if (fd < 0)
 	{
-	  fd = mkfifo (jrbuf, O_CLOEXEC | O_WRONLY | S_IRUSR | S_IWUSR);
-	};
-      if (fd < 0)
-	{
-	  g_error
-	    ("failed to get JSONRPC command fifo %s written by gtk4serv to refpersys (%s)",
-	     jrbuf, strerror (errno));
+	  MY_FATAL ("%s: failed to open JSONRPC command fifo %s"
+		    " written by gtk4serv to refpersys (%s)",
+		    my_prog_name, jrbuf, strerror (errno));
 	  return -1;		// not reached
 	};
       my_fifo_cmd_wfd = fd;
-      DBGEPRINTF ("my_local_options my_fifo_cmd_wfd=%d", my_fifo_cmd_wfd);
-      /// open or create the $JSONRPC.out fifo for refpersys outputs, it will be read by gtk4serv
+      DBGEPRINTF ("my_local_options my_fifo_cmd_wfd=%d %s",
+		  my_fifo_cmd_wfd, jrbuf);
+      /// open or create the $JSONRPC.out fifo for refpersys outputs,
+      /// ... it will be read by gtk4serv
       snprintf (jrbuf, sizeof (jrbuf), "%s.out", jsonrpc);
       errno = 0;
       DBGEPRINTF ("%s: my_local_options outfifo %s", my_prog_name, jrbuf);
+      if (access (jrbuf, F_OK))
+	{
+	  if (mkfifo (jrbuf, O_CLOEXEC | S_IRUSR | S_IWUSR))
+	    MY_FATAL ("%s: my_local_options failed to mkfifo output %s (%s)",
+		      my_prog_name, jrbuf, strerror (errno));
+	};
       fd = open (jrbuf, O_CLOEXEC | O_RDONLY | O_NONBLOCK);
       if (fd < 0)
 	{
-	  fd = mkfifo (jrbuf, O_CLOEXEC | O_RDONLY | S_IRUSR | S_IWUSR);
-	};
-      if (fd < 0)
-	{
-	  g_error
-	    ("failed to get JSONRPC output fifo %s read by gtk4serv from refpersys (%s)",
-	     jrbuf, strerror (errno));
+	  MY_FATAL ("failed to open JSONRPC output fifo %s read by gtk4serv"
+		    " from refpersys (%s)", jrbuf, strerror (errno));
 	  return -1;		// not reached
 	};
       my_fifo_out_rfd = fd;
