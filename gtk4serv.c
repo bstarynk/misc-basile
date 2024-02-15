@@ -54,11 +54,22 @@ extern int my_fifo_out_watchid;	/// watcher id for JSONRPC outputs from refpersy
 
 #define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {                     \
     if (my_debug_wanted) {					\
-      fprintf(stderr, "@¤%s:%d:", (Fil), (Lin));                \
+      fprintf(stderr, "@¤%s:%d: ", (Fil), (Lin));               \
       fprintf(stderr, Fmt, ##__VA_ARGS__);                      \
       fputc('\n', stderr); fflush(stderr); }} while(false)
 
 #define DBGEPRINTF(Fmt,...) DBGEPRINTF_AT(__FILE__,__LINE__,\
+  (Fmt), ##__VA_ARGS__)
+
+
+#define MY_FATAL_AT(Fil,Lin,Fmt,...) do {	\
+    char wbuf[64];				\
+    snprintf(wbuf, sizeof(wbuf), "%s:%d",	\
+	     (Fil), (Lin));			\
+    g_error("%s: " # Fmt, wbuf, ##__VA_ARGS__);	\
+    abort(); } while(false)
+
+#define MY_FATAL(Fmt,...) MY_FATAL_AT(__FILE__,__LINE__,\
   (Fmt), ##__VA_ARGS__)
 
 
@@ -71,13 +82,12 @@ static int
 my_fifo_cmd_writer_cb (GIOChannel *src, GIOCondition cond,
 		       gpointer data UNUSED)
 {
-
   DBGEPRINTF ("%s: my_fifo_cmd_writer_cb start src@%p", my_prog_name, src);
   g_assert (cond == G_IO_OUT);
   g_assert (my_fifo_cmd_wfd > 0);
 #warning unimplemented my_fifo_cmd_writer_cb
-  g_error("%s unimplemented my_fifo_cmd_writer_cb for fd#%d",
-	  my_prog_name, my_fifo_cmd_wfd);
+  MY_FATAL ("%s unimplemented my_fifo_cmd_writer_cb for fd#%d",
+	   my_prog_name, my_fifo_cmd_wfd);
   /// The function should return FALSE if the event source should be removed.
 }				/* end of my_fifo_cmd_writer_cb */
 
@@ -85,13 +95,12 @@ static int
 my_fifo_out_reader_cb (GIOChannel *src, GIOCondition cond,
 		       gpointer data UNUSED)
 {
-
   DBGEPRINTF ("%s: my_fifo_out_reader_cb start src@%p", my_prog_name, src);
   g_assert (cond == G_IO_IN);
   g_assert (my_fifo_out_rfd > 0);
 #warning unimplemented my_fifo_out_reader_cb
-  g_error("%s unimplemented my_fifo_out_reader_cb for fd#%d",
-	  my_prog_name, my_fifo_out_rfd);
+  MY_FATAL ("%s unimplemented my_fifo_out_reader_cb for fd#%d",
+	   my_prog_name, my_fifo_out_rfd);
   /// The function should return FALSE if the event source should be removed.
 }				/* end of my_fifo_out_reader_cb */
 
@@ -187,7 +196,8 @@ my_local_options (GApplication *app, GVariantDict *options,
       strncpy (my_jsonrpc_prefix, jsonrpc, sizeof (my_jsonrpc_prefix) - 1);
       snprintf (jrbuf, sizeof (jrbuf), "%s.cmd", jsonrpc);
       errno = 0;
-      fd = open (jrbuf, O_CLOEXEC | O_WRONLY);
+      DBGEPRINTF ("%s: my_local_options cmdfifo %s", my_prog_name, jrbuf);
+      fd = open (jrbuf, O_CLOEXEC | O_WRONLY | O_NONBLOCK);
       if (fd < 0)
 	{
 	  fd = mkfifo (jrbuf, O_CLOEXEC | O_WRONLY | S_IRUSR | S_IWUSR);
@@ -195,15 +205,17 @@ my_local_options (GApplication *app, GVariantDict *options,
       if (fd < 0)
 	{
 	  g_error
-	    ("failed to get JSONRPC command fifo %s writtenby gtk4serv to refpersys",
-	     jrbuf);
+	    ("failed to get JSONRPC command fifo %s written by gtk4serv to refpersys (%s)",
+	     jrbuf, strerror (errno));
 	  return -1;		// not reached
 	};
       my_fifo_cmd_wfd = fd;
+      DBGEPRINTF ("my_local_options my_fifo_cmd_wfd=%d", my_fifo_cmd_wfd);
       /// open or create the $JSONRPC.out fifo for refpersys outputs, it will be read by gtk4serv
       snprintf (jrbuf, sizeof (jrbuf), "%s.out", jsonrpc);
       errno = 0;
-      fd = open (jrbuf, O_CLOEXEC | O_RDONLY);
+      DBGEPRINTF ("%s: my_local_options outfifo %s", my_prog_name, jrbuf);
+      fd = open (jrbuf, O_CLOEXEC | O_RDONLY | O_NONBLOCK);
       if (fd < 0)
 	{
 	  fd = mkfifo (jrbuf, O_CLOEXEC | O_RDONLY | S_IRUSR | S_IWUSR);
@@ -211,13 +223,15 @@ my_local_options (GApplication *app, GVariantDict *options,
       if (fd < 0)
 	{
 	  g_error
-	    ("failed to get JSONRPC output fifo %s read by gtk4serv from refpersys",
-	     jrbuf);
+	    ("failed to get JSONRPC output fifo %s read by gtk4serv from refpersys (%s)",
+	     jrbuf, strerror (errno));
 	  return -1;		// not reached
 	};
       my_fifo_out_rfd = fd;
+      DBGEPRINTF ("my_local_options my_fifo_out_rfd=%d", my_fifo_out_rfd);
       return 0;
     }
+  DBGEPRINTF ("%s: my_local_options fail", my_prog_name);
   return -1;
 }				// end of my_local_options
 
@@ -270,6 +284,8 @@ main (int argc, char *argv[])
 		    G_CALLBACK (my_command_line), NULL);
   g_signal_connect (my_app, "handle-local-options",
 		    G_CALLBACK (my_local_options), NULL);
+  DBGEPRINTF ("before g_application_run with app@%p git %s", my_app,
+	      my_git_id);
   status = g_application_run (G_APPLICATION (my_app), argc, argv);
   DBGEPRINTF ("ending main with app@%p git %s", my_app, my_git_id);
   g_object_unref (my_app);
