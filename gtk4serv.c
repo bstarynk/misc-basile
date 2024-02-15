@@ -41,6 +41,7 @@ extern char *my_prog_name;
 extern const char my_git_id[];
 extern char my_host_name[64];
 extern char my_jsonrpc_prefix[128];
+#define MY_FIFO_LEN  (sizeof(my_jsonrpc_prefix)+16)
 extern gboolean my_debug_wanted;
 extern GtkApplication *my_app;
 extern int my_fifo_cmd_wfd;	/// fifo file descriptor, commands written by gtk4serv
@@ -171,6 +172,59 @@ my_print_version (void)
 	  my_prog_name, my_git_id, __DATE__ "@" __TIME__);
 }				/* end my_print_version */
 
+static void
+my_fifo_creation (const char *jsonrpc, char cmdjrbuf[static MY_FIFO_LEN],
+		  char outjrbuf[static MY_FIFO_LEN])
+{
+  g_assert (jsonrpc);
+  g_assert (cmdjrbuf);
+  g_assert (outjrbuf);
+  memset (cmdjrbuf, 0, MY_FIFO_LEN);
+  memset (outjrbuf, 0, MY_FIFO_LEN);
+  DBGEPRINTF ("%s: my_fifo_creation jsonrpc %s", my_prog_name,
+	      my_jsonrpc_prefix);
+  /// open or create the $JSONRPC.cmd fifo for refpersys commands,
+  /// ... it will be written by gtk4serv
+  snprintf (cmdjrbuf, MY_FIFO_LEN, "%s.cmd", my_jsonrpc_prefix);
+  errno = 0;
+  DBGEPRINTF ("%s: my_fifo_creation cmdfifo %s", my_prog_name, cmdjrbuf);
+  if (access (cmdjrbuf, F_OK | W_OK))
+    {
+      DBGEPRINTF ("%s: my_fifo_creation cmdfifo %s inaccessible %m",
+		  my_prog_name, cmdjrbuf);
+      if (mkfifo (cmdjrbuf, O_CLOEXEC | S_IRUSR | S_IWUSR))
+	MY_FATAL ("%s: my_fifo_creation failed to mkfifo command %s (%s)",
+		  my_prog_name, cmdjrbuf, strerror (errno));
+      else
+	DBGEPRINTF ("%s: my_fifo_creation made cmdfifo %s (writable)",
+		    my_prog_name, cmdjrbuf);
+    }
+  else
+    DBGEPRINTF ("%s: existing cmdfifo writable %s", my_prog_name, cmdjrbuf);
+  memset (outjrbuf, 0, MY_FIFO_LEN);
+  /// open or create the $JSONRPC.out fifo for refpersys outputs,
+  /// ... it will be read by gtk4serv
+  snprintf (outjrbuf, MY_FIFO_LEN, "%s.out", my_jsonrpc_prefix);
+  errno = 0;
+  DBGEPRINTF ("%s: my_fifo_creation outfifo %s", my_prog_name, outjrbuf);
+  if (access (outjrbuf, F_OK | R_OK))
+    {
+      DBGEPRINTF ("%s: my_fifo_creation outfifo %s inaccessible %m",
+		  my_prog_name, outjrbuf);
+      if (mkfifo (outjrbuf, O_CLOEXEC | S_IRUSR | S_IWUSR))
+	MY_FATAL ("%s: my_fifo_creation failed to mkfifo output %s (%s)",
+		  my_prog_name, outjrbuf, strerror (errno));
+      else
+	DBGEPRINTF ("%s: my_fifo_creation made outfifo %s readable",
+		    my_prog_name, outjrbuf);
+    }
+  else
+    DBGEPRINTF ("%s:  my_fifo_creation outfifo %s exists readable",
+		my_prog_name, outjrbuf);
+}				/* end my_fifo_creation */
+
+
+
 static int
 my_local_options (GApplication *app, GVariantDict *options,
 		  gpointer data UNUSED)
@@ -189,65 +243,32 @@ my_local_options (GApplication *app, GVariantDict *options,
   if (g_variant_dict_lookup (options, "jsonrpc", "s", &jsonrpc))
     {
       int fd = -1;
-      char jrbuf[sizeof (my_jsonrpc_prefix) + 16];
-      memset (jrbuf, 0, sizeof (jrbuf));
+      char cmdjrbuf[MY_FIFO_LEN];
+      char outjrbuf[MY_FIFO_LEN];
+      memset (cmdjrbuf, 0, sizeof (cmdjrbuf));
+      memset (outjrbuf, 0, sizeof (outjrbuf));
       DBGEPRINTF ("%s: my_local_options jsonrpc %s", my_prog_name, jsonrpc);
-      /// open or create the $JSONRPC.cmd fifo for refpersys commands,
-      /// ... it will be written by gtk4serv
       strncpy (my_jsonrpc_prefix, jsonrpc, sizeof (my_jsonrpc_prefix) - 1);
-      snprintf (jrbuf, sizeof (jrbuf), "%s.cmd", jsonrpc);
-      errno = 0;
-      DBGEPRINTF ("%s: my_local_options cmdfifo %s", my_prog_name, jrbuf);
-      if (access (jrbuf, F_OK | W_OK))
-	{
-	  DBGEPRINTF ("%s: my_local_options cmdfifo %s inaccessible %m",
-		      my_prog_name, jrbuf);
-	  if (mkfifo (jrbuf, O_CLOEXEC | S_IRUSR | S_IWUSR))
-	    MY_FATAL ("%s: my_local_options failed to mkfifo command %s (%s)",
-		      my_prog_name, jrbuf, strerror (errno));
-	  else
-	    DBGEPRINTF ("%s: my_local_options made cmdfifo %s (writable)",
-			my_prog_name, jrbuf);
-	}
-      else
-	DBGEPRINTF ("%s: existing cmdfifo writable %s", my_prog_name, jrbuf);
-      fd = open (jrbuf, O_CLOEXEC | O_WRONLY | O_NONBLOCK);
+      my_fifo_creation (my_jsonrpc_prefix, cmdjrbuf, outjrbuf);
+      DBGEPRINTF ("%s: my_local_options cmdjrbuf %s, outjrbuf %s",
+		  my_prog_name, cmdjrbuf, outjrbuf);
+      fd = open (cmdjrbuf, O_CLOEXEC | O_WRONLY | O_NONBLOCK);
       if (fd < 0)
 	{
 	  MY_FATAL ("%s: failed to open JSONRPC command fifo %s"
 		    " written by gtk4serv to refpersys (%s)",
-		    my_prog_name, jrbuf, strerror (errno));
+		    my_prog_name, cmdjrbuf, strerror (errno));
 	  return -1;		// not reached
 	};
       my_fifo_cmd_wfd = fd;
       DBGEPRINTF ("my_local_options my_fifo_cmd_wfd=%d %s",
-		  my_fifo_cmd_wfd, jrbuf);
+		  my_fifo_cmd_wfd, cmdjrbuf);
       ////////////////
-      memset (jrbuf, 0, sizeof (jrbuf));
-      /// open or create the $JSONRPC.out fifo for refpersys outputs,
-      /// ... it will be read by gtk4serv
-      snprintf (jrbuf, sizeof (jrbuf), "%s.out", jsonrpc);
-      errno = 0;
-      DBGEPRINTF ("%s: my_local_options outfifo %s", my_prog_name, jrbuf);
-      if (access (jrbuf, F_OK | R_OK))
-	{
-	  DBGEPRINTF ("%s: my_local_options outfifo %s inaccessible %m",
-		      my_prog_name, jrbuf);
-	  if (mkfifo (jrbuf, O_CLOEXEC | S_IRUSR | S_IWUSR))
-	    MY_FATAL ("%s: my_local_options failed to mkfifo output %s (%s)",
-		      my_prog_name, jrbuf, strerror (errno));
-	  else
-	    DBGEPRINTF ("%s: my_local_options made outfifo %s readable",
-			my_prog_name, jrbuf);
-	}
-      else
-	DBGEPRINTF ("%s:  my_local_options outfifo %s exists readable",
-		    my_prog_name, jrbuf);
-      fd = open (jrbuf, O_CLOEXEC | O_RDONLY | O_NONBLOCK);
+      fd = open (outjrbuf, O_CLOEXEC | O_RDONLY | O_NONBLOCK);
       if (fd < 0)
 	{
 	  MY_FATAL ("failed to open JSONRPC output fifo %s read by gtk4serv"
-		    " from refpersys (%s)", jrbuf, strerror (errno));
+		    " from refpersys (%s)", outjrbuf, strerror (errno));
 	  return -1;		// not reached
 	};
       my_fifo_out_rfd = fd;
@@ -279,7 +300,7 @@ main (int argc, char *argv[])
     };
   my_app = gtk_application_new ("org.refpersys.gtk4serv",
 				G_APPLICATION_DEFAULT_FLAGS);
-  DBGEPRINTF("%s: my_app@%p", my_prog_name, my_app);
+  DBGEPRINTF ("%s: my_app@%p", my_prog_name, my_app);
   g_application_add_main_option	//
     (G_APPLICATION (my_app),
      /*long_name: */ "version",
