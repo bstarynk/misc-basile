@@ -250,8 +250,8 @@ my_local_options (GApplication *app, GVariantDict *options,
       DBGEPRINTF ("%s: my_local_options jsonrpc %s", my_prog_name, jsonrpc);
       strncpy (my_jsonrpc_prefix, jsonrpc, sizeof (my_jsonrpc_prefix) - 1);
       my_fifo_creation (my_jsonrpc_prefix, cmdjrbuf, outjrbuf);
-      DBGEPRINTF ("%s: my_local_options cmdjrbuf %s, outjrbuf %s",
-		  my_prog_name, cmdjrbuf, outjrbuf);
+      DBGEPRINTF ("%s: my_local_options jsonprefix %s cmdjrbuf %s, outjrbuf %s",
+		  my_prog_name, my_jsonrpc_prefix, cmdjrbuf, outjrbuf);
       fd = open (cmdjrbuf, O_CLOEXEC | O_WRONLY | O_NONBLOCK);
       if (fd < 0)
 	{
