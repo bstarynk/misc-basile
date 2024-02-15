@@ -198,7 +198,7 @@ my_local_options (GApplication *app, GVariantDict *options,
       snprintf (jrbuf, sizeof (jrbuf), "%s.cmd", jsonrpc);
       errno = 0;
       DBGEPRINTF ("%s: my_local_options cmdfifo %s", my_prog_name, jrbuf);
-      if (access (jrbuf, F_OK))
+      if (access (jrbuf, F_OK | W_OK))
 	{
 	  DBGEPRINTF ("%s: my_local_options cmdfifo %s inaccessible %m",
 		      my_prog_name, jrbuf);
@@ -210,7 +210,7 @@ my_local_options (GApplication *app, GVariantDict *options,
 			my_prog_name, jrbuf);
 	}
       else
-	DBGEPRINTF ("%s: existing cmdfifo %s", my_prog_name, jrbuf);
+	DBGEPRINTF ("%s: existing cmdfifo writable %s", my_prog_name, jrbuf);
       fd = open (jrbuf, O_CLOEXEC | O_WRONLY | O_NONBLOCK);
       if (fd < 0)
 	{
@@ -222,12 +222,14 @@ my_local_options (GApplication *app, GVariantDict *options,
       my_fifo_cmd_wfd = fd;
       DBGEPRINTF ("my_local_options my_fifo_cmd_wfd=%d %s",
 		  my_fifo_cmd_wfd, jrbuf);
+      ////////////////
+      memset (jrbuf, 0, sizeof (jrbuf));
       /// open or create the $JSONRPC.out fifo for refpersys outputs,
       /// ... it will be read by gtk4serv
       snprintf (jrbuf, sizeof (jrbuf), "%s.out", jsonrpc);
       errno = 0;
       DBGEPRINTF ("%s: my_local_options outfifo %s", my_prog_name, jrbuf);
-      if (access (jrbuf, F_OK))
+      if (access (jrbuf, F_OK | R_OK))
 	{
 	  DBGEPRINTF ("%s: my_local_options outfifo %s inaccessible %m",
 		      my_prog_name, jrbuf);
@@ -237,7 +239,10 @@ my_local_options (GApplication *app, GVariantDict *options,
 	  else
 	    DBGEPRINTF ("%s: my_local_options made outfifo %s",
 			my_prog_name, jrbuf);
-	};
+	}
+      else
+	DBGEPRINTF ("%s:  my_local_options outfifo %s exists readable",
+		    my_prog_name, jrbuf);
       fd = open (jrbuf, O_CLOEXEC | O_RDONLY | O_NONBLOCK);
       if (fd < 0)
 	{
