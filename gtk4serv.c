@@ -50,7 +50,7 @@ extern GIOChannel *my_fifo_cmd_wchan;	/* channel to write JSONRPC commands to re
 extern GIOChannel *my_fifo_out_rchan;	/* channel to read JSONRPC outputs from refpersys */
 extern int my_fifo_cmd_watchid;	/// watcher id for JSONRPC commands to refpersys
 extern int my_fifo_out_watchid;	/// watcher id for JSONRPC outputs from refpersys
-
+extern GtkBuilder* my_builder;
 
 
 #define DBGEPRINTF_AT(Fil,Lin,Fmt,...) do {                     \
@@ -239,6 +239,13 @@ my_local_options (GApplication *app, GVariantDict *options,
       return 0;
     }
 
+  char* builderpath = NULL;
+  if (g_variant_dict_lookup(options, "builder", "s", &builderpath))
+    {
+      DBGEPRINTF("%s: my_local_options builder %s", my_prog_name, builderpath);
+      my_builder = gtk_builder_new_from_file(builderpath);
+    }
+  
   char *jsonrpc = NULL;
   if (g_variant_dict_lookup (options, "jsonrpc", "s", &jsonrpc))
     {
@@ -374,6 +381,7 @@ GIOChannel *my_fifo_cmd_wchan;	/* channel to write JSONRPC commands to */
 GIOChannel *my_fifo_out_rchan;	/* channel to write JSONRPC commands to */
 int my_fifo_cmd_watchid;	/// watcher id for JSONRPC commands to refpersys
 int my_fifo_out_watchid;	/// watcher id for JSONRPC outputs from refpersys
+GtkBuilder* my_builder;
 
 /****************
  **                           for Emacs...
