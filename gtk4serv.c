@@ -250,20 +250,27 @@ my_local_options (GApplication *app, GVariantDict *options,
       DBGEPRINTF ("%s: my_local_options jsonrpc %s", my_prog_name, jsonrpc);
       strncpy (my_jsonrpc_prefix, jsonrpc, sizeof (my_jsonrpc_prefix) - 1);
       my_fifo_creation (my_jsonrpc_prefix, cmdjrbuf, outjrbuf);
-      DBGEPRINTF ("%s: my_local_options jsonprefix %s cmdjrbuf %s, outjrbuf %s",
-		  my_prog_name, my_jsonrpc_prefix, cmdjrbuf, outjrbuf);
+      DBGEPRINTF
+	("%s: my_local_options jsonprefix %s created cmdjrbuf %s, outjrbuf %s",
+	 my_prog_name, my_jsonrpc_prefix, cmdjrbuf, outjrbuf);
+      DBGEPRINTF
+	("%s: my_local_options opening cmdjrbuf %s O_CLOEXEC O_WRONLY O_NONBLOCK",
+	 my_prog_name, cmdjrbuf);
       fd = open (cmdjrbuf, O_CLOEXEC | O_WRONLY | O_NONBLOCK);
       if (fd < 0)
 	{
-	  MY_FATAL ("%s: failed to open JSONRPC command fifo %s"
-		    " written by gtk4serv to refpersys (%s)",
-		    my_prog_name, cmdjrbuf, strerror (errno));
+	  MY_FATAL
+	    ("%s: failed to open JSONRPC command fifo %s written to refpersys (%s)",
+	     my_prog_name, cmdjrbuf, strerror (errno));
 	  return -1;		// not reached
 	};
       my_fifo_cmd_wfd = fd;
       DBGEPRINTF ("my_local_options my_fifo_cmd_wfd=%d %s",
 		  my_fifo_cmd_wfd, cmdjrbuf);
       ////////////////
+      DBGEPRINTF
+	("%s: my_local_options opening outjrbuf %s O_CLOEXEC O_RDONLY O_NONBLOCK",
+	 my_prog_name, outjrbuf);
       fd = open (outjrbuf, O_CLOEXEC | O_RDONLY | O_NONBLOCK);
       if (fd < 0)
 	{
@@ -272,7 +279,8 @@ my_local_options (GApplication *app, GVariantDict *options,
 	  return -1;		// not reached
 	};
       my_fifo_out_rfd = fd;
-      DBGEPRINTF ("my_local_options my_fifo_out_rfd=%d", my_fifo_out_rfd);
+      DBGEPRINTF ("my_local_options my_fifo_out_rfd=%d %s", my_fifo_out_rfd,
+		  outjrbuf);
       return 0;
     }
   DBGEPRINTF ("%s: my_local_options fail", my_prog_name);
@@ -323,6 +331,14 @@ main (int argc, char *argv[])
      "\t$FIFONAME.out is written by refpersys and read by this gtk4serv program\n"
      "\t... see file utilities_rps.cc of RefPerSys",
      /*arg_description: */ "FIFONAME");
+  g_application_add_main_option	//
+    (G_APPLICATION (my_app),
+     /*long_name: */ "builder",
+     /*short_name: */ (char) 'B',
+     /*flag: */ G_OPTION_FLAG_NONE,
+     /*arg: */ G_OPTION_ARG_FILENAME,
+     /*description: */ "use the given $BUILDERFILE for GtkBuilder",
+     /*arg_description: */ "BUILDERFILE");
   g_application_add_main_option	//
     (G_APPLICATION (my_app),
      /*long_name: */ "debug",
