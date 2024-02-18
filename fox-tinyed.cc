@@ -1,12 +1,26 @@
 // file misc-basile/fox-tinyed.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
-//  © Copyright 2022 - 2023 Basile Starynkevitch (&Jeroen van der Zijp)
+//  © Copyright 2022 - 2024 Basile Starynkevitch (&Jeroen van der Zijp)
 //  some code taken from fox-toolkit.org Adie
 #include <fstream>
 #include <iostream>
 /// fox-toolkit.org
 #include <fx.h>
+#include <unistd.h>
 
+extern "C" bool tiny_debug;
+extern "C" char tiny_hostname[80];
+extern "C" const char tiny_buildtimestamp[];
+
+const char tiny_buildtimestamp[]=__DATE__ "@" __TIME__;
+
+#define TINY_DGBOUT_AT(Fil,Lin,Out) do {	\
+  if (tiny_debug)				\
+    std::clog << Fil << ":" << Lin << ": "	\
+              << Out << std::endl;		\
+} while(0)
+
+#define TINY_DBGOUT(Out)  TINY_DGBOUT_AT(__FILE__, __LINE__, Out)
 
 // Editor main window
 class TinyTextWindow : public FXMainWindow
@@ -24,6 +38,7 @@ public:
     TinyTextWindow(FXApp *theapp);
     virtual ~TinyTextWindow();
     virtual void create();
+    virtual void layout();
     void output (std::ostream&out) const;
 };				// end TinyTextWindow
 
@@ -71,6 +86,12 @@ TinyTextWindow::create()
     show(PLACEMENT_SCREEN);
 } // end TinyTextWindow::create()
 
+void
+TinyTextWindow::layout()
+{
+    FXMainWindow::layout();
+} // end TinyTextWindow::layout
+
 TinyTextWindow::TinyTextWindow(FXApp* theapp)
     : FXMainWindow(theapp, /*name:*/"tiny-text-fox",
                    /*closedicon:*/nullptr, /*mainicon:*/nullptr,
@@ -102,9 +123,17 @@ TinyTextWindow::~TinyTextWindow()
     //WRONG: delete editor;
 }; // end TinyTextWindow::~TinyTextWindow
 
+bool tiny_debug;
+char tiny_hostname[80];
 int
 main(int argc, char*argv[])
 {
+    gethostname(tiny_hostname, sizeof(tiny_hostname));
+    if (argc>1 && (!strcmp(argv[1], "--debug") || !strcmp(argv[1], "-D")))
+        tiny_debug = true;
+    TINY_DBGOUT("start of " << argv[0] << " git " << GIT_ID
+                << " pid " << (int)getpid() << " on " << tiny_hostname
+                << " built " << tiny_buildtimestamp);
     FXApp the_app("fox-tinyed","FOX tinyed (Basile Starynkevitch)");
     the_app.init(argc, argv);
     the_app.create();
@@ -113,8 +142,7 @@ main(int argc, char*argv[])
     mywin->layout();
     mywin->show();
     mywin->enable();
-    std::cout << __FILE__ ":" << __LINE__ << " "
-              << "mywin:" << mywin << std::endl;
+    TINY_DBGOUT("mywin:" << mywin);
     return the_app.run();
 } // end main
 
