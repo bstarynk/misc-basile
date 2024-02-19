@@ -846,6 +846,7 @@ MyEditor::escape_key_binding(int key, Fl_Text_Editor*editor)
 void
 MyEditor::initialize()
 {
+  DBGOUT("MyEditor::initialize this@" << (void*)this);
   assert (myed_txtbuff);
   assert (stybuff);
   highlight_data(stybuff, style_table,
@@ -971,23 +972,23 @@ void
 do_style_demo(MyEditor*med)
 {
   assert (med != nullptr);
+  DBGOUT("do_style_demo start med@" << (void*)med);
   assert (med->myed_txtbuff != nullptr);
   assert (med ->stybuff != nullptr);
-  \
-#define DEMO_STYLE(S) do {			\
-    int sl = strlen(#S);			\
-    char sbuf[sizeof(#S)+1];			\
-    memset(sbuf, 0, sizeof(sbuf));		\
+#define DEMO_STYLE(S) do {				\
+    int sl = strlen(#S);				\
+    char sbuf[sizeof(#S)+1];				\
+    memset(sbuf, 0, sizeof(sbuf));			\
     med->myed_txtbuff->append(#S);			\
-    for (int i=0; i<sl; i++)			\
-      sbuf[i] = 'A'+(int)MyEditor::S;		\
+    for (int i=0; i<sl; i++)				\
+      sbuf[i] = 'A'+(int)MyEditor::S;			\
   med->myed_txtbuff->append("\n");			\
-  med->stybuff->append(sbuf);			\
-  med->stybuff->append("A");			\
-  DBGPRINTF("DEMO_STYLE " # S			\
+  med->stybuff->append(sbuf);				\
+  med->stybuff->append("A");				\
+  DBGPRINTF("DEMO_STYLE " # S				\
 	    " myed_txtbuff.len %d stybuff.len %d",	\
 	    med->myed_txtbuff->length(),		\
-	    med->stybuff->length());		\
+	    med->stybuff->length());			\
   } while(0);
   /* starting demo styles */
   DEMO_STYLE(Style_Plain);
