@@ -241,7 +241,7 @@ my_local_options (GApplication *app, GVariantDict *options,
 
   char *builderpath = NULL;
   DBGEPRINTF ("%s: my_local_options testing for builder", my_prog_name);
-  if (g_variant_dict_lookup (options, "builder", "s", &builderpath))
+  if (g_variant_dict_lookup (options, "builder", "&s", &builderpath))
     {
       DBGEPRINTF ("%s: my_local_options builder %s", my_prog_name,
 		  builderpath);
