@@ -10,9 +10,10 @@ VALGRIND=/usr/bin/valgrind
 CC=/usr/bin/gcc
 CXX=/usr/bin/g++
 ASTYLE=/usr/bin/astyle
+ASTYLEFLAGS= --style=gnu -s2
 RM=/bin/rm -vf
 GENG_CC ?= $(CC)
-GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
+export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 GTK4SERV_PACKAGES= gtk4 glib-2.0 gobject-2.0 gio-2.0
 
@@ -20,7 +21,7 @@ GTK4SERV_PACKAGES= gtk4 glib-2.0 gobject-2.0 gio-2.0
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl half bwc gtksrc-browser sync-periodically logged-compile  logged-gcc filipe-shell browserfox onionrefpersys gtk4serv
+all: manydl half bwc gtksrc-browser sync-periodically logged-compile  logged-gcc filipe-shell browserfox onionrefpersys gtk4serv fox-tinyed
 
 
 clean:
@@ -46,7 +47,8 @@ _genf%.so: _genf%.c
 
 indent:
 	for f in $(wildcard *.c) ; do $(INDENT) --gnu-style $$f ; done
-	for f in $(wildcard *.cc) ; do $(ASTYLE) --style=gnu $$f ; done
+	for f in $(wildcard *.cc) ; do $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
+	for f in $(wildcard *.hh) ; do $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
 
 manydl: manydl.c
 	$(CC) $(CFLAGS) -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -lm -ldl -o $@
@@ -95,6 +97,9 @@ onionrefpersys: onionrefpersys.c  GNUmakefile
 
 gtksrc-browser: gtksrc-browser.c build-gtksrc-browser.sh  |GNUmakefile
 	./build-gtksrc-browser.sh
+
+fox-tinyed: fox-tinyed.cc tinyed-build.sh |GNUmakefile
+	./tinyed-build.sh
 
 gtk4serv: gtk4serv.c  |GNUmakefile
 	$(CC) -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
