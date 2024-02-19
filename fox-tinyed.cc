@@ -137,10 +137,24 @@ TinyTextWindow::layout()
 {
   TINY_DBGOUT("TinyTextWindow::layout #" << winrank);
   FXMainWindow::layout();
-  if (editorframe)
+  if (editorframe) {
     editorframe->layout();
-  if (editor)
+    TINY_DBGOUT("TinyTextWindow#" << winrank << ":layout editorframe: "
+		<< "(X="<< editorframe->getX()
+		<< ",Y="<< editorframe->getY()
+		<< ",W=" << editorframe->getWidth()
+		<< ",H=" << editorframe->getHeight()
+		<< ")");
+  }
+  if (editor) {
     editor->layout();
+    TINY_DBGOUT("TinyTextWindow#" << winrank << ":layout editor: "
+		<< "(X="<< editor->getX()
+		<< ",Y="<< editor->getY()
+		<< ",W=" << editor->getWidth()
+		<< ",H=" << editor->getHeight()
+		<< ")");
+  };
   TINY_DBGOUT("end TinyTextWindow::layout #" << winrank);
 } // end TinyTextWindow::layout
 
