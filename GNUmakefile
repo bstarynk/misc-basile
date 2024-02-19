@@ -26,6 +26,7 @@ all: manydl half bwc gtksrc-browser sync-periodically logged-compile  logged-gcc
 
 clean:
 	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically filipe-shell
+	$(RM) fltk-mini-edit
 	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
 	$(RM) _genf*.c
 	$(RM) _logged-gcc_*
