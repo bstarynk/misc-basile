@@ -51,7 +51,10 @@ class TinyTextWindow : public FXMainWindow
   int winrank;
 protected:
   TinyTextWindow(): FXMainWindow(), editorframe(nullptr), editor(nullptr),
-    winrank(++wincount) {};
+    winrank(++wincount)
+  {
+    TINY_DBGOUT("TinyTextWindow#" << winrank << " @" << (void*)this);
+  };
 public:
   TinyTextWindow(FXApp *theapp);
   virtual ~TinyTextWindow();
@@ -111,25 +114,34 @@ TinyTextWindow::output(std::ostream&out) const
       << ")";
 } // end TinyTextWindow::output
 
-FXIMPLEMENT(TinyTextWindow,FXMainWindow,nullptr, 0);
+FXDEFMAP(TinyTextWindow) TinyTextWindowMap[]=
+{
+};
+
+FXIMPLEMENT(TinyTextWindow,FXMainWindow,
+	    TinyTextWindowMap, ARRAYNUMBER(TinyTextWindowMap));
 
 void
 TinyTextWindow::create()
 {
+  TINY_DBGOUT("TinyTextWindow::create #" << winrank);
   FXMainWindow::create();
   editorframe->create();
   editor->create();
   show(PLACEMENT_SCREEN);
+  TINY_DBGOUT("end TinyTextWindow::create #" << winrank);
 } // end TinyTextWindow::create()
 
 void
 TinyTextWindow::layout()
 {
+  TINY_DBGOUT("TinyTextWindow::layout #" << winrank);
   FXMainWindow::layout();
   if (editorframe)
     editorframe->layout();
   if (editor)
     editor->layout();
+  TINY_DBGOUT("end TinyTextWindow::layout #" << winrank);
 } // end TinyTextWindow::layout
 
 TinyTextWindow::TinyTextWindow(FXApp* theapp)
@@ -140,6 +152,7 @@ TinyTextWindow::TinyTextWindow(FXApp* theapp)
     editorframe(nullptr), editor(nullptr),
     winrank (++wincount)
 {
+  TINY_DBGOUT("TinyTextWindow#" << winrank << " @" << (void*)this);
   editorframe = //
     new FXHorizontalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
                           |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
@@ -154,10 +167,12 @@ TinyTextWindow::TinyTextWindow(FXApp* theapp)
                );
   editor->setText("Text in Tiny ");
   editor->insertStyledText(editor->lineEnd(0), "XX", FXText::STYLE_BOLD);
+  TINY_DBGOUT("end TinyTextWindow#" << winrank << " @" << (void*)this);
 }; // end TinyTextWindow::TinyTextWindow
 
 TinyTextWindow::~TinyTextWindow()
 {
+  TINY_DBGOUT(" destroying TinyTextWindow#" << winrank << " @" << (void*)this);
   // don't delete these subwindows, FX will do it....
   //WRONG: delete editorframe;
   //WRONG: delete editor;
