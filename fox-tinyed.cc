@@ -10,6 +10,8 @@
 
 extern "C" bool tiny_debug;
 extern "C" char tiny_hostname[80];
+extern "C" char*tiny_progname;
+
 extern "C" const char tiny_buildtimestamp[];
 
 const char tiny_buildtimestamp[]=__DATE__ "@" __TIME__;
@@ -21,6 +23,22 @@ const char tiny_buildtimestamp[]=__DATE__ "@" __TIME__;
 } while(0)
 
 #define TINY_DBGOUT(Out)  TINY_DGBOUT_AT(__FILE__, __LINE__, Out)
+
+extern "C" void tiny_usage(void);
+extern "C" void tiny_version(void);
+
+// our application
+class TinyApp : public FXApp
+{
+  FXDECLARE(TinyApp);
+public:
+  TinyApp(const char*name, const char*vendor);
+  ~TinyApp();
+private:
+  TinyApp() {}
+  TinyApp(const TinyApp&);
+  TinyApp& operator=(const TinyApp&);
+}; // end of TinyApp
 
 // Editor main window
 class TinyTextWindow : public FXMainWindow
@@ -58,6 +76,24 @@ std::ostream&operator << (std::ostream&out, const TinyTextWindow*ptw)
     out << *ptw << "@" << (void*)ptw;
   return out;
 }
+
+TinyApp::TinyApp(const char*name, const char*vendor)
+  : FXApp(name, vendor)
+{
+  TINY_DBGOUT("TinyApp constructor name:" << name << " vendor:" << vendor
+              << "@" << (void*)this);
+} // end constructor TinyApp::TinyApp
+
+TinyApp::~TinyApp()
+{
+  TINY_DBGOUT("TinyApp destructor @" << (void*)this);
+} // end destructor TinyApp::~TinyApp
+
+FXDEFMAP(TinyApp) TinyAppMap[]=
+{
+};
+FXIMPLEMENT(TinyApp,FXApp,TinyAppMap,ARRAYNUMBER(TinyAppMap))
+
 void
 TinyTextWindow::output(std::ostream&out) const
 {
@@ -90,6 +126,10 @@ void
 TinyTextWindow::layout()
 {
   FXMainWindow::layout();
+  if (editorframe)
+    editorframe->layout();
+  if (editor)
+    editor->layout();
 } // end TinyTextWindow::layout
 
 TinyTextWindow::TinyTextWindow(FXApp* theapp)
@@ -125,24 +165,70 @@ TinyTextWindow::~TinyTextWindow()
 
 bool tiny_debug;
 char tiny_hostname[80];
+char*tiny_progname;
+
+void
+tiny_usage(void)
+{
+  std::cout << tiny_progname << " usage:" << std::endl;
+  std::cout << "\t --version|-V                             #show version"
+            << std::endl;
+  std::cout << "\t --help|-H                                #show this help"
+            << std::endl;
+} // end tiny_usage
+
+void
+tiny_version(void)
+{
+  std::cout << tiny_progname << " version:" << std::endl;
+  std::cout << "git " << GIT_ID << " built " << tiny_buildtimestamp
+            << std::endl;
+  std::cout << "fox-toolkit " << (int)fxversion[0] << '.'
+            << (int)fxversion[1] << '.'
+            << (int)fxversion[2] << std::endl;
+} // end tiny_version
+
 int
 main(int argc, char*argv[])
 {
+  bool showing_usage = false;
+  tiny_progname = argv[0];
   gethostname(tiny_hostname, sizeof(tiny_hostname));
   if (argc>1 && (!strcmp(argv[1], "--debug") || !strcmp(argv[1], "-D")))
     tiny_debug = true;
+  if (argc>1 && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-H")))
+    {
+      tiny_usage();
+      showing_usage = true;
+    };
+  if (argc>1 && (!strcmp(argv[1], "--version") || !strcmp(argv[1], "-V")))
+    {
+      tiny_version();
+      return 0;
+    };
   TINY_DBGOUT("start of " << argv[0] << " git " << GIT_ID
               << " pid " << (int)getpid() << " on " << tiny_hostname
               << " built " << tiny_buildtimestamp);
-  FXApp the_app("fox-tinyed","FOX tinyed (Basile Starynkevitch)");
+  TinyApp the_app("fox-tinyed","FOX tinyed (Basile Starynkevitch)");
   the_app.init(argc, argv);
+  TINY_DBGOUT("application " << &the_app);
   the_app.create();
+  if (showing_usage)
+    {
+      return 0;
+    }
   auto mywin = new TinyTextWindow(&the_app);
   mywin->create();
   mywin->layout();
   mywin->show();
   mywin->enable();
   TINY_DBGOUT("mywin:" << mywin);
+  if (!tiny_debug)
+    {
+      std::cout << argv[0] << " git " GIT_ID
+                << " pid " << (int)getpid() << " on " << tiny_hostname
+                << " built " << tiny_buildtimestamp << std::endl;
+    };
   return the_app.run();
 } // end main
 
