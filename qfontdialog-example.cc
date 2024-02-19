@@ -8,33 +8,33 @@
 class QFontDialogTester : public QWidget
 {
 public:
-    void onFont()
-    {
-        bool ok;
-        QFont font = QFontDialog::getFont(
-                         &ok,
-                         QFont( "Arial", 18 ),
-                         this,
-                         tr("Pick a font") );
-        if( ok )
-            {
-                qDebug() << "font           : " << font;
-                qDebug() << "font weight    : " << font.weight();
-                qDebug() << "font family    : " << font.family();
-                qDebug() << "font style     : " << font.style();
-                //  StyleNormal = 0, StyleItalic = 1, StyleOblique = 2
-                qDebug() << "font pointSize : " << font.pointSize();
-                qDebug() << "font string : " << font.toString();
-            }
-    }
+  void onFont()
+  {
+    bool ok;
+    QFont font = QFontDialog::getFont(
+                   &ok,
+                   QFont( "Arial", 18 ),
+                   this,
+                   tr("Pick a font") );
+    if( ok )
+      {
+        qDebug() << "font           : " << font;
+        qDebug() << "font weight    : " << font.weight();
+        qDebug() << "font family    : " << font.family();
+        qDebug() << "font style     : " << font.style();
+        //  StyleNormal = 0, StyleItalic = 1, StyleOblique = 2
+        qDebug() << "font pointSize : " << font.pointSize();
+        qDebug() << "font string : " << font.toString();
+      }
+  }
 };
 
 int main( int argc, char **argv )
 {
-    QApplication app( argc, argv );
-    QFontDialogTester font_test;
-    font_test.onFont();
-    return 0;
+  QApplication app( argc, argv );
+  QFontDialogTester font_test;
+  font_test.onFont();
+  return 0;
 }
 
 ///

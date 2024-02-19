@@ -59,7 +59,7 @@ char*myprogname;
 const char* argp_program_version = __FILE__ " git " GIT_ID " built " __DATE__;
 
 const char * argp_program_bug_address =
-    "Basile Starynkevitch <basile@starynkevitch.net";
+  "Basile Starynkevitch <basile@starynkevitch.net";
 
 const char* mygcc;
 const char* mygxx;
@@ -76,91 +76,91 @@ int exitcode;
 
 class Do_Output
 {
-    std::function<void(std::ostream&)> _outfun;
+  std::function<void(std::ostream&)> _outfun;
 public:
-    Do_Output(std::function<void(std::ostream&)> f) : _outfun(f) {};
-    ~Do_Output() = default;
-    Do_Output(const Do_Output&) = delete;
-    Do_Output(Do_Output&&) = delete;
-    void out(std::ostream&out) const
-    {
-        _outfun(out);
-    };
+  Do_Output(std::function<void(std::ostream&)> f) : _outfun(f) {};
+  ~Do_Output() = default;
+  Do_Output(const Do_Output&) = delete;
+  Do_Output(Do_Output&&) = delete;
+  void out(std::ostream&out) const
+  {
+    _outfun(out);
+  };
 };
 
 std::ostream&
 operator << (std::ostream&out, const Do_Output&d)
 {
-    d.out(out);
-    return out;
+  d.out(out);
+  return out;
 };
 
 double
 get_float_time(clockid_t cid)
 {
-    struct timespec ts= {0,0};
-    if (!clock_gettime(cid, &ts))
-        return ts.tv_sec*1.0 + ts.tv_nsec*1.0e-9;
-    else
-        return NAN;
+  struct timespec ts= {0,0};
+  if (!clock_gettime(cid, &ts))
+    return ts.tv_sec*1.0 + ts.tv_nsec*1.0e-9;
+  else
+    return NAN;
 };				// end get_float_time
 
 enum
 {
-    MYOPT__NONE,
-    MYOPT_DEBUG=1000,
-    MYOPT_COMPILER,
-    MYOPT_SYSLOG,
-    MYOPT_SQLITE,
+  MYOPT__NONE,
+  MYOPT_DEBUG=1000,
+  MYOPT_COMPILER,
+  MYOPT_SYSLOG,
+  MYOPT_SQLITE,
 };
 
 struct argp_option my_progoptions[] =
 {
-    /* ====== debug this program ======= */
-    {
-        /*name:*/ "debug",
-        /*key:*/ MYOPT_DEBUG,
-        /*arg:*/ NULL,
-        /*flags:*/ 0,
-        /*doc:*/ "The real compiler is COMPILER (e.g. /usr/bin/gcc)",
-        /*group:*/ 0,
-    },
-    /* ====== the underlying compiler ======= */
-    {
-        /*name:*/ "compiler",
-        /*key:*/ MYOPT_COMPILER,
-        /*arg:*/ "COMPILER",
-        /*flags:*/ 0,
-        /*doc:*/ "The real compiler is COMPILER (e.g. /usr/bin/gcc)",
-        /*group:*/ 0,
-    },
-    /* ====== log using syslog(3) ======= */
-    {
-        /*name:*/ "syslog",
-        /*key:*/ MYOPT_SYSLOG,
-        /*arg:*/ NULL,
-        /*flags:*/ 0,
-        /*doc:*/ "Log using syslog(3)",
-        /*group:*/ 0,
-    },
-    /* ====== log in sqlite database ======= */
-    {
-        /*name:*/ "sqlite",
-        /*key:*/ MYOPT_SQLITE,
-        /*arg:*/ "SQLITE_DB",
-        /*flags:*/ 0,
-        /*doc:*/ "Log in the SQLITE_DB database for sqlite3",
-        /*group:*/ 0,
-    },
+  /* ====== debug this program ======= */
+  {
+    /*name:*/ "debug",
+    /*key:*/ MYOPT_DEBUG,
+    /*arg:*/ NULL,
+    /*flags:*/ 0,
+    /*doc:*/ "The real compiler is COMPILER (e.g. /usr/bin/gcc)",
+    /*group:*/ 0,
+  },
+  /* ====== the underlying compiler ======= */
+  {
+    /*name:*/ "compiler",
+    /*key:*/ MYOPT_COMPILER,
+    /*arg:*/ "COMPILER",
+    /*flags:*/ 0,
+    /*doc:*/ "The real compiler is COMPILER (e.g. /usr/bin/gcc)",
+    /*group:*/ 0,
+  },
+  /* ====== log using syslog(3) ======= */
+  {
+    /*name:*/ "syslog",
+    /*key:*/ MYOPT_SYSLOG,
+    /*arg:*/ NULL,
+    /*flags:*/ 0,
+    /*doc:*/ "Log using syslog(3)",
+    /*group:*/ 0,
+  },
+  /* ====== log in sqlite database ======= */
+  {
+    /*name:*/ "sqlite",
+    /*key:*/ MYOPT_SQLITE,
+    /*arg:*/ "SQLITE_DB",
+    /*flags:*/ 0,
+    /*doc:*/ "Log in the SQLITE_DB database for sqlite3",
+    /*group:*/ 0,
+  },
 
-    /* ======= terminating empty option ======= */
-    {   /*name:*/(const char*)0, ///
-        /*key:*/0, ///
-        /*arg:*/(const char*)0, ///
-        /*flags:*/0, ///
-        /*doc:*/(const char*)0, ///
-        /*group:*/0 ///
-    }
+  /* ======= terminating empty option ======= */
+  {   /*name:*/(const char*)0, ///
+    /*key:*/0, ///
+    /*arg:*/(const char*)0, ///
+    /*flags:*/0, ///
+    /*doc:*/(const char*)0, ///
+    /*group:*/0 ///
+  }
 };				// end my_progoptions
 
 
@@ -181,18 +181,18 @@ static struct argp my_argp = { my_progoptions, my_parse_opt, my_args_doc, my_doc
 int
 main(int argc, char**argv)
 {
-    myprogname = argv[0];
-    if (argc>1 && !strcmp(argv[1], "--debug"))
-        debug_enabled = true;
-    int firstix = -1;
-    int argerr = argp_parse(&my_argp, argc, argv, 0, &firstix, NULL);
-    if (argerr > 0)
-        {
-            fprintf(stderr, "%s: failed to parse program arguments\n",
-                    myprogname);
-            argp_help (&my_argp, stderr, 0, myprogname);
-            exit(EXIT_FAILURE);
-        };
+  myprogname = argv[0];
+  if (argc>1 && !strcmp(argv[1], "--debug"))
+    debug_enabled = true;
+  int firstix = -1;
+  int argerr = argp_parse(&my_argp, argc, argv, 0, &firstix, NULL);
+  if (argerr > 0)
+    {
+      fprintf(stderr, "%s: failed to parse program arguments\n",
+              myprogname);
+      argp_help (&my_argp, stderr, 0, myprogname);
+      exit(EXIT_FAILURE);
+    };
 }
 
 
