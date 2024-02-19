@@ -38,7 +38,7 @@ clean:
 ## on non Linux systems, change the .so suffix to whatever can be dlopen-ed
 manydl-plugins: $(patsubst %.c, %.so, $(wildcard _genf*.c))
 
-browserfox: browserfox.cc build-browserfox.sh logged-g++
+browserfox: browserfox.cc build-browserfox.sh |GNUmakefile
 	./build-browserfox.sh
 
 ## this is specific to Linux, related to manydl.c, change it on other
