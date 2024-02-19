@@ -105,3 +105,6 @@ gtk4serv: gtk4serv.c  |GNUmakefile
 	$(CC) -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
 	$(shell pkg-config --cflags $(GTK4SERV_PACKAGES)) $< \
 	$(shell pkg-config --libs $(GTK4SERV_PACKAGES)) -o $@
+
+fltk-mini-edit: fltk-mini-edit.cc mini-edit-build.sh |GNUmakefile
+	./mini-edit-build.sh
