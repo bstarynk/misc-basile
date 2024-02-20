@@ -1,0 +1,7 @@
+<!DOCTYPE xml>
+<!-- file gtk4refpersys.ui for Gtk4 builder -->
+<interface>
+  <object class="GtkApplicationWindow" id="appwin_gtk4rps">
+  </object>
+</interface>
+<!-- eof  gtk4refpersys.ui  -->
