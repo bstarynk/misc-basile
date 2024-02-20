@@ -1,6 +1,6 @@
 // file misc-basile/browserfox.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
-// © 2022 - 2023 copyright CEA & Basile Starynkevitch
+// © 2022 - 2024 copyright CEA & Basile Starynkevitch
 
 /****
 * This program is free software: you can redistribute it and/or modify
@@ -24,19 +24,19 @@
 #include "fx.h"
 #include "fxkeys.h"
 
-extern "C" const char*progname;
+extern "C" const char*bf_progname;
 
-extern "C" const char my_gitid[];
-extern "C" const char my_buildtime[];
+extern "C" const char bf_gitid[];
+extern "C" const char bf_buildtime[];
 
 #ifndef GIT_ID
 #error GIT_ID should be provided in compilation command
 #endif
 
-const char my_gitid[]=GIT_ID;
-const char my_buildtime[]=__DATE__ "@" __TIME__;
+const char bf_gitid[]=GIT_ID;
+const char bf_buildtime[]=__DATE__ "@" __TIME__;
 
-const char*progname;
+const char*bf_progname;
 
 
 class BfWindow: public FXMainWindow
@@ -78,10 +78,12 @@ FXIMPLEMENT(BfWindow,FXMainWindow,BfWindowMap,ARRAYNUMBER(BfWindowMap));
 
 int main(int argc, char**argv)
 {
-  progname = argv[0];
+  bf_progname = argv[0];
   FXApp application("browserfox");
   application.init(argc, argv);
   BfWindow win(&application);
+  win.create();
+  win.show();
   return application.run();
 } // end main
 
