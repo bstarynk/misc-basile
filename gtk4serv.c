@@ -122,6 +122,15 @@ my_activate_app (GApplication *app)
 	     my_fifo_cmd_wfd);
 	  abort ();
 	}
+      GError *err = NULL;
+      if (g_io_channel_set_encoding (my_fifo_cmd_wchan, "UTF-8", &err)
+	  != G_IO_STATUS_NORMAL)
+	{
+	  g_error
+	    ("failed to set UTF-8 encoding on JSONRPC fifo command wfd#%d : %s",
+	     my_fifo_cmd_wfd, err ? err->message : "???");
+	  abort ();
+	};
       my_fifo_cmd_watchid =	//
 	g_io_add_watch (my_fifo_cmd_wchan, G_IO_OUT, my_fifo_cmd_writer_cb,
 			NULL);
@@ -137,6 +146,15 @@ my_activate_app (GApplication *app)
 	     my_fifo_out_rfd);
 	  abort ();
 	}
+      GError *err = NULL;
+      if (g_io_channel_set_encoding (my_fifo_out_rchan, "UTF-8", &err)
+	  != G_IO_STATUS_NORMAL)
+	{
+	  g_error
+	    ("failed to set UTF-8 encoding on JSONRPC fifo output rfd#%d : %s",
+	     my_fifo_out_rfd, err ? err->message : "???");
+	  abort ();
+	};
       my_fifo_out_watchid =	//
 	g_io_add_watch (my_fifo_out_rchan, G_IO_IN, my_fifo_out_reader_cb,
 			NULL);
@@ -248,6 +266,8 @@ my_local_options (GApplication *app, GVariantDict *options,
       my_builder = gtk_builder_new_from_file (builderpath);
       g_free (builderpath);
     }
+  else
+    DBGEPRINTF("%s: my_local_options without builder", my_prog_name);
 
   char *jsonrpc = NULL;
   if (g_variant_dict_lookup (options, "jsonrpc", "s", &jsonrpc))
@@ -345,7 +365,7 @@ main (int argc, char *argv[])
     (G_APPLICATION (my_app),
      /*long_name: */ "builder",
      /*short_name: */ (char) 'B',
-     /*flag: */ G_OPTION_FLAG_NONE,
+     /*flag: */ G_OPTION_FLAG_FILENAME,
      /*arg: */ G_OPTION_ARG_FILENAME,
      /*description: */ "use the given $BUILDERFILE for GtkBuilder",
      /*arg_description: */ "BUILDERFILE");
