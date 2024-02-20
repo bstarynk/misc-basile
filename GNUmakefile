@@ -13,7 +13,7 @@ ASTYLE=/usr/bin/astyle
 ASTYLEFLAGS= --style=gnu -s2
 RM=/bin/rm -vf
 GENG_CC ?= $(CC)
-export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-10)
+export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-14)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 GTK4SERV_PACKAGES= gtk4 glib-2.0 gobject-2.0 gio-2.0
 
