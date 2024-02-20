@@ -119,7 +119,7 @@ FXDEFMAP(TinyTextWindow) TinyTextWindowMap[]=
 };
 
 FXIMPLEMENT(TinyTextWindow,FXMainWindow,
-	    TinyTextWindowMap, ARRAYNUMBER(TinyTextWindowMap));
+            TinyTextWindowMap, ARRAYNUMBER(TinyTextWindowMap));
 
 void
 TinyTextWindow::create()
@@ -135,26 +135,29 @@ TinyTextWindow::create()
 void
 TinyTextWindow::layout()
 {
-  TINY_DBGOUT("TinyTextWindow::layout #" << winrank);
+  TINY_DBGOUT("TinyTextWindow::layout " << *this);
   FXMainWindow::layout();
-  if (editorframe) {
-    editorframe->layout();
-    TINY_DBGOUT("TinyTextWindow#" << winrank << ":layout editorframe: "
-		<< "(X="<< editorframe->getX()
-		<< ",Y="<< editorframe->getY()
-		<< ",W=" << editorframe->getWidth()
-		<< ",H=" << editorframe->getHeight()
-		<< ")");
-  }
-  if (editor) {
-    editor->layout();
-    TINY_DBGOUT("TinyTextWindow#" << winrank << ":layout editor: "
-		<< "(X="<< editor->getX()
-		<< ",Y="<< editor->getY()
-		<< ",W=" << editor->getWidth()
-		<< ",H=" << editor->getHeight()
-		<< ")");
-  };
+  TINY_DBGOUT("TinyTextWindow " << *this);
+  if (editorframe)
+    {
+      editorframe->layout();
+      TINY_DBGOUT("TinyTextWindow#" << winrank << ":layout editorframe: "
+                  << "(X="<< editorframe->getX()
+                  << ",Y="<< editorframe->getY()
+                  << ",W=" << editorframe->getWidth()
+                  << ",H=" << editorframe->getHeight()
+                  << ")");
+    }
+  if (editor)
+    {
+      editor->layout();
+      TINY_DBGOUT("TinyTextWindow#" << winrank << ":layout editor: "
+                  << "(X="<< editor->getX()
+                  << ",Y="<< editor->getY()
+                  << ",W=" << editor->getWidth()
+                  << ",H=" << editor->getHeight()
+                  << ")");
+    };
   TINY_DBGOUT("end TinyTextWindow::layout #" << winrank);
 } // end TinyTextWindow::layout
 
