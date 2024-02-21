@@ -23,8 +23,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 #include <gdk/gdk.h>
+/// the gtk/gtk.h includes every header from GTK4
+#include <gtk/gtk.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -44,6 +45,7 @@ extern char my_jsonrpc_prefix[128];
 #define MY_FIFO_LEN  (sizeof(my_jsonrpc_prefix)+16)
 extern gboolean my_debug_wanted;
 extern GtkApplication *my_app;
+extern GtkWidget *my_main_window;
 extern int my_fifo_cmd_wfd;	/// fifo file descriptor, commands written by gtk4serv
 extern int my_fifo_out_rfd;	/// fifo file descriptor, outputs from refpersys read by gtk4serv
 extern GIOChannel *my_fifo_cmd_wchan;	/* channel to write JSONRPC commands to refpersys */
@@ -241,13 +243,33 @@ my_fifo_creation (const char *jsonrpc, char cmdjrbuf[static MY_FIFO_LEN],
 		my_prog_name, outjrbuf);
 }				/* end my_fifo_creation */
 
-
+static void
+my_create_widgets_without_builder (void)
+{
+  my_main_window = gtk_window_new ();
+  DBGEPRINTF ("my_create_widgets_without_builder mainwin@%p", my_main_window);
+  /**
+   * TODO: google for gtk_main_quit replacement in gtk4
+   **/
+  /// g_signal_connect (G_OBJECT (my_main_window),
+  ///               "destroy", G_CALLBACK (gtk_main_quit), NULL);
+#if 0
+  gtk_container_set_border_width (GTK_CONTAINER (my_main_window), 10);
+  gtk_window_set_default_size (GTK_WINDOW (my_main_window), 760, 500);
+  gtk_window_set_position (GTK_WINDOW (my_main_window), GTK_WIN_POS_CENTER);
+#endif
+#warning my_create_widgets_without_builder incomplete
+  gtk_widget_show (my_main_window);
+  DBGEPRINTF ("my_create_widgets_without_builder end mainwin@%p",
+	      my_main_window);
+}				/* end my_create_widgets_without_builder */
 
 static int
 my_local_options (GApplication *app, GVariantDict *options,
 		  gpointer data UNUSED)
 {
   gboolean version = FALSE;
+  gboolean builder_given = FALSE;
   DBGEPRINTF ("%s: my_local_options start app@%p", my_prog_name, app);
   g_variant_dict_lookup (options, "version", "b", &version);
 
@@ -264,11 +286,14 @@ my_local_options (GApplication *app, GVariantDict *options,
       DBGEPRINTF ("%s: my_local_options builder %s", my_prog_name,
 		  builderpath);
       my_builder = gtk_builder_new_from_file (builderpath);
+      builder_given = TRUE;
       g_free (builderpath);
     }
   else
-    DBGEPRINTF("%s: my_local_options without builder", my_prog_name);
-
+    {
+      builder_given = FALSE;
+      DBGEPRINTF ("%s: my_local_options without builder", my_prog_name);
+    };
   char *jsonrpc = NULL;
   if (g_variant_dict_lookup (options, "jsonrpc", "s", &jsonrpc))
     {
@@ -313,6 +338,12 @@ my_local_options (GApplication *app, GVariantDict *options,
 		  outjrbuf);
       return 0;
     }
+  if (!builder_given)
+    {
+      DBGEPRINTF ("%s: my_local_options create widgets without builder",
+		  my_prog_name);
+      my_create_widgets_without_builder ();
+    };
   DBGEPRINTF ("%s: my_local_options end", my_prog_name);
   return 0;
 }				// end of my_local_options
@@ -405,6 +436,7 @@ GIOChannel *my_fifo_out_rchan;	/* channel to write JSONRPC commands to */
 int my_fifo_cmd_watchid;	/// watcher id for JSONRPC commands to refpersys
 int my_fifo_out_watchid;	/// watcher id for JSONRPC outputs from refpersys
 GtkBuilder *my_builder;
+GtkWidget *my_main_window;
 
 /****************
  **                           for Emacs...
