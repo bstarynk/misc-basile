@@ -40,12 +40,66 @@ private:
   TinyApp& operator=(const TinyApp&);
 }; // end of TinyApp
 
+class TinyHorizontalFrame : public FXHorizontalFrame
+{
+  FXDECLARE(TinyHorizontalFrame);
+protected:
+  TinyHorizontalFrame() : FXHorizontalFrame()
+  {
+  };
+public:
+  TinyHorizontalFrame (FXComposite *p, FXuint opts=0, FXint x=0, FXint y=0, FXint w=0, FXint h=0, FXint pl=DEFAULT_SPACING, FXint pr=DEFAULT_SPACING, FXint pt=DEFAULT_SPACING, FXint pb=DEFAULT_SPACING, FXint hs=DEFAULT_SPACING, FXint vs=DEFAULT_SPACING) : FXHorizontalFrame(p,opts,x,y,w,h,pl,pr,pt,pb,hs,vs)
+  {
+    TINY_DBGOUT("TinyHorizontalFrame@" << (void*)this
+                <<" p@" << (void*)p << " x=" << x << " y=" << y
+                << " w=" << w << " h=" << h);
+  };
+  virtual ~TinyHorizontalFrame()
+  {
+    TINY_DBGOUT("destroy TinyHorizontalFrame@" << (void*)this);
+  }
+  void output(std::ostream&out) const;
+};				// end TinyHorizontalFrame
+
+std::ostream&operator << (std::ostream&out, const TinyHorizontalFrame&tf)
+{
+  tf.output(out);
+  return out;
+}
+
+std::ostream&operator << (std::ostream&out, const TinyHorizontalFrame*ptw)
+{
+  if (!ptw)
+    out << "nulltinyhorizontalframeptr";
+  else
+    out << *ptw << "@" << (void*)ptw;
+  return out;
+}
+
+void
+TinyHorizontalFrame::output(std::ostream&out) const
+{
+  out << "TinyHorizontalFrame@" << (void*)this
+      << "/(x=" << getX() << ",y=" << getY()
+      << ",w=" << getWidth() << ",h=" << getHeight()
+      << ";"
+      << (isEnabled()?"enabled":"disabled")
+      << ";"
+      << (isActive()?"active":"inactive")
+      << ";"
+      << (isShell()?"shell":"nonshell")
+      << ";"
+      << (shown()?"shown":"hidden")
+      << ")";
+} // end TinyHorizontalFrame
+
+
 // Editor main window
 class TinyTextWindow : public FXMainWindow
 {
   FXDECLARE(TinyTextWindow);
   ///
-  FXHorizontalFrame   *editorframe;             // Editor frame
+  TinyHorizontalFrame   *editorframe;             // Editor frame
   FXText              *editor;                  // Editor text widget
   static int wincount;
   int winrank;
@@ -62,6 +116,17 @@ public:
   virtual void layout();
   void output (std::ostream&out) const;
 };				// end TinyTextWindow
+
+
+
+////////////////
+
+FXDEFMAP(TinyHorizontalFrame) TinyHorizontalFrameMap[]=
+{
+};
+
+FXIMPLEMENT(TinyHorizontalFrame,FXHorizontalFrame,
+            TinyHorizontalFrameMap, ARRAYNUMBER(TinyHorizontalFrameMap));
 
 int TinyTextWindow::wincount = 0;
 
@@ -135,9 +200,9 @@ TinyTextWindow::create()
 void
 TinyTextWindow::layout()
 {
-  TINY_DBGOUT("TinyTextWindow::layout " << *this);
+  TINY_DBGOUT("TinyTextWindow::layout start " << *this);
   FXMainWindow::layout();
-  TINY_DBGOUT("TinyTextWindow " << *this);
+  TINY_DBGOUT("TinyTextWindow here " << *this);
   if (editorframe)
     {
       editorframe->layout();
@@ -171,11 +236,11 @@ TinyTextWindow::TinyTextWindow(FXApp* theapp)
 {
   TINY_DBGOUT("TinyTextWindow#" << winrank << " @" << (void*)this);
   editorframe = //
-    new FXHorizontalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
-                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
-                          2, 2, // x,y
-                          448, 330 //w,h
-                         );
+    new TinyHorizontalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
+                            |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
+                            2, 2, // x,y
+                            448, 330 //w,h
+                           );
   editor = //
     new FXText (editorframe, 0,
                 TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
