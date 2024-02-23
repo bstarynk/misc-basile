@@ -42,21 +42,36 @@ private:
 
 class TinyHorizontalFrame : public FXHorizontalFrame
 {
+  static int _counter;
+  int _hf_num;
   FXDECLARE(TinyHorizontalFrame);
 protected:
-  TinyHorizontalFrame() : FXHorizontalFrame()
+  TinyHorizontalFrame() : FXHorizontalFrame(), _hf_num(++_counter)
   {
   };
 public:
-  TinyHorizontalFrame (FXComposite *p, FXuint opts=0, FXint x=0, FXint y=0, FXint w=0, FXint h=0, FXint pl=DEFAULT_SPACING, FXint pr=DEFAULT_SPACING, FXint pt=DEFAULT_SPACING, FXint pb=DEFAULT_SPACING, FXint hs=DEFAULT_SPACING, FXint vs=DEFAULT_SPACING) : FXHorizontalFrame(p,opts,x,y,w,h,pl,pr,pt,pb,hs,vs)
+  int num() const
   {
-    TINY_DBGOUT("TinyHorizontalFrame@" << (void*)this
+    return _hf_num;
+  };
+  TinyHorizontalFrame (FXComposite *p, FXuint opts=0, //
+                       FXint x=0, FXint y=0, //
+                       FXint w=0, FXint h=0, //
+                       FXint pl=DEFAULT_SPACING, //
+                       FXint pr=DEFAULT_SPACING, //
+                       FXint pt=DEFAULT_SPACING, //
+                       FXint pb=DEFAULT_SPACING, //
+                       FXint hs=DEFAULT_SPACING, //
+                       FXint vs=DEFAULT_SPACING) : //
+    FXHorizontalFrame(p,opts,x,y,w,h,pl,pr,pt,pb,hs,vs), _hf_num(++_counter)
+  {
+    TINY_DBGOUT("TinyHorizontalFrame#" << _hf_num << "@" << (void*)this
                 <<" p@" << (void*)p << " x=" << x << " y=" << y
                 << " w=" << w << " h=" << h);
   };
   virtual ~TinyHorizontalFrame()
   {
-    TINY_DBGOUT("destroy TinyHorizontalFrame@" << (void*)this);
+    TINY_DBGOUT("destroy TinyHorizontalFrame#" << _hf_num);
   }
   void output(std::ostream&out) const;
 };				// end TinyHorizontalFrame
@@ -72,14 +87,16 @@ std::ostream&operator << (std::ostream&out, const TinyHorizontalFrame*ptw)
   if (!ptw)
     out << "nulltinyhorizontalframeptr";
   else
-    out << *ptw << "@" << (void*)ptw;
+    out << *ptw ;
   return out;
 }
+
+int TinyHorizontalFrame::_counter;
 
 void
 TinyHorizontalFrame::output(std::ostream&out) const
 {
-  out << "TinyHorizontalFrame@" << (void*)this
+  out << "TinyHorizontalFrame#" << num()
       << "/(x=" << getX() << ",y=" << getY()
       << ",w=" << getWidth() << ",h=" << getHeight()
       << ";"
@@ -94,13 +111,56 @@ TinyHorizontalFrame::output(std::ostream&out) const
 } // end TinyHorizontalFrame
 
 
+class TinyText : public FXText
+{
+  FXDECLARE(TinyText);
+  static int _tt_textcount;
+  int _tt_num;
+public:
+  TinyText();
+  TinyText (FXComposite *p, FXObject *tgt=nullptr, //
+            FXSelector sel=0, FXuint opts=0,//
+            FXint x=0, FXint y=0, FXint w=0, FXint h=0, //
+            FXint pl=3, FXint pr=3, FXint pt=2, FXint pb=2) //
+    : FXText(p,tgt,sel,opts,x,y,w,h,pl,pr,pt,pb), _tt_num(++_tt_textcount)
+  {
+    TINY_DBGOUT("TinyText#" << _tt_num << " @" << (void*)this
+                << "(x=" << ",y=" << y << ",w=" << w << ",h=" << h << ")");
+  };
+  virtual ~TinyText()
+  {
+  };
+  int num() const
+  {
+    return _tt_num;
+  };
+  void output(std::ostream&out) const;
+};				// end TinyText
+
+
+TinyText::TinyText() : FXText(), _tt_num(++_tt_textcount)
+{
+  TINY_DBGOUT("TinyText#" << _tt_num << " @" << (void*)this);
+};
+
+void
+TinyText::output(std::ostream&out) const
+{
+  out << "TinyText#" << _tt_num
+      << "(X="<< getX() << ",Y="<< getY()
+      << ",W=" << getWidth() << ",H=" << getHeight()
+      << ")";
+} // end TinyText::output
+
+int TinyText::_tt_textcount;
+
 // Editor main window
 class TinyTextWindow : public FXMainWindow
 {
   FXDECLARE(TinyTextWindow);
   ///
   TinyHorizontalFrame   *editorframe;             // Editor frame
-  FXText              *editor;                  // Editor text widget
+  TinyText              *editor;                  // Editor text widget
   static int wincount;
   int winrank;
 protected:
@@ -129,6 +189,12 @@ FXIMPLEMENT(TinyHorizontalFrame,FXHorizontalFrame,
             TinyHorizontalFrameMap, ARRAYNUMBER(TinyHorizontalFrameMap));
 
 int TinyTextWindow::wincount = 0;
+
+FXDEFMAP(TinyText) TinyTextMap[]=
+{
+};
+FXIMPLEMENT(TinyText,FXText,TinyTextMap,ARRAYNUMBER(TinyTextMap));
+
 
 std::ostream&operator << (std::ostream&out, const TinyTextWindow&tw)
 {
@@ -242,11 +308,11 @@ TinyTextWindow::TinyTextWindow(FXApp* theapp)
                             448, 330 //w,h
                            );
   editor = //
-    new FXText (editorframe, 0,
-                TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
-                6, 6, //x,y
-                444, 320 //w,h
-               );
+    new TinyText (editorframe, 0,
+                  TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
+                  6, 6, //x,y
+                  444, 320 //w,h
+                 );
   editor->setText("Text in Tiny ");
   editor->insertStyledText(editor->lineEnd(0), "XX", FXText::STYLE_BOLD);
   TINY_DBGOUT("end TinyTextWindow#" << winrank << " @" << (void*)this);
