@@ -76,6 +76,44 @@ public:
   void output(std::ostream&out) const;
 };				// end TinyHorizontalFrame
 
+class TinyVerticalFrame : public FXVerticalFrame
+{
+  static int _counter;
+  int _vf_num;
+  FXDECLARE(TinyVerticalFrame);
+protected:
+  TinyVerticalFrame() : FXVerticalFrame(), _vf_num(++_counter)
+  {
+  };
+public:
+  int num() const
+  {
+    return _vf_num;
+  };
+  TinyVerticalFrame (FXComposite *p, FXuint opts=0, //
+                     FXint x=0, FXint y=0, //
+                     FXint w=0, FXint h=0, //
+                     FXint pl=DEFAULT_SPACING, //
+                     FXint pr=DEFAULT_SPACING, //
+                     FXint pt=DEFAULT_SPACING, //
+                     FXint pb=DEFAULT_SPACING, //
+                     FXint hs=DEFAULT_SPACING, //
+                     FXint vs=DEFAULT_SPACING) : //
+    FXVerticalFrame(p,opts,x,y,w,h,pl,pr,pt,pb,hs,vs), _vf_num(++_counter)
+  {
+    TINY_DBGOUT("TinyVerticalFrame#" << _vf_num << "@" << (void*)this
+                <<" p@" << (void*)p << " x=" << x << " y=" << y
+                << " w=" << w << " h=" << h);
+  };
+  virtual ~TinyVerticalFrame()
+  {
+    TINY_DBGOUT("destroy TinyVerticalFrame#" << _vf_num);
+  }
+  void output(std::ostream&out) const;
+};				// end TinyVerticalFrame
+
+int TinyVerticalFrame::_counter;
+
 std::ostream&operator << (std::ostream&out, const TinyHorizontalFrame&tf)
 {
   tf.output(out);
@@ -335,6 +373,8 @@ tiny_usage(void)
 {
   std::cout << tiny_progname << " usage:" << std::endl;
   std::cout << "\t --version|-V                             #show version"
+            << std::endl;
+  std::cout << "\t --debug|-D                               #debug messages"
             << std::endl;
   std::cout << "\t --help|-H                                #show this help"
             << std::endl;
