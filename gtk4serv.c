@@ -190,6 +190,9 @@ my_print_version (void)
 {
   printf ("%s version git %s built %s\n",
 	  my_prog_name, my_git_id, __DATE__ "@" __TIME__);
+  printf ("%s with GTK %d.%d.%d\n", my_prog_name,
+	  gtk_get_major_version(), gtk_get_minor_version(),
+	  gtk_get_micro_version());
 }				/* end my_print_version */
 
 static void
@@ -371,6 +374,9 @@ main (int argc, char *argv[])
       fflush (NULL);
     };
   gtk_init ();
+  DBGEPRINTF ("%s: did initialize gtk %d.%d.%d aged %d", my_prog_name,
+	      gtk_get_major_version(), gtk_get_minor_version(),
+	      gtk_get_micro_version(), gtk_get_binary_age());
   my_app = gtk_application_new ("org.refpersys.gtk4serv",
 				G_APPLICATION_DEFAULT_FLAGS);
   DBGEPRINTF ("%s: my_app@%p", my_prog_name, my_app);
