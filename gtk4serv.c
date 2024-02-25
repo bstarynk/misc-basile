@@ -246,6 +246,7 @@ my_fifo_creation (const char *jsonrpc, char cmdjrbuf[static MY_FIFO_LEN],
 static void
 my_create_widgets_without_builder (void)
 {
+  DBGEPRINTF ("%s: start my_create_widgets_without_builder", my_prog_name);
   my_main_window = gtk_window_new ();
   DBGEPRINTF ("my_create_widgets_without_builder mainwin@%p", my_main_window);
   /**
@@ -343,6 +344,8 @@ my_local_options (GApplication *app, GVariantDict *options,
       DBGEPRINTF ("%s: my_local_options create widgets without builder",
 		  my_prog_name);
       my_create_widgets_without_builder ();
+      DBGEPRINTF ("%s: my_local_options did create widgets without builder",
+		  my_prog_name);
     };
   DBGEPRINTF ("%s: my_local_options end", my_prog_name);
   return 0;
@@ -367,6 +370,7 @@ main (int argc, char *argv[])
       fputc ('\n', stderr);
       fflush (NULL);
     };
+  gtk_init ();
   my_app = gtk_application_new ("org.refpersys.gtk4serv",
 				G_APPLICATION_DEFAULT_FLAGS);
   DBGEPRINTF ("%s: my_app@%p", my_prog_name, my_app);
