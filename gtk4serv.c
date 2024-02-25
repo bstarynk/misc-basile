@@ -5,15 +5,22 @@
     © Copyright 2024 by Basile Starynkevitch
    program released under GNU General Public License v3+
 
-   this is free software; you can redistribute it and/or modify it under
+   This is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
    Software Foundation; either version 3, or (at your option) any later
    version.
 
-   this is distributed in the hope that it will be useful, but WITHOUT
+   This is distributed in the hope that it will be useful, but WITHOUT
    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
    License for more details.
+
+   This gtk4serv is a GTK4 application. It is the interface to the
+   RefPerSys inference engine on http://refpersys.org/ and
+   communicates with the refpersys process using some JSONRPC protocol
+   on named fifos. In contrast to refpersys itself, the gtk4serv is
+   short lived.
+   
 ****/
 
 #define _GNU_SOURCE
@@ -191,8 +198,8 @@ my_print_version (void)
   printf ("%s version git %s built %s\n",
 	  my_prog_name, my_git_id, __DATE__ "@" __TIME__);
   printf ("%s with GTK %d.%d.%d\n", my_prog_name,
-	  gtk_get_major_version(), gtk_get_minor_version(),
-	  gtk_get_micro_version());
+	  gtk_get_major_version (), gtk_get_minor_version (),
+	  gtk_get_micro_version ());
 }				/* end my_print_version */
 
 static void
@@ -375,8 +382,8 @@ main (int argc, char *argv[])
     };
   gtk_init ();
   DBGEPRINTF ("%s: did initialize gtk %d.%d.%d aged %d", my_prog_name,
-	      gtk_get_major_version(), gtk_get_minor_version(),
-	      gtk_get_micro_version(), gtk_get_binary_age());
+	      gtk_get_major_version (), gtk_get_minor_version (),
+	      gtk_get_micro_version (), gtk_get_binary_age ());
   my_app = gtk_application_new ("org.refpersys.gtk4serv",
 				G_APPLICATION_DEFAULT_FLAGS);
   DBGEPRINTF ("%s: my_app@%p", my_prog_name, my_app);
