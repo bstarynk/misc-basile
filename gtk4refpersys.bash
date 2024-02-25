@@ -13,3 +13,8 @@
 ## or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
 ## License for more details.
 /usr/bin/make gtk4serv
+if [ $? -gt 0 ]; then
+    printf "%s failed to make gtk4serv\n" $0
+    exit 1
+fi
+./gtk4serv $*
