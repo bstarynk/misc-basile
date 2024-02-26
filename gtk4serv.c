@@ -264,13 +264,13 @@ my_create_widgets_without_builder (void)
    **/
   /// g_signal_connect (G_OBJECT (my_main_window),
   ///               "destroy", G_CALLBACK (gtk_main_quit), NULL);
-#if 0
-  gtk_container_set_border_width (GTK_CONTAINER (my_main_window), 10);
+#if 1
+  //gtk_container_set_border_width (GTK_WINDOW (my_main_window), 10);
   gtk_window_set_default_size (GTK_WINDOW (my_main_window), 760, 500);
-  gtk_window_set_position (GTK_WINDOW (my_main_window), GTK_WIN_POS_CENTER);
+  // gtk_window_set_position (GTK_WINDOW (my_main_window), GTK_WIN_POS_CENTER);
 #endif
 #warning my_create_widgets_without_builder incomplete
-  gtk_widget_show (my_main_window);
+  gtk_window_present (my_main_window);
   DBGEPRINTF ("my_create_widgets_without_builder end mainwin@%p",
 	      my_main_window);
 }				/* end my_create_widgets_without_builder */
