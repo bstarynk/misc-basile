@@ -54,7 +54,9 @@ class TinyMainWindow;
 class TinyDisplayWindow;
 class TinyHorizontalFrame;
 class TinyVerticalFrame;
-
+class TinyApp;
+extern "C" TinyApp* tiny_app;
+TinyApp* tiny_app;
 // display output only window, there are several of them
 class TinyDisplayWindow : public FXMainWindow
 {
@@ -387,7 +389,7 @@ TinyDisplayWindow::create()
   FXMainWindow::create();
 #warning incomplete TinyDisplayWindow::create
   show(PLACEMENT_SCREEN);
-  TINY_DBGOUT("end TinyDisplayWindow::create #" << _disp_win_rank);
+  TINY_DBGOUT("end TinyDisplayWindow::create " << *this);
 } // end TinyDisplayWindow::create
 
 void
@@ -416,7 +418,7 @@ TinyDisplayWindow::layout()
   //                << ",H=" << editor->getHeight()
   //                << ")");
   //  };
-  TINY_DBGOUT("end TinyDisplayWindow::layout #" << _disp_win_rank);
+  TINY_DBGOUT("end TinyDisplayWindow::layout " << *this);
 } // end TinyDisplayWindow::layout
 
 TinyDisplayWindow::TinyDisplayWindow(FXApp* theapp)
@@ -539,6 +541,12 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
                  /*x,y,w,h:*/0, 0, 450, 333)
 {
   TINY_DBGOUT("TinyMainWindow @" << (void*)this);
+  if (tiny_app && tiny_app->_main_win && tiny_app->_main_win != this)
+    {
+      TINY_FATALOUT("TinyApp has already a main window " << *tiny_app->_main_win
+                    << " when constructing " << *this);
+    };
+  tiny_app->_main_win = this;
   //_disp_vert_frame = //
   //  new TinyVerticalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
   //                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
@@ -626,6 +634,7 @@ main(int argc, char*argv[])
               << " pid " << (int)getpid() << " on " << tiny_hostname
               << " built " << tiny_buildtimestamp);
   TinyApp the_app("fox-tinyed","FOX tinyed (Basile Starynkevitch)");
+  tiny_app = &the_app;
   the_app.init(argc, argv);
   TINY_DBGOUT("application " << &the_app);
   the_app.create();
@@ -645,7 +654,10 @@ main(int argc, char*argv[])
                 << " pid " << (int)getpid() << " on " << tiny_hostname
                 << " built " << tiny_buildtimestamp << std::endl;
     };
-  return the_app.run();
+  TINY_DBGOUT("running tiny_app " << (void*)tiny_app);
+  int code = the_app.run();
+  tiny_app = nullptr;
+  return code;
 } // end main
 
 
