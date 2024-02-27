@@ -123,7 +123,7 @@ class TinyApp : public FXApp
   FXDECLARE(TinyApp);
 public:
   TinyApp(const char*name, const char*vendor);
-  ~TinyApp();
+  virtual ~TinyApp();
 private:
   TinyApp& operator=(const TinyApp&);
   std::vector<TinyDisplayWindow*> _vec_disp_win;
@@ -345,10 +345,11 @@ std::ostream&operator << (std::ostream&out, const TinyDisplayWindow*ptw)
 }
 
 TinyApp::TinyApp(const char*name, const char*vendor)
-  : FXApp(name, vendor)
+  : FXApp(name, vendor), _vec_disp_win(), _main_win(nullptr)
 {
   TINY_DBGOUT("TinyApp constructor name:" << name << " vendor:" << vendor
               << "@" << (void*)this);
+  _vec_disp_win.reserve(10);
 } // end constructor TinyApp::TinyApp
 
 TinyApp::~TinyApp()
@@ -471,7 +472,7 @@ TinyDisplayWindow::TinyDisplayWindow():
 
 TinyDisplayWindow::~TinyDisplayWindow()
 {
-  TINY_DBGOUT(" destroying TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
+  TINY_DBGOUT("destroying TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
   assert(tiny_app != nullptr);
   assert ((long)tiny_app->_vec_disp_win.size() > _disp_win_rank);
   assert(tiny_app->_vec_disp_win[_disp_win_rank] == this);
