@@ -1,9 +1,20 @@
 // file misc-basile/fox-tinyed.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
 //  © Copyright 2022 - 2024 Basile Starynkevitch (&Jeroen van der Zijp)
+//    and the RefPerSys team on http://refpersys.org/
 //  some code taken from fox-toolkit.org Adie
+
+/**
+ * This program shows two kind of windows. The main window (a single one,
+ * which enable textual input from the users, see TinyMainWindow), and
+ * several display windows (output only, the user can copy the
+ * output), see TinyDisplayWindow.
+ **/
+
 #include <fstream>
 #include <iostream>
+#include <vector>
+
 /// fox-toolkit.org
 #include <fx.h>
 #include <unistd.h>
@@ -27,20 +38,78 @@ const char tiny_buildtimestamp[]=__DATE__ "@" __TIME__;
 
 #define TINY_DBGOUT(Out)  TINY_DGBOUT_AT(__FILE__, __LINE__, Out)
 
+extern "C" void tiny_fatal_at(const char*fil, int lin) __attribute__((noreturn));
+#define TINY_FATALOUT_AT(Fil,Lin,Out) do {		\
+    std::cerr << Fil << ":" << Lin << ": FATAL:"	\
+              << Out << std::endl;			\
+    tiny_fatal_at(Fil,Lin);				\
+} while(0)
+
+#define TINY_FATALOUT(Out)  TINY_FATALOUT_AT(__FILE__, __LINE__, Out)
+
 extern "C" void tiny_usage(void);
 extern "C" void tiny_version(void);
+
+class TinyMainWindow;
+class TinyDisplayWindow;
+class TinyHorizontalFrame;
+class TinyVerticalFrame;
+
+// display output only window, there are several of them
+class TinyDisplayWindow : public FXMainWindow
+{
+  FXDECLARE(TinyDisplayWindow);
+private:
+  TinyDisplayWindow();
+  int _disp_win_rank; // the rank into TinyApp vector
+  TinyVerticalFrame* _disp_vert_frame; // the topmost vertical frame
+  TinyHorizontalFrame* _disp_first_hframe; // the first horizontal subframe
+  static int _disp_win_count;
+#warning missing widget fields in TinyDisplayWindow
+public:
+  TinyDisplayWindow(FXApp *theapp);
+  virtual ~TinyDisplayWindow();
+  virtual void create(void);
+  virtual void layout();
+  void output(std::ostream&out) const;
+};				// end TinyDisplayWindow
+
+
+
+// Editor main window
+class TinyMainWindow : public FXMainWindow
+{
+  FXDECLARE(TinyMainWindow);
+  ///
+protected:
+  TinyMainWindow(): FXMainWindow()
+  {
+    TINY_DBGOUT("TinyMainWindow @" << (void*)this);
+  };
+public:
+  TinyMainWindow(FXApp *theapp);
+  virtual ~TinyMainWindow();
+  virtual void create();
+  virtual void layout();
+  void output (std::ostream&out) const;
+};				// end TinyMainWindow
+
 
 // our application
 class TinyApp : public FXApp
 {
+  friend class TinyMainWindow;
+  friend class TinyDisplayWindow;
   FXDECLARE(TinyApp);
 public:
   TinyApp(const char*name, const char*vendor);
   ~TinyApp();
 private:
-  TinyApp() {}
-  TinyApp(const TinyApp&);
   TinyApp& operator=(const TinyApp&);
+  std::vector<TinyDisplayWindow*> _vec_disp_win;
+  TinyMainWindow* _main_win;
+  TinyApp(): FXApp(), _vec_disp_win(), _main_win(nullptr) {};
+  TinyApp(const TinyApp&);
 }; // end of TinyApp
 
 class TinyHorizontalFrame : public FXHorizontalFrame
@@ -114,6 +183,23 @@ public:
   }
   void output(std::ostream&out) const;
 };				// end TinyVerticalFrame
+
+void
+TinyVerticalFrame::output(std::ostream&out) const
+{
+  out << "TinyVerticalFrame#" << _vf_num
+      << "(X="<< getX() << ",Y="<< getY()
+      << ",W=" << getWidth() << ",H=" << getHeight()
+      << ";"
+      << (isEnabled()?"enabled":"disabled")
+      << ";"
+      << (isActive()?"active":"inactive")
+      << ";"
+      << (isShell()?"shell":"nonshell")
+      << ";"
+      << (shown()?"shown":"hidden")
+      << ")";
+} // end TinyVerticalFrame::output
 
 int TinyVerticalFrame::_counter;
 
@@ -197,34 +283,6 @@ int TinyText::_tt_textcount;
 
 
 
-
-
-
-// Editor main window
-class TinyTextWindow : public FXMainWindow
-{
-  FXDECLARE(TinyTextWindow);
-  ///
-  TinyHorizontalFrame   *editorframe;             // Editor frame
-  TinyText              *editor;                  // Editor text widget
-  static int wincount;
-  int winrank;
-protected:
-  TinyTextWindow(): FXMainWindow(), editorframe(nullptr), editor(nullptr),
-    winrank(++wincount)
-  {
-    TINY_DBGOUT("TinyTextWindow#" << winrank << " @" << (void*)this);
-  };
-public:
-  TinyTextWindow(FXApp *theapp);
-  virtual ~TinyTextWindow();
-  virtual void create();
-  virtual void layout();
-  void output (std::ostream&out) const;
-};				// end TinyTextWindow
-
-
-
 ////////////////
 
 FXDEFMAP(TinyHorizontalFrame) TinyHorizontalFrameMap[]=
@@ -234,7 +292,16 @@ FXDEFMAP(TinyHorizontalFrame) TinyHorizontalFrameMap[]=
 FXIMPLEMENT(TinyHorizontalFrame,FXHorizontalFrame,
             TinyHorizontalFrameMap, ARRAYNUMBER(TinyHorizontalFrameMap));
 
-int TinyTextWindow::wincount = 0;
+FXDEFMAP(TinyVerticalFrame) TinyVerticalFrameMap[]=
+{
+};
+////////////////
+
+
+FXIMPLEMENT(TinyVerticalFrame,FXVerticalFrame,
+            TinyVerticalFrameMap, ARRAYNUMBER(TinyVerticalFrameMap));
+
+int TinyDisplayWindow::_disp_win_count = 0;
 
 FXDEFMAP(TinyText) TinyTextMap[]=
 {
@@ -242,18 +309,18 @@ FXDEFMAP(TinyText) TinyTextMap[]=
 FXIMPLEMENT(TinyText,FXText,TinyTextMap,ARRAYNUMBER(TinyTextMap));
 
 
-std::ostream&operator << (std::ostream&out, const TinyTextWindow&tw)
+std::ostream&operator << (std::ostream&out, const TinyDisplayWindow&tw)
 {
   tw.output(out);
   return out;
 }
 
-std::ostream&operator << (std::ostream&out, const TinyTextWindow*ptw)
+std::ostream&operator << (std::ostream&out, const TinyDisplayWindow*ptw)
 {
   if (!ptw)
-    out << "nulltextwindowptr";
+    out << "nulldispwinptr";
   else
-    out << *ptw << "@" << (void*)ptw;
+    ptw->output(out);
   return out;
 }
 
@@ -275,9 +342,9 @@ FXDEFMAP(TinyApp) TinyAppMap[]=
 FXIMPLEMENT(TinyApp,FXApp,TinyAppMap,ARRAYNUMBER(TinyAppMap))
 
 void
-TinyTextWindow::output(std::ostream&out) const
+TinyDisplayWindow::output(std::ostream&out) const
 {
-  out << "TinyTextWindow#" << winrank
+  out << "TinyTextWindow#" << _disp_win_rank
       << "(X="<< getX() << ",Y="<< getY()
       << ",W=" << getWidth() << ",H=" << getHeight()
       << ";"
@@ -289,88 +356,201 @@ TinyTextWindow::output(std::ostream&out) const
       << ";"
       << (shown()?"shown":"hidden")
       << ")";
-} // end TinyTextWindow::output
+} // end TinyDisplayWindow::output
 
-FXDEFMAP(TinyTextWindow) TinyTextWindowMap[]=
+FXDEFMAP(TinyDisplayWindow) TinyDisplayWindowMap[]=
 {
 };
 
-FXIMPLEMENT(TinyTextWindow,FXMainWindow,
-            TinyTextWindowMap, ARRAYNUMBER(TinyTextWindowMap));
+FXIMPLEMENT(TinyDisplayWindow,FXMainWindow,
+            TinyDisplayWindowMap, ARRAYNUMBER(TinyDisplayWindowMap));
 
 void
-TinyTextWindow::create()
+TinyDisplayWindow::create()
 {
-  TINY_DBGOUT("TinyTextWindow::create #" << winrank);
+  TINY_DBGOUT("TinyDisplayWindow::create #" << _disp_win_rank);
   FXMainWindow::create();
-  editorframe->create();
-  editor->create();
+#warning incomplete TinyDisplayWindow::create
   show(PLACEMENT_SCREEN);
-  TINY_DBGOUT("end TinyTextWindow::create #" << winrank);
-} // end TinyTextWindow::create()
+  TINY_DBGOUT("end TinyDisplayWindow::create #" << _disp_win_rank);
+} // end TinyDisplayWindow::create
 
 void
-TinyTextWindow::layout()
+TinyDisplayWindow::layout()
 {
-  TINY_DBGOUT("TinyTextWindow::layout start " << *this);
+  TINY_DBGOUT("TinyDisplayWindow::layout start " << *this);
   FXMainWindow::layout();
-  TINY_DBGOUT("TinyTextWindow here " << *this);
-  if (editorframe)
-    {
-      editorframe->layout();
-      TINY_DBGOUT("TinyTextWindow#" << winrank << ":layout editorframe: "
-                  << "(X="<< editorframe->getX()
-                  << ",Y="<< editorframe->getY()
-                  << ",W=" << editorframe->getWidth()
-                  << ",H=" << editorframe->getHeight()
-                  << ")");
-    }
-  if (editor)
-    {
-      editor->layout();
-      TINY_DBGOUT("TinyTextWindow#" << winrank << ":layout editor: "
-                  << "(X="<< editor->getX()
-                  << ",Y="<< editor->getY()
-                  << ",W=" << editor->getWidth()
-                  << ",H=" << editor->getHeight()
-                  << ")");
-    };
-  TINY_DBGOUT("end TinyTextWindow::layout #" << winrank);
-} // end TinyTextWindow::layout
+  TINY_DBGOUT("TinyDisplayWindow here " << *this);
+  //if (editorframe)
+  //  {
+  //    editorframe->layout();
+  //    TINY_DBGOUT("TinyDisplayWindow#" << winrank << ":layout editorframe: "
+  //                << "(X="<< editorframe->getX()
+  //                << ",Y="<< editorframe->getY()
+  //                << ",W=" << editorframe->getWidth()
+  //                << ",H=" << editorframe->getHeight()
+  //                << ")");
+  //  }
+  //if (editor)
+  //  {
+  //    editor->layout();
+  //    TINY_DBGOUT("TinyDisplayWindow#" << winrank << ":layout editor: "
+  //                << "(X="<< editor->getX()
+  //                << ",Y="<< editor->getY()
+  //                << ",W=" << editor->getWidth()
+  //                << ",H=" << editor->getHeight()
+  //                << ")");
+  //  };
+  TINY_DBGOUT("end TinyDisplayWindow::layout #" << _disp_win_rank);
+} // end TinyDisplayWindow::layout
 
-TinyTextWindow::TinyTextWindow(FXApp* theapp)
-  : FXMainWindow(theapp, /*name:*/"tiny-text-fox",
+TinyDisplayWindow::TinyDisplayWindow(FXApp* theapp)
+  : FXMainWindow(theapp, /*name:*/"tiny-displaywin-fox",
                  /*closedicon:*/nullptr, /*mainicon:*/nullptr,
                  /*opt:*/DECOR_ALL,
                  /*x,y,w,h:*/0, 0, 450, 333),
-    editorframe(nullptr), editor(nullptr),
-    winrank (++wincount)
+    _disp_win_rank (++_disp_win_count),
+    _disp_vert_frame(nullptr), _disp_first_hframe(nullptr)
 {
-  TINY_DBGOUT("TinyTextWindow#" << winrank << " @" << (void*)this);
-  editorframe = //
-    new TinyHorizontalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
-                            |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
-                            2, 2, // x,y
-                            448, 330 //w,h
-                           );
-  editor = //
-    new TinyText (editorframe, 0,
-                  TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
-                  6, 6, //x,y
-                  444, 320 //w,h
-                 );
-  editor->setText("Text in Tiny ");
-  editor->insertStyledText(editor->lineEnd(0), "XX", FXText::STYLE_BOLD);
-  TINY_DBGOUT("end TinyTextWindow#" << winrank << " @" << (void*)this);
-}; // end TinyTextWindow::TinyTextWindow
+  TINY_DBGOUT("TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
+  _disp_vert_frame = //
+    new TinyVerticalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
+                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
+                          2, 2, // x,y
+                          448, 330 //w,h
+                         );
+  _disp_first_hframe = //
+    new TinyHorizontalFrame (_disp_vert_frame, 0,
+                             TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
+                             6, 6, //x,y
+                             444, 320 //w,h
+                            );
+  //editor->setText("Text in Tiny ");
+  //editor->insertStyledText(editor->lineEnd(0), "XX", FXText::STYLE_BOLD);
+  TINY_DBGOUT("end TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
+}; // end TinyDisplayWindow::TinyDisplayWindow
 
-TinyTextWindow::~TinyTextWindow()
+TinyDisplayWindow::TinyDisplayWindow():
+  FXMainWindow(),
+  _disp_win_rank (++_disp_win_count),
+  _disp_vert_frame(nullptr), _disp_first_hframe(nullptr)
 {
-  TINY_DBGOUT(" destroying TinyTextWindow#" << winrank << " @" << (void*)this);
+  TINY_DBGOUT("TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
+} // end TinyDisplayWindow::TinyDisplayWindow
+
+TinyDisplayWindow::~TinyDisplayWindow()
+{
+  TINY_DBGOUT(" destroying TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
   // don't delete these subwindows, FX will do it....
   //WRONG: delete editorframe;
   //WRONG: delete editor;
-}; // end TinyTextWindow::~TinyTextWindow
+}; // end TinyDisplayWindow::~TinyDisplayWindow
+
+////////////////////////////////////////////////////////////////
+
+void
+TinyMainWindow::output(std::ostream&out) const
+{
+  out << "TinyMainWindow"
+      << "(X="<< getX() << ",Y="<< getY()
+      << ",W=" << getWidth() << ",H=" << getHeight()
+      << ";"
+      << (isEnabled()?"enabled":"disabled")
+      << ";"
+      << (isActive()?"active":"inactive")
+      << ";"
+      << (isShell()?"shell":"nonshell")
+      << ";"
+      << (shown()?"shown":"hidden")
+      << ")";
+} // end TinyMainWindow::output
+
+FXDEFMAP(TinyMainWindow) TinyMainWindowMap[]=
+{
+};
+
+FXIMPLEMENT(TinyMainWindow,FXMainWindow,
+            TinyMainWindowMap, ARRAYNUMBER(TinyMainWindowMap));
+
+void
+TinyMainWindow::create()
+{
+  static int count;
+  count++;
+  TINY_DBGOUT("TinyMainWindow::create @" << (void*)this << "#" << count);
+  if (count>1)
+    {
+    }
+  FXMainWindow::create();
+#warning incomplete TinyMainWindow::create
+  show(PLACEMENT_SCREEN);
+  TINY_DBGOUT("end TinyMainWindow::create @" << (void*)this);
+} // end TinyMainWindow::create
+
+void
+TinyMainWindow::layout()
+{
+  TINY_DBGOUT("TinyMainWindow::layout start @" << (void*)this);
+  FXMainWindow::layout();
+  TINY_DBGOUT("TinyMainWindow here @" << (void*)this);
+  //if (editorframe)
+  //  {
+  //    editorframe->layout();
+  //    TINY_DBGOUT("TinyMainWindow#" << winrank << ":layout editorframe: "
+  //                << "(X="<< editorframe->getX()
+  //                << ",Y="<< editorframe->getY()
+  //                << ",W=" << editorframe->getWidth()
+  //                << ",H=" << editorframe->getHeight()
+  //                << ")");
+  //  }
+  //if (editor)
+  //  {
+  //    editor->layout();
+  //    TINY_DBGOUT("TinyMainWindow#" << winrank << ":layout editor: "
+  //                << "(X="<< editor->getX()
+  //                << ",Y="<< editor->getY()
+  //                << ",W=" << editor->getWidth()
+  //                << ",H=" << editor->getHeight()
+  //                << ")");
+  //  };
+  TINY_DBGOUT("end TinyMainWindow::layout @" << (void*)this);
+} // end TinyMainWindow::layout
+
+TinyMainWindow::TinyMainWindow(FXApp* theapp)
+  : FXMainWindow(theapp, /*name:*/"tiny-mainwin-fox",
+                 /*closedicon:*/nullptr, /*mainicon:*/nullptr,
+                 /*opt:*/DECOR_ALL,
+                 /*x,y,w,h:*/0, 0, 450, 333)
+{
+  TINY_DBGOUT("TinyMainWindow @" << (void*)this);
+  //_disp_vert_frame = //
+  //  new TinyVerticalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
+  //                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
+  //                          2, 2, // x,y
+  //                          448, 330 //w,h
+  //                         );
+  //_disp_first_hframe = //
+  //  new TinyHorizontalFrame (_disp_vert_frame, 0,
+  //                TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
+  //                6, 6, //x,y
+  //                444, 320 //w,h
+  //               );
+  //editor->setText("Text in Tiny ");
+  //editor->insertStyledText(editor->lineEnd(0), "XX", FXText::STYLE_BOLD);
+  TINY_DBGOUT("end TinyMainWindow @" << (void*)this);
+}; // end TinyMainWindow::TinyMainWindow
+
+TinyMainWindow::~TinyMainWindow()
+{
+  TINY_DBGOUT(" destroying TinyMainWindow @" << (void*)this);
+  // don't delete these subwindows, FX will do it....
+  //WRONG: delete editorframe;
+  //WRONG: delete editor;
+}; // end TinyMainWindow::~TinyMainWindow
+
+////////////////////////////////////////////////////////////////
+
+
 
 bool tiny_debug;
 char tiny_hostname[80];
@@ -401,6 +581,13 @@ tiny_version(void)
   std::cout << "jsoncpp " << JSONCPP_VERSION_STRING << std::endl;
 } // end tiny_version
 
+void tiny_fatal_at(const char*fil, int lin)
+{
+  fflush(nullptr);
+  std::cerr << "ABORTING from " << fil << ":" << lin << std::endl;
+  abort();
+} // end tiny_fatal_at
+
 int
 main(int argc, char*argv[])
 {
@@ -430,7 +617,7 @@ main(int argc, char*argv[])
     {
       return 0;
     }
-  auto mywin = new TinyTextWindow(&the_app);
+  auto mywin = new TinyMainWindow(&the_app);
   mywin->create();
   mywin->layout();
   mywin->show();
