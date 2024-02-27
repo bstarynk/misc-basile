@@ -94,6 +94,21 @@ public:
   void output (std::ostream&out) const;
 };				// end TinyMainWindow
 
+std::ostream&operator << (std::ostream&out, const TinyMainWindow&mw)
+{
+  mw.output(out);
+  return out;
+}
+
+std::ostream&operator << (std::ostream&out, const TinyMainWindow*ptw)
+{
+  if (!ptw)
+    out << "nullmainwinptr";
+  else
+    ptw->output(out);
+  return out;
+}
+
 
 // our application
 class TinyApp : public FXApp
@@ -477,22 +492,23 @@ TinyMainWindow::create()
 {
   static int count;
   count++;
-  TINY_DBGOUT("TinyMainWindow::create @" << (void*)this << "#" << count);
+  TINY_DBGOUT("TinyMainWindow::create #" << count << ": " << *this);
   if (count>1)
     {
+      TINY_FATALOUT("TinyMainWindow multiple " << *this);
     }
   FXMainWindow::create();
 #warning incomplete TinyMainWindow::create
   show(PLACEMENT_SCREEN);
-  TINY_DBGOUT("end TinyMainWindow::create @" << (void*)this);
+  TINY_DBGOUT("end TinyMainWindow::create " << *this);
 } // end TinyMainWindow::create
 
 void
 TinyMainWindow::layout()
 {
-  TINY_DBGOUT("TinyMainWindow::layout start @" << (void*)this);
+  TINY_DBGOUT("TinyMainWindow::layout start " << *this);
   FXMainWindow::layout();
-  TINY_DBGOUT("TinyMainWindow here @" << (void*)this);
+  // TINY_DBGOUT("TinyMainWindow::layout here " << *this);
   //if (editorframe)
   //  {
   //    editorframe->layout();
@@ -513,7 +529,7 @@ TinyMainWindow::layout()
   //                << ",H=" << editor->getHeight()
   //                << ")");
   //  };
-  TINY_DBGOUT("end TinyMainWindow::layout @" << (void*)this);
+  TINY_DBGOUT("end TinyMainWindow::layout " << *this);
 } // end TinyMainWindow::layout
 
 TinyMainWindow::TinyMainWindow(FXApp* theapp)
@@ -542,7 +558,7 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
 
 TinyMainWindow::~TinyMainWindow()
 {
-  TINY_DBGOUT(" destroying TinyMainWindow @" << (void*)this);
+  TINY_DBGOUT(" destroying TinyMainWindow @" << (void*)this << " " << *this);
   // don't delete these subwindows, FX will do it....
   //WRONG: delete editorframe;
   //WRONG: delete editor;
