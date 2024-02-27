@@ -14,6 +14,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <cassert>
 
 /// fox-toolkit.org
 #include <fx.h>
@@ -57,16 +58,18 @@ class TinyVerticalFrame;
 class TinyApp;
 extern "C" TinyApp* tiny_app;
 TinyApp* tiny_app;
+
+
 // display output only window, there are several of them
 class TinyDisplayWindow : public FXMainWindow
 {
   FXDECLARE(TinyDisplayWindow);
 private:
   TinyDisplayWindow();
-  int _disp_win_rank; // the rank into TinyApp vector
+  long _disp_win_rank; // the rank into TinyApp vector
   TinyVerticalFrame* _disp_vert_frame; // the topmost vertical frame
   TinyHorizontalFrame* _disp_first_hframe; // the first horizontal subframe
-  static int _disp_win_count;
+  static long _disp_win_count;
 #warning missing widget fields in TinyDisplayWindow
 public:
   TinyDisplayWindow(FXApp *theapp);
@@ -318,7 +321,7 @@ FXDEFMAP(TinyVerticalFrame) TinyVerticalFrameMap[]=
 FXIMPLEMENT(TinyVerticalFrame,FXVerticalFrame,
             TinyVerticalFrameMap, ARRAYNUMBER(TinyVerticalFrameMap));
 
-int TinyDisplayWindow::_disp_win_count = 0;
+long TinyDisplayWindow::_disp_win_count = 0;
 
 FXDEFMAP(TinyText) TinyTextMap[]=
 {
@@ -430,10 +433,16 @@ TinyDisplayWindow::TinyDisplayWindow(FXApp* theapp)
     _disp_vert_frame(nullptr), _disp_first_hframe(nullptr)
 {
   TINY_DBGOUT("TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
+  assert(tiny_app != nullptr);
+  tiny_app->_vec_disp_win.reserve(_disp_win_rank+1);
+  if ((long)tiny_app->_vec_disp_win.size() == _disp_win_rank-1)
+    tiny_app->_vec_disp_win.push_back(this);
+  assert((long)tiny_app->_vec_disp_win.size() == _disp_win_rank);
+  assert(tiny_app->_vec_disp_win[_disp_win_rank] == this);
   _disp_vert_frame = //
     new TinyVerticalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
                           |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
-                          2, 2, // x,y
+                          2, 2, // x,yo
                           448, 330 //w,h
                          );
   _disp_first_hframe = //
@@ -453,11 +462,20 @@ TinyDisplayWindow::TinyDisplayWindow():
   _disp_vert_frame(nullptr), _disp_first_hframe(nullptr)
 {
   TINY_DBGOUT("TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
+  assert(tiny_app != nullptr);
+  tiny_app->_vec_disp_win.reserve(_disp_win_rank+1);
+  if ((long)tiny_app->_vec_disp_win.size() == _disp_win_rank-1)
+    tiny_app->_vec_disp_win.push_back(this);
+  assert((long)tiny_app->_vec_disp_win.size() == _disp_win_rank);
 } // end TinyDisplayWindow::TinyDisplayWindow
 
 TinyDisplayWindow::~TinyDisplayWindow()
 {
   TINY_DBGOUT(" destroying TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
+  assert(tiny_app != nullptr);
+  assert ((long)tiny_app->_vec_disp_win.size() > _disp_win_rank);
+  assert(tiny_app->_vec_disp_win[_disp_win_rank] == this);
+  tiny_app->_vec_disp_win[_disp_win_rank] = nullptr;
   // don't delete these subwindows, FX will do it....
   //WRONG: delete editorframe;
   //WRONG: delete editor;
@@ -630,6 +648,7 @@ main(int argc, char*argv[])
       tiny_version();
       return 0;
     };
+  assert(argc>0 && argv[argc] == nullptr);
   TINY_DBGOUT("start of " << argv[0] << " git " << GIT_ID
               << " pid " << (int)getpid() << " on " << tiny_hostname
               << " built " << tiny_buildtimestamp);
@@ -657,6 +676,7 @@ main(int argc, char*argv[])
   TINY_DBGOUT("running tiny_app " << (void*)tiny_app);
   int code = the_app.run();
   tiny_app = nullptr;
+  assert (argc>=0); /// it could have been changed by FX!
   return code;
 } // end main
 
