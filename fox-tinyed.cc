@@ -7,6 +7,9 @@
 /// fox-toolkit.org
 #include <fx.h>
 #include <unistd.h>
+/// jsoncpp
+#include <json/json.h>
+#include <json/version.h>
 
 extern "C" bool tiny_debug;
 extern "C" char tiny_hostname[80];
@@ -191,6 +194,11 @@ TinyText::output(std::ostream&out) const
 } // end TinyText::output
 
 int TinyText::_tt_textcount;
+
+
+
+
+
 
 // Editor main window
 class TinyTextWindow : public FXMainWindow
@@ -389,6 +397,8 @@ tiny_version(void)
   std::cout << "fox-toolkit " << (int)fxversion[0] << '.'
             << (int)fxversion[1] << '.'
             << (int)fxversion[2] << std::endl;
+  /// see also https://github.com/open-source-parsers/jsoncpp/issues/1531
+  std::cout << "jsoncpp " << JSONCPP_VERSION_STRING << std::endl;
 } // end tiny_version
 
 int
