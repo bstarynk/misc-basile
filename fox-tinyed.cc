@@ -88,8 +88,12 @@ public:
 class TinyMainWindow : public FXMainWindow
 {
   FXDECLARE(TinyMainWindow);
+  TinyVerticalFrame* _main_vertframe;
+  FXMenuBar* _main_menubar;
+  FXMenuPane *_main_filemenu;
 protected:
-  TinyMainWindow(): FXMainWindow()
+  TinyMainWindow(): FXMainWindow(),
+		    _main_vertframe(nullptr), _main_menubar(nullptr)
   {
     TINY_DBGOUT("TinyMainWindow @" << (void*)this);
   };
@@ -454,7 +458,7 @@ TinyDisplayWindow::TinyDisplayWindow(FXApp* theapp)
   _disp_menubar=new FXMenuBar(_disp_vert_frame,LAYOUT_SIDE_TOP|LAYOUT_FILL_X);
 
   // File menu
-  _disp_filemenu=new FXMenuPane(this);
+  _disp_filemenu=new FXMenuPane(_disp_menubar);
   new FXMenuCommand(_disp_filemenu,"&Quit",nullptr,getApp(),FXApp::ID_QUIT);
   _disp_first_hframe = //
     new TinyHorizontalFrame (_disp_vert_frame, 0,
@@ -569,7 +573,10 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
   : FXMainWindow(theapp, /*name:*/"tiny-mainwin-fox",
                  /*closedicon:*/nullptr, /*mainicon:*/nullptr,
                  /*opt:*/DECOR_ALL,
-                 /*x,y,w,h:*/0, 0, 450, 333)
+                 /*x,y,w,h:*/0, 0, 450, 333),
+    _main_vertframe(nullptr),
+    _main_menubar(nullptr),
+    _main_filemenu(nullptr)
 {
   TINY_DBGOUT("TinyMainWindow @" << (void*)this);
   if (tiny_app && tiny_app->_main_win && tiny_app->_main_win != this)
@@ -577,21 +584,16 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
       TINY_FATALOUT("TinyApp has already a main window " << *tiny_app->_main_win
                     << " when constructing " << *this);
     };
+  _main_vertframe = new TinyVerticalFrame(this, LAYOUT_SIDE_TOP|FRAME_NONE //
+                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
+                          2, 2, // x,yo
+                          448, 330 //w,h
+                         );
+  _main_menubar = new FXMenuBar(_main_vertframe,
+				LAYOUT_SIDE_TOP|LAYOUT_FILL_X);
+  _main_filemenu=new FXMenuPane(_main_menubar);
+  new FXMenuCommand(_main_filemenu,"&Quit",nullptr,getApp(),FXApp::ID_QUIT);
   tiny_app->_main_win = this;
-  //_disp_vert_frame = //
-  //  new TinyVerticalFrame(this,LAYOUT_SIDE_TOP|FRAME_NONE //
-  //                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
-  //                          2, 2, // x,y
-  //                          448, 330 //w,h
-  //                         );
-  //_disp_first_hframe = //
-  //  new TinyHorizontalFrame (_disp_vert_frame, 0,
-  //                TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
-  //                6, 6, //x,y
-  //                444, 320 //w,h
-  //               );
-  //editor->setText("Text in Tiny ");
-  //editor->insertStyledText(editor->lineEnd(0), "XX", FXText::STYLE_BOLD);
   TINY_DBGOUT("end TinyMainWindow @" << (void*)this);
 }; // end TinyMainWindow::TinyMainWindow
 
