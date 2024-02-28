@@ -68,6 +68,9 @@ private:
   TinyDisplayWindow();
   long _disp_win_rank; // the rank into TinyApp vector
   TinyVerticalFrame* _disp_vert_frame; // the topmost vertical frame
+  ///
+  FXMenuBar* _disp_menubar;
+  FXMenuPane   *_disp_filemenu;       // File menu
   TinyHorizontalFrame* _disp_first_hframe; // the first horizontal subframe
   static long _disp_win_count;
 #warning missing widget fields in TinyDisplayWindow
@@ -85,7 +88,6 @@ public:
 class TinyMainWindow : public FXMainWindow
 {
   FXDECLARE(TinyMainWindow);
-  ///
 protected:
   TinyMainWindow(): FXMainWindow()
   {
@@ -431,7 +433,10 @@ TinyDisplayWindow::TinyDisplayWindow(FXApp* theapp)
                  /*opt:*/DECOR_ALL,
                  /*x,y,w,h:*/0, 0, 450, 333),
     _disp_win_rank (++_disp_win_count),
-    _disp_vert_frame(nullptr), _disp_first_hframe(nullptr)
+    _disp_vert_frame(nullptr),
+    _disp_menubar(nullptr),
+    _disp_filemenu(nullptr),
+    _disp_first_hframe(nullptr)
 {
   TINY_DBGOUT("TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
   assert(tiny_app != nullptr);
@@ -446,6 +451,11 @@ TinyDisplayWindow::TinyDisplayWindow(FXApp* theapp)
                           2, 2, // x,yo
                           448, 330 //w,h
                          );
+  _disp_menubar=new FXMenuBar(_disp_vert_frame,LAYOUT_SIDE_TOP|LAYOUT_FILL_X);
+
+  // File menu
+  _disp_filemenu=new FXMenuPane(this);
+  new FXMenuCommand(_disp_filemenu,"&Quit",nullptr,getApp(),FXApp::ID_QUIT);
   _disp_first_hframe = //
     new TinyHorizontalFrame (_disp_vert_frame, 0,
                              TEXT_READONLY|TEXT_WORDWRAP|LAYOUT_FILL_X|LAYOUT_FILL_Y, //
@@ -460,7 +470,10 @@ TinyDisplayWindow::TinyDisplayWindow(FXApp* theapp)
 TinyDisplayWindow::TinyDisplayWindow():
   FXMainWindow(),
   _disp_win_rank (++_disp_win_count),
-  _disp_vert_frame(nullptr), _disp_first_hframe(nullptr)
+  _disp_vert_frame(nullptr),
+  _disp_menubar(nullptr),
+  _disp_filemenu(nullptr),
+  _disp_first_hframe(nullptr)
 {
   TINY_DBGOUT("TinyDisplayWindow#" << _disp_win_rank << " @" << (void*)this);
   assert(tiny_app != nullptr);
@@ -478,8 +491,7 @@ TinyDisplayWindow::~TinyDisplayWindow()
   assert(tiny_app->_vec_disp_win[_disp_win_rank] == this);
   tiny_app->_vec_disp_win[_disp_win_rank] = nullptr;
   // don't delete these subwindows, FX will do it....
-  //WRONG: delete editorframe;
-  //WRONG: delete editor;
+  delete _disp_filemenu;
 }; // end TinyDisplayWindow::~TinyDisplayWindow
 
 ////////////////////////////////////////////////////////////////
