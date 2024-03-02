@@ -93,7 +93,7 @@ class TinyMainWindow : public FXMainWindow
   FXMenuPane *_main_filemenu;
 protected:
   TinyMainWindow(): FXMainWindow(),
-		    _main_vertframe(nullptr), _main_menubar(nullptr)
+    _main_vertframe(nullptr), _main_menubar(nullptr)
   {
     TINY_DBGOUT("TinyMainWindow @" << (void*)this);
   };
@@ -585,12 +585,12 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
                     << " when constructing " << *this);
     };
   _main_vertframe = new TinyVerticalFrame(this, LAYOUT_SIDE_TOP|FRAME_NONE //
-                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
-                          2, 2, // x,yo
-                          448, 330 //w,h
-                         );
+                                          |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
+                                          2, 2, // x,yo
+                                          448, 330 //w,h
+                                         );
   _main_menubar = new FXMenuBar(_main_vertframe,
-				LAYOUT_SIDE_TOP|LAYOUT_FILL_X);
+                                LAYOUT_SIDE_TOP|LAYOUT_FILL_X);
   _main_filemenu=new FXMenuPane(_main_menubar);
   new FXMenuCommand(_main_filemenu,"&Quit",nullptr,getApp(),FXApp::ID_QUIT);
   tiny_app->_main_win = this;
