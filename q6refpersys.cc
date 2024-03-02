@@ -20,7 +20,7 @@
    communicates with the refpersys process using some JSONRPC protocol
    on named fifos. In contrast to refpersys itself, the q6refpersys process is
    short lived.
-   
+
 ****/
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
@@ -39,6 +39,7 @@ extern "C" char myqr_host_name[64];
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDebug>
+#include <QMainWindow>
 #include <iostream>
 #include <sstream>
 #include <unistd.h>
@@ -61,6 +62,75 @@ extern "C" char myqr_host_name[];
 
 extern "C" QApplication *myqr_app;
 
+QT_BEGIN_NAMESPACE
+namespace Ui
+{
+class MyqrMainWindow;
+class MyqrDisplayWindow;
+}
+QT_END_NAMESPACE
+
+class MyqrMainWindow : public QMainWindow
+{
+  Q_OBJECT;
+private slots:
+  void about();
+  void aboutQt();
+public:
+  explicit MyqrMainWindow(QWidget*parent = nullptr);
+  virtual ~MyqrMainWindow();
+};				// end MyqrMainWindow
+
+class MyqrDisplayWindow : public QMainWindow
+{
+  Q_OBJECT;
+private slots:
+  void about();
+public:
+  explicit MyqrDisplayWindow(QWidget*parent = nullptr);
+  virtual ~MyqrDisplayWindow();
+};				// end MyqrDisplayWindow
+
+MyqrMainWindow::MyqrMainWindow(QWidget*parent)
+  : QMainWindow(parent)
+{
+  qDebug() << "unimplemented MyqrMainWindow constructor";
+#warning unimplemented MyqrMainWindow constructor
+} // end MyqrMainWindow constructor
+
+MyqrDisplayWindow::MyqrDisplayWindow(QWidget*parent)
+  : QMainWindow(parent)
+{
+} // end MyqrDisplayWindow constructor
+
+void
+MyqrDisplayWindow::about()
+{
+  qDebug() << " unimplemented MyqrDisplayWindow::about";
+} // end MyqrDisplayWindow::about
+
+MyqrMainWindow::~MyqrMainWindow()
+{
+} // end MyqrMainWindow destructor
+
+MyqrDisplayWindow::~MyqrDisplayWindow()
+{
+} // end MyqrDisplayWindow destructor
+
+void
+MyqrMainWindow::aboutQt()
+{
+  qDebug() << " unimplemented MyqrMainWindow::aboutQt";
+#warning unimplemented MyqrMainWindow::aboutQt
+} // end MyqrDisplayWindow::aboutQt
+
+void
+MyqrMainWindow::about()
+{
+  qDebug() << " unimplemented MyqrMainWindow::about";
+#warning unimplemented MyqrMainWindow::about
+} // end MyqrDisplayWindow::aboutQt
+
 void myqr_create_windows(void);
 
 void
@@ -79,19 +149,19 @@ int main(int argc, char **argv)
   QApplication the_app(argc, argv);
   QCoreApplication::setApplicationName("q6refpersys");
   QCoreApplication::setApplicationVersion(QString("version ") + myqr_git_id
-					  + " " __DATE__ "@" __TIME__);
+                                          + " " __DATE__ "@" __TIME__);
   QCommandLineParser cli_parser;
   cli_parser.addVersionOption();
   cli_parser.addHelpOption();
   QCommandLineOption debug_opt(QStringList() << "D" << "debug",
-			       "show debugging messages");
+                               "show debugging messages");
   cli_parser.addOption(debug_opt);
   QCommandLineOption jsonrpc_opt{{"J", "jsonrpc"},
-				 "Use $JSONRPC.out and $JSONRPC.cmd fifos.", "JSONRPC"};
+    "Use $JSONRPC.out and $JSONRPC.cmd fifos.", "JSONRPC"};
   cli_parser.addOption(jsonrpc_opt);
   QCommandLineOption refpersys_opt{"start-refpersys",
-				   "Start the given $REFPERSYS, defaulted to refpersys",
-				   "REFPERSYS", QString("refpersys")};
+                                   "Start the given $REFPERSYS, defaulted to refpersys",
+                                   "REFPERSYS", QString("refpersys")};
   cli_parser.addOption(refpersys_opt);
   cli_parser.process(the_app);
   const QStringList args = cli_parser.positionalArguments();
@@ -107,6 +177,8 @@ int main(int argc, char **argv)
 const char myqr_git_id[] = GITID;
 char myqr_host_name[sizeof(myqr_host_name)];
 QApplication *myqr_app;
+
+#include "_q6refpersys-moc.cc"
 
 /****************
  **                           for Emacs...
