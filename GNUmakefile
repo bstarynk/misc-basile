@@ -112,7 +112,7 @@ fltk-mini-edit: fltk-mini-edit.cc mini-edit-build.sh |GNUmakefile
 	./mini-edit-build.sh
 
 q6refpersys: q6refpersys.cc _q6refpersys-moc.cc |GNUmakefile
-	$(CXX) -rdynamic -fPIE -fPIC $(CXXFLAGS) -DGITID='"$(GIT_ID)"' \
+	$(CXX) -rdynamic -fPIE -fPIC -g -O $(CXXFLAGS) -DGITID='"$(GIT_ID)"' \
 	$(shell pkg-config --cflags $(Q6REFPERSYS_PACKAGES)) $< \
 	$(shell pkg-config --libs $(Q6REFPERSYS_PACKAGES)) -o $@
 
