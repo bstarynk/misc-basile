@@ -119,7 +119,7 @@ MyqrMainWindow::MyqrMainWindow(QWidget*parent)
                   << " and this@" << (void*)this);
   the_instance = this;
   MYQR_DEBUGOUT("MyqrMainWndow the_instance@" << (void*)the_instance
-		<< " parent@" << (void*)parent);
+                << " parent@" << (void*)parent);
   setMinimumWidth(minimal_width);
   setMinimumHeight(minimal_height);
   setMaximumWidth(maximal_width);
