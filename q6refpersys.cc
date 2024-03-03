@@ -40,11 +40,13 @@ extern "C" char myqr_host_name[64];
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QMainWindow>
+#include <QtCore/qglobal.h>
 #include <iostream>
 #include <sstream>
 #include <unistd.h>
 
 extern "C" char myqr_host_name[];
+extern "C" bool myqr_debug;
 
 #define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {	\
     std::ostringstream outs##Lin;		\
@@ -60,6 +62,17 @@ extern "C" char myqr_host_name[];
   MYQR_FATALOUT_AT_BIS(Fil,Lin,Out)
 
 #define MYQR_FATALOUT(Out) MYQR_FATALOUT_AT(__FILE__,__LINE__,Out)
+
+#define MYQR_DEBUGOUT_AT_BIS(Fil,Lin,Out) do {	\
+    if (myqr_debug)				\
+      std::clog << Fil << ":" << Lin << " "	\
+		<< Out << std::endl;		\
+  } while(0)
+
+#define MYQR_DEBUGOUT_AT(Fil,Lin,Out) \
+  MYQR_DEBUGOUT_AT_BIS(Fil,Lin,Out)
+
+#define MYQR_DEBUGOUT(Out) MYQR_DEBUGOUT_AT(__FILE__,__LINE__,Out)
 
 extern "C" QApplication *myqr_app;
 
@@ -78,13 +91,15 @@ private slots:
   void about();
   void aboutQt();
 public:
+  static MyqrMainWindow*the_instance;
   explicit MyqrMainWindow(QWidget*parent = nullptr);
   virtual ~MyqrMainWindow();
-  static constexpr int minimal_width = 256;
+  static constexpr int minimal_width = 512;
   static constexpr int minimal_height = 128;
-  static constexpr int maximal_width = 1024;
-  static constexpr int maximal_height = 800;
+  static constexpr int maximal_width = 2048;
+  static constexpr int maximal_height = 1024;
 };				// end MyqrMainWindow
+MyqrMainWindow*MyqrMainWindow::the_instance;
 
 class MyqrDisplayWindow : public QMainWindow
 {
@@ -99,8 +114,17 @@ public:
 MyqrMainWindow::MyqrMainWindow(QWidget*parent)
   : QMainWindow(parent)
 {
-  qDebug() << "unimplemented MyqrMainWindow constructor";
-#warning unimplemented MyqrMainWindow constructor
+  if (the_instance != nullptr)
+    MYQR_FATALOUT("duplicate MyqrMainWndow @" << (void*)the_instance
+		  << " and this@" << (void*)this);
+  the_instance = this;
+  setMinimumWidth(minimal_width);
+  setMinimumHeight(minimal_height);
+  setMaximumWidth(maximal_width);
+  setMaximumHeight(maximal_height);
+  qDebug() << "incomplete MyqrMainWindow constructor "
+	   << __FILE__  ":" << (__LINE__-1);
+#warning incomplete MyqrMainWindow constructor
 } // end MyqrMainWindow constructor
 
 MyqrDisplayWindow::MyqrDisplayWindow(QWidget*parent)
@@ -116,6 +140,10 @@ MyqrDisplayWindow::about()
 
 MyqrMainWindow::~MyqrMainWindow()
 {
+  if (the_instance != this)
+    MYQR_FATALOUT("corruption in MyqrMainWndow the_instance@" << (void*)the_instance
+		  << " this@" << (void*)this);
+  the_instance = nullptr;
 } // end MyqrMainWindow destructor
 
 MyqrDisplayWindow::~MyqrDisplayWindow()
@@ -141,10 +169,12 @@ void myqr_create_windows(const QString& geom);
 void
 myqr_create_windows(const QString& geom)
 {
-  qDebug() << " unimplemented myqr_create_windows geometry " << geom;
+  MYQR_DEBUGOUT("incomplete myqr_create_windows geometry "
+		<< geom.toStdString() << ";");
   int w=0, h=0;
   if (sscanf(geom.toStdString().c_str(), "%dx%h", &w, &h) >= 2)
     {
+      MYQR_DEBUGOUT("scanned w=" << w << " h=" << h);
       if (w > MyqrMainWindow::maximal_width)
         w= MyqrMainWindow::maximal_width;
       if (h > MyqrMainWindow::maximal_height)
@@ -155,15 +185,25 @@ myqr_create_windows(const QString& geom)
   if (h< MyqrMainWindow::minimal_height)
     h= MyqrMainWindow::minimal_height;
   qDebug() << "myqr_create_windows w=" << w << ", h=" << h;
-  MYQR_FATALOUT("unimplemented myqr_create_windows");
-#warning unimplemented myqr_create_windows
+  auto mainwin = new MyqrMainWindow(nullptr);
+  mainwin->resize(w,h);
+  mainwin->show();
+  qDebug() << "incomplete myqr_create_windows mainwin@" << (void*)mainwin;
+#warning incomplete myqr_create_windows
 } // end myqr_create_windows
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-  if (argc>1 && (!strcmp(argv[1], "-D") || !strcmp(argv[1], "--debug")))
-    qDebug().setVerbosity(QDebug::DefaultVerbosity);
+  for (int i=1; i<argc; i++) {
+    if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug")) {
+      qDebug().setVerbosity(QDebug::DefaultVerbosity);
+      myqr_debug = true;
+    }
+  }
   gethostname(myqr_host_name, sizeof(myqr_host_name)-1);
+  MYQR_DEBUGOUT("starting " << argv[0] << " on " << myqr_host_name
+		<< " git " << myqr_git_id << " pid " << (int)getpid());
   QApplication the_app(argc, argv);
   QCoreApplication::setApplicationName("q6refpersys");
   QCoreApplication::setApplicationVersion(QString("version ") + myqr_git_id
@@ -175,10 +215,10 @@ int main(int argc, char **argv)
                                "show debugging messages");
   cli_parser.addOption(debug_opt);
   QCommandLineOption jsonrpc_opt{{"J", "jsonrpc"},
-    "Use $JSONRPC.out and $JSONRPC.cmd fifos.", "JSONRPC"};
+				 "Use $JSONRPC.out and $JSONRPC.cmd fifos.", "JSONRPC"};
   cli_parser.addOption(jsonrpc_opt);
   QCommandLineOption geometry_opt{{"G", "geometry"},
-    "Main window geometry is W*H,\n... e.g. --geometry 400x650", "WxH"};
+				  "Main window geometry is W*H,\n... e.g. --geometry 400x650", "WxH"};
   cli_parser.addOption(geometry_opt);
   QCommandLineOption refpersys_opt{"start-refpersys",
                                    "Start the given $REFPERSYS, defaulted to refpersys",
@@ -187,7 +227,9 @@ int main(int argc, char **argv)
   cli_parser.process(the_app);
   const QStringList args = cli_parser.positionalArguments();
   myqr_app = &the_app;
-  myqr_create_windows(cli_parser.value(geometry_opt));
+  QString geomstr = cli_parser.value(geometry_opt);
+  MYQR_DEBUGOUT("geomstr:" << geomstr.toStdString());
+  myqr_create_windows(geomstr);
   myqr_app->exec();
   myqr_app = nullptr;
   return 0;
@@ -198,7 +240,7 @@ int main(int argc, char **argv)
 const char myqr_git_id[] = GITID;
 char myqr_host_name[sizeof(myqr_host_name)];
 QApplication *myqr_app;
-
+bool myqr_debug;
 #include "_q6refpersys-moc.cc"
 
 /****************
