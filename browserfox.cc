@@ -24,11 +24,12 @@
 #include "fx.h"
 #include "fxkeys.h"
 
+extern "C" bool bf_debug;
 extern "C" const char*bf_progname;
-
 extern "C" const char bf_gitid[];
 extern "C" const char bf_buildtime[];
 
+extern "C" char bf_hostname[];
 #ifndef GIT_ID
 #error GIT_ID should be provided in compilation command
 #endif
@@ -37,14 +38,16 @@ const char bf_gitid[]=GIT_ID;
 const char bf_buildtime[]=__DATE__ "@" __TIME__;
 
 const char*bf_progname;
-
+bool bf_debug;
 
 class BfWindow: public FXMainWindow
 {
+  int win_rank;
+  static int win_count;
   FXDECLARE(BfWindow)
 private:
 protected:
-  BfWindow() {};
+  BfWindow();
 public:
   static constexpr int bf_width=800;
   static constexpr int bf_height=650;
@@ -56,29 +59,95 @@ FXDEFMAP(BfWindow) BfWindowMap[]=
 {
 };
 
+int BfWindow::win_count;
+
+#define BF_BACKTRACE_PRINT(Skip) do {if (my_debug_flag) \
+      my_backtrace_print_at(__FILE__,__LINE__, (Skip)); } while (0)
+
+extern "C" void bf_backtrace_print_at(const char*fil, int line, int skip);
+
+
+/// fatal error macro, printf-like
+#define BF_FATALPRINTF_AT(Fil,Lin,Fmt,...) do {		\
+    printf("\n@@°@@FATAL ERROR (%s pid %d) %s:%d:\n",	\
+	   my_prog_name, (int)getpid(),			\
+	   Fil,Lin);					\
+    printf((Fmt), ##__VA_ARGS__);			\
+    putchar('\n');					\
+    my_backtrace_print_at(Fil,Lin, (1));		\
+    fflush(nullptr);					\
+    my_abort(); } while(0)
+
+//// example is FATALPRINTF   ("x=%d",x)
+#define BF_FATALPRINTF(Fmt,...) FATALPRINTF_AT(__FILE__,__LINE__,\
+					    Fmt,##__VA_ARGS__)
+
+#define BF_FATALOUT_AT(Fil,Lin,Out) do {		\
+    std::ostringstream outs##Lin;		\
+    outs##Lin << Out << std::fflush;		\
+    BF_FATALPRINTF_AT(Fil,Lin,"%s",		\
+		   outs##Lin.str().c_str());	\
+} while(0)
+#define BF_FATALOUT(Out) FATALOUT_AT(__FILE__,__LINE__,Out)
+
+/// debug printing macro à la printf
+#define BF_DBGPRINTF_AT(Fil,Lin,Fmt,...) do {	\
+    if (bf_debug) {				\
+      fprintf(stderr,"@@%s:%d:",Fil,Lin);	\
+      fprintf(stderr, (Fmt), ##__VA_ARGS__);	\
+      fputc('\n', stderr); fflush(stderr);	\
+    }} while(0)
+#define BF_DBGPRINTF(Fmt,...) DBGPRINTF_AT(__FILE__,__LINE__,Fmt,\
+					##__VA_ARGS__)
+
+/// debug printing macro à la C++
+#define BF_DBGOUT_AT(Fil,Lin,Out) do {			\
+    if (bf_debug) {					\
+      std::clog << "@@" Fil << ":" << Lin << ':'	\
+		<< Out << std::endl;			\
+    }} while(0)
+#define BF_DBGOUT(Out) BF_DBGOUT_AT(__FILE__,__LINE__,Out)
+
+
 
 
 ////////////////////////////////////////////////////////////////
 BfWindow::BfWindow(FXApp*app)
   : FXMainWindow(app, "browserfox",nullptr,nullptr,DECOR_ALL,0,0,
-                 bf_width,bf_height)
+                 bf_width,bf_height),
+    win_rank(++win_count)
 {
+  BF_DBGOUT("BfWindow#" << win_rank << " in app @"<<(void*)this);
 }; // end BfWindow::BfWindow
 
+BfWindow::BfWindow(): FXMainWindow(), win_rank(++win_count)
+{
+  BF_DBGOUT("BfWindow#" << win_rank<<" @"<<(void*)this);
+};
 BfWindow::~BfWindow()
 {
+  BF_DBGOUT("~BfWindow#" << win_rank);
 }; // end BfWindow::~BfWindow
 
 void
 BfWindow::create()
 {
+  BF_DBGOUT("BfWindow:create#" << win_rank);
 }; // end BfWindow::create
 
 FXIMPLEMENT(BfWindow,FXMainWindow,BfWindowMap,ARRAYNUMBER(BfWindowMap));
 
-int main(int argc, char**argv)
+char bf_hostname[80];
+int
+main(int argc, char**argv)
 {
   bf_progname = argv[0];
+  gethostname(bf_hostname, sizeof(bf_hostname)-1);
+  for (int i=1; i<argc; i++)
+    if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug"))
+      bf_debug = true;
+  BF_DBGOUT("start of " << argv[0] << " pid " << (int)getpid() << " on " << bf_hostname
+            << " git " << bf_gitid << " build " << bf_buildtime);
   FXApp application("browserfox");
   application.init(argc, argv);
   BfWindow win(&application);
