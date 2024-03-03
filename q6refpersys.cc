@@ -49,9 +49,10 @@ extern "C" char myqr_host_name[];
 #define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {	\
     std::ostringstream outs##Lin;		\
     outs##Lin << Out << std::flush;		\
-    qFatal("%s:%d: %s\n[git %s] on %s",       	\
+    qFatal("%s:%d: %s\n[git %s@%s] on %s",	\
 	   Fil, Lin, outs##Lin.str().c_str(),   \
-	   myqr_git_id, myqr_host_name);       	\
+	   myqr_git_id, __DATE__" " __TIME__,	\
+	   myqr_host_name);			\
     abort();					\
   } while(0)
 
@@ -79,6 +80,10 @@ private slots:
 public:
   explicit MyqrMainWindow(QWidget*parent = nullptr);
   virtual ~MyqrMainWindow();
+  static constexpr int minimal_width = 256;
+  static constexpr int minimal_height = 128;
+  static constexpr int maximal_width = 1024;
+  static constexpr int maximal_height = 800;
 };				// end MyqrMainWindow
 
 class MyqrDisplayWindow : public QMainWindow
@@ -131,12 +136,25 @@ MyqrMainWindow::about()
 #warning unimplemented MyqrMainWindow::about
 } // end MyqrDisplayWindow::aboutQt
 
-void myqr_create_windows(void);
+void myqr_create_windows(const QString& geom);
 
 void
-myqr_create_windows(void)
+myqr_create_windows(const QString& geom)
 {
-  qDebug() << " unimplemented myqr_create_windows";
+  qDebug() << " unimplemented myqr_create_windows geometry " << geom;
+  int w=0, h=0;
+  if (sscanf(geom.toStdString().c_str(), "%dx%h", &w, &h) >= 2)
+    {
+      if (w > MyqrMainWindow::maximal_width)
+        w= MyqrMainWindow::maximal_width;
+      if (h > MyqrMainWindow::maximal_height)
+        h=MyqrMainWindow::maximal_height;
+    }
+  if (w< MyqrMainWindow::minimal_width)
+    w=MyqrMainWindow::minimal_width;
+  if (h< MyqrMainWindow::minimal_height)
+    h= MyqrMainWindow::minimal_height;
+  qDebug() << "myqr_create_windows w=" << w << ", h=" << h;
   MYQR_FATALOUT("unimplemented myqr_create_windows");
 #warning unimplemented myqr_create_windows
 } // end myqr_create_windows
@@ -159,6 +177,9 @@ int main(int argc, char **argv)
   QCommandLineOption jsonrpc_opt{{"J", "jsonrpc"},
     "Use $JSONRPC.out and $JSONRPC.cmd fifos.", "JSONRPC"};
   cli_parser.addOption(jsonrpc_opt);
+  QCommandLineOption geometry_opt{{"G", "geometry"},
+    "Main window geometry is W*H,\n... e.g. --geometry 400x650", "WxH"};
+  cli_parser.addOption(geometry_opt);
   QCommandLineOption refpersys_opt{"start-refpersys",
                                    "Start the given $REFPERSYS, defaulted to refpersys",
                                    "REFPERSYS", QString("refpersys")};
@@ -166,7 +187,7 @@ int main(int argc, char **argv)
   cli_parser.process(the_app);
   const QStringList args = cli_parser.positionalArguments();
   myqr_app = &the_app;
-  myqr_create_windows();
+  myqr_create_windows(cli_parser.value(geometry_opt));
   myqr_app->exec();
   myqr_app = nullptr;
   return 0;
