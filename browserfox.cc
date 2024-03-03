@@ -23,6 +23,7 @@
 
 #include "fx.h"
 #include "fxkeys.h"
+#include "fxver.h"
 
 extern "C" bool bf_debug;
 extern "C" const char*bf_progname;
@@ -148,7 +149,8 @@ main(int argc, char**argv)
     if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug"))
       bf_debug = true;
   BF_DBGOUT("start of " << argv[0] << " pid " << (int)getpid() << " on " << bf_hostname
-            << " git " << bf_gitid << " build " << bf_buildtime);
+            << " git " << bf_gitid << " build " << bf_buildtime
+	    << " for FOX " << FOX_MAJOR << '.' << FOX_MINOR << '.' << FOX_LEVEL);
   FXApp application("browserfox");
   application.init(argc, argv);
   BfWindow win(&application);
