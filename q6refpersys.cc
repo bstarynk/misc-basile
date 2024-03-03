@@ -116,14 +116,16 @@ MyqrMainWindow::MyqrMainWindow(QWidget*parent)
 {
   if (the_instance != nullptr)
     MYQR_FATALOUT("duplicate MyqrMainWndow @" << (void*)the_instance
-		  << " and this@" << (void*)this);
+                  << " and this@" << (void*)this);
   the_instance = this;
+  MYQR_DEBUGOUT("MyqrMainWndow the_instance@" << (void*)the_instance
+		<< " parent@" << (void*)parent);
   setMinimumWidth(minimal_width);
   setMinimumHeight(minimal_height);
   setMaximumWidth(maximal_width);
   setMaximumHeight(maximal_height);
   qDebug() << "incomplete MyqrMainWindow constructor "
-	   << __FILE__  ":" << (__LINE__-1);
+           << __FILE__  ":" << (__LINE__-1);
 #warning incomplete MyqrMainWindow constructor
 } // end MyqrMainWindow constructor
 
@@ -142,7 +144,7 @@ MyqrMainWindow::~MyqrMainWindow()
 {
   if (the_instance != this)
     MYQR_FATALOUT("corruption in MyqrMainWndow the_instance@" << (void*)the_instance
-		  << " this@" << (void*)this);
+                  << " this@" << (void*)this);
   the_instance = nullptr;
 } // end MyqrMainWindow destructor
 
@@ -170,15 +172,20 @@ void
 myqr_create_windows(const QString& geom)
 {
   MYQR_DEBUGOUT("incomplete myqr_create_windows geometry "
-		<< geom.toStdString() << ";");
+                << geom.toStdString() << ";");
   int w=0, h=0;
-  if (sscanf(geom.toStdString().c_str(), "%dx%h", &w, &h) >= 2)
+  const char*geomcstr = geom.toStdString().c_str();
+  if (geomcstr != nullptr)
     {
-      MYQR_DEBUGOUT("scanned w=" << w << " h=" << h);
-      if (w > MyqrMainWindow::maximal_width)
-        w= MyqrMainWindow::maximal_width;
-      if (h > MyqrMainWindow::maximal_height)
-        h=MyqrMainWindow::maximal_height;
+      MYQR_DEBUGOUT("myqr_create_windows geomcstr='" << geomcstr << "'");
+      if (sscanf(geomcstr, "%dx%h", &w, &h) >= 2)
+        {
+          MYQR_DEBUGOUT("scanned w=" << w << " h=" << h);
+          if (w > MyqrMainWindow::maximal_width)
+            w= MyqrMainWindow::maximal_width;
+          if (h > MyqrMainWindow::maximal_height)
+            h=MyqrMainWindow::maximal_height;
+        }
     }
   if (w< MyqrMainWindow::minimal_width)
     w=MyqrMainWindow::minimal_width;
@@ -195,15 +202,17 @@ myqr_create_windows(const QString& geom)
 int
 main(int argc, char **argv)
 {
-  for (int i=1; i<argc; i++) {
-    if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug")) {
-      qDebug().setVerbosity(QDebug::DefaultVerbosity);
-      myqr_debug = true;
+  for (int i=1; i<argc; i++)
+    {
+      if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug"))
+        {
+          qDebug().setVerbosity(QDebug::DefaultVerbosity);
+          myqr_debug = true;
+        }
     }
-  }
   gethostname(myqr_host_name, sizeof(myqr_host_name)-1);
   MYQR_DEBUGOUT("starting " << argv[0] << " on " << myqr_host_name
-		<< " git " << myqr_git_id << " pid " << (int)getpid());
+                << " git " << myqr_git_id << " pid " << (int)getpid());
   QApplication the_app(argc, argv);
   QCoreApplication::setApplicationName("q6refpersys");
   QCoreApplication::setApplicationVersion(QString("version ") + myqr_git_id
@@ -215,10 +224,10 @@ main(int argc, char **argv)
                                "show debugging messages");
   cli_parser.addOption(debug_opt);
   QCommandLineOption jsonrpc_opt{{"J", "jsonrpc"},
-				 "Use $JSONRPC.out and $JSONRPC.cmd fifos.", "JSONRPC"};
+    "Use $JSONRPC.out and $JSONRPC.cmd fifos.", "JSONRPC"};
   cli_parser.addOption(jsonrpc_opt);
   QCommandLineOption geometry_opt{{"G", "geometry"},
-				  "Main window geometry is W*H,\n... e.g. --geometry 400x650", "WxH"};
+    "Main window geometry is W*H,\n... e.g. --geometry 400x650", "WxH"};
   cli_parser.addOption(geometry_opt);
   QCommandLineOption refpersys_opt{"start-refpersys",
                                    "Start the given $REFPERSYS, defaulted to refpersys",
@@ -229,6 +238,7 @@ main(int argc, char **argv)
   myqr_app = &the_app;
   QString geomstr = cli_parser.value(geometry_opt);
   MYQR_DEBUGOUT("geomstr:" << geomstr.toStdString());
+  MYQR_DEBUGOUT("debug:" << cli_parser.value(debug_opt).toStdString());
   myqr_create_windows(geomstr);
   myqr_app->exec();
   myqr_app = nullptr;
