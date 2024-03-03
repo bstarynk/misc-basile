@@ -54,6 +54,7 @@ public:
   BfWindow(FXApp*app);
   virtual ~BfWindow();
   virtual void create();
+  int rank() const { return win_rank;};
 };				// end class BfWindow
 FXDEFMAP(BfWindow) BfWindowMap[]=
 {
@@ -152,7 +153,10 @@ main(int argc, char**argv)
   application.init(argc, argv);
   BfWindow win(&application);
   win.create();
+  BF_DBGOUT("show win#" << win.rank() << " X=" << win.getX() << ",Y=" << win.getY()
+	    << ",W=" << win.getWidth() << ",H=" << win.getHeight());
   win.show();
+  BF_DBGOUT("win#" << win.rank() << " is " << (win.shown()?"shown":"hidden"));
   return application.run();
 } // end main
 
