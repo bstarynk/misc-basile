@@ -28,6 +28,10 @@
 #include "fxkeys.h"
 #include "fxver.h"
 
+/// jsoncpp C++ library for JSON
+#include "json/json.h"
+#include "json/version.h"
+
 extern "C" bool bf_debug;
 extern "C" const char*bf_progname;
 extern "C" const char bf_gitid[];
@@ -234,6 +238,7 @@ main(int argc, char**argv)
       printf("%s version git %s built on %s\n", bf_progname, bf_gitid, bf_buildtime);
       printf("GNU glibc %s\n", gnu_get_libc_version());
       printf("compiled for FOX %d.%d.%d\n", FOX_MAJOR, FOX_MINOR, FOX_LEVEL);
+      printf("compiled for JSONCPP %s\n", JSONCPP_VERSION_STRING);
       return 0;
     };
   FXApp application("browserfox");
