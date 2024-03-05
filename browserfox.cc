@@ -184,12 +184,14 @@ bf_backtrace_print_at(const char*fil, int line, int skip)
   fprintf(stderr, "backtrace from %s:%d (skip:%d)\n", fil, line, skip);
   for (i=0; i<size; i++)
     {
-      if (i<skip) continue;
+      if (i<skip)
+	continue;
       fprintf(stderr, "%d: %s", i, strings[i]);
       if (strings[i][0]=='_')
         {
           int status = -4;
-          char*demangledname= abi::__cxa_demangle(strings[i], NULL, NULL, &status);
+          char*demangledname= abi::__cxa_demangle(strings[i],
+						  NULL, NULL, &status);
           if (demangledname && demangledname[0] && status ==0)
             fprintf(stderr, " = %s", demangledname);
           free(demangledname);
@@ -199,6 +201,8 @@ bf_backtrace_print_at(const char*fil, int line, int skip)
   fflush(stderr);
 } // end bf_backtrace_print_at
 
+
+
 void
 bf_help(void)
 {
@@ -206,7 +210,7 @@ bf_help(void)
   printf("\t -D | --debug                    # debug messages\n");
   printf("\t -V | --version                  # version information\n");
   printf("\t -H | --help                     # this help\n");
-  printf("\t -dont-run                       # dry run, crashes\n");
+  printf("\t --dont-run                      # dry run, crashes\n");
   printf("# and FOX toolkit options\n");
   fflush(stdout);
 } // end of bf_help
@@ -230,12 +234,15 @@ main(int argc, char**argv)
       if (!strcmp(argv[i], "--dont-run"))
         dontrun = true;
     }
-  BF_DBGOUT("start of " << argv[0] << " pid " << (int)getpid() << " on " << bf_hostname
+  BF_DBGOUT("start of " << argv[0] << " pid " << (int)getpid()
+	    << " on " << bf_hostname
             << " git " << bf_gitid << " build " << bf_buildtime
-            << " for FOX " << FOX_MAJOR << '.' << FOX_MINOR << '.' << FOX_LEVEL);
+            << " for FOX "
+	    << FOX_MAJOR << '.' << FOX_MINOR << '.' << FOX_LEVEL);
   if (showversion)
     {
-      printf("%s version git %s built on %s\n", bf_progname, bf_gitid, bf_buildtime);
+      printf("%s version git %s built on %s\n", bf_progname,
+	     bf_gitid, bf_buildtime);
       printf("GNU glibc %s\n", gnu_get_libc_version());
       printf("compiled for FOX %d.%d.%d\n", FOX_MAJOR, FOX_MINOR, FOX_LEVEL);
       printf("compiled for JSONCPP %s\n", JSONCPP_VERSION_STRING);
@@ -252,7 +259,9 @@ main(int argc, char**argv)
   win.create();
   BF_DBGOUT("show win#" << win.rank() << " X=" << win.getX() << ",Y=" << win.getY()
             << ",W=" << win.getWidth() << ",H=" << win.getHeight());
-  win.show();
+  /// the following call is creating X11 windows.
+  application.create();
+  win.show(PLACEMENT_SCREEN);
   BF_DBGOUT("win#" << win.rank() << " is " << (win.shown()?"shown":"hidden"));
   if (dontrun)
     {
