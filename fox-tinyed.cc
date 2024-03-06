@@ -91,9 +91,10 @@ class TinyMainWindow : public FXMainWindow
   TinyVerticalFrame* _main_vertframe;
   FXMenuBar* _main_menubar;
   FXMenuPane *_main_filemenu;
+  FXMenuCommand *_main_quitcmd;
 protected:
   TinyMainWindow(): FXMainWindow(),
-    _main_vertframe(nullptr), _main_menubar(nullptr)
+		    _main_vertframe(nullptr), _main_menubar(nullptr), _main_filemenu(nullptr), _main_quitcmd(nullptr)
   {
     TINY_DBGOUT("TinyMainWindow @" << (void*)this);
   };
@@ -566,6 +567,11 @@ TinyMainWindow::create(void)
       _main_filemenu->create();
       TINY_DBGOUT("TinyMainWindow::create filemenu@" << (void*)_main_filemenu);
     };
+  if (_main_quitcmd)
+    {
+      _main_quitcmd->create();
+      TINY_DBGOUT("TinyMainWindow::create quitcmd@" << (void*)_main_quitcmd);
+    }
 #warning incomplete TinyMainWindow::create
   show(PLACEMENT_SCREEN);
   TINY_DBGOUT("end TinyMainWindow::create " << *this);
@@ -607,7 +613,8 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
                  /*x,y,w,h:*/0, 0, 450, 333),
     _main_vertframe(nullptr),
     _main_menubar(nullptr),
-    _main_filemenu(nullptr)
+    _main_filemenu(nullptr),
+    _main_quitcmd(nullptr)
 {
   TINY_DBGOUT("TinyMainWindow @" << (void*)this);
   if (tiny_app && tiny_app->_main_win && tiny_app->_main_win != this)
@@ -623,17 +630,18 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
   _main_menubar = new FXMenuBar(_main_vertframe,
                                 LAYOUT_SIDE_TOP|LAYOUT_FILL_X);
   _main_filemenu=new FXMenuPane(_main_menubar);
-  new FXMenuCommand(_main_filemenu,"&Quit",nullptr,getApp(),FXApp::ID_QUIT);
+  _main_quitcmd = new FXMenuCommand(_main_filemenu,"&Quit",nullptr,getApp(),FXApp::ID_QUIT);
   tiny_app->_main_win = this;
-  TINY_DBGOUT("end TinyMainWindow @" << (void*)this);
+  TINY_DBGOUT("end TinyMainWindow @" << (void*)this
+	      << " main_menubar@" << _main_menubar
+	      << " main_filemenu@" << _main_filemenu
+	      << " main_quitcmd@" << _main_quitcmd);
 }; // end TinyMainWindow::TinyMainWindow
 
 TinyMainWindow::~TinyMainWindow()
 {
   TINY_DBGOUT(" destroying TinyMainWindow @" << (void*)this << " " << *this);
   // don't delete these subwindows, FX will do it....
-  //WRONG: delete editorframe;
-  //WRONG: delete editor;
 }; // end TinyMainWindow::~TinyMainWindow
 
 ////////////////////////////////////////////////////////////////
