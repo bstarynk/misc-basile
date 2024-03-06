@@ -100,8 +100,8 @@ protected:
 public:
   TinyMainWindow(FXApp *theapp);
   virtual ~TinyMainWindow();
-  virtual void create();
-  virtual void layout();
+  virtual void create(void);
+  virtual void layout(void);
   void output (std::ostream&out) const;
 };				// end TinyMainWindow
 
@@ -393,7 +393,7 @@ FXIMPLEMENT(TinyDisplayWindow,FXMainWindow,
             TinyDisplayWindowMap, ARRAYNUMBER(TinyDisplayWindowMap));
 
 void
-TinyDisplayWindow::create()
+TinyDisplayWindow::create(void)
 {
   TINY_DBGOUT("TinyDisplayWindow::create #" << _disp_win_rank);
   FXMainWindow::create();
@@ -525,7 +525,7 @@ FXIMPLEMENT(TinyMainWindow,FXMainWindow,
             TinyMainWindowMap, ARRAYNUMBER(TinyMainWindowMap));
 
 void
-TinyMainWindow::create()
+TinyMainWindow::create(void)
 {
   static int count;
   count++;
