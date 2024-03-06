@@ -229,16 +229,16 @@ TinyVerticalFrame::output(std::ostream&out) const
 
 int TinyVerticalFrame::_counter;
 
-std::ostream&operator << (std::ostream&out, const TinyHorizontalFrame&tf)
+std::ostream&operator << (std::ostream&out, const TinyVerticalFrame&tf)
 {
   tf.output(out);
   return out;
 }
 
-std::ostream&operator << (std::ostream&out, const TinyHorizontalFrame*ptw)
+std::ostream&operator << (std::ostream&out, const TinyVerticalFrame*ptw)
 {
   if (!ptw)
-    out << "nulltinyhorizontalframeptr";
+    out << "nulltinyverticalframeptr";
   else
     out << *ptw ;
   return out;
@@ -263,6 +263,20 @@ TinyHorizontalFrame::output(std::ostream&out) const
       << ")";
 } // end TinyHorizontalFrame
 
+std::ostream&operator << (std::ostream&out, const TinyHorizontalFrame&tf)
+{
+  tf.output(out);
+  return out;
+}
+
+std::ostream&operator << (std::ostream&out, const TinyHorizontalFrame*ptw)
+{
+  if (!ptw)
+    out << "nulltinyhorizontalframeptr";
+  else
+    out << *ptw ;
+  return out;
+}
 
 class TinyText : public FXText
 {
@@ -318,6 +332,8 @@ FXDEFMAP(TinyHorizontalFrame) TinyHorizontalFrameMap[]=
 FXIMPLEMENT(TinyHorizontalFrame,FXHorizontalFrame,
             TinyHorizontalFrameMap, ARRAYNUMBER(TinyHorizontalFrameMap));
 
+
+////////////////
 FXDEFMAP(TinyVerticalFrame) TinyVerticalFrameMap[]=
 {
 };
@@ -535,6 +551,21 @@ TinyMainWindow::create(void)
       TINY_FATALOUT("TinyMainWindow multiple " << *this);
     }
   FXMainWindow::create();
+  if (_main_vertframe)
+    {
+      _main_vertframe->create();
+      TINY_DBGOUT("TinyMainWindow::create vertframe:" << *_main_vertframe);
+    };
+  if (_main_menubar)
+    {
+      _main_menubar->create();
+      TINY_DBGOUT("TinyMainWindow::create menubar@" << (void*)_main_menubar);
+    };
+  if (_main_filemenu)
+    {
+      _main_filemenu->create();
+      TINY_DBGOUT("TinyMainWindow::create filemenu@" << (void*)_main_filemenu);
+    };
 #warning incomplete TinyMainWindow::create
   show(PLACEMENT_SCREEN);
   TINY_DBGOUT("end TinyMainWindow::create " << *this);
