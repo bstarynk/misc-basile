@@ -1041,11 +1041,19 @@ my_backtrace_error(void*data, const char*msg, int errnum)
   exit(EXIT_FAILURE);
 } // end my_backtrace_error
 
+int
+my_backtrace_full(void *data, uintptr_t pc,
+		  const char *filename, int lineno,
+		  const char *function)
+{
+} // end my_backtrace_full
+
 void
 my_backtrace_print_at(const char*fil, int line, int skip)
 {
   printf("%s:%d backtrace\n", fil, line);
-  backtrace_print(my_backtrace_state, skip, stdout);
+  backtrace_full(my_backtrace_state, skip,
+		 my_backtrace_full, my_backtrace_error, stdout);
   fflush(NULL);
 } // end my_backtrace_print_at
 
