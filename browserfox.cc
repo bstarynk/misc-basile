@@ -185,13 +185,13 @@ bf_backtrace_print_at(const char*fil, int line, int skip)
   for (i=0; i<size; i++)
     {
       if (i<skip)
-	continue;
+        continue;
       fprintf(stderr, "%d: %s", i, strings[i]);
       if (strings[i][0]=='_')
         {
           int status = -4;
           char*demangledname= abi::__cxa_demangle(strings[i],
-						  NULL, NULL, &status);
+                                                  NULL, NULL, &status);
           if (demangledname && demangledname[0] && status ==0)
             fprintf(stderr, " = %s", demangledname);
           free(demangledname);
@@ -235,14 +235,14 @@ main(int argc, char**argv)
         dontrun = true;
     }
   BF_DBGOUT("start of " << argv[0] << " pid " << (int)getpid()
-	    << " on " << bf_hostname
+            << " on " << bf_hostname
             << " git " << bf_gitid << " build " << bf_buildtime
             << " for FOX "
-	    << FOX_MAJOR << '.' << FOX_MINOR << '.' << FOX_LEVEL);
+            << FOX_MAJOR << '.' << FOX_MINOR << '.' << FOX_LEVEL);
   if (showversion)
     {
       printf("%s version git %s built on %s\n", bf_progname,
-	     bf_gitid, bf_buildtime);
+             bf_gitid, bf_buildtime);
       printf("GNU glibc %s\n", gnu_get_libc_version());
       printf("compiled for FOX %d.%d.%d\n", FOX_MAJOR, FOX_MINOR, FOX_LEVEL);
       printf("compiled for JSONCPP %s\n", JSONCPP_VERSION_STRING);
