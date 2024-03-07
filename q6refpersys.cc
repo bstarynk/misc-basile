@@ -44,6 +44,9 @@ extern "C" char myqr_host_name[64];
 #include <QGroupBox>
 #include <QVBoxLayout>
 #include <QTextEdit>
+#include <QLineEdit>
+#include <QSizePolicy>
+#include <QLabel>
 #include <QtCore/qglobal.h>
 #include <iostream>
 #include <sstream>
@@ -101,6 +104,9 @@ class MyqrMainWindow : public QMainWindow
   QAction* _mainwin_pasteact;
   /// the central widget is a vertical group box
   QGroupBox* _mainwin_centralgroup;
+  QLabel*_mainwin_toplabel;
+  QLineEdit*_mainwin_cmdline;
+  QTextEdit*_mainwin_textoutput;
 private slots:
   void about();
   void aboutQt();
@@ -134,7 +140,8 @@ MyqrMainWindow::MyqrMainWindow(QWidget*parent)
     _mainwin_aboutqtact(nullptr),
     _mainwin_copyact(nullptr),
     _mainwin_pasteact(nullptr),
-    _mainwin_centralgroup(nullptr)
+    _mainwin_centralgroup(nullptr),
+    _mainwin_toplabel(nullptr)
 {
   if (the_instance != nullptr)
     MYQR_FATALOUT("duplicate MyqrMainWndow @" << (void*)the_instance
@@ -152,6 +159,14 @@ MyqrMainWindow::MyqrMainWindow(QWidget*parent)
   {
     QVBoxLayout *vbox = new QVBoxLayout;
     _mainwin_centralgroup->setLayout(vbox);
+    _mainwin_toplabel = new QLabel("q6refpersys");
+    vbox->addWidget(_mainwin_toplabel);
+    _mainwin_cmdline = new QLineEdit(_mainwin_centralgroup);
+    _mainwin_cmdline->setFixedWidth(this->width()-16);
+    vbox->addWidget(_mainwin_cmdline);
+    _mainwin_textoutput = new QTextEdit();
+    _mainwin_textoutput->setReadOnly(true);
+    vbox->addWidget(_mainwin_textoutput);
   }
   setCentralWidget(_mainwin_centralgroup);
   the_instance = this;
