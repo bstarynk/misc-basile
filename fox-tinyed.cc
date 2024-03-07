@@ -94,7 +94,7 @@ class TinyMainWindow : public FXMainWindow
   FXMenuCommand *_main_quitcmd;
 protected:
   TinyMainWindow(): FXMainWindow(),
-		    _main_vertframe(nullptr), _main_menubar(nullptr), _main_filemenu(nullptr), _main_quitcmd(nullptr)
+    _main_vertframe(nullptr), _main_menubar(nullptr), _main_filemenu(nullptr), _main_quitcmd(nullptr)
   {
     TINY_DBGOUT("TinyMainWindow @" << (void*)this);
   };
@@ -633,9 +633,9 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
   _main_quitcmd = new FXMenuCommand(_main_filemenu,"&Quit",nullptr,getApp(),FXApp::ID_QUIT);
   tiny_app->_main_win = this;
   TINY_DBGOUT("end TinyMainWindow @" << (void*)this
-	      << " main_menubar@" << _main_menubar
-	      << " main_filemenu@" << _main_filemenu
-	      << " main_quitcmd@" << _main_quitcmd);
+              << " main_menubar@" << _main_menubar
+              << " main_filemenu@" << _main_filemenu
+              << " main_quitcmd@" << _main_quitcmd);
 }; // end TinyMainWindow::TinyMainWindow
 
 TinyMainWindow::~TinyMainWindow()
