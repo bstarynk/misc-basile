@@ -291,6 +291,7 @@ main(int argc, char **argv)
   QString geomstr = cli_parser.value(geometry_opt);
   MYQR_DEBUGOUT("geomstr:" << geomstr.toStdString());
   MYQR_DEBUGOUT("debug:" << cli_parser.value(debug_opt).toStdString());
+  MYQR_DEBUGOUT("startrefpersys:" << cli_parser.value(refpersys_opt).toStdString());
   myqr_create_windows(geomstr);
   myqr_app->exec();
   myqr_app = nullptr;
