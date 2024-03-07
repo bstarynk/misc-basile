@@ -40,6 +40,7 @@ extern "C" char myqr_host_name[64];
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QMainWindow>
+#include <QMenuBar>
 #include <QtCore/qglobal.h>
 #include <iostream>
 #include <sstream>
@@ -87,6 +88,13 @@ QT_END_NAMESPACE
 class MyqrMainWindow : public QMainWindow
 {
   Q_OBJECT;
+  QMenuBar* _mainwin_menubar;
+  QMenu* _mainwin_appmenu;
+  QAction* _mainwin_aboutact;
+  QAction* _mainwin_aboutqtact;
+  QMenu* _mainwin_editmenu;
+  QAction* _mainwin_copyact;
+  QAction* _mainwin_pasteact;
 private slots:
   void about();
   void aboutQt();
@@ -112,11 +120,27 @@ public:
 };				// end MyqrDisplayWindow
 
 MyqrMainWindow::MyqrMainWindow(QWidget*parent)
-  : QMainWindow(parent)
+  : QMainWindow(parent),
+    _mainwin_menubar(nullptr),
+    _mainwin_appmenu(nullptr),
+    _mainwin_editmenu(nullptr),
+    _mainwin_aboutact(nullptr),
+    _mainwin_aboutqtact(nullptr),
+    _mainwin_copyact(nullptr),
+    _mainwin_pasteact(nullptr)
 {
   if (the_instance != nullptr)
     MYQR_FATALOUT("duplicate MyqrMainWndow @" << (void*)the_instance
                   << " and this@" << (void*)this);
+  _mainwin_menubar = menuBar();
+  _mainwin_appmenu =_mainwin_menubar-> addMenu("App");
+  _mainwin_aboutact = _mainwin_appmenu->addAction("About");
+  QObject::connect(_mainwin_aboutact,&QAction::triggered,this,&MyqrMainWindow::about);
+  _mainwin_aboutqtact = _mainwin_appmenu->addAction("About Qt");
+  QObject::connect(_mainwin_aboutqtact,&QAction::triggered,this,&MyqrMainWindow::aboutQt);
+  _mainwin_editmenu =_mainwin_menubar-> addMenu("Edit");
+  _mainwin_copyact =  _mainwin_editmenu->addAction("Copy");
+  _mainwin_pasteact = _mainwin_editmenu->addAction("Paste");
   the_instance = this;
   MYQR_DEBUGOUT("MyqrMainWndow the_instance@" << (void*)the_instance
                 << " parent@" << (void*)parent);
@@ -155,14 +179,14 @@ MyqrDisplayWindow::~MyqrDisplayWindow()
 void
 MyqrMainWindow::aboutQt()
 {
-  qDebug() << " unimplemented MyqrMainWindow::aboutQt";
+  MYQR_DEBUGOUT("unimplemented MyqrMainWindow::aboutQt");
 #warning unimplemented MyqrMainWindow::aboutQt
 } // end MyqrDisplayWindow::aboutQt
 
 void
 MyqrMainWindow::about()
 {
-  qDebug() << " unimplemented MyqrMainWindow::about";
+  MYQR_DEBUGOUT("unimplemented MyqrMainWindow::about");
 #warning unimplemented MyqrMainWindow::about
 } // end MyqrDisplayWindow::aboutQt
 
