@@ -41,6 +41,9 @@ extern "C" char myqr_host_name[64];
 #include <QDebug>
 #include <QMainWindow>
 #include <QMenuBar>
+#include <QGroupBox>
+#include <QVBoxLayout>
+#include <QTextEdit>
 #include <QtCore/qglobal.h>
 #include <iostream>
 #include <sstream>
@@ -88,6 +91,7 @@ QT_END_NAMESPACE
 class MyqrMainWindow : public QMainWindow
 {
   Q_OBJECT;
+  //// the menubar
   QMenuBar* _mainwin_menubar;
   QMenu* _mainwin_appmenu;
   QAction* _mainwin_aboutact;
@@ -95,6 +99,8 @@ class MyqrMainWindow : public QMainWindow
   QMenu* _mainwin_editmenu;
   QAction* _mainwin_copyact;
   QAction* _mainwin_pasteact;
+  /// the central widget is a vertical group box
+  QGroupBox* _mainwin_centralgroup;
 private slots:
   void about();
   void aboutQt();
@@ -127,7 +133,8 @@ MyqrMainWindow::MyqrMainWindow(QWidget*parent)
     _mainwin_aboutact(nullptr),
     _mainwin_aboutqtact(nullptr),
     _mainwin_copyact(nullptr),
-    _mainwin_pasteact(nullptr)
+    _mainwin_pasteact(nullptr),
+    _mainwin_centralgroup(nullptr)
 {
   if (the_instance != nullptr)
     MYQR_FATALOUT("duplicate MyqrMainWndow @" << (void*)the_instance
@@ -141,6 +148,12 @@ MyqrMainWindow::MyqrMainWindow(QWidget*parent)
   _mainwin_editmenu =_mainwin_menubar-> addMenu("Edit");
   _mainwin_copyact =  _mainwin_editmenu->addAction("Copy");
   _mainwin_pasteact = _mainwin_editmenu->addAction("Paste");
+  _mainwin_centralgroup = new QGroupBox(this);
+  {
+    QVBoxLayout *vbox = new QVBoxLayout;
+    _mainwin_centralgroup->setLayout(vbox);
+  }
+  setCentralWidget(_mainwin_centralgroup);
   the_instance = this;
   MYQR_DEBUGOUT("MyqrMainWndow the_instance@" << (void*)the_instance
                 << " parent@" << (void*)parent);
