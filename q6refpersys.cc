@@ -48,15 +48,22 @@ extern "C" char myqr_host_name[64];
 #include <QLineEdit>
 #include <QSizePolicy>
 #include <QLabel>
+#include <QSocketNotifier>
 #include <QtCore/qglobal.h>
 #include <iostream>
 #include <sstream>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 extern "C" char myqr_host_name[];
 extern "C" bool myqr_debug;
 extern "C" std::string myqr_jsonrpc;
-
+extern "C" int myqr_jsonrpc_cmd_fd; /// written by RefPerSys, read by q6refpersys
+extern "C" int myqr_jsonrpc_out_fd; /// read by RefPerSys, written by q6refpersys
+extern "C" QSocketNotifier* myqr_notifier_jsonrpc_cmd;
+extern "C" QSocketNotifier* myqr_notifier_jsonrpc_out;
 #define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {	\
     std::ostringstream outs##Lin;		\
     outs##Lin << Out << std::flush;		\
@@ -151,9 +158,57 @@ std::ostream& operator << (std::ostream&out, const QList<QString>&qslist)
   int nbl=0;
   for (const QString&qs: qslist)
     {
+      if (nbl++ > 0)
+        out << ' ';
+      std::string s = qs.toStdString();
+      bool needquotes=false;
+      for (char c: s)
+        {
+          if (!isalnum(c)&& c!='_') needquotes=true;
+        }
+      if (needquotes)
+        out << "'";
+      for (QChar qc : qs)
+        {
+          switch (qc.unicode())
+            {
+            case '\\':
+              out << "\\\\";
+              break;
+            case '\'':
+              out << "\\'";
+              break;
+            case '\"':
+              out << "\\\"";
+              break;
+            case '\r':
+              out << "\\r";
+              break;
+            case '\n':
+              out << "\\n";
+              break;
+            case '\t':
+              out << "\\t";
+              break;
+            case '\v':
+              out << "\\v";
+              break;
+            case '\f':
+              out << "\\f";
+              break;
+            case ' ':
+              out << " ";
+              break;
+            default:
+              out << QString(qc).toStdString();
+              break;
+            }
+        }
+      if (needquotes)
+        out << "'";
     }
   return out;
-}
+}// end operator << (std::ostream&out, const QList<QString>&qslist)
 
 ////////////////////////////////////////////////////////////////
 
@@ -279,12 +334,45 @@ myqr_create_windows(const QString& geom)
 } // end myqr_create_windows
 
 void
+myqr_readable_jsonrpc_cmd(void)
+{
+  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd unimplemented myqr_jsonrpc_cmd_fd=" << myqr_jsonrpc_cmd_fd);
+#warning unimplemented myqr_readable_jsonrpc_cmd
+} // end myqr_readable_jsonrpc_cmd
+
+void
+myqr_writable_jsonrpc_out(void)
+{
+  MYQR_DEBUGOUT("myqr_writable_jsonrpc_out unimplemented myqr_jsonrpc_out_fd=" << myqr_jsonrpc_out_fd);
+#warning unimplemented myqr_writable_jsonrpc_out
+} // end myqr_writable_jsonrpc_out
+
+void
 myqr_have_jsonrpc(const std::string&jsonrpc)
 {
   MYQR_DEBUGOUT("myqr_have_jsonrpc incomplete " << jsonrpc);
-#warning incomplete myqr_have_jsonrpc
-  /* TODO: create the FIFOs $JSONRPC.out and $JSONRPC.cmd and connect
-     them to the application */
+  std::string jsonrpc_cmd = jsonrpc+".cmd"; /// written by RefPerSys, read by q6refpersys
+  std::string jsonrpc_out = jsonrpc+".out"; /// read by RefPerSys, written by q6refpersys
+  if (access(jsonrpc_cmd.c_str(), F_OK))
+    {
+      if (mkfifo(jsonrpc_cmd.c_str(), 0660)<0)
+        MYQR_FATALOUT("failed to create command JSONRPC fifo " << jsonrpc_cmd << ":" << strerror(errno));
+    };
+  if (access(jsonrpc_out.c_str(), F_OK))
+    {
+      if (mkfifo(jsonrpc_out.c_str(), 0660)<0)
+        MYQR_FATALOUT("failed to create output JSONRPC fifo " << jsonrpc_out << ":" << strerror(errno));
+    };
+  myqr_jsonrpc_cmd_fd = open(jsonrpc_cmd.c_str(), 0440 | O_CLOEXEC);
+  if (myqr_jsonrpc_cmd_fd<0)
+    MYQR_FATALOUT("failed to open command JSONRPC " << jsonrpc_cmd << " for reading:" << strerror(errno));
+  myqr_notifier_jsonrpc_cmd = new QSocketNotifier(myqr_jsonrpc_cmd_fd, QSocketNotifier::Read);
+  QObject::connect(myqr_notifier_jsonrpc_cmd,&QSocketNotifier::activated,myqr_readable_jsonrpc_cmd);
+  myqr_jsonrpc_out_fd = open(jsonrpc_out.c_str(), 0660 | O_CLOEXEC);
+  if (myqr_jsonrpc_out_fd<0)
+    MYQR_FATALOUT("failed to open output JSONRPC " << jsonrpc_out << " for writing:" << strerror(errno));
+  myqr_notifier_jsonrpc_out = new QSocketNotifier(myqr_jsonrpc_out_fd, QSocketNotifier::Write);
+  QObject::connect(myqr_notifier_jsonrpc_out,&QSocketNotifier::activated,myqr_writable_jsonrpc_out);
 } // end myqr_have_jsonrpc
 
 void
@@ -310,6 +398,7 @@ myqr_start_refpersys(const std::string& refpersysprog,
   if (!myqr_refpersys_process->startDetached(&pid))
     MYQR_FATALOUT("failed to start refpersys " << prog);
   MYQR_DEBUGOUT("myqr_start_refpersys started " << refpersysprog
+                << " with arguments " << arglist
                 << " as pid " << pid);
 } // end myqr_start_refpersys
 
@@ -376,7 +465,11 @@ char myqr_host_name[sizeof(myqr_host_name)];
 QApplication *myqr_app;
 bool myqr_debug;
 std::string myqr_jsonrpc;
+int myqr_jsonrpc_cmd_fd = -1;
+int myqr_jsonrpc_out_fd = -1;
 QProcess*myqr_refpersys_process;
+QSocketNotifier* myqr_notifier_jsonrpc_cmd;
+QSocketNotifier* myqr_notifier_jsonrpc_out;
 #include "_q6refpersys-moc.cc"
 
 /****************
