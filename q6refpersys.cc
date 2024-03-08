@@ -357,22 +357,32 @@ myqr_have_jsonrpc(const std::string&jsonrpc)
     {
       if (mkfifo(jsonrpc_cmd.c_str(), 0660)<0)
         MYQR_FATALOUT("failed to create command JSONRPC fifo " << jsonrpc_cmd << ":" << strerror(errno));
+      else
+	MYQR_DEBUGOUT("myqr_have_jsonrpc created command fifo " << jsonrpc_cmd);
     };
   if (access(jsonrpc_out.c_str(), F_OK))
     {
       if (mkfifo(jsonrpc_out.c_str(), 0660)<0)
         MYQR_FATALOUT("failed to create output JSONRPC fifo " << jsonrpc_out << ":" << strerror(errno));
+      else
+	MYQR_DEBUGOUT("myqr_have_jsonrpc created output fifo " << jsonrpc_out);
     };
   myqr_jsonrpc_cmd_fd = open(jsonrpc_cmd.c_str(), 0440 | O_CLOEXEC);
   if (myqr_jsonrpc_cmd_fd<0)
     MYQR_FATALOUT("failed to open command JSONRPC " << jsonrpc_cmd << " for reading:" << strerror(errno));
+  else
+    MYQR_DEBUGOUT("myqr_have_jsonrpc cmd fd#" << myqr_jsonrpc_cmd_fd);
   myqr_notifier_jsonrpc_cmd = new QSocketNotifier(myqr_jsonrpc_cmd_fd, QSocketNotifier::Read);
   QObject::connect(myqr_notifier_jsonrpc_cmd,&QSocketNotifier::activated,myqr_readable_jsonrpc_cmd);
   myqr_jsonrpc_out_fd = open(jsonrpc_out.c_str(), 0660 | O_CLOEXEC);
   if (myqr_jsonrpc_out_fd<0)
     MYQR_FATALOUT("failed to open output JSONRPC " << jsonrpc_out << " for writing:" << strerror(errno));
+  else
+    MYQR_DEBUGOUT("myqr_have_jsonrpc out fd#" << myqr_jsonrpc_cmd_fd);
   myqr_notifier_jsonrpc_out = new QSocketNotifier(myqr_jsonrpc_out_fd, QSocketNotifier::Write);
   QObject::connect(myqr_notifier_jsonrpc_out,&QSocketNotifier::activated,myqr_writable_jsonrpc_out);
+  MYQR_DEBUGOUT("myqr_have_jsonrpc cmd: " << jsonrpc_cmd << " fd#" << myqr_jsonrpc_cmd_fd
+		<< " out: " << jsonrpc_out<< " fd#" << myqr_jsonrpc_out_fd);
 } // end myqr_have_jsonrpc
 
 void
