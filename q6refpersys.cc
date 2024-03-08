@@ -37,6 +37,7 @@ extern "C" char myqr_host_name[64];
 
 
 #include <QApplication>
+#include <QProcess>
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QMainWindow>
@@ -54,6 +55,7 @@ extern "C" char myqr_host_name[64];
 
 extern "C" char myqr_host_name[];
 extern "C" bool myqr_debug;
+extern "C" std::string myqr_jsonrpc;
 
 #define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {	\
     std::ostringstream outs##Lin;		\
@@ -140,8 +142,18 @@ public:
 
 
 
+////////////////////////////////////////////////////////////////
+extern "C" QProcess*myqr_refpersys_process;
 //=============================================================
 
+std::ostream& operator << (std::ostream&out, const QList<QString>&qslist)
+{
+  int nbl=0;
+  for (const QString&qs: qslist)
+    {
+    }
+  return out;
+}
 
 ////////////////////////////////////////////////////////////////
 
@@ -258,13 +270,48 @@ myqr_create_windows(const QString& geom)
     w=MyqrMainWindow::minimal_width;
   if (h< MyqrMainWindow::minimal_height)
     h= MyqrMainWindow::minimal_height;
-  qDebug() << "myqr_create_windows w=" << w << ", h=" << h;
+  MYQR_DEBUGOUT("myqr_create_windows w=" << w << ", h=" << h);
   auto mainwin = new MyqrMainWindow(nullptr);
   mainwin->resize(w,h);
   mainwin->show();
-  qDebug() << "incomplete myqr_create_windows mainwin@" << (void*)mainwin;
+  MYQR_DEBUGOUT("myqr_create_windows incomplete mainwin@" << (void*)mainwin);
 #warning incomplete myqr_create_windows
 } // end myqr_create_windows
+
+void
+myqr_have_jsonrpc(const std::string&jsonrpc)
+{
+  MYQR_DEBUGOUT("myqr_have_jsonrpc incomplete " << jsonrpc);
+#warning incomplete myqr_have_jsonrpc
+  /* TODO: create the FIFOs $JSONRPC.out and $JSONRPC.cmd and connect
+     them to the application */
+} // end myqr_have_jsonrpc
+
+void
+myqr_start_refpersys(const std::string& refpersysprog,
+                     QStringList&arglist)
+{
+  std::string prog= refpersysprog;
+  qint64 pid= 0;
+  MYQR_DEBUGOUT("starting myqr_start_refpersys " << refpersysprog
+                << " " << arglist);
+  if (refpersysprog.empty())
+    {
+      prog = "refpersys";
+    }
+  else if (refpersysprog[0] == '-')
+    {
+      prog = "refpersys";
+      arglist.prepend(QString(refpersysprog.c_str()));
+    };
+  myqr_refpersys_process = new QProcess();
+  myqr_refpersys_process->setProgram(QString(prog.c_str()));
+  myqr_refpersys_process->setArguments(arglist);
+  if (!myqr_refpersys_process->startDetached(&pid))
+    MYQR_FATALOUT("failed to start refpersys " << prog);
+  MYQR_DEBUGOUT("myqr_start_refpersys started " << refpersysprog
+                << " as pid " << pid);
+} // end myqr_start_refpersys
 
 int
 main(int argc, char **argv)
@@ -301,14 +348,22 @@ main(int argc, char **argv)
                                    "REFPERSYS", QString("refpersys")};
   cli_parser.addOption(refpersys_opt);
   cli_parser.process(the_app);
-  const QStringList args = cli_parser.positionalArguments();
+  QStringList args = cli_parser.positionalArguments();
   myqr_app = &the_app;
   QString geomstr = cli_parser.value(geometry_opt);
   MYQR_DEBUGOUT("geomstr:" << geomstr.toStdString());
   MYQR_DEBUGOUT("debug:" << cli_parser.value(debug_opt).toStdString());
   MYQR_DEBUGOUT("startrefpersys:" << cli_parser.value(refpersys_opt).toStdString()
-		<< (cli_parser.isSet(refpersys_opt)?" is set":" is not set"));
+                << (cli_parser.isSet(refpersys_opt)?" is set":" is not set"));
   myqr_create_windows(geomstr);
+  if (cli_parser.isSet(jsonrpc_opt))
+    myqr_have_jsonrpc(cli_parser.value(jsonrpc_opt).toStdString());
+  if (cli_parser.isSet(refpersys_opt))
+    {
+      if (cli_parser.isSet(jsonrpc_opt))
+        args += cli_parser.value(jsonrpc_opt);
+      myqr_start_refpersys(cli_parser.value(refpersys_opt).toStdString(), args);
+    };
   myqr_app->exec();
   myqr_app = nullptr;
   return 0;
@@ -320,6 +375,8 @@ const char myqr_git_id[] = GITID;
 char myqr_host_name[sizeof(myqr_host_name)];
 QApplication *myqr_app;
 bool myqr_debug;
+std::string myqr_jsonrpc;
+QProcess*myqr_refpersys_process;
 #include "_q6refpersys-moc.cc"
 
 /****************
