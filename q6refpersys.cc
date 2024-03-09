@@ -15,11 +15,12 @@
    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
    License for more details.
 
-   This gtk4serv is a GTK4 application. It is the interface to the
-   RefPerSys inference engine on http://refpersys.org/ and
-   communicates with the refpersys process using some JSONRPC protocol
-   on named fifos. In contrast to refpersys itself, the q6refpersys process is
-   short lived.
+   This q6refpersys program is an opensource Qt6 application (Qt is a
+   graphical user toolkit for Linux; see https://www.qt.io/product/qt6
+   ...) It is the interface to the RefPerSys inference engine on
+   http://refpersys.org/ and communicates with the refpersys process
+   using some JSONRPC protocol on named fifos. In contrast to
+   refpersys itself, the q6refpersys process is short lived.
 
 ****/
 #ifndef _GNU_SOURCE
@@ -378,7 +379,7 @@ myqr_have_jsonrpc(const std::string&jsonrpc)
   if (myqr_jsonrpc_out_fd<0)
     MYQR_FATALOUT("failed to open output JSONRPC " << jsonrpc_out << " for writing:" << strerror(errno));
   else
-    MYQR_DEBUGOUT("myqr_have_jsonrpc out fd#" << myqr_jsonrpc_cmd_fd);
+    MYQR_DEBUGOUT("myqr_have_jsonrpc out fd#" << myqr_jsonrpc_out_fd);
   myqr_notifier_jsonrpc_out = new QSocketNotifier(myqr_jsonrpc_out_fd, QSocketNotifier::Write);
   QObject::connect(myqr_notifier_jsonrpc_out,&QSocketNotifier::activated,myqr_writable_jsonrpc_out);
   MYQR_DEBUGOUT("myqr_have_jsonrpc ending cmd: " << jsonrpc_cmd << " fd#" << myqr_jsonrpc_cmd_fd
@@ -402,6 +403,8 @@ myqr_start_refpersys(const std::string& refpersysprog,
       prog = "refpersys";
       arglist.prepend(QString(refpersysprog.c_str()));
     };
+  MYQR_DEBUGOUT("myqr_start_refpersys prog=" << prog << " arglist=" << arglist
+		<< "before process creation");
   myqr_refpersys_process = new QProcess();
   myqr_refpersys_process->setProgram(QString(prog.c_str()));
   myqr_refpersys_process->setArguments(arglist);
@@ -452,9 +455,9 @@ main(int argc, char **argv)
   QStringList args = cli_parser.positionalArguments();
   myqr_app = &the_app;
   QString geomstr = cli_parser.value(geometry_opt);
-  MYQR_DEBUGOUT("geomstr:" << geomstr.toStdString());
-  MYQR_DEBUGOUT("debug:" << cli_parser.value(debug_opt).toStdString());
-  MYQR_DEBUGOUT("startrefpersys:" << cli_parser.value(refpersys_opt).toStdString()
+  MYQR_DEBUGOUT("main geomstr:" << geomstr.toStdString());
+  MYQR_DEBUGOUT("main debug:" << cli_parser.value(debug_opt).toStdString());
+  MYQR_DEBUGOUT("main startrefpersys:" << cli_parser.value(refpersys_opt).toStdString()
                 << (cli_parser.isSet(refpersys_opt)?" is set":" is not set"));
   myqr_create_windows(geomstr);
   if (cli_parser.isSet(jsonrpc_opt))
@@ -465,7 +468,9 @@ main(int argc, char **argv)
         args += cli_parser.value(jsonrpc_opt);
       myqr_start_refpersys(cli_parser.value(refpersys_opt).toStdString(), args);
     };
-  myqr_app->exec();
+  MYQR_DEBUGOUT("main before exec");
+  int execret = myqr_app->exec();
+  MYQR_DEBUGOUT("main after exec execret=" << execret);
   myqr_app = nullptr;
   return 0;
 } // end main
