@@ -15,6 +15,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <functional>
 
 /// fox-toolkit.org
 #include <fx.h>
@@ -50,15 +51,19 @@ extern "C" void tiny_fatal_at(const char*fil, int lin) __attribute__((noreturn))
 
 extern "C" void tiny_usage(void);
 extern "C" void tiny_version(void);
-
 class TinyMainWindow;
 class TinyDisplayWindow;
 class TinyHorizontalFrame;
 class TinyVerticalFrame;
 class TinyApp;
 extern "C" TinyApp* tiny_app;
-TinyApp* tiny_app;
 
+std::ostream& operator << (std::ostream&out,
+                           const std::function<void(std::ostream&)>&f)
+{
+  f(out);
+  return out;
+}
 
 // display output only window, there are several of them
 class TinyDisplayWindow : public FXMainWindow
@@ -624,7 +629,7 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
     };
   _main_vertframe = new TinyVerticalFrame(this, LAYOUT_SIDE_TOP|FRAME_NONE //
                                           |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
-                                          2, 2, // x,yo
+                                          2, 2, // x,y
                                           448, 330 //w,h
                                          );
   _main_menubar = new FXMenuBar(_main_vertframe,
@@ -643,7 +648,6 @@ TinyMainWindow::~TinyMainWindow()
   TINY_DBGOUT(" destroying TinyMainWindow @" << (void*)this << " " << *this);
   // don't delete these subwindows, FX will do it....
 }; // end TinyMainWindow::~TinyMainWindow
-
 ////////////////////////////////////////////////////////////////
 
 
@@ -651,6 +655,7 @@ TinyMainWindow::~TinyMainWindow()
 bool tiny_debug;
 char tiny_hostname[80];
 char*tiny_progname;
+TinyApp* tiny_app;
 
 void
 tiny_usage(void)
