@@ -53,6 +53,7 @@ extern "C" char myqr_host_name[64];
 #include <QtCore/qglobal.h>
 #include <iostream>
 #include <sstream>
+#include <functional>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -395,8 +396,8 @@ myqr_start_refpersys(const std::string& refpersysprog,
   qint64 pid= 0;
   MYQR_DEBUGOUT("starting myqr_start_refpersys " << refpersysprog
                 << " " << arglist << " from " << myqr_progname
-		<< " on " << myqr_host_name
-		<< " pid " << (int)getpid() << " git " << myqr_git_id);
+                << " on " << myqr_host_name
+                << " pid " << (int)getpid() << " git " << myqr_git_id);
   if (refpersysprog.empty())
     {
       prog = "refpersys";
@@ -407,21 +408,22 @@ myqr_start_refpersys(const std::string& refpersysprog,
       arglist.prepend(QString(refpersysprog.c_str()));
     };
   MYQR_DEBUGOUT("myqr_start_refpersys prog=" << prog << " arglist=" << arglist
-		<< "before process creation from pid " << (int)getpid());
+                << "before process creation from pid " << (int)getpid());
   myqr_refpersys_process = new QProcess();
   myqr_refpersys_process->setProgram(QString(prog.c_str()));
   myqr_refpersys_process->setArguments(arglist);
   MYQR_DEBUGOUT("myqr_start_refpersys before starting " << prog
                 << " with arguments " << arglist
-		<< " git " << myqr_git_id
-		<< " myqr_refpersys_process@" << (void*)myqr_refpersys_process);
+                << " git " << myqr_git_id
+                << " myqr_refpersys_process@" << (void*)myqr_refpersys_process);
   errno = 0;
-  if (!myqr_refpersys_process->startDetached(&pid)) {
-    int e = errno;
-    MYQR_FATALOUT("failed to start refpersys program: " << prog
-		  << " from " << myqr_progname << " pid:" << getpid()
-		  << " errno:" << strerror(e));
-  };
+  if (!myqr_refpersys_process->startDetached(&pid))
+    {
+      int e = errno;
+      MYQR_FATALOUT("failed to start refpersys program: " << prog
+                    << " from " << myqr_progname << " pid:" << getpid()
+                    << " errno:" << strerror(e));
+    };
   MYQR_DEBUGOUT("myqr_start_refpersys started " << prog
                 << " with arguments " << arglist
                 << " as pid " << pid);
@@ -441,11 +443,13 @@ main(int argc, char **argv)
     }
   gethostname(myqr_host_name, sizeof(myqr_host_name)-1);
   MYQR_DEBUGOUT("starting " << myqr_progname << " on " << myqr_host_name
-                << " git " << myqr_git_id << " pid " << (int)getpid());
-  QApplication the_app(argc, argv);
+                << " git " << myqr_git_id << " pid " << (int)getpid()
+                << " argc=" << argc);
   QCoreApplication::setApplicationName("q6refpersys");
   QCoreApplication::setApplicationVersion(QString("version ") + myqr_git_id
                                           + " " __DATE__ "@" __TIME__);
+  QApplication the_app(argc, argv);
+  MYQR_DEBUGOUT("the_app@" << (void*)&the_app << " argc:" << argc);
   QCommandLineParser cli_parser;
   cli_parser.addVersionOption();
   cli_parser.addHelpOption();
@@ -463,7 +467,9 @@ main(int argc, char **argv)
                                    "REFPERSYS", QString("refpersys")};
   cli_parser.addOption(refpersys_opt);
   cli_parser.process(the_app);
+  MYQR_DEBUGOUT("main cli_parser@" << (void*)&cli_parser);
   QStringList args = cli_parser.positionalArguments();
+  MYQR_DEBUGOUT("main args:" << args);
   myqr_app = &the_app;
   QString geomstr = cli_parser.value(geometry_opt);
   MYQR_DEBUGOUT("main geomstr:" << geomstr.toStdString());
