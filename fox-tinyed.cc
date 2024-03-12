@@ -108,6 +108,7 @@ public:
   virtual ~TinyMainWindow();
   virtual void create(void);
   virtual void layout(void);
+  virtual void show(void);
   void output (std::ostream&out) const;
 };				// end TinyMainWindow
 
@@ -523,6 +524,34 @@ TinyDisplayWindow::~TinyDisplayWindow()
 ////////////////////////////////////////////////////////////////
 
 void
+TinyMainWindow::show(void)
+{
+  TINY_DBGOUT("TinyMainWindow::show start " << *this);
+  FXMainWindow::show();
+  if (_main_vertframe)
+    {
+      _main_vertframe->show();
+      TINY_DBGOUT("TinyMainWindow::show vertframe " << *_main_vertframe);
+    }
+  if (_main_menubar)
+    {
+      _main_menubar->show();
+      TINY_DBGOUT("TinyMainWindow::show menubar @" << (void*)_main_menubar);
+    };
+  if (_main_filemenu)
+    {
+      _main_filemenu->show();
+      TINY_DBGOUT("TinyMainWindow::show filemenu @" << (void*)_main_filemenu);
+    };
+  if (_main_quitcmd)
+    {
+      _main_quitcmd->show();
+      TINY_DBGOUT("TinyMainWindow::show quitcmd @" << (void*)_main_quitcmd);
+    };
+  TINY_DBGOUT("TinyMainWindow::show end " << *this);
+} // end TinyMainWindow::show
+
+void
 TinyMainWindow::output(std::ostream&out) const
 {
   out << "TinyMainWindow"
@@ -577,8 +606,6 @@ TinyMainWindow::create(void)
       _main_quitcmd->create();
       TINY_DBGOUT("TinyMainWindow::create quitcmd@" << (void*)_main_quitcmd);
     }
-#warning incomplete TinyMainWindow::create
-  show(PLACEMENT_SCREEN);
   TINY_DBGOUT("end TinyMainWindow::create " << *this);
 } // end TinyMainWindow::create
 
@@ -615,7 +642,7 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
   : FXMainWindow(theapp, /*name:*/"tiny-mainwin-fox",
                  /*closedicon:*/nullptr, /*mainicon:*/nullptr,
                  /*opt:*/DECOR_ALL,
-                 /*x,y,w,h:*/0, 0, 450, 333),
+                 /*x,y,w,h:*/20, 20, 450, 333),
     _main_vertframe(nullptr),
     _main_menubar(nullptr),
     _main_filemenu(nullptr),
@@ -634,7 +661,7 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
                                          );
   _main_menubar = new FXMenuBar(_main_vertframe,
                                 LAYOUT_SIDE_TOP|LAYOUT_FILL_X);
-  _main_filemenu=new FXMenuPane(_main_menubar);
+  _main_filemenu = new FXMenuPane(_main_menubar);
   _main_quitcmd = new FXMenuCommand(_main_filemenu,"&Quit",nullptr,getApp(),FXApp::ID_QUIT);
   tiny_app->_main_win = this;
   TINY_DBGOUT("end TinyMainWindow @" << (void*)this
@@ -723,9 +750,10 @@ main(int argc, char*argv[])
   auto mywin = new TinyMainWindow(&the_app);
   mywin->create();
   mywin->layout();
-  mywin->show();
   mywin->enable();
-  TINY_DBGOUT("mywin:" << mywin);
+  TINY_DBGOUT("showing mywin:" << mywin);
+  mywin->show();
+  TINY_DBGOUT("shown mywin:" << mywin);
   if (!tiny_debug)
     {
       std::cout << argv[0] << " git " GIT_ID

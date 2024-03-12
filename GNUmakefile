@@ -15,13 +15,15 @@ RM=/bin/rm -vf
 GENG_CC ?= $(CC)
 export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-15)
 CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
+CXXFLAGS= -O -g -Wall -Wextra -I /usr/local/include/
 GTK4SERV_PACKAGES= gtk4 glib-2.0 gobject-2.0 gio-2.0
+GTKMMRPS_PACKAGES= gtkmm-4.0 jsoncpp
 Q6REFPERSYS_PACKAGES= Qt6Core Qt6Gui Qt6DBus Qt6UiPlugin Qt6Widgets jsoncpp
 QT6MOC= /usr/lib/qt6/libexec/moc
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl half bwc gtksrc-browser sync-periodically logged-compile  logged-gcc filipe-shell browserfox onionrefpersys gtk4serv fox-tinyed q6refpersys
+all: manydl half gtkmm-refpersys bwc gtksrc-browser sync-periodically logged-compile  logged-gcc filipe-shell browserfox onionrefpersys gtk4serv fox-tinyed q6refpersys
 
 
 clean:
@@ -110,6 +112,11 @@ gtk4serv: gtk4serv.c  |GNUmakefile
 
 fltk-mini-edit: fltk-mini-edit.cc mini-edit-build.sh |GNUmakefile
 	./mini-edit-build.sh
+
+gtkmm-refpersys: gtkmm-refpersys.cc |GNUmakefile
+	$(CXX)  -rdynamic -fPIE -fPIC -g -O $(CXXFLAGS) -DGITID='"$(GIT_ID)"' \
+	$(shell pkg-config --cflags $(GTKMMRPS_PACKAGES)) $< \
+	$(shell pkg-config --libs $(GTKMMRPS_PACKAGES)) -o $@
 
 q6refpersys: q6refpersys.cc _q6refpersys-moc.cc |GNUmakefile
 	$(CXX) -rdynamic -fPIE -fPIC -g -O $(CXXFLAGS) -DGITID='"$(GIT_ID)"' \
