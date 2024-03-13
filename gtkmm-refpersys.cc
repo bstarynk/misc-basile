@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <functional>
 
 #ifndef GITID
 #error GITID should be compile time defined
@@ -70,6 +71,13 @@ extern "C" Gtk::Application*gmrps_app;
 
 #define GMRPS_DBGOUT(Out) GMRPS_DBGOUT_AT(__FILE__,__LINE__,Out)
 
+std::ostream&operator << (std::ostream&out, std::function<void(std::ostream&)> f)
+{
+  f(out);
+  return out;
+} // end output << for lambdas...
+
+
 int
 main(int argc, char* argv[])
 {
@@ -78,7 +86,8 @@ main(int argc, char* argv[])
   gethostname(gmrps_hostname, GMRPS_HOSTNAME_MAX-1);
   GMRPS_DBGOUT("start " << argv[0] << " git " << gmrps_git_id << " on "
 	       << gmrps_hostname << " pid " << (int)getpid());
-  auto app = Gtk::Application::create();
+  auto app = Gtk::Application::create("gtkmm.refpersys.org");
+  GMRPS_DBGOUT("app is " << app);
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "debug", 'D',
 			     "Enable debugging");
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "version", 'V',
