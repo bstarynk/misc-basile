@@ -438,7 +438,7 @@ myqr_start_refpersys(const std::string& refpersysprog,
         colon = strchr(pc, ':');
         nextpc = colon?(colon+1):nullptr;
         std::string dir(pc, colon?(colon-pc-1):strlen(pc));
-        std::string exepath = dir + ":" + prog;
+        std::string exepath = dir + "/" + prog;
         MYQR_DEBUGOUT("myqr_start_refpersys pc="
                       << pc << " dir=" << dir << " exepath=" << exepath);
         if (!access(exepath.c_str(), F_OK|X_OK))
