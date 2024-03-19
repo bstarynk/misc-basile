@@ -220,13 +220,15 @@ MyqrMainWindow::MyqrMainWindow(QWidget*parent)
   : QMainWindow(parent),
     _mainwin_menubar(nullptr),
     _mainwin_appmenu(nullptr),
-    _mainwin_editmenu(nullptr),
     _mainwin_aboutact(nullptr),
     _mainwin_aboutqtact(nullptr),
+    _mainwin_editmenu(nullptr),
     _mainwin_copyact(nullptr),
     _mainwin_pasteact(nullptr),
     _mainwin_centralgroup(nullptr),
-    _mainwin_toplabel(nullptr)
+    _mainwin_toplabel(nullptr),
+    _mainwin_cmdline(nullptr),
+    _mainwin_textoutput(nullptr)
 {
   if (the_instance != nullptr)
     MYQR_FATALOUT("duplicate MyqrMainWndow @" << (void*)the_instance
@@ -314,10 +316,12 @@ myqr_create_windows(const QString& geom)
   const char*geomcstr = geom.toStdString().c_str();
   if (geomcstr != nullptr)
     {
+      int p= -1;
       MYQR_DEBUGOUT("myqr_create_windows geomcstr='" << geomcstr << "'");
-      if (sscanf(geomcstr, "%dx%h", &w, &h) >= 2)
+      if (sscanf(geomcstr, " %dx%d %n", &w, &h, &p) >= 2)
         {
-          MYQR_DEBUGOUT("scanned w=" << w << " h=" << h);
+          MYQR_DEBUGOUT("scanned w=" << w << " h=" << h
+                        << " geomcstr='" << geomcstr << "' p=" << p);
           if (w > MyqrMainWindow::maximal_width)
             w= MyqrMainWindow::maximal_width;
           if (h > MyqrMainWindow::maximal_height)
@@ -328,7 +332,8 @@ myqr_create_windows(const QString& geom)
     w=MyqrMainWindow::minimal_width;
   if (h< MyqrMainWindow::minimal_height)
     h= MyqrMainWindow::minimal_height;
-  MYQR_DEBUGOUT("myqr_create_windows w=" << w << ", h=" << h);
+  MYQR_DEBUGOUT("myqr_create_windows normalized w=" << w << ", h=" << h
+                << " from  geomcstr='" << geomcstr << "'");
   auto mainwin = new MyqrMainWindow(nullptr);
   mainwin->resize(w,h);
   mainwin->show();
