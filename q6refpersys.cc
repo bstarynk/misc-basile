@@ -389,6 +389,14 @@ myqr_have_jsonrpc(const std::string&jsonrpc)
     MYQR_DEBUGOUT("myqr_have_jsonrpc out fd#" << myqr_jsonrpc_out_fd);
   myqr_notifier_jsonrpc_out = new QSocketNotifier(myqr_jsonrpc_out_fd, QSocketNotifier::Write);
   QObject::connect(myqr_notifier_jsonrpc_out,&QSocketNotifier::activated,myqr_writable_jsonrpc_out);
+  if (setenv("REFPERSYS_JSONRPC", jsonrpc.c_str(), /*overwrite:*/(int)true)) {
+    MYQR_FATALOUT("failed to setenv REFPERSYS_JSONRPC to " << jsonrpc
+		  << " :" << strerror(errno));
+  }
+  else {
+    MYQR_DEBUGOUT("myqr_have_jsonrpc did setenv REFPERSYS_JSONRPC to "
+		  << jsonrpc.c_str());
+  };
   MYQR_DEBUGOUT("myqr_have_jsonrpc ending cmd: " << jsonrpc_cmd << " fd#" << myqr_jsonrpc_cmd_fd
                 << " out: " << jsonrpc_out<< " fd#" << myqr_jsonrpc_out_fd);
 } // end myqr_have_jsonrpc
@@ -462,7 +470,8 @@ main(int argc, char **argv)
                                "show debugging messages");
   cli_parser.addOption(debug_opt);
   QCommandLineOption jsonrpc_opt{{"J", "jsonrpc"},
-    "Use $JSONRPC.out and $JSONRPC.cmd fifos.", "JSONRPC"};
+    "Use $JSONRPC.out and $JSONRPC.cmd fifos.\n"
+    "Also sets the REFPERSYS_JSONRPC environment variable to $JSONRPC.", "JSONRPC"};
   cli_parser.addOption(jsonrpc_opt);
   QCommandLineOption geometry_opt{{"G", "geometry"},
     "Main window geometry is W*H,\n... e.g. --geometry 400x650", "WxH"};
