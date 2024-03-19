@@ -389,14 +389,16 @@ myqr_have_jsonrpc(const std::string&jsonrpc)
     MYQR_DEBUGOUT("myqr_have_jsonrpc out fd#" << myqr_jsonrpc_out_fd);
   myqr_notifier_jsonrpc_out = new QSocketNotifier(myqr_jsonrpc_out_fd, QSocketNotifier::Write);
   QObject::connect(myqr_notifier_jsonrpc_out,&QSocketNotifier::activated,myqr_writable_jsonrpc_out);
-  if (setenv("REFPERSYS_JSONRPC", jsonrpc.c_str(), /*overwrite:*/(int)true)) {
-    MYQR_FATALOUT("failed to setenv REFPERSYS_JSONRPC to " << jsonrpc
-		  << " :" << strerror(errno));
-  }
-  else {
-    MYQR_DEBUGOUT("myqr_have_jsonrpc did setenv REFPERSYS_JSONRPC to "
-		  << jsonrpc.c_str());
-  };
+  if (setenv("REFPERSYS_JSONRPC", jsonrpc.c_str(), /*overwrite:*/(int)true))
+    {
+      MYQR_FATALOUT("failed to setenv REFPERSYS_JSONRPC to " << jsonrpc
+                    << " :" << strerror(errno));
+    }
+  else
+    {
+      MYQR_DEBUGOUT("myqr_have_jsonrpc did setenv REFPERSYS_JSONRPC to "
+                    << jsonrpc.c_str());
+    };
   MYQR_DEBUGOUT("myqr_have_jsonrpc ending cmd: " << jsonrpc_cmd << " fd#" << myqr_jsonrpc_cmd_fd
                 << " out: " << jsonrpc_out<< " fd#" << myqr_jsonrpc_out_fd);
 } // end myqr_have_jsonrpc
@@ -423,9 +425,39 @@ myqr_start_refpersys(const std::string& refpersysprog,
   MYQR_DEBUGOUT("myqr_start_refpersys prog=" << prog << " arglist=" << arglist
                 << "before process creation from pid " << (int)getpid());
   myqr_refpersys_process = new QProcess();
-  myqr_refpersys_process->setProgram(QString(prog.c_str()));
+  std::string progname;
+  {
+    const char* path = getenv("PATH");
+    const char*pc = nullptr;
+    const char*colon = nullptr;
+    const char*nextpc = nullptr;
+    MYQR_DEBUGOUT("myqr_start_refpersys PATH=" << path
+                  << " prog=" << prog);
+    for (pc = path; pc && *pc; pc = nextpc)
+      {
+        colon = strchr(pc, ':');
+        nextpc = colon?(colon+1):nullptr;
+        std::string dir(pc, colon?(colon-pc-1):strlen(pc));
+        std::string exepath = dir + ":" + prog;
+        MYQR_DEBUGOUT("myqr_start_refpersys pc="
+                      << pc << " dir=" << dir << " exepath=" << exepath);
+        if (!access(exepath.c_str(), F_OK|X_OK))
+          {
+
+            progname = exepath;
+            MYQR_DEBUGOUT("myqr_start_refpersys progname=" << progname);
+            nextpc = nullptr;
+            break;
+
+          }
+      };
+    if (progname.empty())
+      MYQR_FATALOUT("failed to find program " << prog
+                    << " in PATH=" << path);
+  };
+  myqr_refpersys_process->setProgram(QString(progname.c_str()));
   myqr_refpersys_process->setArguments(arglist);
-  MYQR_DEBUGOUT("myqr_start_refpersys before starting " << prog
+  MYQR_DEBUGOUT("myqr_start_refpersys before starting " << progname
                 << " with arguments " << arglist
                 << " git " << myqr_git_id
                 << " myqr_refpersys_process@" << (void*)myqr_refpersys_process);
