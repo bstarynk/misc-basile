@@ -85,20 +85,20 @@ main(int argc, char* argv[])
     gmrps_debug = true;
   gethostname(gmrps_hostname, GMRPS_HOSTNAME_MAX-1);
   GMRPS_DBGOUT("start " << argv[0] << " git " << gmrps_git_id << " on "
-	       << gmrps_hostname << " pid " << (int)getpid());
+               << gmrps_hostname << " pid " << (int)getpid());
   auto app = Gtk::Application::create("gtkmm.refpersys.org");
   GMRPS_DBGOUT("app is " << app);
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "debug", 'D',
-			     "Enable debugging");
+                             "Enable debugging");
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "version", 'V',
-			     "Give version information");
+                             "Give version information");
   gmrps_app = app.get();
   int ret= app->make_window_and_run<Gtk::Window>(argc, argv);
   gmrps_app = nullptr;
   return ret;
 } // end main
 
- char gmrps_hostname[GMRPS_HOSTNAME_MAX];
+char gmrps_hostname[GMRPS_HOSTNAME_MAX];
 bool gmrps_debug;
 Gtk::Application*gmrps_app;
 const char gmrps_git_id[] = GITID;
