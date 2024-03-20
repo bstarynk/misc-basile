@@ -85,6 +85,10 @@ extern "C" Json::CharReaderBuilder myqr_jsoncpp_reader_builder;
 extern "C" QSocketNotifier* myqr_notifier_jsonrpc_out;
 extern "C" int myqr_jsonrpc_out_fd; /// read by RefPerSys, written by q6refpersys
 extern "C" std::recursive_mutex myqr_mtx_jsonrpc_out;
+extern "C" std::deque<Json::Value> myqr_deque_jsonrpc_out;
+extern "C" std::stringstream myqr_stream_jsonrpc_out;
+
+
 extern "C" void myqr_process_jsonrpc(const Json::Value&js);
 extern "C" void myqr_jsonrpc_to_refpersys
 (const std::string& method,
@@ -611,17 +615,47 @@ myqr_jsonrpc_to_refpersys
  const std::function<void(const Json::Value&res)>& resfun)
 {
   Json::Value jresult;
-  Json::Value jreq(Json::objectValue);
   static int count;
   {
     std::lock_guard<std::recursive_mutex> lock(myqr_mtx_jsonrpc_out);
+    Json::Value jreq(Json::objectValue);
     jreq["jsonrpc"] = "2.0";
     jreq["method"] = method;
     jreq["params"] = args;
     jreq["id"] = ++count;
+    myqr_deque_jsonrpc_out.push_back(jreq);
+    MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys jreq:" << jreq.asString());
+
   }
-  MYQR_FATALOUT("unimplemented myqr_jsonrpc_to_refpersys method:"
-                << method << " args:" << args.asString());
+  usleep(500);
+  {
+    std::lock_guard<std::recursive_mutex> lock(myqr_mtx_jsonrpc_out);
+    if (!myqr_deque_jsonrpc_out.empty())
+      {
+        Json::Value joldreq = myqr_deque_jsonrpc_out.front();
+        myqr_deque_jsonrpc_out.pop_front();
+        myqr_stream_jsonrpc_out << joldreq.asString()
+                                << "\n\f" << std::flush;
+      }
+    std::string outs = myqr_stream_jsonrpc_out.str();
+    size_t outslen = outs.size();
+    ssize_t wcnt = write(myqr_jsonrpc_out_fd, outs.c_str(), outslen);
+    MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys outslen:" << outslen
+                  << " wcnt:" << wcnt);
+    if (wcnt>0)   // https://stackoverflow.com/a/4546562
+      {
+        if (wcnt<outslen)
+          {
+            outs.erase(0, wcnt);
+            myqr_stream_jsonrpc_out.str(outs);
+          }
+        else   // https://stackoverflow.com/a/20792
+          {
+            myqr_stream_jsonrpc_out.str("");
+          }
+      }
+#warning incomplete myqr_jsonrpc_to_refpersys
+  }
 } // end  myqr_jsonrpc_to_refpersys
 
 int
@@ -709,7 +743,8 @@ QProcess*myqr_refpersys_process;
 QSocketNotifier* myqr_notifier_jsonrpc_cmd;
 QSocketNotifier* myqr_notifier_jsonrpc_out;
 std::recursive_mutex myqr_mtx_jsonrpc_out;
-
+std::deque<Json::Value> myqr_deque_jsonrpc_out;
+std::stringstream myqr_stream_jsonrpc_out;
 
 #include "_q6refpersys-moc.cc"
 
