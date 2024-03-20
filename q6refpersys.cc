@@ -57,6 +57,7 @@ extern "C" char myqr_host_name[64];
 #include <iostream>
 #include <sstream>
 #include <functional>
+#include <mutex>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -70,6 +71,9 @@ extern "C" int myqr_jsonrpc_cmd_fd; /// written by RefPerSys, read by q6refpersy
 extern "C" int myqr_jsonrpc_out_fd; /// read by RefPerSys, written by q6refpersys
 extern "C" QSocketNotifier* myqr_notifier_jsonrpc_cmd;
 extern "C" QSocketNotifier* myqr_notifier_jsonrpc_out;
+extern "C" std::recursive_mutex myqr_mtx_jsonrpc_cmd;
+extern "C" std::stringstream myqr_stream_jsonrpc_cmd;
+
 #define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {	\
     std::ostringstream outs##Lin;		\
     outs##Lin << Out << std::flush;		\
@@ -348,6 +352,19 @@ void
 myqr_readable_jsonrpc_cmd(void)
 {
   MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd start myqr_jsonrpc_cmd_fd=" << myqr_jsonrpc_cmd_fd);
+  /*** NOTE:
+
+       We actually expect that most JSON objects sent by refpersys to
+       this GUI process are short, typically a few dozen bytes
+       each. And each of them is terminated by a formfeed (which is
+       invalid in JSON) or a double newline.
+
+       In rare cases refpersys might send a large JSON (over a
+       kilobyte), but we expect this to be not frequent.  In other
+       words, there is a lot of string copying happening here, to ease
+       coding.
+   ***/
+  const std::lock_guard<std::recursive_mutex> lock(myqr_mtx_jsonrpc_cmd);
   constexpr unsigned jrbufsize= 2048;
   char buf [jrbufsize+4];
   memset (buf, 0, sizeof(buf));
@@ -378,14 +395,45 @@ myqr_readable_jsonrpc_cmd(void)
       myqr_jsonrpc_cmd_fd = -1;
       exit(EXIT_SUCCESS);
     }
-  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd incomplete read " << rdcnt <<
-                " bytes.");
+  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd incomplete read " << rdcnt
+                << " bytes:" << std::endl << buf);
+  size_t oldcmdlen = myqr_stream_jsonrpc_cmd.tellp();
+  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd oldcmdlen:" << oldcmdlen);
+  myqr_stream_jsonrpc_cmd.write(buf, rdcnt);
+  char*begm = buf;
+  while(begm && *begm)
+    {
+      char*ff = strchr(begm, '\f');
+      char*nn = strstr(begm, "\n\n");
+      char*eom = nullptr;
+      if (!ff && !nn)
+        return;
+      if (ff != nullptr && nn != nullptr)
+        {
+          eom = (ff < nn)?ff:nn;
+        }
+      else if (ff != nullptr)
+        eom = ff+1;
+      else if (nn != nullptr)
+        eom = nn+2;
+      else
+        {
+          /// this should never happen
+          MYQR_FATALOUT("myqr_readable_jsonrpc_cmd bug ff=" << ff << " nn=" << nn);
+        };
+      int deltaeom = eom - begm;
+      assert(deltaeom > 0);
+      size_t newcmdlen = oldcmdlen + deltaeom;
+    };
 } // end myqr_readable_jsonrpc_cmd
+
+
 
 void
 myqr_writable_jsonrpc_out(void)
 {
-  MYQR_DEBUGOUT("myqr_writable_jsonrpc_out unimplemented myqr_jsonrpc_out_fd=" << myqr_jsonrpc_out_fd);
+  MYQR_DEBUGOUT("myqr_writable_jsonrpc_out unimplemented myqr_jsonrpc_out_fd="
+                << myqr_jsonrpc_out_fd);
 #warning unimplemented myqr_writable_jsonrpc_out
 } // end myqr_writable_jsonrpc_out
 
@@ -581,6 +629,8 @@ bool myqr_debug;
 std::string myqr_jsonrpc;
 int myqr_jsonrpc_cmd_fd = -1;
 int myqr_jsonrpc_out_fd = -1;
+std::recursive_mutex myqr_mtx_jsonrpc_cmd;
+std::stringstream myqr_stream_jsonrpc_cmd;
 QProcess*myqr_refpersys_process;
 QSocketNotifier* myqr_notifier_jsonrpc_cmd;
 QSocketNotifier* myqr_notifier_jsonrpc_out;
