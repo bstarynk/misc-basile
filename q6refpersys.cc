@@ -50,9 +50,13 @@ extern "C" char myqr_host_name[64];
 #include <QSizePolicy>
 #include <QLabel>
 #include <QSocketNotifier>
-#include <QJsonValue>
+//#include <QJsonValue>
 #include <QtCore/qglobal.h>
 
+
+// from jsoncpp (see https://github.com/open-source-parsers/jsoncpp)
+#include "json/value.h"
+#include "json/reader.h"
 
 #include <iostream>
 #include <sstream>
@@ -62,6 +66,8 @@ extern "C" char myqr_host_name[64];
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+
 
 extern "C" char myqr_host_name[];
 extern "C" char* myqr_progname;
@@ -73,6 +79,9 @@ extern "C" QSocketNotifier* myqr_notifier_jsonrpc_cmd;
 extern "C" QSocketNotifier* myqr_notifier_jsonrpc_out;
 extern "C" std::recursive_mutex myqr_mtx_jsonrpc_cmd;
 extern "C" std::stringstream myqr_stream_jsonrpc_cmd;
+extern "C" Json::CharReader* myqr_jsonrpc_reader;
+extern "C" Json::CharReaderBuilder myqr_jsoncpp_reader_builder;
+extern "C" void myqr_process_jsonrpc(const Json::Value&js);
 
 #define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {	\
     std::ostringstream outs##Lin;		\
@@ -351,13 +360,14 @@ myqr_create_windows(const QString& geom)
 void
 myqr_readable_jsonrpc_cmd(void)
 {
-  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd start myqr_jsonrpc_cmd_fd=" << myqr_jsonrpc_cmd_fd);
+  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd start myqr_jsonrpc_cmd_fd="
+                << myqr_jsonrpc_cmd_fd);
   /*** NOTE:
 
        We actually expect that most JSON objects sent by refpersys to
        this GUI process are short, typically a few dozen bytes
-       each. And each of them is terminated by a formfeed (which is
-       invalid in JSON) or a double newline.
+       each. And each JSON message is terminated by a formfeed (which is
+       invalid in JSON, in C "\f") or a double newline, in C "\n\n" ...
 
        In rare cases refpersys might send a large JSON (over a
        kilobyte), but we expect this to be not frequent.  In other
@@ -423,7 +433,29 @@ myqr_readable_jsonrpc_cmd(void)
         };
       int deltaeom = eom - begm;
       assert(deltaeom > 0);
-      size_t newcmdlen = oldcmdlen + deltaeom;
+      std::string jsonstr;
+      if (oldcmdlen>0)
+        {
+          jsonstr.assign(myqr_stream_jsonrpc_cmd.str());
+          jsonstr.append(begm, deltaeom);
+          oldcmdlen=0;
+        }
+      else
+        jsonstr.assign(begm, deltaeom);
+      begm = eom+1;
+      MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd jsonstr=" << jsonstr);
+      Json::Value jv;
+      std::string errmsg;
+      bool okparse = //
+        myqr_jsonrpc_reader->parse(jsonstr.c_str(), &jsonstr.back(),
+                                   &jv, &errmsg);
+      if (!okparse)
+        MYQR_FATALOUT("myqr_readable_jsonrpc_cmd failed to parse:"
+                      << std::endl  << jsonstr
+                      << std::endl << "error:" << errmsg);
+      MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd parsed json:"
+                    << std::endl << jv.asString() << std::endl);
+
     };
 } // end myqr_readable_jsonrpc_cmd
 
@@ -555,6 +587,15 @@ myqr_start_refpersys(const std::string& refpersysprog,
                 << " as pid " << pid);
 } // end myqr_start_refpersys
 
+
+void
+myqr_process_jsonrpc(const Json::Value&js)
+{
+#warning myqr_process_jsonrpc unimplemented
+  MYQR_FATALOUT("unimplemented myqr_process_jsonrpc" << std::endl
+                << js.asString());
+} // end myqr_process_jsonrpc
+
 int
 main(int argc, char **argv)
 {
@@ -571,6 +612,9 @@ main(int argc, char **argv)
   MYQR_DEBUGOUT("starting " << myqr_progname << " on " << myqr_host_name
                 << " git " << myqr_git_id << " pid " << (int)getpid()
                 << " argc=" << argc);
+  myqr_jsoncpp_reader_builder["collectComments"] = false;
+  myqr_jsoncpp_reader_builder["rejectDupKeys"] = true;
+  myqr_jsonrpc_reader = myqr_jsoncpp_reader_builder.newCharReader();
   QCoreApplication::setApplicationName("q6refpersys");
   QCoreApplication::setApplicationVersion(QString("version ") + myqr_git_id
                                           + " " __DATE__ "@" __TIME__);
@@ -627,6 +671,8 @@ char myqr_host_name[sizeof(myqr_host_name)];
 QApplication *myqr_app;
 bool myqr_debug;
 std::string myqr_jsonrpc;
+Json::CharReaderBuilder myqr_jsoncpp_reader_builder;
+Json::CharReader* myqr_jsonrpc_reader;
 int myqr_jsonrpc_cmd_fd = -1;
 int myqr_jsonrpc_out_fd = -1;
 std::recursive_mutex myqr_mtx_jsonrpc_cmd;
