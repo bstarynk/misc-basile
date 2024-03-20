@@ -50,7 +50,10 @@ extern "C" char myqr_host_name[64];
 #include <QSizePolicy>
 #include <QLabel>
 #include <QSocketNotifier>
+#include <QJsonValue>
 #include <QtCore/qglobal.h>
+
+
 #include <iostream>
 #include <sstream>
 #include <functional>
@@ -344,8 +347,39 @@ myqr_create_windows(const QString& geom)
 void
 myqr_readable_jsonrpc_cmd(void)
 {
-  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd unimplemented myqr_jsonrpc_cmd_fd=" << myqr_jsonrpc_cmd_fd);
-#warning unimplemented myqr_readable_jsonrpc_cmd
+  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd start myqr_jsonrpc_cmd_fd=" << myqr_jsonrpc_cmd_fd);
+  constexpr unsigned jrbufsize= 2048;
+  char buf [jrbufsize+4];
+  memset (buf, 0, sizeof(buf));
+  char errbuf[64];
+  memset (errbuf, 0, sizeof(errbuf));
+  errno = 0;
+  ssize_t rdcnt = read(myqr_jsonrpc_cmd_fd, buf, jrbufsize);
+  int rderr = errno;
+  if (rdcnt < 0 && rderr > 0)
+    {
+      strerror_r(rderr, errbuf, sizeof(errbuf));
+      assert(errbuf[0] != (char)0);
+    };
+  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd got rdcnt=" << rdcnt
+                << (rderr?" : ":".")
+                << (rderr?errbuf:""));
+  if (rdcnt<0)
+    {
+      if (rderr == EWOULDBLOCK || rderr == EAGAIN || rderr == EINTR)
+        return;
+      MYQR_FATALOUT("myqr_readable_jsonrpc_cmd read fd#"
+                    << myqr_jsonrpc_cmd_fd << " failed: " << errbuf);
+    }
+  else if (rdcnt==0)
+    {
+      MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd got EOF on fd#"
+                    << myqr_jsonrpc_cmd_fd);
+      myqr_jsonrpc_cmd_fd = -1;
+      exit(EXIT_SUCCESS);
+    }
+  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd incomplete read " << rdcnt <<
+                " bytes.");
 } // end myqr_readable_jsonrpc_cmd
 
 void
