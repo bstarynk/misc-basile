@@ -62,6 +62,7 @@ extern "C" char myqr_host_name[64];
 #include <sstream>
 #include <functional>
 #include <mutex>
+#include <deque>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -72,16 +73,23 @@ extern "C" char myqr_host_name[64];
 extern "C" char myqr_host_name[];
 extern "C" char* myqr_progname;
 extern "C" bool myqr_debug;
-extern "C" std::string myqr_jsonrpc;
+extern "C" std::string myqr_jsonrpc; // the FIFO prefix
+
 extern "C" int myqr_jsonrpc_cmd_fd; /// written by RefPerSys, read by q6refpersys
-extern "C" int myqr_jsonrpc_out_fd; /// read by RefPerSys, written by q6refpersys
 extern "C" QSocketNotifier* myqr_notifier_jsonrpc_cmd;
-extern "C" QSocketNotifier* myqr_notifier_jsonrpc_out;
 extern "C" std::recursive_mutex myqr_mtx_jsonrpc_cmd;
 extern "C" std::stringstream myqr_stream_jsonrpc_cmd;
 extern "C" Json::CharReader* myqr_jsonrpc_reader;
 extern "C" Json::CharReaderBuilder myqr_jsoncpp_reader_builder;
+
+extern "C" QSocketNotifier* myqr_notifier_jsonrpc_out;
+extern "C" int myqr_jsonrpc_out_fd; /// read by RefPerSys, written by q6refpersys
+extern "C" std::recursive_mutex myqr_mtx_jsonrpc_out;
 extern "C" void myqr_process_jsonrpc(const Json::Value&js);
+extern "C" void myqr_jsonrpc_to_refpersys
+(const std::string& method,
+ const Json::Value& args,
+ const std::function<void(const Json::Value&res)>& resfun);
 
 #define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {	\
     std::ostringstream outs##Lin;		\
@@ -596,6 +604,26 @@ myqr_process_jsonrpc(const Json::Value&js)
                 << js.asString());
 } // end myqr_process_jsonrpc
 
+void
+myqr_jsonrpc_to_refpersys
+(const std::string& method,
+ const Json::Value& args,
+ const std::function<void(const Json::Value&res)>& resfun)
+{
+  Json::Value jresult;
+  Json::Value jreq(Json::objectValue);
+  static int count;
+  {
+    std::lock_guard<std::recursive_mutex> lock(myqr_mtx_jsonrpc_out);
+    jreq["jsonrpc"] = "2.0";
+    jreq["method"] = method;
+    jreq["params"] = args;
+    jreq["id"] = ++count;
+  }
+  MYQR_FATALOUT("unimplemented myqr_jsonrpc_to_refpersys method:"
+                << method << " args:" << args.asString());
+} // end  myqr_jsonrpc_to_refpersys
+
 int
 main(int argc, char **argv)
 {
@@ -680,6 +708,9 @@ std::stringstream myqr_stream_jsonrpc_cmd;
 QProcess*myqr_refpersys_process;
 QSocketNotifier* myqr_notifier_jsonrpc_cmd;
 QSocketNotifier* myqr_notifier_jsonrpc_out;
+std::recursive_mutex myqr_mtx_jsonrpc_out;
+
+
 #include "_q6refpersys-moc.cc"
 
 /****************
