@@ -87,7 +87,7 @@ extern "C" int myqr_jsonrpc_out_fd; /// read by RefPerSys, written by q6refpersy
 extern "C" std::recursive_mutex myqr_mtx_jsonrpc_out;
 extern "C" std::deque<Json::Value> myqr_deque_jsonrpc_out;
 extern "C" std::stringstream myqr_stream_jsonrpc_out;
-
+extern "C" std::map<int,std::function<void(const Json::Value&res)>> myqr_jsonrpc_out_procmap;
 
 extern "C" void myqr_process_jsonrpc(const Json::Value&js);
 extern "C" void myqr_jsonrpc_to_refpersys
@@ -624,6 +624,7 @@ myqr_jsonrpc_to_refpersys
     jreq["params"] = args;
     jreq["id"] = ++count;
     myqr_deque_jsonrpc_out.push_back(jreq);
+    myqr_jsonrpc_out_procmap.insert_or_assign(count, resfun);
     MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys jreq:" << jreq.asString());
 
   }
@@ -647,16 +648,22 @@ myqr_jsonrpc_to_refpersys
         if (wcnt<outslen)
           {
             outs.erase(0, wcnt);
+            MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys outs becomes: '"
+                          << outs << "'");
             myqr_stream_jsonrpc_out.str(outs);
           }
         else   // https://stackoverflow.com/a/20792
           {
+            MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys outs cleared");
             myqr_stream_jsonrpc_out.str("");
           }
       }
 #warning incomplete myqr_jsonrpc_to_refpersys
   }
 } // end  myqr_jsonrpc_to_refpersys
+
+
+
 
 int
 main(int argc, char **argv)
@@ -745,7 +752,7 @@ QSocketNotifier* myqr_notifier_jsonrpc_out;
 std::recursive_mutex myqr_mtx_jsonrpc_out;
 std::deque<Json::Value> myqr_deque_jsonrpc_out;
 std::stringstream myqr_stream_jsonrpc_out;
-
+std::map<int,std::function<void(const Json::Value&res)>> myqr_jsonrpc_out_procmap;
 #include "_q6refpersys-moc.cc"
 
 /****************
