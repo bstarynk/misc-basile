@@ -645,7 +645,7 @@ myqr_jsonrpc_to_refpersys
                   << " wcnt:" << wcnt);
     if (wcnt>0)   // https://stackoverflow.com/a/4546562
       {
-        if (wcnt<outslen)
+        if ((long)wcnt<(long)outslen)
           {
             outs.erase(0, wcnt);
             MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys outs becomes: '"
