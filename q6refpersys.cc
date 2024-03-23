@@ -51,6 +51,8 @@ extern "C" char myqr_host_name[64];
 #include <QLabel>
 #include <QSocketNotifier>
 //#include <QJsonValue>
+#include <QtCore/QtCoreVersion>
+//#include <QJsonValue>
 #include <QtCore/qglobal.h>
 
 
@@ -89,8 +91,13 @@ extern "C" std::deque<Json::Value> myqr_deque_jsonrpc_out;
 extern "C" std::stringstream myqr_stream_jsonrpc_out;
 extern "C" std::map<int,std::function<void(const Json::Value&res)>> myqr_jsonrpc_out_procmap;
 
-extern "C" void myqr_process_jsonrpc(const Json::Value&js);
-extern "C" void myqr_jsonrpc_to_refpersys
+
+/// process the JSON recieved from refpersys
+extern "C" void myqr_process_jsonrpc_from_refpersys(const Json::Value&js);
+
+
+/// do a remote procedure call to RefPerSys using our JSONRPC variant
+extern "C" void myqr_call_jsonrpc_to_refpersys
 (const std::string& method,
  const Json::Value& args,
  const std::function<void(const Json::Value&res)>& resfun);
@@ -179,6 +186,10 @@ public:
 };				// end MyqrDisplayWindow
 
 
+std::ostream& operator << (std::ostream&out, const Json::Value&jv)
+{
+  return out;
+}
 
 ////////////////////////////////////////////////////////////////
 extern "C" QProcess*myqr_refpersys_process;
@@ -369,6 +380,10 @@ myqr_create_windows(const QString& geom)
 #warning incomplete myqr_create_windows
 } // end myqr_create_windows
 
+
+
+/// This function gets called when some bytes could be read on the
+/// file descriptor (FIFO) from refpersys to GUI.
 void
 myqr_readable_jsonrpc_cmd(void)
 {
@@ -395,6 +410,9 @@ myqr_readable_jsonrpc_cmd(void)
   errno = 0;
   ssize_t rdcnt = read(myqr_jsonrpc_cmd_fd, buf, jrbufsize);
   int rderr = errno;
+  MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd read JSONRPC cmdfd#" <<
+		myqr_readable_jsonrpc_cmd << " recieved "
+		<< rdcnt << " bytes in buffer of " << jrbufsize);
   if (rdcnt < 0 && rderr > 0)
     {
       strerror_r(rderr, errbuf, sizeof(errbuf));
@@ -417,6 +435,7 @@ myqr_readable_jsonrpc_cmd(void)
       myqr_jsonrpc_cmd_fd = -1;
       exit(EXIT_SUCCESS);
     }
+  buf[rdcnt] = (char)0;
   MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd incomplete read " << rdcnt
                 << " bytes:" << std::endl << buf);
   size_t oldcmdlen = myqr_stream_jsonrpc_cmd.tellp();
@@ -428,8 +447,11 @@ myqr_readable_jsonrpc_cmd(void)
       char*ff = strchr(begm, '\f');
       char*nn = strstr(begm, "\n\n");
       char*eom = nullptr;
-      if (!ff && !nn)
+      if (!ff && !nn) {
+	/// the JSON message is incomplete since not ended by formfeed
+	/// or double-newline
         return;
+      };
       if (ff != nullptr && nn != nullptr)
         {
           eom = (ff < nn)?ff:nn;
@@ -467,7 +489,7 @@ myqr_readable_jsonrpc_cmd(void)
                       << std::endl << "error:" << errmsg);
       MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd parsed json:"
                     << std::endl << jv.asString() << std::endl);
-
+      myqr_process_jsonrpc_from_refpersys(jv);
     };
 } // end myqr_readable_jsonrpc_cmd
 
@@ -481,6 +503,9 @@ myqr_writable_jsonrpc_out(void)
 #warning unimplemented myqr_writable_jsonrpc_out
 } // end myqr_writable_jsonrpc_out
 
+
+
+/// a JSONRPC communication happens with RefPerSys
 void
 myqr_have_jsonrpc(const std::string&jsonrpc)
 {
@@ -507,7 +532,8 @@ myqr_have_jsonrpc(const std::string&jsonrpc)
   else
     MYQR_DEBUGOUT("myqr_have_jsonrpc cmd fd#" << myqr_jsonrpc_cmd_fd);
   myqr_notifier_jsonrpc_cmd = new QSocketNotifier(myqr_jsonrpc_cmd_fd, QSocketNotifier::Read);
-  QObject::connect(myqr_notifier_jsonrpc_cmd,&QSocketNotifier::activated,myqr_readable_jsonrpc_cmd);
+  QObject::connect(myqr_notifier_jsonrpc_cmd,&QSocketNotifier::activated,
+		   myqr_readable_jsonrpc_cmd);
   myqr_jsonrpc_out_fd = open(jsonrpc_out.c_str(), 0660 | O_CLOEXEC | O_NONBLOCK);
   if (myqr_jsonrpc_out_fd<0)
     MYQR_FATALOUT("failed to open output JSONRPC " << jsonrpc_out << " for writing:" << strerror(errno));
@@ -525,9 +551,19 @@ myqr_have_jsonrpc(const std::string&jsonrpc)
       MYQR_DEBUGOUT("myqr_have_jsonrpc did setenv REFPERSYS_JSONRPC to "
                     << jsonrpc.c_str());
     };
-  MYQR_DEBUGOUT("myqr_have_jsonrpc ending cmd: " << jsonrpc_cmd << " fd#" << myqr_jsonrpc_cmd_fd
-                << " out: " << jsonrpc_out<< " fd#" << myqr_jsonrpc_out_fd);
+  MYQR_DEBUGOUT("myqr_have_jsonrpc installed cmd: " << jsonrpc_cmd << " fd#" << myqr_jsonrpc_cmd_fd
+                << " out: " << jsonrpc_out
+		<< " fd#" << myqr_jsonrpc_out_fd);
+  {
+    Json::Value jargs(Json::arrayValue);
+    jargs.append(Json::Value(myqr_git_id));
+    jargs.append(Json::Value(qVersion()));
+    jargs.append(Json::Value(QTCORE_VERSION_STR));
+    MYQR_DEBUGOUT("myqr_have_jsonrpc jargs=" << jargs);
+  }
 } // end myqr_have_jsonrpc
+
+
 
 void
 myqr_start_refpersys(const std::string& refpersysprog,
@@ -552,6 +588,7 @@ myqr_start_refpersys(const std::string& refpersysprog,
                 << "before process creation from pid " << (int)getpid());
   myqr_refpersys_process = new QProcess();
   std::string progname;
+  if (prog.find('/') == std::string::npos)
   {
     const char* path = getenv("PATH");
     const char*pc = nullptr;
@@ -579,7 +616,12 @@ myqr_start_refpersys(const std::string& refpersysprog,
     if (progname.empty())
       MYQR_FATALOUT("failed to find program " << prog
                     << " in PATH=" << path);
-  };
+  }
+  else
+    {
+      MYQR_DEBUGOUT("myqr_start_refpersys prog has slash " << prog);
+      progname = prog;
+    };
   myqr_refpersys_process->setProgram(QString(progname.c_str()));
   myqr_refpersys_process->setArguments(arglist);
   MYQR_DEBUGOUT("myqr_start_refpersys before starting " << progname
@@ -600,16 +642,25 @@ myqr_start_refpersys(const std::string& refpersysprog,
 } // end myqr_start_refpersys
 
 
-void
-myqr_process_jsonrpc(const Json::Value&js)
-{
-#warning myqr_process_jsonrpc unimplemented
-  MYQR_FATALOUT("unimplemented myqr_process_jsonrpc" << std::endl
-                << js.asString());
-} // end myqr_process_jsonrpc
 
+/// process the JSON recieved from refpersys
 void
-myqr_jsonrpc_to_refpersys
+myqr_process_jsonrpc_from_refpersys(const Json::Value&js)
+{
+  MYQR_DEBUGOUT("myqr_process_jsonrpc_from_refpersys got JSON" << std::endl
+		<< js.asString());
+#warning myqr_process_jsonrpc_from_refpersys unimplemented
+  MYQR_FATALOUT("unimplemented myqr_process_jsonrpc_from_refpersys"
+		<< std::endl
+                << js.asString());
+} // end myqr_process_jsonrpc_from_refpersys
+
+
+
+
+/// do a remote procedure call to RefPerSys using our JSONRPC variant
+void
+myqr_call_jsonrpc_to_refpersys
 (const std::string& method,
  const Json::Value& args,
  const std::function<void(const Json::Value&res)>& resfun)
@@ -625,7 +676,7 @@ myqr_jsonrpc_to_refpersys
     jreq["id"] = ++count;
     myqr_deque_jsonrpc_out.push_back(jreq);
     myqr_jsonrpc_out_procmap.insert_or_assign(count, resfun);
-    MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys jreq:" << jreq.asString());
+    MYQR_DEBUGOUT("myqr_call_jsonrpc_to_refpersys jreq:" << jreq.asString());
 
   }
   usleep(500);
@@ -641,26 +692,26 @@ myqr_jsonrpc_to_refpersys
     std::string outs = myqr_stream_jsonrpc_out.str();
     size_t outslen = outs.size();
     ssize_t wcnt = write(myqr_jsonrpc_out_fd, outs.c_str(), outslen);
-    MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys outslen:" << outslen
+    MYQR_DEBUGOUT("myqr_call_jsonrpc_to_refpersys outslen:" << outslen
                   << " wcnt:" << wcnt);
     if (wcnt>0)   // https://stackoverflow.com/a/4546562
       {
         if ((long)wcnt<(long)outslen)
           {
             outs.erase(0, wcnt);
-            MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys outs becomes: '"
+            MYQR_DEBUGOUT("myqr_call_jsonrpc_to_refpersys outs becomes: '"
                           << outs << "'");
             myqr_stream_jsonrpc_out.str(outs);
           }
         else   // https://stackoverflow.com/a/20792
           {
-            MYQR_DEBUGOUT("myqr_jsonrpc_to_refpersys outs cleared");
+            MYQR_DEBUGOUT("myqr_call_jsonrpc_to_refpersys outs cleared");
             myqr_stream_jsonrpc_out.str("");
           }
       }
-#warning incomplete myqr_jsonrpc_to_refpersys
+#warning incomplete myqr_call_jsonrpc_to_refpersys
   }
-} // end  myqr_jsonrpc_to_refpersys
+} // end  myqr_call_jsonrpc_to_refpersys
 
 
 
@@ -680,7 +731,8 @@ main(int argc, char **argv)
   gethostname(myqr_host_name, sizeof(myqr_host_name)-1);
   MYQR_DEBUGOUT("starting " << myqr_progname << " on " << myqr_host_name
                 << " git " << myqr_git_id << " pid " << (int)getpid()
-                << " argc=" << argc);
+                << " argc=" << argc
+		<< " dynamic qVersion=" << qVersion());
   myqr_jsoncpp_reader_builder["collectComments"] = false;
   myqr_jsoncpp_reader_builder["rejectDupKeys"] = true;
   myqr_jsonrpc_reader = myqr_jsoncpp_reader_builder.newCharReader();
