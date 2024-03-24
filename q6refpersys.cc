@@ -59,6 +59,7 @@ extern "C" char myqr_host_name[64];
 // from jsoncpp (see https://github.com/open-source-parsers/jsoncpp)
 #include "json/value.h"
 #include "json/reader.h"
+#include "json/writer.h"
 
 #include <iostream>
 #include <sstream>
@@ -90,7 +91,7 @@ extern "C" std::recursive_mutex myqr_mtx_jsonrpc_out;
 extern "C" std::deque<Json::Value> myqr_deque_jsonrpc_out;
 extern "C" std::stringstream myqr_stream_jsonrpc_out;
 extern "C" std::map<int,std::function<void(const Json::Value&res)>> myqr_jsonrpc_out_procmap;
-
+extern "C" Json::StreamWriterBuilder myqr_jsoncpp_writer_builder;
 
 /// process the JSON recieved from refpersys
 extern "C" void myqr_process_jsonrpc_from_refpersys(const Json::Value&js);
@@ -185,11 +186,17 @@ public:
   virtual ~MyqrDisplayWindow();
 };				// end MyqrDisplayWindow
 
-
+#if 0
 std::ostream& operator << (std::ostream&out, const Json::Value&jv)
 {
+  Json::StreamWriterBuilder builder;
+  builder["commentStyle"] = "None";
+   std::unique_ptr<Json::StreamWriter>
+     writer(builder.newStreamWriter());
+   writer->write(value, &out);
   return out;
 }
+#endif
 
 ////////////////////////////////////////////////////////////////
 extern "C" QProcess*myqr_refpersys_process;
@@ -735,6 +742,8 @@ main(int argc, char **argv)
 		<< " dynamic qVersion=" << qVersion());
   myqr_jsoncpp_reader_builder["collectComments"] = false;
   myqr_jsoncpp_reader_builder["rejectDupKeys"] = true;
+  myqr_jsoncpp_writer_builder["commentStyle"] = "None";
+  myqr_jsoncpp_writer_builder["indentation"] = "";
   myqr_jsonrpc_reader = myqr_jsoncpp_reader_builder.newCharReader();
   QCoreApplication::setApplicationName("q6refpersys");
   QCoreApplication::setApplicationVersion(QString("version ") + myqr_git_id
@@ -793,6 +802,7 @@ QApplication *myqr_app;
 bool myqr_debug;
 std::string myqr_jsonrpc;
 Json::CharReaderBuilder myqr_jsoncpp_reader_builder;
+Json::StreamWriterBuilder myqr_jsoncpp_writer_builder;
 Json::CharReader* myqr_jsonrpc_reader;
 int myqr_jsonrpc_cmd_fd = -1;
 int myqr_jsonrpc_out_fd = -1;
