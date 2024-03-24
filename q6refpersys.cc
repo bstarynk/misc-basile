@@ -186,18 +186,6 @@ public:
   virtual ~MyqrDisplayWindow();
 };				// end MyqrDisplayWindow
 
-#if 0
-std::ostream& operator << (std::ostream&out, const Json::Value&jv)
-{
-  Json::StreamWriterBuilder builder;
-  builder["commentStyle"] = "None";
-   std::unique_ptr<Json::StreamWriter>
-     writer(builder.newStreamWriter());
-   writer->write(value, &out);
-  return out;
-}
-#endif
-
 ////////////////////////////////////////////////////////////////
 extern "C" QProcess*myqr_refpersys_process;
 //=============================================================
