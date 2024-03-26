@@ -93,6 +93,8 @@ extern "C" std::stringstream myqr_stream_jsonrpc_out;
 extern "C" std::map<int,std::function<void(const Json::Value&res)>> myqr_jsonrpc_out_procmap;
 extern "C" Json::StreamWriterBuilder myqr_jsoncpp_writer_builder;
 
+extern "C" pid_t myqr_refpersys_pid;
+
 /// process the JSON recieved from refpersys
 extern "C" void myqr_process_jsonrpc_from_refpersys(const Json::Value&js);
 
@@ -549,13 +551,8 @@ myqr_have_jsonrpc(const std::string&jsonrpc)
   MYQR_DEBUGOUT("myqr_have_jsonrpc installed cmd: " << jsonrpc_cmd << " fd#" << myqr_jsonrpc_cmd_fd
                 << " out: " << jsonrpc_out
 		<< " fd#" << myqr_jsonrpc_out_fd);
-  {
-    Json::Value jargs(Json::arrayValue);
-    jargs.append(Json::Value(myqr_git_id));
-    jargs.append(Json::Value(qVersion()));
-    jargs.append(Json::Value(QTCORE_VERSION_STR));
-    MYQR_DEBUGOUT("myqr_have_jsonrpc jargs=" << jargs);
-  }
+  MYQR_DEBUGOUT("myqr_have_jsonrpc ending jsonrpc:" << jsonrpc
+		<< " cmd.fd#" << myqr_jsonrpc_cmd_fd << " out.fd#" << myqr_jsonrpc_out_fd);
 } // end myqr_have_jsonrpc
 
 
@@ -634,6 +631,7 @@ myqr_start_refpersys(const std::string& refpersysprog,
   MYQR_DEBUGOUT("myqr_start_refpersys started " << prog
                 << " with arguments " << arglist
                 << " as pid " << pid);
+  myqr_refpersys_pid = (pid_t) pid;
 } // end myqr_start_refpersys
 
 
@@ -774,6 +772,23 @@ main(int argc, char **argv)
         args += cli_parser.value(jsonrpc_opt);
       myqr_start_refpersys(cli_parser.value(refpersys_opt).toStdString(), args);
     };
+  ///
+  MYQR_DEBUGOUT("main jsonrpc_opt:" << cli_parser.value(jsonrpc_opt).toStdString()
+		<< " refpersys_opt: " <<  cli_parser.value(refpersys_opt).toStdString()
+		<< " jsonrpc:" << myqr_jsonrpc << " pid:" << myqr_refpersys_pid);
+  if (cli_parser.isSet(jsonrpc_opt) && cli_parser.isSet(refpersys_opt))
+  {
+    Json::Value jargs(Json::arrayValue);
+    jargs.append(Json::Value(myqr_git_id));
+    jargs.append(Json::Value(qVersion()));
+    jargs.append(Json::Value(QTCORE_VERSION_STR));
+    MYQR_DEBUGOUT("myqr_have_jsonrpc jargs=" << jargs << " call _VERSION" << " refpersys_pid:" << myqr_refpersys_pid);
+    myqr_call_jsonrpc_to_refpersys("_VERSION", jargs,
+				   [&] (const Json::Value&jres) {
+				     MYQR_DEBUGOUT("myqr_have_jsonrpc _VERSION got " << jres
+						   << " with jargs " << jargs);
+				   });
+  }
   MYQR_DEBUGOUT("main before exec");
   int execret = myqr_app->exec();
   MYQR_DEBUGOUT("main after exec execret=" << execret);
@@ -803,6 +818,9 @@ std::recursive_mutex myqr_mtx_jsonrpc_out;
 std::deque<Json::Value> myqr_deque_jsonrpc_out;
 std::stringstream myqr_stream_jsonrpc_out;
 std::map<int,std::function<void(const Json::Value&res)>> myqr_jsonrpc_out_procmap;
+pid_t myqr_refpersys_pid;
+
+
 #include "_q6refpersys-moc.cc"
 
 /****************
