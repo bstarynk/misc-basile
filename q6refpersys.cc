@@ -95,6 +95,8 @@ extern "C" Json::StreamWriterBuilder myqr_jsoncpp_writer_builder;
 
 extern "C" pid_t myqr_refpersys_pid;
 
+extern "C" std::string myqr_json2str(const Json::Value&jv);
+
 /// process the JSON recieved from refpersys
 extern "C" void myqr_process_jsonrpc_from_refpersys(const Json::Value&js);
 
@@ -641,11 +643,11 @@ void
 myqr_process_jsonrpc_from_refpersys(const Json::Value&js)
 {
   MYQR_DEBUGOUT("myqr_process_jsonrpc_from_refpersys got JSON" << std::endl
-		<< js.asString());
+		<< myqr_json2str(js));
 #warning myqr_process_jsonrpc_from_refpersys unimplemented
   MYQR_FATALOUT("unimplemented myqr_process_jsonrpc_from_refpersys"
 		<< std::endl
-                << js.asString());
+                << myqr_json2str(js));
 } // end myqr_process_jsonrpc_from_refpersys
 
 
@@ -669,7 +671,8 @@ myqr_call_jsonrpc_to_refpersys
     jreq["id"] = ++count;
     myqr_deque_jsonrpc_out.push_back(jreq);
     myqr_jsonrpc_out_procmap.insert_or_assign(count, resfun);
-    MYQR_DEBUGOUT("myqr_call_jsonrpc_to_refpersys jreq:" << jreq.asString());
+    MYQR_DEBUGOUT("myqr_call_jsonrpc_to_refpersys jreq:"
+		  << myqr_json2str(jreq));
 
   }
   usleep(500);
@@ -679,7 +682,7 @@ myqr_call_jsonrpc_to_refpersys
       {
         Json::Value joldreq = myqr_deque_jsonrpc_out.front();
         myqr_deque_jsonrpc_out.pop_front();
-        myqr_stream_jsonrpc_out << joldreq.asString()
+        myqr_stream_jsonrpc_out << myqr_json2str(joldreq)
                                 << "\n\f" << std::flush;
       }
     std::string outs = myqr_stream_jsonrpc_out.str();
@@ -708,6 +711,15 @@ myqr_call_jsonrpc_to_refpersys
 
 
 
+std::string
+myqr_json2str(const Json::Value&jv)
+{
+  Json::StreamWriterBuilder builder;
+  builder["commentStyle"] = "None";
+  builder["indentation"] = " ";
+  auto str = Json::writeString(builder, jv);
+  return str;
+} // end myqr_json2str
 
 int
 main(int argc, char **argv)
@@ -778,15 +790,16 @@ main(int argc, char **argv)
 		<< " jsonrpc:" << myqr_jsonrpc << " pid:" << myqr_refpersys_pid);
   if (cli_parser.isSet(jsonrpc_opt) && cli_parser.isSet(refpersys_opt))
   {
-    Json::Value jargs(Json::arrayValue);
-    jargs.append(Json::Value(myqr_git_id));
-    jargs.append(Json::Value(qVersion()));
-    jargs.append(Json::Value(QTCORE_VERSION_STR));
+    Json::Value jargs(Json::objectValue);
+    jargs["gitid"] = myqr_git_id;
+    jargs["runtime_Qt"] = qVersion();
+    jargs["compile_Qt"] = QTCORE_VERSION_STR;
+    MYQR_DEBUGOUT("myqr_have_jsonrpc jargs is " << myqr_json2str(jargs));
     MYQR_DEBUGOUT("myqr_have_jsonrpc jargs=" << jargs << " call _VERSION" << " refpersys_pid:" << myqr_refpersys_pid);
     myqr_call_jsonrpc_to_refpersys("_VERSION", jargs,
 				   [&] (const Json::Value&jres) {
-				     MYQR_DEBUGOUT("myqr_have_jsonrpc _VERSION got " << jres
-						   << " with jargs " << jargs);
+				     MYQR_DEBUGOUT("myqr_have_jsonrpc _VERSION got " <<  myqr_json2str(jres)
+						   << " with jargs " <<  myqr_json2str(jargs));
 				   });
   }
   MYQR_DEBUGOUT("main before exec");
