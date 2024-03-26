@@ -70,7 +70,7 @@ extern "C" char myqr_host_name[64];
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <signal.h>
 
 
 extern "C" char myqr_host_name[];
@@ -689,9 +689,11 @@ myqr_call_jsonrpc_to_refpersys
       }
     std::string outs = myqr_stream_jsonrpc_out.str();
     size_t outslen = outs.size();
+    errno = 0;
     ssize_t wcnt = write(myqr_jsonrpc_out_fd, outs.c_str(), outslen);
     MYQR_DEBUGOUT("myqr_call_jsonrpc_to_refpersys outslen:" << outslen
-                  << " wcnt:" << wcnt);
+                  << " wcnt:" << wcnt << " outfd#" << myqr_jsonrpc_out_fd
+		  << " errno:" << strerror(errno));
     if (wcnt>0)   // https://stackoverflow.com/a/4546562
       {
         if ((long)wcnt<(long)outslen)
@@ -808,8 +810,17 @@ main(int argc, char **argv)
   MYQR_DEBUGOUT("main before exec");
   int execret = myqr_app->exec();
   MYQR_DEBUGOUT("main after exec execret=" << execret);
+  if (myqr_refpersys_pid>0) {
+    MYQR_DEBUGOUT("main kill with SIGTERM refpersys pid#" << myqr_refpersys_pid);
+    errno = 0;
+    if (kill(myqr_refpersys_pid, SIGTERM)<0) {
+      MYQR_FATALOUT("failed to TERM refpersys pid#" << myqr_refpersys_pid
+		    << ":" << strerror(errno));
+    }
+  }
   myqr_app = nullptr;
-  return 0;
+  MYQR_DEBUGOUT("main returns execret=" << execret);
+  return execret;
 } // end main
 
 
