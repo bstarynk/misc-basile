@@ -693,7 +693,7 @@ myqr_call_jsonrpc_to_refpersys
     ssize_t wcnt = write(myqr_jsonrpc_out_fd, outs.c_str(), outslen);
     MYQR_DEBUGOUT("myqr_call_jsonrpc_to_refpersys outslen:" << outslen
                   << " wcnt:" << wcnt << " outfd#" << myqr_jsonrpc_out_fd
-		  << " errno:" << strerror(errno));
+		  << " errno:" << strerror(errno) << " pid:" << (int)getpid());
     if (wcnt>0)   // https://stackoverflow.com/a/4546562
       {
         if ((long)wcnt<(long)outslen)
