@@ -71,6 +71,28 @@ extern "C" Gtk::Application*gmrps_app;
 
 #define GMRPS_DBGOUT(Out) GMRPS_DBGOUT_AT(__FILE__,__LINE__,Out)
 
+
+
+class GmRpsMainWindow : public Gtk::Window
+{
+public:
+  GmRpsMainWindow();
+  ~GmRpsMainWindow();
+};				// end GmRpsMainWindow
+
+GmRpsMainWindow::GmRpsMainWindow()
+{
+  set_title("gtkmm-refpersys");
+  g_assert(gmrps_app != nullptr);
+  set_default_size(400, 200);
+} // end GmRpsMainWindow::GmRpsMainWindow
+
+
+GmRpsMainWindow::~GmRpsMainWindow()
+{
+} // end GmRpsMainWindow::~GmRpsMainWindow
+
+
 std::ostream&operator << (std::ostream&out, std::function<void(std::ostream&)> f)
 {
   f(out);
@@ -92,8 +114,10 @@ main(int argc, char* argv[])
                              "Enable debugging");
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "version", 'V',
                              "Give version information");
+  app->add_main_option_entry(Gio::Application::OptionType::STRING, "geometry", 'G',
+                             "Give version geometry WxH of main window");
   gmrps_app = app.get();
-  int ret= app->make_window_and_run<Gtk::Window>(argc, argv);
+  int ret= app->make_window_and_run<GmRpsMainWindow>(argc, argv);
   gmrps_app = nullptr;
   return ret;
 } // end main
@@ -102,5 +126,12 @@ char gmrps_hostname[GMRPS_HOSTNAME_MAX];
 bool gmrps_debug;
 Gtk::Application*gmrps_app;
 const char gmrps_git_id[] = GITID;
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "make gtkmm-refpersys" ;;
+ ** End: ;;
+ ****************/
 
 /// end of file gtkmm-refpersys.cc
