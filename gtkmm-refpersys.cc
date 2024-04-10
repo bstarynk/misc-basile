@@ -32,13 +32,15 @@
 #error GITID should be compile time defined
 #endif
 
+class GmRps_Application;
+
 #define GMRPS_HOSTNAME_MAX 63
 extern "C" bool gmrps_debug;
 extern "C" char gmrps_hostname[GMRPS_HOSTNAME_MAX];
 
 extern "C" const char gmrps_git_id[];
 
-extern "C" Gtk::Application*gmrps_app;
+extern "C" GmRps_Application*gmrps_app;
 
 
 #define GMRPS_DBGEPRINTF_AT_BIS(Fil,Lin,Fmt,...) do {	\
@@ -72,6 +74,11 @@ extern "C" Gtk::Application*gmrps_app;
 #define GMRPS_DBGOUT(Out) GMRPS_DBGOUT_AT(__FILE__,__LINE__,Out)
 
 
+class GmRps_Application : public Gtk::Application
+{
+public:
+  int on_handle_local_options(const Glib::RefPtr<Glib::VariantDict> &options);
+};				// end GmRps_Application
 
 class GmRpsMainWindow : public Gtk::Window
 {
@@ -99,6 +106,31 @@ std::ostream&operator << (std::ostream&out, std::function<void(std::ostream&)> f
   return out;
 } // end output << for lambdas...
 
+int
+GmRps_Application::on_handle_local_options(const Glib::RefPtr<Glib::VariantDict> &options)
+{
+  if (!options)
+    return -1;
+  GMRPS_DBGOUT("unimplemented GmRps_Application::on_handle_local_options");
+  if (options->contains("debug"))
+    {
+      GMRPS_DBGOUT("debugging ....");
+      gmrps_debug = true;
+    }
+  else if (options->contains("version"))
+    {
+      GMRPS_DBGOUT("version ....");
+    }
+  else if (options->contains("geometry"))
+    {
+      Glib::ustring geomstr;
+      if (options->lookup_value("geometry", geomstr))
+        {
+          GMRPS_DBGOUT("geometry " << geomstr.data());
+        }
+    }
+  return 1;
+} // end GmRps_Application::on_handle_local_options
 
 int
 main(int argc, char* argv[])
@@ -108,7 +140,7 @@ main(int argc, char* argv[])
   gethostname(gmrps_hostname, GMRPS_HOSTNAME_MAX-1);
   GMRPS_DBGOUT("start " << argv[0] << " git " << gmrps_git_id << " on "
                << gmrps_hostname << " pid " << (int)getpid());
-  auto app = Gtk::Application::create("gtkmm.refpersys.org");
+  auto app = GmRps_Application::create("gtkmm.refpersys.org");
   GMRPS_DBGOUT("app is " << app);
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "debug", 'D',
                              "Enable debugging");
@@ -116,7 +148,10 @@ main(int argc, char* argv[])
                              "Give version information");
   app->add_main_option_entry(Gio::Application::OptionType::STRING, "geometry", 'G',
                              "Give version geometry WxH of main window");
-  gmrps_app = app.get();
+  gmrps_app = dynamic_cast<GmRps_Application*>(app.get());
+  gmrps_app->signal_handle_local_options().connect
+  (sigc::mem_fun(*gmrps_app,
+                 &GmRps_Application::on_handle_local_options), true);
   int ret= app->make_window_and_run<GmRpsMainWindow>(argc, argv);
   gmrps_app = nullptr;
   return ret;
@@ -124,7 +159,7 @@ main(int argc, char* argv[])
 
 char gmrps_hostname[GMRPS_HOSTNAME_MAX];
 bool gmrps_debug;
-Gtk::Application*gmrps_app;
+GmRps_Application*gmrps_app;
 const char gmrps_git_id[] = GITID;
 
 /****************
