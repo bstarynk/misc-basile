@@ -141,15 +141,15 @@ main(int argc, char* argv[])
   GMRPS_DBGOUT("start " << argv[0] << " git " << gmrps_git_id << " on "
                << gmrps_hostname << " pid " << (int)getpid());
   std::shared_ptr<Gtk::Application> app = GmRps_Application::create("gtkmm.refpersys.org");
-  GMRPS_DBGOUT("app is @" << (void*)app.get());
+  GMRPS_DBGOUT("app is @" << (void*)(app.get()));
+  gmrps_app = dynamic_cast<GmRps_Application*>(app.get());
+  GMRPS_DBGOUT("gmrps_app is @" << (void*)gmrps_app);
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "debug", 'D',
                              "Enable debugging");
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "version", 'V',
                              "Give version information");
   app->add_main_option_entry(Gio::Application::OptionType::STRING, "geometry", 'G',
                              "Give version geometry WxH of main window");
-  gmrps_app = dynamic_cast<GmRps_Application*>(app.get());
-  GMRPS_DBGOUT("gmrps_app is @" << (void*)gmrps_app);
   gmrps_app->signal_handle_local_options().connect
   (sigc::mem_fun(*gmrps_app,
                  &GmRps_Application::on_handle_local_options), true);
