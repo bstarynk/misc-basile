@@ -140,8 +140,8 @@ main(int argc, char* argv[])
   gethostname(gmrps_hostname, GMRPS_HOSTNAME_MAX-1);
   GMRPS_DBGOUT("start " << argv[0] << " git " << gmrps_git_id << " on "
                << gmrps_hostname << " pid " << (int)getpid());
-  auto app = GmRps_Application::create("gtkmm.refpersys.org");
-  GMRPS_DBGOUT("app is " << app);
+  std::shared_ptr<Gtk::Application> app = GmRps_Application::create("gtkmm.refpersys.org");
+  GMRPS_DBGOUT("app is @" << (void*)app.get());
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "debug", 'D',
                              "Enable debugging");
   app->add_main_option_entry(Gio::Application::OptionType::BOOL, "version", 'V',
@@ -149,9 +149,11 @@ main(int argc, char* argv[])
   app->add_main_option_entry(Gio::Application::OptionType::STRING, "geometry", 'G',
                              "Give version geometry WxH of main window");
   gmrps_app = dynamic_cast<GmRps_Application*>(app.get());
+  GMRPS_DBGOUT("gmrps_app is @" << (void*)gmrps_app);
   gmrps_app->signal_handle_local_options().connect
   (sigc::mem_fun(*gmrps_app,
                  &GmRps_Application::on_handle_local_options), true);
+  GMRPS_DBGOUT("before make_window_and_run argc=" << argc << " argv=" << argv);
   int ret= app->make_window_and_run<GmRpsMainWindow>(argc, argv);
   gmrps_app = nullptr;
   return ret;
