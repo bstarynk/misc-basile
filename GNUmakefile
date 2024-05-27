@@ -98,7 +98,7 @@ valgrind-logged-gcc: logged-gcc sync-periodically.c
 
 onionrefpersys: onionrefpersys.c  GNUmakefile
 	$(CC)  $(CFLAGS) -DGITID='"$(GIT_ID)"' $<  -L/usr/local/lib \
-           -lonion_static -lsystemd -lgcrypt -lgnutls -lgmp -Bdynamic -o $@
+           -lonion_static -lsqlite3 -lsystemd -lgcrypt -lgnutls -lgmp -Bdynamic -o $@
 
 gtksrc-browser: gtksrc-browser.c build-gtksrc-browser.sh  |GNUmakefile
 	./build-gtksrc-browser.sh
