@@ -12,12 +12,17 @@ static int cur_lineno = 1;
 %prefix carbex_
 
  
-: [\ \t\r\f]+; /* skip whitespace */
+: [\ \t\r\f]+ { /* skip whitespace */ }
 
 : [\n] {
   cur_lineno++; 
 }
 
+PAR_OPEN: \(; 
+PAR_CLOSE: \);
+NAME: [a-zA-Z_]*;
+
+%token PAR_OPEN PAR_CLOSE NAME
 %grammar%
 /* this is the grammar section of the parser file carbex_parser.cbrt */
 
