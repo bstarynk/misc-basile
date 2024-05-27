@@ -22,6 +22,7 @@
 #include <getopt.h>
 #include <onion/onion.h>
 #include <onion/log.h>
+#include <onion/version.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
@@ -129,6 +130,8 @@ parse_options (int argc, char **argv)
 	case 'V':
 	  printf ("%s version git %s built %s\n",
 		  progname, gitid, __DATE__ "@" __TIME__);
+	  printf ("sqlite version %s\n", sqlite3_libversion());
+	  printf ("onion version %s\n", onion_version());
 	  exit (EXIT_SUCCESS);
 	  break;
 	case 'H':
