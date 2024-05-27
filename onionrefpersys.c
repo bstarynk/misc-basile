@@ -47,7 +47,8 @@ bool debug = false;
 
 const char *web_port = "8080";
 const char *web_host = "localhost";
-const char *sqlite_path = "/var/tmp/onionrefpersys.sqlite";
+const char *my_sqlite_path = "/var/tmp/onionrefpersys.sqlite";
+sqlite3*my_sqlite_db;
 
 const struct option options_arr[] = {
   {.name = (const char *) "debug",	//
@@ -130,7 +131,7 @@ parse_options (int argc, char **argv)
 	case 'V':
 	  printf ("%s version git %s built %s\n",
 		  progname, gitid, __DATE__ "@" __TIME__);
-	  printf ("sqlite version %s\n", sqlite3_libversion());
+	  printf ("sqlite version %s sourceid %s\n", sqlite3_libversion(), sqlite3_sourceid());
 	  printf ("onion version %s\n", onion_version());
 	  exit (EXIT_SUCCESS);
 	  break;
@@ -138,7 +139,7 @@ parse_options (int argc, char **argv)
 	  web_host = optarg;
 	  break;
 	case 'B':
-	  sqlite_path = optarg;
+	  my_sqlite_path = optarg;
 	  break;
 	default:
 	  break;
@@ -165,7 +166,7 @@ show_usage (void)
   printf ("\t --host | -H <webhost>        # set HTTP host, default %s\n",
 	  web_host);
   printf ("\t --sqlite-base | -B <path>    # set Sqlite file, default %s\n",
-	  sqlite_path);
+	  my_sqlite_path);
 }				/* end show_usage */
 
 int
@@ -177,12 +178,18 @@ main (int argc, char **argv)
   parse_options (argc, argv);
   nice (5);
   my_onion = onion_new (O_THREADED);
+  errno = 0;
   {
     int sqin = sqlite3_initialize ();
     if (sqin != SQLITE_OK)
-      {
-	FATAL ("Failed to initialize sqlite3: sqlite error %d", sqin);
-      }
+      FATAL ("Failed to initialize sqlite3: sqlite error %d (errno %s)", sqin,
+	     strerror(errno));
+    int sqop = sqlite3_open_v2(my_sqlite_path, &my_sqlite_db,
+			       SQLITE_OPEN_CREATE|SQLITE_OPEN_READWRITE|SQLITE_OPEN_FULLMUTEX,
+			       NULL);
+    if (sqop != SQLITE_OK || !my_sqlite_db)
+      FATAL("Failed to open sqlite database %s, sqlite error %d (errno %s)",
+	    my_sqlite_path, sqop, strerror(errno));
   }
   onion_set_port (my_onion, web_port);
   onion_set_hostname (my_onion, web_host);
