@@ -53,6 +53,7 @@ const char *my_sqlite_path = "/var/tmp/onionrefpersys.sqlite";
 sqlite3 *my_sqlite_db;
 int my_cputime_limit = 7200 /* seconds, so two hours */ ;
 int my_filesize_limit_mb = 1024 /* megabytes, so one gigabyte */ ;
+int my_web_timeout = 10;	/* web timeout in seconds */
 
 const struct option options_arr[] = {
   {.name = (const char *) "debug",	//
@@ -75,6 +76,10 @@ const struct option options_arr[] = {
    .has_arg = required_argument,	//
    .flag = (int *) NULL,	//
    .val = 'H'},			//
+  {.name = (const char *) "timeout",	//
+   .has_arg = required_argument,	//
+   .flag = (int *) NULL,	//
+   .val = 'T'},			//
   {.name = (const char *) "cpu-limit",	//
    .has_arg = required_argument,	//
    .flag = (int *) NULL,	//
@@ -127,7 +132,8 @@ parse_options (int argc, char **argv)
       int option_index = 0;
       int c = 0;
       c =
-	getopt_long (argc, argv, "DP:H:B:C:F:hV", options_arr, &option_index);
+	getopt_long (argc, argv, "DP:H:B:C:F:T:hV", options_arr,
+		     &option_index);
       if (c < 0)
 	break;
       switch (c)
@@ -164,6 +170,13 @@ parse_options (int argc, char **argv)
 	  my_filesize_limit_mb = atoi (optarg);
 	  if (my_filesize_limit_mb < 0)
 	    FATAL ("invalid file size limit %d", my_filesize_limit_mb);
+	  break;
+	case 'T':
+	  my_web_timeout = atoi (optarg);
+	  if (my_web_timeout < 0)
+	    FATAL ("invalid web timeout limit %d", my_filesize_limit_mb);
+	  break;
+
 	default:
 	  break;
 	}
@@ -194,6 +207,9 @@ show_usage (void)
     ("\t --cpu-limit | -C <cpusec>    # set CPU time limit, default %d sec,\n"
      "\t                              # 0 for none.\n", my_cputime_limit);
   printf
+    ("\t --timeout | -T <realsec>    # set web timeout limit, default %d sec,\n"
+     "\t                              # 0 for none.\n", my_web_timeout);
+  printf
     ("\t --file-limit | -F <sizemb>   # set file size limit, default %d megabytes\n"
      "\t                              # 0 for none.\n", my_filesize_limit_mb);
 }				/* end show_usage */
@@ -215,12 +231,20 @@ set_process_limits (void)
   if (my_filesize_limit_mb > 0)
     {
       rlim.rlim_cur = my_filesize_limit_mb << 20;
-      rlim.rlim_max = my_filesize_limit_mb << 20 + 65536;
+      rlim.rlim_max = (my_filesize_limit_mb << 20) + 65536;
       if (setrlimit (RLIMIT_FSIZE, &rlim))
 	FATAL ("failed to limit file size to %d megabytes (%s)",
 	       my_cputime_limit, strerror (errno));
     };
 }				/* end set_process_limits */
+
+
+void
+create_sqlite_tables (void)
+{
+#warning unimplemented create_sqlite_tables
+  FATAL("unimplemented create_sqlite_tables");
+}				/* end create_sqlite_tables */
 
 int
 main (int argc, char **argv)
@@ -232,6 +256,8 @@ main (int argc, char **argv)
   nice (5);
   set_process_limits ();
   my_onion = onion_new (O_THREADED);
+  if (my_web_timeout > 0)
+    onion_set_timeout (my_onion, my_web_timeout);
   errno = 0;
   {
     int sqin = sqlite3_initialize ();
@@ -254,6 +280,7 @@ main (int argc, char **argv)
       FATAL ("Failed to close sqlite database %s, sqlite error %d (errno %s)",
 	     my_sqlite_path, sqcl, strerror (errno));
   }
+  create_sqlite_tables ();
 }				/* end main */
 
 /****************
