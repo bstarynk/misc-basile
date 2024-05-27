@@ -28,7 +28,9 @@
 #include <time.h>
 #include <stdatomic.h>
 #include <stdio.h>
+#include <syslog.h>
 #include <gnu/libc-version.h>
+#include <sqlite3.h>
 
 onion *my_onion;
 
@@ -76,7 +78,25 @@ void parse_options (int argc, char **argv);
 
 void show_usage (void);
 
+void fatal_at(const char*fil, int lin, const char*fmt, ...) __attribute__((noreturn,format (printf, 3, 4)));
+
+#define FATAL_AT_BIS(Fil,Lin,Fmt,...) do{fatal_at(Fil,Lin,Fmt,##__VA_ARGS__);}while(0)
+#define FATAL_AT(Fil,Lin,Fmt,...) FATAL_AT_BIS((Fil),(Lin),Fmt,##__VA_ARGS__)
+#define FATAL(Fmt,...) FATAL_AT(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+
 ////////////////////////////////////////////////////////////////
+
+void
+fatal_at(const char*fil, int lin, const char*fmt, ...)
+{
+  static char buf[1024];
+  va_list arg;
+  va_start(arg, fmt);
+  vsnprintf(buf, sizeof(buf)-1, fmt, arg);
+  va_end(arg);
+  syslog(LOG_CRIT,"%s fatal at %s:%d: %s", progname,  fil, lin, buf);
+  exit(EXIT_FAILURE);
+} /* end fatal_at */
 
 /// keep this function consistent with show_usage
 void
@@ -124,19 +144,31 @@ show_usage (void)
 	  "blob/master", __FILE__);
   printf ("uses the libonion web service library from %s\n",
 	  "https://www.coralbits.com/libonion/");
+  printf ("uses the sqlite3 library from %s\n",
+	  "https://sqlite.org/");
   printf ("\t --debug | -D                 # enable debugging\n");
   printf ("\t --version | -V               # show version\n");
   printf ("\t --help | -h                  # show this help\n");
-  printf ("\t --port | -P <webport>        # set HTTP port\n");
-  printf ("\t --host | -H <webhost>        # set HTTP host\n");
+  printf ("\t --port | -P <webport>        # set HTTP port, default %s\n",
+	  web_port);
+  printf ("\t --host | -H <webhost>        # set HTTP host, default %s\n",
+	  web_host);
 }				/* end show_usage */
 
 int
 main (int argc, char **argv)
 {
   progname = argv[0];
+  openlog(progname, LOG_NDELAY|LOG_CONS|LOG_PERROR|LOG_PID,LOG_LOCAL0);
   parse_options (argc, argv);
+  nice (5);
   my_onion = onion_new (O_THREADED);
+  {
+    int sqin = sqlite3_initialize();
+    if (sqin != SQLITE_OK) {
+      FATAL("Failed to initialize sqlite3: sqlite error %d", sqin); 
+    }
+  }
   onion_set_port (my_onion, web_port);
   onion_set_hostname (my_onion, web_host);
 }				/* end main */
