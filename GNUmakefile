@@ -33,6 +33,7 @@ clean:
 	$(RM) _genf*.c
 	$(RM) _logged-gcc_*
 	$(RM) _q6refpersys*
+	$(RM) onionrefpersys gtkmm-refpersys q6refpersys
 ## on non Linux, change .so to whatever can be dlopen-esd
 	$(RM) _genf*.so
 	$(RM) _pmap*
