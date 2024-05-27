@@ -56,6 +56,30 @@ int my_cputime_limit = 7200 /* seconds, so two hours */ ;
 int my_filesize_limit_mb = 1024 /* megabytes, so one gigabyte */ ;
 int my_web_timeout = 10;	/* web timeout in seconds */
 
+
+////////////////////////////////////////////////////////////////
+/****
+ *    web requests to be handled by onionrefpersys
+ *
+ *
+ ***** POST /refpersys-build (sent from RefPerSys GNUmakefile
+ * request arguments
+ *        gitid from REFPERSYS_CONFIGURED_GITID
+ *        gcc_version
+ *        gpp_version
+ *        fltk_version (from fltk-config --version)
+ *        builder_person
+ *        builder_email
+ *
+ * request response ???not sure???
+ *        type JSON
+ *        fields dbid
+*****/
+////////////////////////////////////////////////////////////////
+
+
+
+
 const struct option options_arr[] = {
   {.name = (const char *) "debug",	//
    .has_arg = no_argument,	//
