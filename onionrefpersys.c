@@ -19,6 +19,7 @@
 
 
 #include <features.h>
+#include <assert.h>
 #include <getopt.h>
 #include <onion/onion.h>
 #include <onion/log.h>
@@ -242,8 +243,27 @@ set_process_limits (void)
 void
 create_sqlite_tables (void)
 {
-#warning unimplemented create_sqlite_tables
-  FATAL("unimplemented create_sqlite_tables");
+  char *msgerr = NULL;
+  assert (my_sqlite_db != NULL);
+  int r1 = sqlite3_exec (my_sqlite_db,
+			 "PRAGMA encoding = 'UTF-8';\n"
+			 "BEGIN TRANSACTION;\n"
+			 "CREATE TABLE IF NOT EXISTS tb_ (" ")",
+			 NULL,
+			 NULL,
+			 &msgerr);
+  if (r1 != SQLITE_OK)
+    FATAL ("failed to create tb_ (r1:%d:%s)- error %s", r1,
+	   sqlite3_errstr (r1), msgerr ? msgerr : "???");
+  msgerr = NULL;
+  int rend = sqlite3_exec (my_sqlite_db,
+			   "END TRANSACTION;\n",
+			   NULL,
+			   NULL,
+			   &msgerr);
+  if (rend != SQLITE_OK)
+    FATAL ("failed to END transaction (rend:%d:%s) - error %s", rend,
+	   sqlite3_errstr (rend), msgerr ? msgerr : "???");
 }				/* end create_sqlite_tables */
 
 int
