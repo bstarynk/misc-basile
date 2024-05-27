@@ -1,7 +1,7 @@
 
 /**
   onionrefpersys.c:
-  Copyright (C) 2023 Basile Starynkevitch
+  Copyright (C) 2023 - 2024 Basile Starynkevitch
 
   This onionrefpersys is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License as
@@ -33,6 +33,10 @@
 onion *my_onion;
 
 const char *progname;
+
+#ifndef GITID
+#error compilation command should define the GITID macro
+#endif
 
 const char gitid[] = GITID;
 
@@ -116,6 +120,10 @@ show_usage (void)
 {
   printf ("%s usage (a specialized webserver)\n", progname);
   printf ("see %s file (GPLv3+ licensed, no warranty)\n", __FILE__);
+  printf ("source file on https://github.com/bstarynk/%s/%s\n",
+	  "blob/master", __FILE__);
+  printf ("uses the libonion web service library from %s\n",
+	  "https://www.coralbits.com/libonion/");
   printf ("\t --debug | -D                 # enable debugging\n");
   printf ("\t --version | -V               # show version\n");
   printf ("\t --help | -h                  # show this help\n");
@@ -132,3 +140,12 @@ main (int argc, char **argv)
   onion_set_port (my_onion, web_port);
   onion_set_hostname (my_onion, web_host);
 }				/* end main */
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "make onionrefpersys" ;;
+ ** End: ;;
+ ****************/
+
+/// end of
