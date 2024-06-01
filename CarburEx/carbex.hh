@@ -25,18 +25,30 @@
 #include <cstring>
 
 extern "C" const char*carbex_progname;
+/// forward declarations
+class Tok;
+class TokNull;
+class TokInt;
+class TokDouble;
+class TokString;
+class TokName;
+class TokKeyword;
+class TokChunk;
 
 enum TokType
 {
-  tky_none,
-  tky_int,
-  tky_double,
-  tky_string,
-  tky_chunk,
-  tky_name,
-  tky_keyword
+  Tkty_none,
+  Tkty_int,
+  Tkty_double,
+  Tkty_string,
+  Tkty_chunk,
+  Tkty_name,
+  Tkty_keyword
 };
 
+enum CarbKeyword
+{
+};
 /// In simple cases, we could just use std::variant, but this code is
 /// an exercise for the rule of five. See
 /// https://en.cppreference.com/w/cpp/language/rule_of_three and
@@ -45,18 +57,40 @@ class Tok
 {
   enum TokType tk_type;
   int tk_lineno;
+  int tk_colno;
+  std::string tk_file;
   union
   {
     void* tk_ptr;
-    int tk_int;
+    intptr_t tk_int;
     double tk_double;
     std::string tk_string;
+    TokName* tk_name;
+    TokKeyword* tk_keyword;
+    TokChunk* tk_chunk;
   };
 protected:
-  Tok(nullptr_t) : tk_type(tky_none), tk_lineno(0), tk_ptr(nullptr) {};
-  Tok(TokType ty, int n): tk_type(ty),  tk_lineno(0), tk_int(n) {};
-  Tok(TokType ty, double d): tk_type(ty),  tk_lineno(0), tk_double(d) {};
-  Tok(TokType ty, std::string s): tk_type(ty),  tk_lineno(0), tk_string(s) {};
+  Tok(nullptr_t)
+    : tk_type(Tkty_none), tk_lineno(0), tk_colno(0), tk_file(),
+      tk_ptr(nullptr) {};
+  Tok(TokType ty, intptr_t n)
+    : tk_type(ty),  tk_lineno(0), tk_colno(0), tk_file(),
+      tk_int(n) {};
+  Tok(TokType ty, double d, std::nullptr_t)
+    : tk_type(ty),  tk_lineno(0), tk_colno(0), tk_file(),
+      tk_double(d) {};
+  Tok(TokType ty, std::string s)
+    : tk_type(ty),  tk_lineno(0), tk_colno(0), tk_file(),
+      tk_string(s) {};
+  Tok(TokType ty, TokName& nm)
+    : tk_type(ty),  tk_lineno(0), tk_colno(0), tk_file(),
+      tk_name(&nm) {};
+  Tok(TokType ty, TokKeyword& kw)
+    : tk_type(ty),  tk_lineno(0), tk_colno(0), tk_file(),
+      tk_keyword(&kw) {};
+  Tok(TokType ty, TokChunk& ch)
+    : tk_type(ty),  tk_lineno(0), tk_colno(0), tk_file(),
+      tk_chunk(&ch) {};
 public:
   enum TokType get_type(void) const
   {
@@ -68,9 +102,6 @@ public:
     if (tk_lineno==0) tk_lineno=ln;
   };
 #warning should follow the rule of five
-  Tok(int n) : Tok(tky_int, n) {};
-  Tok(double d) : Tok(tky_double, d) {};
-  Tok(std::string s): Tok(tky_string, s) {};
   Tok(const Tok&);		// copy constructor
   Tok(Tok&&);			// move constructor
   Tok& operator = (const Tok&); // copy assignment
@@ -92,20 +123,32 @@ public:
 class TokInt : public Tok
 {
 public:
-  TokInt(int n) : Tok(tky_int, n) {};
+  TokInt(intptr_t n) : Tok(Tkty_int, n) {};
 };
 
 class TokDouble : public Tok
 {
 public:
-  TokDouble(double d) : Tok(tky_double, d) {};
+  TokDouble(double d) : Tok(Tkty_double, d, nullptr) {};
 };
 
-class  TokString : public Tok
+class TokString : public Tok
 {
 public:
-  TokString(const std::string&s) : Tok(tky_string, s) {};
+  TokString(const std::string&s) : Tok(Tkty_string, s) {};
   TokString(const char*s) : TokString(std::string(s)) {};
-};
+};				// end TokString
+
+class TokKeyword : public Tok
+{
+};				// end TokKeyword
+
+class TokName : public Tok
+{
+};				// end TokName
+
+class TokChunk : public Tok
+{
+};				// end TokChunk
 
 #endif /*CARBEX_INCLUDED*/
