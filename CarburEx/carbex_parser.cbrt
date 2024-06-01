@@ -45,4 +45,11 @@ NAME: [a-z][a-zA-Z_]* {
 /* this is the epilogue part of the parser file carbex_parser.cbrt */
 
 
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "make -j2 carbex" ;;
+ ** End: ;;
+ ****************/
+
 /// end of file carbex_parser.cbrt

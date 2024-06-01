@@ -154,4 +154,14 @@ class TokChunk : public Tok
 {
 };				// end TokChunk
 
+
+
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "make -j2 carbex" ;;
+ ** End: ;;
+ ****************/
+
 #endif /*CARBEX_INCLUDED*/

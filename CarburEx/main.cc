@@ -159,3 +159,11 @@ main(int argc, char**argv)
   else if (argc>1 && !strcmp(argv[1], "--help"))
     show_help();
 } // end main
+
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "make -j2 carbex" ;;
+ ** End: ;;
+ ****************/
