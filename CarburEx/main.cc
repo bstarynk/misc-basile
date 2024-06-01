@@ -21,20 +21,29 @@ Tok::~Tok()
 {
   switch (tk_type)
     {
-    case tky_none:
+    case Tkty_none:
       return;
-    case tky_int:
+    case Tkty_int:
       tk_int=0;
       break;
-    case tky_double:
+    case Tkty_double:
       tk_double=0.0;
       break;
-    case tky_string:
+    case Tkty_string:
       tk_string.empty();
       tk_string.~Tk_stdstring_t();
       break;
+    case Tkty_name:
+      tk_name=nullptr;
+      break;
+    case Tkty_keyword:
+      tk_keyword=nullptr;
+      break;
+    case Tkty_chunk:
+      tk_chunk=nullptr;
+      break;
     };
-  tk_type = tky_none;
+  tk_type = Tkty_none;
   tk_ptr = nullptr;
 } // end destructor of Tok
 
@@ -46,23 +55,38 @@ Tok::Tok(const Tok& ts) : // copy constructor
   if (&ts == this) return;
   switch (ts.tk_type)
     {
-    case tky_none:
+    case Tkty_none:
       tk_ptr = nullptr;
       return;
-    case tky_int:
-      tk_type = tky_int;
+    case Tkty_int:
+      tk_type = Tkty_int;
       tk_int = ts.tk_int;
       break;
-    case tky_double:
-      tk_type = tky_double;
+    case Tkty_double:
+      tk_type = Tkty_double;
       tk_double = ts.tk_double;
       break;
-    case tky_string:
-      tk_type = tky_string;
+    case Tkty_string:
+      tk_type = Tkty_string;
       new (&tk_string) std::string(ts.tk_string);
       break;
+    case Tkty_keyword:
+      tk_type = Tkty_keyword;
+      tk_keyword = ts.tk_keyword;
+      break;
+    case Tkty_name:
+      tk_type = Tkty_name;
+      tk_name = ts.tk_name;
+      break;
+    case Tkty_chunk:
+      tk_type = Tkty_chunk;
+      tk_chunk = ts.tk_chunk;
+      break;
     }
-}
+} /// end of Tok::Tok(const Tok& ts) copy constructor
+
+
+
 
 Tok::Tok(Tok&&ts) : // move constructor
   Tok::Tok(nullptr)
@@ -70,24 +94,36 @@ Tok::Tok(Tok&&ts) : // move constructor
   if (&ts == this) return;
   switch (ts.tk_type)
     {
-    case tky_none:
+    case Tkty_none:
       tk_ptr = nullptr;
-      tk_type = tky_none;
+      tk_type = Tkty_none;
       return;
-    case tky_int:
-      tk_type = tky_int;
+    case Tkty_int:
+      tk_type = Tkty_int;
       tk_int = ts.tk_int;
       break;
-    case tky_double:
-      tk_type = tky_double;
+    case Tkty_double:
+      tk_type = Tkty_double;
       tk_double = ts.tk_double;
       break;
-    case tky_string:
-      tk_type = tky_string;
+    case Tkty_string:
+      tk_type = Tkty_string;
       new (&tk_string) std::string(ts.tk_string);
       break;
+    case Tkty_name:
+      tk_type = Tkty_name;
+      tk_name = ts.tk_name;
+      break;
+    case Tkty_keyword:
+      tk_type = Tkty_keyword;
+      tk_keyword = ts.tk_keyword;
+      break;
+    case Tkty_chunk:
+      tk_type = Tkty_chunk;
+      tk_chunk = ts.tk_chunk;
+      break;
     }
-} // end move constructor
+} // end Tok::Tok(Tok&&ts) move constructor
 
 void
 show_version(void)
@@ -95,10 +131,10 @@ show_version(void)
   std::cout << carbex_progname
             << " version " << GITID << " with " << CARBURETTA_VERSION
             << " built " << __DATE__ "@" __TIME__ " from " __FILE__
-	    << std::endl;
+            << std::endl;
   std::cout << "no warranty, since GPLv3+ licensed" << std::endl
-	    << "see CarburEx under github.com/bstarynk/misc-basile"
-	    << std::endl;
+            << "see CarburEx under github.com/bstarynk/misc-basile"
+            << std::endl;
 } // end show_version
 
 void
@@ -108,8 +144,8 @@ show_help(void)
   std::cout << "\t --version # show version" << std::endl;
   std::cout << "\t --help    # show this help" << std::endl;
   std::cout << "no warranty, since GPLv3+ licensed" << std::endl
-	    << "see CarburEx under github.com/bstarynk/misc-basile"
-	    << std::endl;
+            << "see CarburEx under github.com/bstarynk/misc-basile"
+            << std::endl;
 } // end show_help
 
 int
