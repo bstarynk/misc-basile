@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdio.h>
+#include <err.h>
 
 #include <map>
 #include <vector>

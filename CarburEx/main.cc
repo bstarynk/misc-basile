@@ -158,6 +158,20 @@ main(int argc, char**argv)
     show_version();
   else if (argc>1 && !strcmp(argv[1], "--help"))
     show_help();
+  for (int aix=1; aix<argc; aix++)
+    {
+      const char*curarg = argv[aix];
+      if (curarg[0] != '-'
+          && (isalnum(curarg[0]) || curarg[0]=='_'
+              || curarg[0]=='/' || curarg[0]=='.'))
+        {
+          FILE* curfil = fopen(curarg, "r");
+          if (!curfil)
+            err(EXIT_FAILURE, "cannot open file %s", curarg);
+#warning missing code to parse curarg
+        }
+    }
+  return 0;
 } // end main
 
 
