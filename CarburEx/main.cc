@@ -16,6 +16,8 @@
 #include "carbex.hh"
 
 const char*carbex_progname;
+const char*carbex_filename;
+int carbex_curline, carbex_curcol;
 
 Tok::~Tok()
 {
