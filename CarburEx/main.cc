@@ -1,4 +1,17 @@
 // file misc-basile/CarburEx/main.cc
+// SPDX-License-Identifier: GPL-3.0-or-later
+// © Copyright by Basile Starynkevitch 2023 - 2024
+// program released under GNU General Public License v3+
+//
+// this is free software; you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 3, or (at your option) any later
+// version.
+//
+// this is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+// License for more details.
 
 #include "carbex.hh"
 
@@ -80,8 +93,12 @@ void
 show_version(void)
 {
   std::cout << carbex_progname
-            << " version " << GITID
-            << " built " << __DATE__ "@" __TIME__ << std::endl;
+            << " version " << GITID << " with " << CARBURETTA_VERSION
+            << " built " << __DATE__ "@" __TIME__ " from " __FILE__
+	    << std::endl;
+  std::cout << "no warranty, since GPLv3+ licensed" << std::endl
+	    << "see CarburEx under github.com/bstarynk/misc-basile"
+	    << std::endl;
 } // end show_version
 
 void
@@ -89,7 +106,10 @@ show_help(void)
 {
   std::cout << carbex_progname << "usage:" << std::endl;
   std::cout << "\t --version # show version" << std::endl;
-  std::cout << "\t --help # show this help" << std::endl;
+  std::cout << "\t --help    # show this help" << std::endl;
+  std::cout << "no warranty, since GPLv3+ licensed" << std::endl
+	    << "see CarburEx under github.com/bstarynk/misc-basile"
+	    << std::endl;
 } // end show_help
 
 int
@@ -98,4 +118,6 @@ main(int argc, char**argv)
   carbex_progname = argv[0];
   if (argc>1 && !strcmp(argv[1], "--version"))
     show_version();
+  else if (argc>1 && !strcmp(argv[1], "--help"))
+    show_help();
 } // end main
