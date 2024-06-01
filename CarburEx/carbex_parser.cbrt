@@ -6,21 +6,36 @@
 #include "carbex.hh"
 
 static int cur_lineno = 1;
+static int cur_colno = 1;
 
 %scanner%
 /* this is the scanner section of the parser file  carbex_parser.cbrt */
 %prefix carbex_
 
  
-: [\ \t\r\f]+ { /* skip whitespace */ }
-
-: [\n] {
-  cur_lineno++; 
+: [ \v\r\f]+ { /* skip whitespace */
+  cur_colno += strlen($text);
 }
 
-PAR_OPEN: \(; 
-PAR_CLOSE: \);
-NAME: [a-zA-Z_]*;
+: [\t] {
+  cur_colno = (cur_colno|7) + 1;
+}
+
+: [\n] {
+  cur_lineno ++;
+  cur_colno = 1;
+}
+
+PAR_OPEN: \( {
+  printf("open paren L%dC%d '%s'\n", cur_lineno, cur_colno, $text);
+}
+PAR_CLOSE: \) {
+  printf("close paren L%dC%d '%s'\n", cur_lineno, cur_colno, $text);
+}
+
+NAME: [a-z][a-zA-Z_]* {
+  printf("name '%s' L%dC%d\n", $text, cur_lineno, cur_colno);
+}
 
 %token PAR_OPEN PAR_CLOSE NAME
 %grammar%
