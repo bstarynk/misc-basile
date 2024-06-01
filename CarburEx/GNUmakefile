@@ -2,9 +2,10 @@
 
 # the Carburetta parser generator from https://carburetta.com/
 CARBURETTA= /usr/local/bin/carburetta
+CARBURETTA_VERSION:=$(shell $(CARBURETTA) --version | /bin/tr -d '()')
 GITID=$(shell git log --format=oneline -q -1 | cut -c1-10)
-CXX= g++-13
-CXXFLAGS= -O -g -Wall -Wextra -std=gnu++14 -DGITID=\"$(GITID)\"
+CXX= g++
+CXXFLAGS= -O -g -Wall -Wextra -std=gnu++14 -DGITID=\"$(GITID)\" '-DCARBURETTA_VERSION=\"$(CARBURETTA_VERSION)\"'
 ASTYLE= astyle
 ASTYLEFLAGS= --verbose   --style=gnu  --indent=spaces=2
 RM= /bin/rm -vf
@@ -13,19 +14,19 @@ RM= /bin/rm -vf
 
 .SECONDARY: carbex_parser.cc carbex_parser.hh
 
-all: carbex
+all: carbex GNUmakefile
 
-carbex: carbex_parser.o main.o
+carbex: carbex_parser.o main.o | GNUmakefile
 	$(LINK.cc) $^ -o $@
 
-main.o: main.cc carbex.hh carbex_parser.hh
+main.o: main.cc carbex.hh carbex_parser.hh | GNUmakefile
 
-carbex_parser.o: carbex_parser.cc carbex.hh
+carbex_parser.o: carbex_parser.cc carbex.hh | GNUmakefile
 
 carbex_parser.cc carbex_parser.hh: carbex_parser.cbrt
 	$(CARBURETTA) --version
-	$(CARBURETTA) --c carbex_parser.cc --x-utf8 carbex_parser.cbrt
-	$(CARBURETTA) --h carbex_parser.hh --x-utf8 carbex_parser.cbrt
+	$(CARBURETTA) --c carbex_parser.cc carbex_parser.cbrt
+	$(CARBURETTA) --h carbex_parser.hh carbex_parser.cbrt
 indent:
 	$(ASTYLE) $(ASTYLEFLAGS) carbex.hh
 	$(ASTYLE) $(ASTYLEFLAGS) main.cc
