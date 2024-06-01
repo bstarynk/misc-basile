@@ -15,9 +15,11 @@
 
 #include "carbex.hh"
 
+///#include "carbex_parser.hh"
+
 const char*carbex_progname;
 const char*carbex_filename;
-int carbex_curline, carbex_curcol;
+int carbex_lineno, carbex_colno;
 
 Tok::~Tok()
 {
@@ -168,6 +170,9 @@ main(int argc, char**argv)
           FILE* curfil = fopen(curarg, "r");
           if (!curfil)
             err(EXIT_FAILURE, "cannot open file %s", curarg);
+	  carbex_lineno = 1;
+	  carbex_colno = 1;
+	  carbex_filename = curarg;
 #warning missing code to parse curarg
         }
     }

@@ -5,8 +5,9 @@
 // this is the prologue of the parser file carbex_parser.cbrt for Carburetta
 #include "carbex.hh"
 
-static int cur_lineno = 1;
-static int cur_colno = 1;
+extern "C"  int carbex_lineno;
+extern "C"  int carbex_colno;
+
 
 %scanner%
 /* this is the scanner section of the parser file  carbex_parser.cbrt */
@@ -14,27 +15,27 @@ static int cur_colno = 1;
 
  
 : [ \v\r\f]+ { /* skip whitespace */
-  cur_colno += strlen($text);
+  carbex_colno += strlen($text);
 }
 
 : [\t] {
-  cur_colno = (cur_colno|7) + 1;
+  carbex_colno = (carbex_colno|7) + 1;
 }
 
 : [\n] {
-  cur_lineno ++;
-  cur_colno = 1;
+  carbex_lineno ++;
+  carbex_colno = 1;
 }
 
 PAR_OPEN: \( {
-  printf("open paren L%dC%d '%s'\n", cur_lineno, cur_colno, $text);
+  printf("open paren L%dC%d '%s'\n", carbex_lineno, carbex_colno, $text);
 }
 PAR_CLOSE: \) {
-  printf("close paren L%dC%d '%s'\n", cur_lineno, cur_colno, $text);
+  printf("close paren L%dC%d '%s'\n", carbex_lineno, carbex_colno, $text);
 }
 
 NAME: [a-z][a-zA-Z_]* {
-  printf("name '%s' L%dC%d\n", $text, cur_lineno, cur_colno);
+  printf("name '%s' L%dC%d\n", $text, carbex_lineno, carbex_colno);
 }
 
 %token PAR_OPEN PAR_CLOSE NAME

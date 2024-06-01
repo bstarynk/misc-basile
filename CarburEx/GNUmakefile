@@ -21,13 +21,13 @@ carbex: carbex_parser.o main.o | GNUmakefile
 	@$(PRINTF) '\nbuilding %s git %s with %s CXX=%s\n' $@ '$(GITID)' '$(CARBURETTA_VERSION)' $(CXX)
 	$(LINK.cc) $^ -o $@
 
-main.o: main.cc carbex.hh carbex_parser.hh | GNUmakefile
+main.o: main.cc carbex.hh | GNUmakefile
 
 carbex_parser.o: carbex_parser.cc carbex.hh | GNUmakefile
 
 carbex_parser.cc carbex_parser.hh: carbex_parser.cbrt
 	$(CARBURETTA) --c carbex_parser.cc carbex_parser.cbrt
-	$(CARBURETTA) --h carbex_parser.hh carbex_parser.cbrt
+
 indent:
 	$(ASTYLE) $(ASTYLEFLAGS) carbex.hh
 	$(ASTYLE) $(ASTYLEFLAGS) main.cc
