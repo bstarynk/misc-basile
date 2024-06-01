@@ -1,5 +1,17 @@
 // file misc-basile/CarburEx/carbex.hh
-// by Basile Starynkevitch 2023
+// SPDX-License-Identifier: GPL-3.0-or-later
+// © Copyright by Basile Starynkevitch 2023 - 2024
+// program released under GNU General Public License v3+
+//
+// this is free software; you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 3, or (at your option) any later
+// version.
+//
+// this is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+// License for more details.
 #ifndef CARBEX_INCLUDED
 #define CARBEX_INCLUDED
 
@@ -20,7 +32,9 @@ enum TokType
   tky_int,
   tky_double,
   tky_string,
-  //  tky_name,
+  tky_chunk,
+  tky_name,
+  tky_keyword
 };
 
 /// In simple cases, we could just use std::variant, but this code is
@@ -49,7 +63,10 @@ public:
     return tk_type;
   };
   virtual ~Tok();
-  void set_lineno(int ln) { if (tk_lineno==0) tk_lineno=ln; };
+  void set_lineno(int ln)
+  {
+    if (tk_lineno==0) tk_lineno=ln;
+  };
 #warning should follow the rule of five
   Tok(int n) : Tok(tky_int, n) {};
   Tok(double d) : Tok(tky_double, d) {};
@@ -58,27 +75,34 @@ public:
   Tok(Tok&&);			// move constructor
   Tok& operator = (const Tok&); // copy assignment
   Tok& operator = (Tok&&r); 	// move assignment
-  int lineno(void) const { return tk_lineno; };
+  int lineno(void) const
+  {
+    return tk_lineno;
+  };
 };
 
 using Tk_stdstring_t = std::string;
 
-class TokNull : public Tok {
+class TokNull : public Tok
+{
 public:
   TokNull() : Tok(nullptr) {};
 };
 
-class TokInt : public Tok {
+class TokInt : public Tok
+{
 public:
   TokInt(int n) : Tok(tky_int, n) {};
 };
 
-class TokDouble : public Tok{
+class TokDouble : public Tok
+{
 public:
   TokDouble(double d) : Tok(tky_double, d) {};
 };
 
-class  TokString : public Tok {
+class  TokString : public Tok
+{
 public:
   TokString(const std::string&s) : Tok(tky_string, s) {};
   TokString(const char*s) : TokString(std::string(s)) {};
