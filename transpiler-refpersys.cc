@@ -22,6 +22,9 @@ const char trp_git_id[] = GIT_ID;
 char* trp_prog_name;
 
 
+
+////////////////////////////////////////////////////////////////
+
 //// support for prime numbers copied from refpersys.org
 static const int64_t trp_primes_tab[] =
 {
@@ -231,6 +234,44 @@ trp_prime_lessequal_ranked (int64_t n, int*prank)
   return 0;
 } // end trp_prime_lessequal_ranked
 
+
+////////////////////////////////////////////////////////////////
+//// the lexing function is parsing some input stream
+Trp_Token*
+trp_parse_token(std::istream&ins, std::string&filename,
+                int& lineno, int&colno)
+{
+  int nc = EOF;
+  if (!ins)
+    return nullptr;
+  for (nc = ins.peek(); nc >= 0; nc++)
+    {
+      if (nc == EOF)
+        return nullptr;
+      if (nc == '\n')
+        {
+          lineno++;
+          continue;
+        };
+      if (nc == '\t')
+        {
+          colno = (colno|7)+1;
+          continue;
+        };
+      if (isspace(nc))
+        {
+          colno++;
+          continue;
+        };
+      TRP_ERROR("unimplemented trp_parse_token %s:%d:%d",
+                filename.c_str(), lineno, colno);
+#warning unimplemented trp_parse_token
+    }
+} // end trp_parse_token
+
+
+///// main function and usual GNU inspired program options
+
 static void
 trp_show_version(void)
 {
@@ -253,6 +294,9 @@ trp_show_help(void)
   std::cout << "See also refpersys.org and github.com/RefPerSys/RefPerSys"
             << std::endl;
 } // end trp_show_version
+
+
+
 
 int
 main(int argc, char**argv)

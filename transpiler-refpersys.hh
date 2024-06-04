@@ -30,9 +30,32 @@
 #include <vector>
 #include <set>
 
+/// BSD like error functions
+#include "err.h"
+
 /// Boehm conservative garbage collector:
 #include "gc_cpp.h"
 
+#define TRP_WARNING_AT_BIS(Fil,Lin,Fmt,...) do {	\
+    warn("[from %s:%d]" Fmt "\n",			\
+	 (Fil),(Lin), __VA_ARGS__); } while (0)
+
+#define TRP_WARNING_AT(Fil,Lin,Fmt,...) \
+  TRP_WARNING_AT_BIS(Fil,Lin,Fmt,__VA_ARGS__)
+
+#define TRP_WARNING(Fmt,...) \
+  TRP_WARNING_AT(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+
+#define TRP_EXIT_ERROR 100
+#define TRP_ERROR_AT_BIS(Fil,Lin,Fmt,...) do {		\
+    err(TRP_EXIT_ERROR,"[from %s:%d]" Fmt "\n",		\
+	 (Fil),(Lin), __VA_ARGS__); } while (0)
+
+#define TRP_ERROR_AT(Fil,Lin,Fmt,...) \
+  TRP_ERROR_AT_BIS(Fil,Lin,Fmt,__VA_ARGS__)
+
+#define TRP_ERROR(Fmt,...) \
+  TRP_ERROR_AT(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 ///naming convention: the trp_ prefix
 extern "C" const char trp_git_id[];
@@ -52,11 +75,11 @@ class Trp_KeywordToken;
 class Trp_DoubleToken;
 class Trp_ChunkToken;
 
-extern "C" Trp_Token*trp_parse_token(std::istream&ins);
+extern "C" Trp_Token*trp_parse_token(std::istream&ins, std::string&filename, int& lineno, int&colno);
 
 class Trp_Token : public gc_cleanup
 {
-  friend  Trp_Token*trp_parse_token(std::istream&ins);
+  friend  Trp_Token*trp_parse_token(std::istream&ins, std::string&filename, int& lineno, int&colno);
 private:
   std::string tok_file;
   int tok_lin, tok_col;
@@ -64,6 +87,10 @@ protected:
   Trp_Token(std::string fil, int lin, int col=0);
   virtual ~Trp_Token();
 };				// end class Trp_Token
+
+class Trp_NameToken : public Trp_Token
+{
+};				// end class Trp_NameToken
 
 #endif //TRANSPILER_REFPERSYS_INCLUDED
 /****************
