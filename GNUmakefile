@@ -23,13 +23,16 @@ QT6MOC= /usr/lib/qt6/libexec/moc
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl half gtkmm-refpersys bwc gtksrc-browser sync-periodically logged-compile  logged-gcc filipe-shell browserfox onionrefpersys gtk4serv fox-tinyed q6refpersys
+all: manydl half sync-periodically transpiler-refpersys \
+     logged-compile logged-gcc filipe-shell browserfox onionrefpersys \
+     gtk4serv fox-tinyed q6refpersys  gtkmm-refpersys bwc gtksrc-browser
 
 
 clean:
 	$(RM) *~ *.orig *.o bwc manydl clever-framac half sync-periodically filipe-shell
 	$(RM) fltk-mini-edit
 	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
+	$(RM) transpiler-refpersys
 	$(RM) _genf*.c
 	$(RM) _logged-gcc_*
 	$(RM) _q6refpersys*
@@ -67,6 +70,8 @@ bwc: bwc.c
 sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
 
+transpiler-refpersys: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
+	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $^ -o $@ -lgccpp -lgc  -ldl
 filipe-shell: filipe-shell.c
 	$(CC) $(CFLAGS) -DFILIPE_GIT='"$(GIT_ID)"' $^  -o $@
 
