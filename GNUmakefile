@@ -36,6 +36,7 @@ clean:
 	$(RM) _genf*.c
 	$(RM) _logged-gcc_*
 	$(RM) _q6refpersys*
+	$(RM) *.ii
 	$(RM) onionrefpersys gtkmm-refpersys q6refpersys
 ## on non Linux, change .so to whatever can be dlopen-esd
 	$(RM) _genf*.so
@@ -71,7 +72,10 @@ sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
 
 transpiler-refpersys: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
-	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $^ -o $@ -lgccpp -lgc  -ldl
+	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $< -o $@ -lgccpp -lgc  -ldl
+transpiler-refpersys.ii: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
+	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' -C -E $< -o - | /bin/sed -e 's:^#://#:' > $@
+
 filipe-shell: filipe-shell.c
 	$(CC) $(CFLAGS) -DFILIPE_GIT='"$(GIT_ID)"' $^  -o $@
 
