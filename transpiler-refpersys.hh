@@ -43,6 +43,27 @@ extern "C" int64_t trp_prime_greaterequal_ranked (int64_t n, int*prank);
 extern "C" int64_t trp_prime_below (int64_t n);
 extern "C" int64_t trp_prime_lessequal_ranked (int64_t n, int*prank);
 
+class Trp_Syntax;
+class Trp_Token;
+class Trp_StringToken;
+class Trp_IntToken;
+class Trp_NameToken;
+class Trp_KeywordToken;
+class Trp_DoubleToken;
+class Trp_ChunkToken;
+
+extern "C" Trp_Token*trp_parse_token(std::istream&ins);
+
+class Trp_Token : public gc_cleanup
+{
+  friend  Trp_Token*trp_parse_token(std::istream&ins);
+private:
+  std::string tok_file;
+  int tok_lin, tok_col;
+protected:
+  Trp_Token(std::string fil, int lin, int col=0);
+  virtual ~Trp_Token();
+};				// end class Trp_Token
 
 #endif //TRANSPILER_REFPERSYS_INCLUDED
 /****************
