@@ -231,11 +231,36 @@ trp_prime_lessequal_ranked (int64_t n, int*prank)
   return 0;
 } // end trp_prime_lessequal_ranked
 
+static void
+trp_show_version(void)
+{
+  GC_word gv = GC_get_version();
+  std::clog << trp_prog_name << " version git " <<  trp_git_id
+            << " using Boehm GC " << (gv >> 16) << "."
+            << ((gv & 0xffff) >> 8) << "." << (gv & 0xff) << std::endl
+            << " built " << __DATE__ "@" << __TIME__ << std::endl;
+} // end trp_show_version
+
+static void
+trp_show_help(void)
+{
+  std::cout << trp_prog_name << "usage:" << std::endl
+            << "\t --version                   # show version" << std::endl
+            << "\t --help                      # this usage" << std::endl;
+} // end trp_show_version
+
 int
 main(int argc, char**argv)
 {
   trp_prog_name = argv[0];
   GC_INIT();
+  if (argc == 2)
+    {
+      if (!strcmp(argv[1], "--version"))
+        trp_show_version();
+      else if (!strcmp(argv[1], "--help"))
+        trp_show_help();
+    }
 } // end of main
 
 /****************
