@@ -244,9 +244,14 @@ trp_show_version(void)
 static void
 trp_show_help(void)
 {
-  std::cout << trp_prog_name << "usage:" << std::endl
+  std::cout << trp_prog_name << " usage:" << std::endl
             << "\t --version                   # show version" << std::endl
             << "\t --help                      # this usage" << std::endl;
+  std::cout << "GPLv3+ licensed, so without warranty!" << std::endl
+            << "See its source file on github.com/bstarynk/misc-basile "
+            << __FILE__ << std::endl;
+  std::cout << "See also refpersys.org and github.com/RefPerSys/RefPerSys"
+            << std::endl;
 } // end trp_show_version
 
 int
