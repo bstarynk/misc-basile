@@ -22,6 +22,9 @@
 ;; Comment/uncomment this line to enable MELPA Stable if desired.  See `package-archive-priorities`
 ;; and `package-pinned-packages`. Most users will not need or want to do this.
 ;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(add-to-list 'auto-mode-alist '("\\.ml[iylp]?$" . caml-mode))
+(add-to-list 'auto-mode-alist '("\\.ocaml$" . caml-mode))
+(if window-system (require 'caml-font))
 (package-initialize)
 (setenv "ESHELL" "/bin/zsh")
 
@@ -37,6 +40,7 @@
  '(column-number-mode t)
  '(global-display-line-numbers-mode t)
  '(line-number-mode nil)
+ '(package-selected-packages '(caml))
  '(size-indication-mode t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
