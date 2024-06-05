@@ -39,9 +39,9 @@
 /// GNU guile 3.0
 #include "libguile.h"
 
-#define TRP_WARNING_AT_BIS(Fil,Lin,Fmt,...) do {	\
-    warn("[from %s:%d]" Fmt "\n",			\
-	 (Fil),(Lin), __VA_ARGS__); } while (0)
+#define TRP_WARNING_AT_BIS(Fil,Lin,Fmt,...) do {  \
+    warn("[from %s:%d]" Fmt "\n",     \
+   (Fil),(Lin), __VA_ARGS__); } while (0)
 
 #define TRP_WARNING_AT(Fil,Lin,Fmt,...) \
   TRP_WARNING_AT_BIS(Fil,Lin,Fmt,__VA_ARGS__)
@@ -50,9 +50,9 @@
   TRP_WARNING_AT(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 #define TRP_EXIT_ERROR 100
-#define TRP_ERROR_AT_BIS(Fil,Lin,Fmt,...) do {		\
-    err(TRP_EXIT_ERROR,"[from %s:%d]" Fmt "\n",		\
-	 (Fil),(Lin), __VA_ARGS__); } while (0)
+#define TRP_ERROR_AT_BIS(Fil,Lin,Fmt,...) do {    \
+    err(TRP_EXIT_ERROR,"[from %s:%d]" Fmt "\n",   \
+   (Fil),(Lin), __VA_ARGS__); } while (0)
 
 #define TRP_ERROR_AT(Fil,Lin,Fmt,...) \
   TRP_ERROR_AT_BIS(Fil,Lin,Fmt,__VA_ARGS__)
@@ -88,7 +88,7 @@ class Trp_SymbolicName : public gc_cleanup
   Trp_SymbolicName(const std::string);
 public:
   static Trp_SymbolicName* find(const std::string n);
-};				// end Trp_SymbolicName
+};        // end Trp_SymbolicName
 
 class Trp_Token : public gc_cleanup
 {
@@ -99,11 +99,11 @@ private:
 protected:
   Trp_Token(std::string fil, int lin, int col=0);
   virtual ~Trp_Token();
-};				// end class Trp_Token
+};        // end class Trp_Token
 
 class Trp_NameToken : public Trp_Token
 {
-};				// end class Trp_NameToken
+};        // end class Trp_NameToken
 
 #endif //TRANSPILER_REFPERSYS_INCLUDED
 /****************

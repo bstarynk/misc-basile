@@ -289,14 +289,38 @@ trp_show_help(void)
             << "\t --version                   # show version" << std::endl
             << "\t --help                      # this usage" << std::endl;
   std::cout << "GPLv3+ licensed, so without warranty!" << std::endl
-            << "See its source file on github.com/bstarynk/misc-basile "
-            << __FILE__ << std::endl;
+            << "See its source file " << __FILE__ << " under github.com/bstarynk/misc-basile/"
+            << std::endl;
   std::cout << "See also refpersys.org and github.com/RefPerSys/RefPerSys"
             << std::endl;
 } // end trp_show_version
 
+// to handle program argument --foo=, return position of char after =
+// or else -1 if called as trp_position_equal_option("--foo",argv[XX])
+int
+trp_position_equal_option(const char*prefix, const char*progarg)
+{
+  if (!prefix || !progarg)
+    return -1;
+  if (prefix[0] != '-')
+    return -1;
+  size_t preflen = strlen(prefix);
+  size_t arglen = strlen(progarg);
+  if (preflen >= arglen)
+    return -1;
+  if (strncmp(progarg,prefix,preflen) != 0)
+    return -1;
+  if (progarg[preflen]!='=')
+    return -1;
+  return preflen+1;
+} // end trp_position_equal_option
 
-
+void
+trp_parse_program_options(int &argc, char**argv)
+{
+#warning trp_parse_program_options unimplemented
+  TRP_WARNING("unimplemented trp_parse_program_options argc=%d", argc);
+} // end trp_parse_program_options
 
 int
 main(int argc, char**argv)
@@ -306,10 +330,17 @@ main(int argc, char**argv)
   if (argc == 2)
     {
       if (!strcmp(argv[1], "--version"))
-        trp_show_version();
+        {
+          trp_show_version();
+          return 0;
+        }
       else if (!strcmp(argv[1], "--help"))
-        trp_show_help();
-    }
+        {
+          trp_show_help();
+          return 0;
+        }
+    };
+  trp_parse_program_options(argc, argv);
 } // end of main
 
 /****************
