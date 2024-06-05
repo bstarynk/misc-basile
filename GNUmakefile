@@ -75,7 +75,7 @@ sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
 
 transpiler-refpersys: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
-	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $(GUILE_CFLAGS) $< -o $@ -lgccpp $(GUILE_LIBS) -lgc  -ldl
+	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $(GUILE_CFLAGS) $< -o $@ -lgccpp -lunistring $(GUILE_LIBS) -lgc  -ldl
 transpiler-refpersys.ii: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
 	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $(GUILE_CFLAGS) -C -E $< -o - | /bin/sed -e 's:^#://#:' > $@
 
