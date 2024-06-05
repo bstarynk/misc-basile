@@ -36,6 +36,9 @@
 /// Boehm conservative garbage collector:
 #include "gc_cpp.h"
 
+/// GNU guile 3.0
+#include "libguile.h"
+
 #define TRP_WARNING_AT_BIS(Fil,Lin,Fmt,...) do {	\
     warn("[from %s:%d]" Fmt "\n",			\
 	 (Fil),(Lin), __VA_ARGS__); } while (0)
@@ -66,6 +69,7 @@ extern "C" int64_t trp_prime_greaterequal_ranked (int64_t n, int*prank);
 extern "C" int64_t trp_prime_below (int64_t n);
 extern "C" int64_t trp_prime_lessequal_ranked (int64_t n, int*prank);
 
+class Trp_SymbolicName;
 class Trp_Syntax;
 class Trp_Token;
 class Trp_StringToken;
@@ -76,6 +80,15 @@ class Trp_DoubleToken;
 class Trp_ChunkToken;
 
 extern "C" Trp_Token*trp_parse_token(std::istream&ins, std::string&filename, int& lineno, int&colno);
+
+class Trp_SymbolicName : public gc_cleanup
+{
+  const std::string _name_str;
+  static std::map<std::string,Trp_SymbolicName*> _name_dict_;
+  Trp_SymbolicName(const std::string);
+public:
+  static Trp_SymbolicName* find(const std::string n);
+};				// end Trp_SymbolicName
 
 class Trp_Token : public gc_cleanup
 {

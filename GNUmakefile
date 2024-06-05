@@ -19,6 +19,9 @@ CXXFLAGS= -O -g -Wall -Wextra -I /usr/local/include/
 GTK4SERV_PACKAGES= gtk4 glib-2.0 gobject-2.0 gio-2.0
 GTKMMRPS_PACKAGES= gtkmm-4.0 jsoncpp
 Q6REFPERSYS_PACKAGES= Qt6Core Qt6Gui Qt6DBus Qt6UiPlugin Qt6Widgets jsoncpp
+GUILE_CFLAGS:=$(shell pkg-config --cflags guile-3.0)
+GUILE_LIBS:=$(shell  pkg-config --libs guile-3.0)
+
 QT6MOC= /usr/lib/qt6/libexec/moc
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
@@ -72,9 +75,9 @@ sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
 
 transpiler-refpersys: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
-	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $< -o $@ -lgccpp -lgc  -ldl
+	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $(GUILE_CFLAGS) $< -o $@ -lgccpp $(GUILE_LIBS) -lgc  -ldl
 transpiler-refpersys.ii: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
-	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' -C -E $< -o - | /bin/sed -e 's:^#://#:' > $@
+	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $(GUILE_CFLAGS) -C -E $< -o - | /bin/sed -e 's:^#://#:' > $@
 
 filipe-shell: filipe-shell.c
 	$(CC) $(CFLAGS) -DFILIPE_GIT='"$(GIT_ID)"' $^  -o $@
