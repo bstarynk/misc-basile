@@ -253,40 +253,70 @@ Trp_InputFile::~Trp_InputFile()
   _inp_col=0;
   _inp_cur=nullptr;
 } // end Trp_InputFile::~Trp_InputFile
-////////////////////////////////////////////////////////////////
-//// the lexing function is parsing some input stream
-Trp_Token*
-trp_parse_token(std::istream&ins, std::string&filename,
-                int& lineno, int&colno)
-{
-  int nc = EOF;
-  if (!ins)
-    return nullptr;
-  for (nc = ins.peek(); nc >= 0; nc++)
-    {
-      if (nc == EOF)
-        return nullptr;
-      if (nc == '\n')
-        {
-          lineno++;
-          continue;
-        };
-      if (nc == '\t')
-        {
-          colno = (colno|7)+1;
-          continue;
-        };
-      if (isspace(nc))
-        {
-          colno++;
-          continue;
-        };
-      TRP_ERROR("unimplemented trp_parse_token %s:%d:%d",
-                filename.c_str(), lineno, colno);
-#warning unimplemented trp_parse_token
-    }
-} // end trp_parse_token
 
+void
+Trp_InputFile::skip_spaces(void)
+{
+  while (_inp_cur && isspace(*_inp_cur))
+    {
+      if (*_inp_cur=='\n')
+        {
+          _inp_cur++;
+          _inp_line++;
+          _inp_eol=nullptr;
+          _inp_col=1;
+        }
+      else if (*_inp_cur=='\t')
+        {
+          _inp_cur++;
+          _inp_col = ((1+_inp_col)|7)+1;
+        }
+      else
+        {
+          _inp_cur++;
+          _inp_col++;
+        }
+    }
+} // end Trp_InputFile::skip_spaces
+
+const char*
+Trp_InputFile::eol(void) const
+{
+  if (_inp_cur>=_inp_end) return nullptr;
+  while (_inp_eol<_inp_end && *_inp_eol!='\n')
+    _inp_eol++;
+  if (_inp_eol>_inp_cur) return _inp_eol;
+} // end Trp_InputFile::eol
+
+ucs4_t
+Trp_InputFile::peek_utf8(bool*goodp) const
+{
+  ucs4_t u=0;
+  int l = u8_mbtoucr(&u, (const uint8_t*)_inp_cur, eol()-_inp_cur);
+  if (l>0)
+    {
+      if (goodp)
+        *goodp=true;
+      return u;
+    }
+  if (goodp)
+    *goodp=false;
+  return 0;
+} // end Trp_InputFile::peek_utf8
+
+ucs4_t
+Trp_InputFile::peek_utf8(const char*&nextp) const
+{
+  ucs4_t u=0;
+  int l = u8_mbtoucr(&u, (const uint8_t*)_inp_cur, eol()-_inp_cur);
+  if (l>0)
+    {
+      nextp = _inp_cur+l;
+      return u;
+    }
+  nextp = _inp_cur;
+  return 0;
+} // end Trp_InputFile::peek_utf8
 
 ///// main function and usual GNU inspired program options
 

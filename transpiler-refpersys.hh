@@ -39,6 +39,10 @@
 /// GNU guile 3.0
 #include "libguile.h"
 
+
+// unistring library
+#include "unistr.h"
+
 // https://github.com/vimpunk/mio/tree/master/single_include/mio
 #include "mio.hpp"
 
@@ -89,13 +93,17 @@ class Trp_InputFile : public mio::mmap_source
   const char* _inp_start;
   const char* _inp_end;
   const char* _inp_cur;
+  mutable const char* _inp_eol;
   int _inp_line, _inp_col;
 public:
   Trp_InputFile(const std::string path);
+  Trp_Token*next_token(void);
+  void skip_spaces(void);
+  const char* eol(void) const;
+  ucs4_t peek_utf8(bool*goodp=nullptr) const;
+  ucs4_t peek_utf8(const char*&nextp) const;
   virtual ~Trp_InputFile();
 };				// end Trp_InputFile
-
-extern "C" Trp_Token*trp_parse_token(std::istream&ins, std::string&filename, int& lineno, int&colno);
 
 class Trp_SymbolicName : public gc_cleanup
 {
