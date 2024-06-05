@@ -234,7 +234,25 @@ trp_prime_lessequal_ranked (int64_t n, int*prank)
   return 0;
 } // end trp_prime_lessequal_ranked
 
+Trp_InputFile::Trp_InputFile(const std::string path)
+  : mio::mmap_source(path), _inp_path(path),
+    _inp_start(nullptr), _inp_end(nullptr), _inp_cur(nullptr), _inp_line(0), _inp_col(0)
+{
+  _inp_start = data();
+  _inp_end = data() + size();
+  _inp_cur = _inp_start;
+  _inp_line = 1;
+  _inp_col = 1;
+} // end Trp_InputFile::Trp_InputFile
 
+Trp_InputFile::~Trp_InputFile()
+{
+  _inp_start=nullptr;
+  _inp_end=nullptr;
+  _inp_line=0;
+  _inp_col=0;
+  _inp_cur=nullptr;
+} // end Trp_InputFile::~Trp_InputFile
 ////////////////////////////////////////////////////////////////
 //// the lexing function is parsing some input stream
 Trp_Token*
@@ -289,7 +307,7 @@ trp_show_help(void)
             << "\t --version                   # show version" << std::endl
             << "\t --help                      # this usage" << std::endl;
   std::cout << "\t --guile=<GUILE-source>      # processed by GNU guile" << std::endl
-	    << "\t                             # see www.gnu.org/software/guile/" << std::endl;
+            << "\t                             # see www.gnu.org/software/guile/" << std::endl;
   std::cout << "\t --output=<C++-code>         # generated C++ file" << std::endl;
   std::cout << "GPLv3+ licensed, so without warranty!" << std::endl
             << "See its source file " << __FILE__ << " under github.com/bstarynk/misc-basile/"

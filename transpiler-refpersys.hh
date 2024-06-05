@@ -39,6 +39,9 @@
 /// GNU guile 3.0
 #include "libguile.h"
 
+// https://github.com/vimpunk/mio/tree/master/single_include/mio
+#include "mio.hpp"
+
 #define TRP_WARNING_AT_BIS(Fil,Lin,Fmt,...) do {  \
     warn("[from %s:%d]" Fmt "\n",     \
    (Fil),(Lin), __VA_ARGS__); } while (0)
@@ -69,6 +72,7 @@ extern "C" int64_t trp_prime_greaterequal_ranked (int64_t n, int*prank);
 extern "C" int64_t trp_prime_below (int64_t n);
 extern "C" int64_t trp_prime_lessequal_ranked (int64_t n, int*prank);
 
+class Trp_InputFile;
 class Trp_SymbolicName;
 class Trp_Syntax;
 class Trp_Token;
@@ -78,6 +82,18 @@ class Trp_NameToken;
 class Trp_KeywordToken;
 class Trp_DoubleToken;
 class Trp_ChunkToken;
+
+class Trp_InputFile : public mio::mmap_source
+{
+  const std::string _inp_path;
+  const char* _inp_start;
+  const char* _inp_end;
+  const char* _inp_cur;
+  int _inp_line, _inp_col;
+public:
+  Trp_InputFile(const std::string path);
+  virtual ~Trp_InputFile();
+};				// end Trp_InputFile
 
 extern "C" Trp_Token*trp_parse_token(std::istream&ins, std::string&filename, int& lineno, int&colno);
 
