@@ -288,12 +288,15 @@ trp_show_help(void)
   std::cout << trp_prog_name << " usage:" << std::endl
             << "\t --version                   # show version" << std::endl
             << "\t --help                      # this usage" << std::endl;
+  std::cout << "\t --guile=<GUILE-source>      # processed by GNU guile" << std::endl
+	    << "\t                             # see www.gnu.org/software/guile/" << std::endl;
+  std::cout << "\t --output=<C++-code>         # generated C++ file" << std::endl;
   std::cout << "GPLv3+ licensed, so without warranty!" << std::endl
             << "See its source file " << __FILE__ << " under github.com/bstarynk/misc-basile/"
             << std::endl;
   std::cout << "See also refpersys.org and github.com/RefPerSys/RefPerSys"
             << std::endl;
-} // end trp_show_version
+} // end trp_show_help
 
 // to handle program argument --foo=, return position of char after =
 // or else -1 if called as trp_position_equal_option("--foo",argv[XX])
