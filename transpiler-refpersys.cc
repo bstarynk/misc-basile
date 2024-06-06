@@ -318,6 +318,29 @@ Trp_InputFile::peek_utf8(const char*&nextp) const
   return 0;
 } // end Trp_InputFile::peek_utf8
 
+
+
+////////////////////////////////////////////////////////////////
+Trp_Token::Trp_Token(Trp_InputFile*src, int lin, int col)
+  : tok_src(src), tok_lin(lin), tok_col(col)
+{
+} // end Trp_Token::Trp_Token
+
+Trp_Token::Trp_Token(Trp_InputFile*src, int col)
+  : tok_src(src), tok_lin(src->lineno()), tok_col(col)
+{
+} // end Trp_Token::Trp_Token
+
+Trp_Token::~Trp_Token()
+{
+  tok_src=nullptr;
+  tok_lin=0;
+  tok_col=0;
+} // end Trp_Token::~Trp_Token
+
+////////////////////////////////////////////////////////////////
+
+
 ///// main function and usual GNU inspired program options
 
 static void

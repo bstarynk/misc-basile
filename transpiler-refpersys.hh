@@ -102,6 +102,18 @@ public:
   const char* eol(void) const;
   ucs4_t peek_utf8(bool*goodp=nullptr) const;
   ucs4_t peek_utf8(const char*&nextp) const;
+  int lineno() const
+  {
+    return _inp_line;
+  };
+  int colno() const
+  {
+    return _inp_col;
+  };
+  const std::string path() const
+  {
+    return _inp_path;
+  };
   virtual ~Trp_InputFile();
 };				// end Trp_InputFile
 
@@ -116,12 +128,12 @@ public:
 
 class Trp_Token : public gc_cleanup
 {
-  friend  Trp_Token*trp_parse_token(std::istream&ins, std::string&filename, int& lineno, int&colno);
 private:
-  std::string tok_file;
+  Trp_InputFile*tok_src;
   int tok_lin, tok_col;
 protected:
-  Trp_Token(std::string fil, int lin, int col=0);
+  Trp_Token(Trp_InputFile*src, int lin, int col);
+  Trp_Token(Trp_InputFile*src, int col);
   virtual ~Trp_Token();
 };        // end class Trp_Token
 
