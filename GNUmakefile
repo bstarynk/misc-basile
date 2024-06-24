@@ -26,7 +26,7 @@ QT6MOC= /usr/lib/qt6/libexec/moc
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl half sync-periodically transpiler-refpersys \
+all: manydl minicomp half sync-periodically transpiler-refpersys \
      logged-compile logged-gcc filipe-shell browserfox onionrefpersys \
      gtk4serv fox-tinyed q6refpersys  gtkmm-refpersys bwc gtksrc-browser
 
@@ -143,3 +143,7 @@ q6refpersys.ii: q6refpersys.cc  _q6refpersys-moc.cc |GNUmakefile
 	$(CXX) -C -E $(CXXFLAGS) -DGITID='"$(GIT_ID)"' \
 	$(shell pkg-config --cflags $(Q6REFPERSYS_PACKAGES)) $< -o - \
 	        | /bin/sed s:^#://#: > $@ \
+
+minicomp-gccjit: minicomp-gccjit.c |GNUmakefile
+	$(CC)  -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
+               -I $(shell $(CC) )
