@@ -319,6 +319,15 @@ Trp_InputFile::peek_utf8(const char*&nextp) const
 } // end Trp_InputFile::peek_utf8
 
 
+Trp_Token*
+Trp_InputFile::next_token(void)
+{
+  bool goodch = false;
+  skip_spaces();
+  ucs4_t ch = peek_utf8(&goodch);
+  if (!goodch)
+    return nullptr;
+} // end trp_token::next_token
 
 ////////////////////////////////////////////////////////////////
 Trp_Token::Trp_Token(Trp_InputFile*src, int lin, int col)
