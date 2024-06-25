@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "libgccjit.h"
+#include "jansson.h"
 
 #ifndef GITID
 #error GITID should be defined in compilation command
@@ -36,24 +37,44 @@ minicomp_gitid[]=GITID;
 const char
 minicomp_md5sum[]=MD5SUM;
 
-gcc_jit_context* jitctx;
+gcc_jit_context* minicomp_jitctx;
+
+void
+minicomp_show_version(void)
+{
+    printf("%s version: gitid %s\n using libgccjit %d.%d.%d\n"
+	   " jansson %s\n"
+	   " built %s\n",
+	   minicomp_progname, minicomp_gitid,
+	   gcc_jit_version_major(),
+	   gcc_jit_version_minor(),
+	   gcc_jit_version_patchlevel(),
+	   jansson_version_str(),
+	   __DATE__ "@" __TIME__);
+    printf("%s md5 signature: %s\n", minicomp_progname, minicomp_md5sum);
+} /* end minicomp_show_version */
+
+void
+minicomp_show_help(void)
+{
+  printf("%s usage:\n", minicomp_progname);
+  printf("\t --help                                 #show this help\n");
+  printf("\t --version                              #show version info\n");
+} /* end minicomp_show_help */
 
 int
 main(int argc, char**argv)
 {
   minicomp_progname=argv[0];
   if (argc > 1 && !strcmp(argv[1], "--version")) {
-    printf("%s version: gitid %s\n using libgccjit %d.%d.%d\n built %s\n",
-	   minicomp_progname, minicomp_gitid,
-	   gcc_jit_version_major(),
-	   gcc_jit_version_minor(),
-	   gcc_jit_version_patchlevel(), __DATE__ "@" __TIME__);
-    printf("%s md5 signature: %s\n", minicomp_progname, minicomp_md5sum);
+    minicomp_show_version();
     return 0;
-  };
-  jitctx = gcc_jit_context_acquire();
-  gcc_jit_context_release (jitctx);
-  jitctx = NULL;
+  }
+  else if (argc > 1 && !strcmp(argv[1], "--help"))
+    minicomp_show_help();
+  minicomp_jitctx = gcc_jit_context_acquire();
+  gcc_jit_context_release (minicomp_jitctx);
+  minicomp_jitctx = NULL;
 } /* end main */
 /****************
  **                           for Emacs...
