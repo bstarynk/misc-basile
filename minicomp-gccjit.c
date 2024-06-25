@@ -20,21 +20,35 @@
 #include <string.h>
 #include "libgccjit.h"
 
+#ifndef GITID
+#error GITID should be defined in compilation command
+#endif
+
+#ifndef MD5SUM
+#error MD5SUM should be definied in compilation command
+#endif
+
+const char*minicomp_progname;
 
 const char
 minicomp_gitid[]=GITID;
+
+const char
+minicomp_md5sum[]=MD5SUM;
 
 gcc_jit_context* jitctx;
 
 int
 main(int argc, char**argv)
 {
+  minicomp_progname=argv[0];
   if (argc > 1 && !strcmp(argv[1], "--version")) {
     printf("%s version: gitid %s\n using libgccjit %d.%d.%d\n built %s\n",
-	   argv[0], minicomp_gitid,
+	   minicomp_progname, minicomp_gitid,
 	   gcc_jit_version_major(),
 	   gcc_jit_version_minor(),
 	   gcc_jit_version_patchlevel(), __DATE__ "@" __TIME__);
+    printf("%s md5 signature: %s\n", minicomp_progname, minicomp_md5sum);
     return 0;
   };
   jitctx = gcc_jit_context_acquire();

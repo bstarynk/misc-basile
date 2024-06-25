@@ -146,5 +146,6 @@ q6refpersys.ii: q6refpersys.cc  _q6refpersys-moc.cc |GNUmakefile
 
 minicomp-gccjit: minicomp-gccjit.c |GNUmakefile
 	$(CC)  -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
+	       -DMD5SUM='"$(shell /bin/md5sum $<)"' \
                -I $(shell $(CC) -print-file-name=include) \
 	$< $(shell $(CC) -print-file-name=libgccjit.so) -o $@
