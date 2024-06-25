@@ -56,3 +56,4 @@ q6refpersys
 _q6refpersys-moc.cc
 gtkmm-refpersys
 transpiler-refpersys
+minicomp-gccjit
