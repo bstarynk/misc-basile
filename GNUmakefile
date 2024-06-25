@@ -26,7 +26,7 @@ QT6MOC= /usr/lib/qt6/libexec/moc
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl minicomp half sync-periodically transpiler-refpersys \
+all: manydl minicomp-gccjit half sync-periodically transpiler-refpersys \
      logged-compile logged-gcc filipe-shell browserfox onionrefpersys \
      gtk4serv fox-tinyed q6refpersys  gtkmm-refpersys bwc gtksrc-browser
 
@@ -148,4 +148,7 @@ minicomp-gccjit: minicomp-gccjit.c |GNUmakefile
 	$(CC)  -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
 	       -DMD5SUM='"$(shell /bin/md5sum $<)"' \
                -I $(shell $(CC) -print-file-name=include) \
-	$< $(shell $(CC) -print-file-name=libgccjit.so) -o $@
+                $(shell pkg-config --cflags jansson) \
+	$< $(shell $(CC) -print-file-name=libgccjit.so) \
+           $(shell pkg-config --libs jansson) \
+                -o $@
