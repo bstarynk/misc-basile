@@ -164,7 +164,7 @@ minicomp_handle_arguments (int argc, char **argv)
 	  int r = pclose (pipinp);
 	  pipinp = NULL;
 	  if (r)
-	    MINICOMP_FATAL ("popen input JSON pipe %s failed returning %d",
+	    MINICOMP_FATAL ("pclose input JSON pipe %s failed returning %d",
 			    curarg + 1, r);
 	}
       else if (!access (curarg, R_OK))
