@@ -17,8 +17,10 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 #include "libgccjit.h"
 #include "jansson.h"
 
@@ -90,11 +92,10 @@ void
 minicomp_process_json (FILE *fil, const char *name)
 {
   json_error_t jerr = { };
-  json_t *js =
-    json_loadf (fil,
-		JSON_DISABLE_EOF_CHECK | JSON_SORT_KEYS |
-		JSON_REJECT_DUPLICATES,
-		&jerr);
+  json_t *js = json_loadf (fil,
+			   JSON_DISABLE_EOF_CHECK | JSON_SORT_KEYS |
+			   JSON_REJECT_DUPLICATES,
+			   &jerr);
   if (!js)
     MINICOMP_FATAL ("failed to load JSON file %s:\n"
 		    "error %s, in %s:%d:%d (p %d)",
@@ -137,6 +138,9 @@ minicomp_process_json (FILE *fil, const char *name)
 void
 minicomp_generate_code (void)
 {
+  gcc_jit_context_set_bool_option (minicomp_jitctx,
+				   GCC_JIT_BOOL_OPTION_DEBUGINFO, true);
+  gcc_jit_context_add_driver_option (minicomp_jitctx, "-fPIC");	/// position independent code
 #warning unimplemented minicomp_generate_code
   MINICOMP_FATAL ("unimplemented minicomp_generate_code");
 }				/* end minicomp_generate_code */
@@ -150,9 +154,22 @@ minicomp_handle_arguments (int argc, char **argv)
       const char *curarg = argv[aix];
       if (curarg[0] == '-')
 	{
+	  if (curarg[1] == 'O'	//letter upper-case O, for optimization, eg -O2
+	      && (isdigit (curarg[2]) || curarg[2] == 'g'
+		  || curarg[2] == 's'))
+	    {
+	      if (isdigit (curarg[2]))
+		gcc_jit_context_set_int_option (minicomp_jitctx,
+						GCC_JIT_INT_OPTION_OPTIMIZATION_LEVEL,
+						atoi (curarg + 2));
+	      else
+		gcc_jit_context_add_driver_option (minicomp_jitctx, curarg);
+	    }
+	  else if (curarg[1] == 'f')
+	    gcc_jit_context_add_driver_option (minicomp_jitctx, curarg);
 #warning incomplete minicomp_handle_arguments
-	  MINICOMP_FATAL("incomplete minicomp_handle_arguments curarg#%d=%s",
-			 aix, curarg);
+	  MINICOMP_FATAL ("incomplete minicomp_handle_arguments curarg#%d=%s",
+			  aix, curarg);
 	}
       else if (curarg[0] == '!' || curarg[0] == '|')
 	{
