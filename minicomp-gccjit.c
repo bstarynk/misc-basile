@@ -55,6 +55,9 @@ minicomp_fatal_stop_at (const char *fil, int lin)
 {
   minicomp_fatal_file = fil;
   minicomp_fatal_line = lin;
+  fprintf (stderr, "%s git %s md5sum %s\n", minicomp_progname,
+	   minicomp_gitid, minicomp_md5sum);
+  fflush (NULL);
   abort ();
 }				/* end minicomp_fatal_stop_at */
 
