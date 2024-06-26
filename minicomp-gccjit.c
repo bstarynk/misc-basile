@@ -141,6 +141,28 @@ minicomp_process_json (FILE *fil, const char *name)
 }				/* end minicomp_process_json */
 
 void
+minicomp_first_pass (void)
+{
+  int jcln = json_array_size (minicomp_json_code_array);
+  /// we first need to find an output file in the JSON components if it was not given on the command line
+  if (!minicomp_generated_elf_so)
+    {
+      for (int ix = 0; ix < jcln; ix++)
+	{
+	  json_t *jcomp = json_array_get (minicomp_json_code_array, ix);
+	  json_t *jgencod = NULL;
+	  if (json_is_object (jcomp)
+	      && (jgencod = json_object_get (jcomp, "generated-code"))
+	      && json_is_string (jgencod))
+	    {
+	      minicomp_generated_elf_so = json_string_value (jgencod);
+	      break;
+	    }
+	}
+    }
+}				/* end minicomp_first_pass */
+
+void
 minicomp_generate_code (void)
 {
   gcc_jit_context_set_bool_option (minicomp_jitctx,
@@ -248,6 +270,7 @@ main (int argc, char **argv)
     MINICOMP_FATAL ("failed to create initial minicomp_json_code_array (%s)",
 		    strerror (errno));
   minicomp_handle_arguments (argc, argv);
+  minicomp_first_pass ();
   minicomp_generate_code ();
   json_decref (minicomp_json_code_array);
   minicomp_json_code_array = NULL;
