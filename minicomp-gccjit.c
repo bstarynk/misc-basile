@@ -38,6 +38,8 @@ const char minicomp_gitid[] = GITID;
 
 const char minicomp_md5sum[] = MD5SUM;
 
+const char *minicomp_generated_elf_so;
+
 gcc_jit_context *minicomp_jitctx;
 
 volatile const char *minicomp_fatal_file;
@@ -86,6 +88,9 @@ minicomp_show_help (void)
   printf ("%s usage:\n", minicomp_progname);
   printf ("\t --help                                 #show this help\n");
   printf ("\t --version                              #show version info\n");
+  printf ("\t -O[0-2g]                               #GCC optimization\n");
+  printf
+    ("\t -o <filename> | --output=ELFFILE       #generated ELF shared object\n");
 }				/* end minicomp_show_help */
 
 void
@@ -149,8 +154,12 @@ void
 minicomp_handle_arguments (int argc, char **argv)
 {
   int aix = 0;
+  char argbuf[256];
+  memset (argbuf, 0, sizeof (argbuf));
   for (aix = 1; aix < argc; aix++)
     {
+      int c = -1;
+      memset (argbuf, 0, sizeof (argbuf));
       const char *curarg = argv[aix];
       if (curarg[0] == '-')
 	{
@@ -167,9 +176,32 @@ minicomp_handle_arguments (int argc, char **argv)
 	    }
 	  else if (curarg[1] == 'f')
 	    gcc_jit_context_add_driver_option (minicomp_jitctx, curarg);
+	  else if (!strcmp (curarg, "-o") && aix + 1 < argc)
+	    {
+	      if (minicomp_generated_elf_so)
+		MINICOMP_FATAL ("generated output file already is %s,"
+				" rejecting arg#%d %s",
+				minicomp_generated_elf_so, aix + 1,
+				argv[aix + 1]);
+	      minicomp_generated_elf_so = argv[aix + 1];
+	      aix++;
+	    }
+	  else if (sscanf (curarg, "--output=%n", &c) >= 0 && curarg[c])
+	    {
+	      const char *out = curarg + strlen ("--output=");
+	      if (!out)
+		MINICOMP_FATAL ("missing output file after --output=");
+	      if (minicomp_generated_elf_so)
+		MINICOMP_FATAL ("generated output file already is %s,"
+				" rejecting arg#%d %s",
+				minicomp_generated_elf_so, aix, curarg);
+	      minicomp_generated_elf_so = out;
+	    }
 #warning incomplete minicomp_handle_arguments
-	  MINICOMP_FATAL ("incomplete minicomp_handle_arguments curarg#%d=%s",
-			  aix, curarg);
+	  else
+	    MINICOMP_FATAL
+	      ("unexpected minicomp_handle_arguments curarg#%d=%s", aix,
+	       curarg);
 	}
       else if (curarg[0] == '!' || curarg[0] == '|')
 	{
