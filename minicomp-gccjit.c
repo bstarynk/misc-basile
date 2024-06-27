@@ -42,6 +42,10 @@ const char *minicomp_generated_elf_so;
 
 gcc_jit_context *minicomp_jitctx;
 
+gcc_jit_object **minicomp_jitobvec;
+int minicomp_nbjitob;
+int minicomp_size_jitobvec;
+
 volatile const char *minicomp_fatal_file;
 volatile int minicomp_fatal_line;
 void minicomp_fatal_stop_at (const char *, int) __attribute__((noreturn));
@@ -86,11 +90,10 @@ void
 minicomp_show_help (void)
 {
   printf ("%s usage:\n", minicomp_progname);
-  printf ("\t --help                                 #show this help\n");
-  printf ("\t --version                              #show version info\n");
-  printf ("\t -O[0-2g]                               #GCC optimization\n");
-  printf
-    ("\t -o <filename> | --output=ELFFILE       #generated ELF shared object\n");
+  printf ("\t --help                             #show this help\n");
+  printf ("\t --version                          #show version info\n");
+  printf ("\t -O[0-2g]                           #GCC optimization\n");
+  printf ("\t -o <filename> | --output=ELFFILE   #generated ELF shared object\n");
 }				/* end minicomp_show_help */
 
 void
@@ -160,6 +163,14 @@ minicomp_first_pass (void)
 	    }
 	}
     }
+  /// allocate the vector of gcc_jit_object-s
+  minicomp_size_jitobvec = 1 + ((jcln + 7) | 0xf);
+  minicomp_jitobvec =
+    calloc (minicomp_size_jitobvec, sizeof (gcc_jit_object *));
+  if (!minicomp_jitobvec)
+    MINICOMP_FATAL ("cannot allocate vector for %d gccjit objects (%s)",
+		    minicomp_size_jitobvec, strerror (errno));
+  minicomp_nbjitob = 0;
 }				/* end minicomp_first_pass */
 
 void
