@@ -93,7 +93,8 @@ minicomp_show_help (void)
   printf ("\t --help                             #show this help\n");
   printf ("\t --version                          #show version info\n");
   printf ("\t -O[0-2g]                           #GCC optimization\n");
-  printf ("\t -o <filename> | --output=ELFFILE   #generated ELF shared object\n");
+  printf
+    ("\t -o <filename> | --output=ELFFILE   #generated ELF shared object\n");
 }				/* end minicomp_show_help */
 
 void
@@ -148,21 +149,23 @@ minicomp_first_pass (void)
 {
   int jcln = json_array_size (minicomp_json_code_array);
   /// we first need to find an output file in the JSON components if it was not given on the command line
-  if (!minicomp_generated_elf_so)
-    {
-      for (int ix = 0; ix < jcln; ix++)
-	{
-	  json_t *jcomp = json_array_get (minicomp_json_code_array, ix);
-	  json_t *jgencod = NULL;
-	  if (json_is_object (jcomp)
-	      && (jgencod = json_object_get (jcomp, "generated-code"))
-	      && json_is_string (jgencod))
-	    {
-	      minicomp_generated_elf_so = json_string_value (jgencod);
-	      break;
-	    }
-	}
-    }
+  {
+    for (int ix = 0; ix < jcln; ix++)
+      {
+	json_t *jcomp = json_array_get (minicomp_json_code_array, ix);
+	json_t *jgencod = NULL;
+	if (json_is_object (jcomp))
+	  {
+	    if (!minicomp_generated_elf_so
+		&& (jgencod = json_object_get (jcomp, "generated-code"))
+		&& json_is_string (jgencod))
+	      {
+		minicomp_generated_elf_so = json_string_value (jgencod);
+		break;
+	      }
+	  }
+      }
+  }
   /// allocate the vector of gcc_jit_object-s
   minicomp_size_jitobvec = 1 + ((jcln + 7) | 0xf);
   minicomp_jitobvec =
