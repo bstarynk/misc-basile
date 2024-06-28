@@ -175,6 +175,8 @@ minicomp_jitloc (json_t *jloc)
   return NULL;
 }				/* end minicomp_jitloc */
 
+gcc_jit_type *minicomp_type_of_json (json_t * jtype, int rk);
+
 gcc_jit_type *
 minicomp_add_type (json_t *jtype, const char *kind, int rk)
 {
@@ -201,13 +203,25 @@ minicomp_add_type (json_t *jtype, const char *kind, int rk)
 	  return jitopaqtyp;
 	}
     }
-  else if (!strcmp(kind, "struct")) {
-    #warning incomplete minicomp_add_type struct
-  }
+  else if (!strcmp (kind, "struct"))
+    {
+      json_t *jfields = json_object_get (jtype, "fields");
+      if (!json_is_array (jfields))
+	MINICOMP_FATAL ("minicomp_add_type rk=%d missing fields in jtype=%s",
+			rk,
+			json_dumps (jtype, JSON_INDENT (1) | JSON_SORT_KEYS));
+      int nbfields = json_array_size (jfields);
+      gcc_jit_field **fldarr =
+	calloc (((nbfields + 1) | 7), sizeof (gcc_jit_field *));
+      if (!fldarr)
+	MINICOMP_FATAL
+	  ("minicomp_add_type rk=%d out of memory for %d fields (%s)", rk,
+	   nbfields, strerror (errno));
+#warning incomplete minicomp_add_type struct
+    }
 #warning incomplete minicomp_add_type
-  MINICOMP_FATAL("incomplete minicomp_add_type rk=%d jtype=%s",
-		 rk,
-		 json_dumps(jtype, JSON_INDENT(1)|JSON_SORT_KEYS));
+  MINICOMP_FATAL ("incomplete minicomp_add_type rk=%d jtype=%s",
+		  rk, json_dumps (jtype, JSON_INDENT (1) | JSON_SORT_KEYS));
 }				/* end minicomp_add_type */
 
 gcc_jit_type *
@@ -299,6 +313,24 @@ minicomp_type_by_name (const char *tyname)
     return (gcc_jit_type *) ptr;
   return NULL;
 }				/* end minicomp_type_by_name */
+
+gcc_jit_type *
+minicomp_type_of_json (json_t *jtype, int rk)
+{
+  if (!jtype)
+    MINICOMP_FATAL ("null jtype rk#%d", rk);
+  if (json_is_string (jtype))
+    {
+      gcc_jit_type *ty = minicomp_type_by_name (json_string_value (jtype));
+      if (!ty)
+	MINICOMP_FATAL ("no jtype named %s rk#%d", json_string_value (jtype),
+			rk);
+      return ty;
+    }
+  MINICOMP_FATAL ("incomplete minicomp_type_of_json rk=%d jtype=%s",
+		  rk, json_dumps (jtype, JSON_INDENT (1) | JSON_SORT_KEYS));
+#warning incomplete minicomp_type_of_json
+}				/* end minicomp_type_of_json  */
 
 void
 minicomp_first_pass (void)
