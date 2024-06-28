@@ -48,6 +48,9 @@ gcc_jit_object **minicomp_jitobvec;
 int minicomp_nbjitob;
 int minicomp_size_jitobvec;
 
+GHashTable *minicomp_name2type_hashtable;	// associate strings to gcc_jit_type pointers
+GHashTable *minicomp_type2name_hashtable;	// associate gcc_jit_type to names
+
 volatile const char *minicomp_fatal_file;
 volatile int minicomp_fatal_line;
 void minicomp_fatal_stop_at (const char *, int) __attribute__((noreturn));
@@ -82,13 +85,11 @@ minicomp_show_version (void)
   printf ("\t md5sum %s\n", minicomp_md5sum);
   printf ("\t using libgccjit %d.%d.%d\n",
 	  gcc_jit_version_major (),
-	  gcc_jit_version_minor (),
-	  gcc_jit_version_patchlevel ());
-  printf ("\t using jansson library for JSON %s\n",
-	  jansson_version_str ());
+	  gcc_jit_version_minor (), gcc_jit_version_patchlevel ());
+  printf ("\t using jansson library for JSON %s\n", jansson_version_str ());
   printf ("\t using Glib %d.%d.%d checked %s at %s:%d\n",
 	  glib_major_version, glib_minor_version, glib_micro_version,
-	  glib_check_version(2,79,1)?:"good", __FILE__, __LINE__);
+	  glib_check_version (2, 79, 1) ? : "good", __FILE__, __LINE__);
 }				/* end minicomp_show_version */
 
 void
@@ -149,40 +150,155 @@ minicomp_process_json (FILE *fil, const char *name)
   json_decref (js);
 }				/* end minicomp_process_json */
 
-gcc_jit_location*
-minicomp_jitloc(json_t*jloc)
+gcc_jit_location *
+minicomp_jitloc (json_t *jloc)
 {
-  if (json_is_object (jloc)) {
-    json_t *jfil = json_object_get (jloc, "fil");
-    json_t *jlin = json_object_get(jloc, "lin");
-    json_t* jcol = json_object_get(jloc, "col");
-    if (json_is_string(jfil) && json_is_integer(jlin))
-      {
-	if (json_is_integer(jcol))
-	  return gcc_jit_context_new_location(minicomp_jitctx,
-					      json_string_value(jfil),
-					      json_integer_value(jlin),
-					      json_integer_value(jcol));
-	else
-	  return gcc_jit_context_new_location(minicomp_jitctx,
-					      json_string_value(jfil),
-					      json_integer_value(jlin),
-					      0);
-      }
-  }
+  if (json_is_object (jloc))
+    {
+      json_t *jfil = json_object_get (jloc, "fil");
+      json_t *jlin = json_object_get (jloc, "lin");
+      json_t *jcol = json_object_get (jloc, "col");
+      if (json_is_string (jfil) && json_is_integer (jlin))
+	{
+	  if (json_is_integer (jcol))
+	    return gcc_jit_context_new_location (minicomp_jitctx,
+						 json_string_value (jfil),
+						 json_integer_value (jlin),
+						 json_integer_value (jcol));
+	  else
+	    return gcc_jit_context_new_location (minicomp_jitctx,
+						 json_string_value (jfil),
+						 json_integer_value (jlin),
+						 0);
+	}
+    }
   return NULL;
-} /* end minicomp_jitloc */
+}				/* end minicomp_jitloc */
 
-void
-minicomp_add_type(json_t*jtype, const char*kind)
+gcc_jit_type *
+minicomp_add_type (json_t *jtype, const char *kind, int rk)
 {
-  if (!strcmp(kind, "opaque")) {
-  }
-} /* end minicomp_add_type */
+  const char *ctypename = NULL;
+  char tynamebuf[256];
+  memset (tynamebuf, 0, 16 + sizeof (tynamebuf) / 4);
+  json_t *jname = json_object_get (jtype, "name");
+  if (json_is_string (jname))
+    ctypename = json_string_value (jname);
+  else
+    memset (tynamebuf, 0, sizeof (tynamebuf));
+  if (!strcmp (kind, "opaque"))
+    {
+      if (!ctypename)
+	{
+	  snprintf (tynamebuf, sizeof (tynamebuf),
+		    "__opaque_%d_%s", rk, minicomp_basename);
+	  ctypename = tynamebuf;
+	  gcc_jit_struct *jitopaqstruct =
+	    gcc_jit_context_new_opaque_struct (minicomp_jitctx,
+					       minicomp_jitloc (jtype),
+					       ctypename);
+	  gcc_jit_type *jitopaqtyp = gcc_jit_struct_as_type (jitopaqstruct);
+	  return jitopaqtyp;
+	}
+    }
+}				/* end minicomp_add_type */
+
+gcc_jit_type *
+minicomp_type_by_name (const char *tyname)
+{
+  void *ptr = NULL;
+  gcc_jit_type *res = NULL;
+  if (false)
+    return NULL;
+  else if (!strcmp (tyname, "void"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_VOID);
+  else if (!strcmp (tyname, "pointer"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_VOID_PTR);
+  else if (!strcmp (tyname, "bool"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_BOOL);
+  else if (!strcmp (tyname, "char"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_CHAR);
+  else if (!strcmp (tyname, "schar"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_SIGNED_CHAR);
+  else if (!strcmp (tyname, "uchar"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_UNSIGNED_CHAR);
+  else if (!strcmp (tyname, "short"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_SHORT);
+  else if (!strcmp (tyname, "ushort"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_UNSIGNED_SHORT);
+  else if (!strcmp (tyname, "int"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_INT);
+  else if (!strcmp (tyname, "uint"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_UNSIGNED_INT);
+  else if (!strcmp (tyname, "long"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_LONG);
+  else if (!strcmp (tyname, "ulong"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_UNSIGNED_LONG);
+  else if (!strcmp (tyname, "longlong"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_LONG_LONG);
+  else if (!strcmp (tyname, "ulonglong"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_UNSIGNED_LONG_LONG);
+  else if (!strcmp (tyname, "uint8"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_UINT8_T);
+  else if (!strcmp (tyname, "uint16"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_UINT16_T);
+  else if (!strcmp (tyname, "uint32"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_UINT32_T);
+  else if (!strcmp (tyname, "uint64"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_UINT64_T);
+  else if (!strcmp (tyname, "uint128"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_UINT128_T);
+  else if (!strcmp (tyname, "int8"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_INT8_T);
+  else if (!strcmp (tyname, "int16"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_INT16_T);
+  else if (!strcmp (tyname, "int32"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_INT32_T);
+  else if (!strcmp (tyname, "int64"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_INT64_T);
+  else if (!strcmp (tyname, "int128"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_INT128_T);
+  else if (!strcmp (tyname, "float"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_FLOAT);
+  else if (!strcmp (tyname, "double"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_DOUBLE);
+  else if (!strcmp (tyname, "long_double"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_LONG_DOUBLE);
+  else if (!strcmp (tyname, "constcharptr"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_CONST_CHAR_PTR);
+  else if (!strcmp (tyname, "size_t"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_SIZE_T);
+  else if (!strcmp (tyname, "FILEptr"))
+    return gcc_jit_context_get_type (minicomp_jitctx, GCC_JIT_TYPE_FILE_PTR);
+  else if (!strcmp (tyname, "complex_float"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_COMPLEX_FLOAT);
+  else if (!strcmp (tyname, "complex_double"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_COMPLEX_DOUBLE);
+  else if (!strcmp (tyname, "complex_long_double"))
+    return gcc_jit_context_get_type (minicomp_jitctx,
+				     GCC_JIT_TYPE_COMPLEX_LONG_DOUBLE);
+  else if ((ptr = g_hash_table_lookup (minicomp_name2type_hashtable, tyname))
+	   != NULL)
+    return (gcc_jit_type *) ptr;
+#warning incomplete minicomp_type_by_name
+  return NULL;
+}				/* end minicomp_type_by_name */
 
 void
 minicomp_first_pass (void)
 {
+  minicomp_name2type_hashtable = g_hash_table_new (g_str_hash, g_str_equal);
+  minicomp_type2name_hashtable = g_hash_table_new (NULL, NULL);
   int jcln = json_array_size (minicomp_json_code_array);
   /// we first need to find an output file in the JSON components if it was not given on the command line
   {
@@ -190,7 +306,7 @@ minicomp_first_pass (void)
       {
 	json_t *jcomp = json_array_get (minicomp_json_code_array, ix);
 	json_t *jgencod = NULL;
-	json_t* jtypestr = NULL;
+	json_t *jtypestr = NULL;
 	if (json_is_object (jcomp))
 	  {
 	    if (!minicomp_generated_elf_so
@@ -200,9 +316,9 @@ minicomp_first_pass (void)
 		minicomp_generated_elf_so = json_string_value (jgencod);
 		break;
 	      }
-	    else if ((jtypestr= json_object_get(jcomp, "type"))
-		     && json_is_string(jtypestr))
-	      minicomp_add_type(jcomp, json_string_value (jtypestr));
+	    else if ((jtypestr = json_object_get (jcomp, "type"))
+		     && json_is_string (jtypestr))
+	      minicomp_add_type (jcomp, json_string_value (jtypestr), ix);
 	  }
       }
   }
@@ -217,25 +333,32 @@ minicomp_first_pass (void)
 }				/* end minicomp_first_pass */
 
 void
-minicomp_set_basename(void)
+minicomp_set_basename (void)
 {
-  char* dp = minicomp_basename;
+  char *dp = minicomp_basename;
   if (!minicomp_generated_elf_so)
-    MINICOMP_FATAL("cannot set basename without knowing generated ELF shared object");
-  const char* sp = strrchr(minicomp_generated_elf_so, '/')?:minicomp_generated_elf_so;
+    MINICOMP_FATAL
+      ("cannot set basename without knowing generated ELF shared object");
+  const char *sp =
+    strrchr (minicomp_generated_elf_so, '/') ? : minicomp_generated_elf_so;
   if (*sp == '/')
     sp++;
   if (minicomp_basename[0])
     return;
-  while (*sp != '.' && dp < minicomp_basename+sizeof(minicomp_basename)-1) {
-    if (isalnum(*sp))
-      *(dp++) = *sp;
-    else *(dp++) = '_';
-    sp++;
-  };
+  while (*sp != '.'
+	 && dp < minicomp_basename + sizeof (minicomp_basename) - 1)
+    {
+      if (isalnum (*sp))
+	*(dp++) = *sp;
+      else
+	*(dp++) = '_';
+      sp++;
+    };
   if (!minicomp_basename[0])
-    snprintf(minicomp_basename, sizeof(minicomp_basename), "_minicomp_gccjit%.9s_p%d_", minicomp_gitid, (int)getpid());
-} /* end minicomp_set_basename */
+    snprintf (minicomp_basename, sizeof (minicomp_basename),
+	      "_minicomp_gccjit%.9s_p%d_", minicomp_gitid, (int) getpid ());
+}				/* end minicomp_set_basename */
+
 void
 minicomp_generate_code (void)
 {
@@ -293,13 +416,17 @@ minicomp_handle_arguments (int argc, char **argv)
 				minicomp_generated_elf_so, aix, curarg);
 	      minicomp_generated_elf_so = out;
 	    }
-	  else if (sscanf (curarg, "--base=%100[A-Za-z0-9_]%n", argbuf, &c)>0 && argbuf[0] && c>0) {
-	    if (minicomp_basename[0])
-	      MINICOMP_FATAL("already given basename %s rejecting arg#%d %s",
-			     minicomp_basename, aix, curarg);
-	    argbuf[120] = (char)0;
-	    strncpy(minicomp_basename, argbuf, sizeof(minicomp_basename)-1);
-	  }
+	  else if (sscanf (curarg, "--base=%100[A-Za-z0-9_]%n", argbuf, &c) >
+		   0 && argbuf[0] && c > 0)
+	    {
+	      if (minicomp_basename[0])
+		MINICOMP_FATAL
+		  ("already given basename %s rejecting arg#%d %s",
+		   minicomp_basename, aix, curarg);
+	      argbuf[120] = (char) 0;
+	      strncpy (minicomp_basename, argbuf,
+		       sizeof (minicomp_basename) - 1);
+	    }
 #warning incomplete minicomp_handle_arguments
 	  else
 	    MINICOMP_FATAL
@@ -352,11 +479,13 @@ main (int argc, char **argv)
 		    strerror (errno));
   minicomp_handle_arguments (argc, argv);
   if (!minicomp_basename[0])
-    minicomp_set_basename();
+    minicomp_set_basename ();
   minicomp_first_pass ();
   minicomp_generate_code ();
   json_decref (minicomp_json_code_array);
   minicomp_json_code_array = NULL;
+  g_hash_table_destroy (minicomp_type2name_hashtable);
+  g_hash_table_destroy (minicomp_name2type_hashtable);
   gcc_jit_context_release (minicomp_jitctx);
   minicomp_jitctx = NULL;
 }				/* end main */
