@@ -149,6 +149,37 @@ minicomp_process_json (FILE *fil, const char *name)
   json_decref (js);
 }				/* end minicomp_process_json */
 
+gcc_jit_location*
+minicomp_jitloc(json_t*jloc)
+{
+  if (json_is_object (jloc)) {
+    json_t *jfil = json_object_get (jloc, "fil");
+    json_t *jlin = json_object_get(jloc, "lin");
+    json_t* jcol = json_object_get(jloc, "col");
+    if (json_is_string(jfil) && json_is_integer(jlin))
+      {
+	if (json_is_integer(jcol))
+	  return gcc_jit_context_new_location(minicomp_jitctx,
+					      json_string_value(jfil),
+					      json_integer_value(jlin),
+					      json_integer_value(jcol));
+	else
+	  return gcc_jit_context_new_location(minicomp_jitctx,
+					      json_string_value(jfil),
+					      json_integer_value(jlin),
+					      0);
+      }
+  }
+  return NULL;
+} /* end minicomp_jitloc */
+
+void
+minicomp_add_type(json_t*jtype, const char*kind)
+{
+  if (!strcmp(kind, "opaque")) {
+  }
+} /* end minicomp_add_type */
+
 void
 minicomp_first_pass (void)
 {
@@ -159,6 +190,7 @@ minicomp_first_pass (void)
       {
 	json_t *jcomp = json_array_get (minicomp_json_code_array, ix);
 	json_t *jgencod = NULL;
+	json_t* jtypestr = NULL;
 	if (json_is_object (jcomp))
 	  {
 	    if (!minicomp_generated_elf_so
@@ -168,6 +200,9 @@ minicomp_first_pass (void)
 		minicomp_generated_elf_so = json_string_value (jgencod);
 		break;
 	      }
+	    else if ((jtypestr= json_object_get(jcomp, "type"))
+		     && json_is_string(jtypestr))
+	      minicomp_add_type(jcomp, json_string_value (jtypestr));
 	  }
       }
   }
@@ -186,7 +221,7 @@ minicomp_set_basename(void)
 {
   char* dp = minicomp_basename;
   if (!minicomp_generated_elf_so)
-    MINICOMP_FATAL("cannot set basename without knowing generatd ELF shared object");
+    MINICOMP_FATAL("cannot set basename without knowing generated ELF shared object");
   const char* sp = strrchr(minicomp_generated_elf_so, '/')?:minicomp_generated_elf_so;
   if (*sp == '/')
     sp++;
@@ -199,7 +234,7 @@ minicomp_set_basename(void)
     sp++;
   };
   if (!minicomp_basename[0])
-    snprintf(minicomp_basename, sizeof(minicomp_basename), "_minicomp_gccjit%.9s_%d_", minicomp_gitid, (int)getpid());
+    snprintf(minicomp_basename, sizeof(minicomp_basename), "_minicomp_gccjit%.9s_p%d_", minicomp_gitid, (int)getpid());
 } /* end minicomp_set_basename */
 void
 minicomp_generate_code (void)
