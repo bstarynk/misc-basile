@@ -201,6 +201,13 @@ minicomp_add_type (json_t *jtype, const char *kind, int rk)
 	  return jitopaqtyp;
 	}
     }
+  else if (!strcmp(kind, "struct")) {
+    #warning incomplete minicomp_add_type struct
+  }
+#warning incomplete minicomp_add_type
+  MINICOMP_FATAL("incomplete minicomp_add_type rk=%d jtype=%s",
+		 rk,
+		 json_dumps(jtype, JSON_INDENT(1)|JSON_SORT_KEYS));
 }				/* end minicomp_add_type */
 
 gcc_jit_type *
@@ -290,7 +297,6 @@ minicomp_type_by_name (const char *tyname)
   else if ((ptr = g_hash_table_lookup (minicomp_name2type_hashtable, tyname))
 	   != NULL)
     return (gcc_jit_type *) ptr;
-#warning incomplete minicomp_type_by_name
   return NULL;
 }				/* end minicomp_type_by_name */
 
