@@ -23,6 +23,7 @@
 #include <ctype.h>
 #include "libgccjit.h"
 #include "jansson.h"
+#include "glib.h"
 
 #ifndef GITID
 #error GITID should be defined in compilation command
@@ -39,6 +40,7 @@ const char minicomp_gitid[] = GITID;
 const char minicomp_md5sum[] = MD5SUM;
 
 const char *minicomp_generated_elf_so;
+char minicomp_basename[128];
 
 gcc_jit_context *minicomp_jitctx;
 
@@ -75,15 +77,18 @@ minicomp_fatal_stop_at (const char *fil, int lin)
 void
 minicomp_show_version (void)
 {
-  printf ("%s version: gitid %s\n using libgccjit %d.%d.%d\n"
-	  " jansson %s\n"
-	  " built %s\n",
-	  minicomp_progname, minicomp_gitid,
+  printf ("%s version gitid %s built %s\n",
+	  minicomp_progname, minicomp_gitid, __DATE__ "@" __TIME__);
+  printf ("\t md5sum %s\n", minicomp_md5sum);
+  printf ("\t using libgccjit %d.%d.%d\n",
 	  gcc_jit_version_major (),
 	  gcc_jit_version_minor (),
-	  gcc_jit_version_patchlevel (),
-	  jansson_version_str (), __DATE__ "@" __TIME__);
-  printf ("%s md5 signature: %s\n", minicomp_progname, minicomp_md5sum);
+	  gcc_jit_version_patchlevel ());
+  printf ("\t using jansson library for JSON %s\n",
+	  jansson_version_str ());
+  printf ("\t using Glib %d.%d.%d checked %s at %s:%d\n",
+	  glib_major_version, glib_minor_version, glib_micro_version,
+	  glib_check_version(2,79,1)?:"good", __FILE__, __LINE__);
 }				/* end minicomp_show_version */
 
 void
@@ -177,6 +182,26 @@ minicomp_first_pass (void)
 }				/* end minicomp_first_pass */
 
 void
+minicomp_set_basename(void)
+{
+  char* dp = minicomp_basename;
+  if (!minicomp_generated_elf_so)
+    MINICOMP_FATAL("cannot set basename without knowing generatd ELF shared object");
+  const char* sp = strrchr(minicomp_generated_elf_so, '/')?:minicomp_generated_elf_so;
+  if (*sp == '/')
+    sp++;
+  if (minicomp_basename[0])
+    return;
+  while (*sp != '.' && dp < minicomp_basename+sizeof(minicomp_basename)-1) {
+    if (isalnum(*sp))
+      *(dp++) = *sp;
+    else *(dp++) = '_';
+    sp++;
+  };
+  if (!minicomp_basename[0])
+    snprintf(minicomp_basename, sizeof(minicomp_basename), "_minicomp_gccjit%.9s_%d_", minicomp_gitid, (int)getpid());
+} /* end minicomp_set_basename */
+void
 minicomp_generate_code (void)
 {
   gcc_jit_context_set_bool_option (minicomp_jitctx,
@@ -233,6 +258,13 @@ minicomp_handle_arguments (int argc, char **argv)
 				minicomp_generated_elf_so, aix, curarg);
 	      minicomp_generated_elf_so = out;
 	    }
+	  else if (sscanf (curarg, "--base=%100[A-Za-z0-9_]%n", argbuf, &c)>0 && argbuf[0] && c>0) {
+	    if (minicomp_basename[0])
+	      MINICOMP_FATAL("already given basename %s rejecting arg#%d %s",
+			     minicomp_basename, aix, curarg);
+	    argbuf[120] = (char)0;
+	    strncpy(minicomp_basename, argbuf, sizeof(minicomp_basename)-1);
+	  }
 #warning incomplete minicomp_handle_arguments
 	  else
 	    MINICOMP_FATAL
@@ -284,6 +316,8 @@ main (int argc, char **argv)
     MINICOMP_FATAL ("failed to create initial minicomp_json_code_array (%s)",
 		    strerror (errno));
   minicomp_handle_arguments (argc, argv);
+  if (!minicomp_basename[0])
+    minicomp_set_basename();
   minicomp_first_pass ();
   minicomp_generate_code ();
   json_decref (minicomp_json_code_array);

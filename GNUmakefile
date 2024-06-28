@@ -148,7 +148,7 @@ minicomp-gccjit: minicomp-gccjit.c |GNUmakefile
 	$(CC)  -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
 	       -DMD5SUM='"$(shell /bin/md5sum $<)"' \
                -I $(shell $(CC) -print-file-name=include) \
-                $(shell pkg-config --cflags jansson) \
+                $(shell pkg-config --cflags jansson glib-2.0) \
 	$< $(shell $(CC) -print-file-name=libgccjit.so) \
-           $(shell pkg-config --libs jansson) \
+           $(shell pkg-config --libs jansson glib-2.0) \
                 -o $@
