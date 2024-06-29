@@ -1,7 +1,7 @@
-## file misc-basile/Makefile
+## file misc-basile/GNUmakefile
 ## on https://github.com/bstarynk/
 
-.PHONY: all clean indent manydl-plugins analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac valgrind-logged-gcc
+.PHONY: all clean indent manydl-plugins analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac valgrind-logged-gcc minicomp
 
 FRAMAC=/usr/bin/frama-c
 FRAMALIBC=/usr/share/frama-c/libc/
@@ -26,7 +26,7 @@ QT6MOC= /usr/lib/qt6/libexec/moc
 GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
-all: manydl minicomp-gccjit half sync-periodically transpiler-refpersys \
+all: manydl half sync-periodically transpiler-refpersys \
      logged-compile logged-gcc filipe-shell browserfox onionrefpersys \
      gtk4serv fox-tinyed q6refpersys  gtkmm-refpersys bwc gtksrc-browser
 
@@ -44,6 +44,7 @@ clean:
 ## on non Linux, change .so to whatever can be dlopen-esd
 	$(RM) _genf*.so
 	$(RM) _pmap*
+	$(MAKE) -C MiniComp clean
 
 
 ## on non Linux systems, change the .so suffix to whatever can be dlopen-ed
@@ -144,11 +145,5 @@ q6refpersys.ii: q6refpersys.cc  _q6refpersys-moc.cc |GNUmakefile
 	$(shell pkg-config --cflags $(Q6REFPERSYS_PACKAGES)) $< -o - \
 	        | /bin/sed s:^#://#: > $@ \
 
-minicomp-gccjit: minicomp-gccjit.c |GNUmakefile
-	$(CC)  -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
-	       -DMD5SUM='"$(shell /bin/md5sum $<)"' \
-               -I $(shell $(CC) -print-file-name=include) \
-                $(shell pkg-config --cflags jansson glib-2.0) \
-	$< $(shell $(CC) -print-file-name=libgccjit.so) \
-           $(shell pkg-config --libs jansson glib-2.0) \
-                -o $@
+minicomp: |GNUmakefile MiniComp/GNUmakefile $(wildcard MiniComp/*.c MiniComp/*.h)
+	$(MAKE) -C MiniComp all
