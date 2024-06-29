@@ -1,4 +1,4 @@
-// file misc-basile/minicomp-gccjit.c
+// file misc-basile/MiniComp/minicomp-gccjit.c
 // SPDX-License-Identifier: GPL-3.0-or-later
 //  © Copyright Basile Starynkevitch 2024
 /// program released under GNU General Public License v3+
@@ -14,23 +14,14 @@
 /// License for more details.
 
 #define _GNU_SOURCE 1
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <string.h>
-#include <ctype.h>
-#include "libgccjit.h"
-#include "jansson.h"
-#include "glib.h"
+#include "minicomp.h"
 
 #ifndef GITID
 #error GITID should be defined in compilation command
 #endif
 
 #ifndef MD5SUM
-#error MD5SUM should be definied in compilation command
+#error MD5SUM should be defined in compilation command
 #endif
 
 const char *minicomp_progname;
@@ -40,7 +31,7 @@ const char minicomp_gitid[] = GITID;
 const char minicomp_md5sum[] = MD5SUM;
 
 const char *minicomp_generated_elf_so;
-char minicomp_basename[128];
+char minicomp_basename[MINICOMP_SIZE_BASENAME];
 
 gcc_jit_context *minicomp_jitctx;
 
@@ -54,17 +45,9 @@ GHashTable *minicomp_type2name_hashtable;	// associate gcc_jit_type to names
 volatile const char *minicomp_fatal_file;
 volatile int minicomp_fatal_line;
 void minicomp_fatal_stop_at (const char *, int) __attribute__((noreturn));
-#define MINICOMP_FATAL_AT_BIS(Fil,Lin,Fmt,...) do {			\
-    fprintf(stderr, "MINICOMP-GCCJIT FATAL:%s:%d: <%s>\n " Fmt "\n\n",	\
-            Fil, Lin, __func__, ##__VA_ARGS__);				\
-    minicomp_fatal_stop_at(Fil,Lin); } while(0)
 
 
 json_t *minicomp_json_code_array;
-
-#define MINICOMP_FATAL_AT(Fil,Lin,Fmt,...) MINICOMP_FATAL_AT_BIS(Fil,Lin,Fmt,##__VA_ARGS__)
-
-#define MINICOMP_FATAL(Fmt,...) MINICOMP_FATAL_AT(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 void
 minicomp_fatal_stop_at (const char *fil, int lin)

@@ -39,7 +39,7 @@ CFLAGS= $(OPTIMFLAGS) -Wall -Wextra -I /usr/local/include/
 
 all: minicomp-gccjit
 
-minicomp-gccjit: minicomp-gccjit.c |GNUmakefile
+minicomp-gccjit: minicomp-gccjit.c minicomp.h |GNUmakefile
 	$(CC)  -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
 	       -DMD5SUM='"$(shell /bin/md5sum $<)"' \
                -I $(shell $(CC) -print-file-name=include) \
@@ -47,3 +47,6 @@ minicomp-gccjit: minicomp-gccjit.c |GNUmakefile
 	$< $(shell $(CC) -print-file-name=libgccjit.so) \
            $(shell pkg-config --libs $(PACKAGES)) \
                 -o $@
+
+clean:
+	$(RM) *.o minicomp-gccjit
