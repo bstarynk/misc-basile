@@ -87,9 +87,15 @@ minicomp_show_help (void)
   printf ("%s usage:\n", minicomp_progname);
   printf ("\t --help                             #show this help\n");
   printf ("\t --version                          #show version info\n");
+  printf ("\t --base=NAME                        #set a common basename\n");
   printf ("\t -O[0-2g]                           #GCC optimization\n");
-  printf
-    ("\t -o <filename> | --output=ELFFILE   #generated ELF shared object\n");
+  printf ("\t -o <file> | --output=ELFFILE       #generated ELF\n"
+	  "\t                                    #shared object\n");
+  printf ("\t <input-files-or-pipes> ...\n");
+  printf ("An argument starting with letters or digits\n"
+	  "\t or _ or / or . is a JSON file\n");
+  printf ("An argument starting with ! or |\n"
+	  "\t (usually shell-quoted) is a popen-ed command\n");
 }				/* end minicomp_show_help */
 
 void
@@ -254,6 +260,10 @@ minicomp_handle_arguments (int argc, char **argv)
       const char *curarg = argv[aix];
       if (curarg[0] == '-')
 	{
+	  if (!strcmp(curarg, "--help"))
+	    continue;
+	  if (!strcmp(curarg, "--version"))
+	    continue;
 	  if (curarg[1] == 'O'	//letter upper-case O, for optimization, eg -O2
 	      && (isdigit (curarg[2]) || curarg[2] == 'g'
 		  || curarg[2] == 's'))
