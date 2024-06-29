@@ -34,12 +34,14 @@ minicomp_expr_of_json (json_t *jexpr, int rk)
 {
   if (!jexpr)
     MINICOMP_FATAL ("minicomp_expr_of_json null json_t at rank %d", rk);
+  /// the null json represents the (void*)NULL pointer
   if (json_is_null (jexpr))
     {
       return gcc_jit_context_null (minicomp_jitctx,
 				   gcc_jit_context_get_type (minicomp_jitctx,
 							     GCC_JIT_TYPE_VOID_PTR));
     }
+  /// the integral jsons
   else if (json_is_integer (jexpr))
     {
       long expval = json_integer_value (jexpr);
@@ -81,6 +83,24 @@ minicomp_expr_of_json (json_t *jexpr, int rk)
 							  GCC_JIT_TYPE_LONG),
 							 (int) expval);
 	}
+    }
+  //// boolean jsons
+  else if (json_is_boolean (jexpr))
+    {
+      if (json_is_false (jexpr))
+	return gcc_jit_context_zero (minicomp_jitctx,
+				     gcc_jit_context_get_type
+				     (minicomp_jitctx, GCC_JIT_TYPE_BOOL));
+      else
+	return gcc_jit_context_one (minicomp_jitctx,
+				    gcc_jit_context_get_type
+				    (minicomp_jitctx, GCC_JIT_TYPE_BOOL));
+    }
+  //// string jsons
+  else if (json_is_string (jexpr))
+    {
+      const char *str = json_string_value (jexpr);
+      return gcc_jit_context_new_string_literal (minicomp_jitctx, str);
     }
 #warning minicomp_expr_of_json incomplete
   MINICOMP_FATAL ("minicomp_expr_of_json incomplete rk#%d jexpr %s",
