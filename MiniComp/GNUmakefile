@@ -33,20 +33,54 @@ RM=/bin/rm -vf
 export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-15)
 PACKAGES=glib-2.0 jansson
 OPTIMFLAGS= -O2 -g
-CFLAGS= $(OPTIMFLAGS) -Wall -Wextra -I /usr/local/include/
+CFLAGS= $(OPTIMFLAGS) -fPIE -fPIC  -Wall -Wextra -I /usr/local/include/
 
-.PHONY: all clean
+.PHONY: all clean indent
 
 all: minicomp-gccjit
 
-minicomp-gccjit: minicomp-gccjit.c minicomp.h |GNUmakefile
-	$(CC)  -rdynamic -fPIE -fPIC $(CFLAGS) -DGITID='"$(GIT_ID)"' \
+minicomp-gccjit: minicomp-gccjit.o minicomp-types.o minicomp-stmts.o minicomp-exprs.o |GNUmakefile
+	$(LINK.c)  -rdynamic -fPIE -fPIC $^ \
+	$(shell $(CC) -print-file-name=libgccjit.so) \
+           $(shell pkg-config --libs $(PACKAGES)) \
+	-ldl -o $@
+
+minicomp-gccjit.o: minicomp-gccjit.c minicomp.h |GNUmakefile
+	$(CC)  -c $(CFLAGS) -DGITID='"$(GIT_ID)"' \
 	       -DMD5SUM='"$(shell /bin/md5sum $<)"' \
                -I $(shell $(CC) -print-file-name=include) \
                 $(shell pkg-config --cflags $(PACKAGES)) \
-	$< $(shell $(CC) -print-file-name=libgccjit.so) \
-           $(shell pkg-config --libs $(PACKAGES)) \
-                -o $@
+                $< -o $@
+
+minicomp-types.o: minicomp-types.c minicomp.h |GNUmakefile
+	$(CC)  -c $(CFLAGS) -DGITID='"$(GIT_ID)"' \
+	       -DMD5SUM='"$(shell /bin/md5sum $<)"' \
+               -I $(shell $(CC) -print-file-name=include) \
+                $(shell pkg-config --cflags $(PACKAGES)) \
+                $< -o $@
+
+
+minicomp-stmts.o: minicomp-stmts.c minicomp.h |GNUmakefile
+	$(CC)  -c $(CFLAGS) -DGITID='"$(GIT_ID)"' \
+	       -DMD5SUM='"$(shell /bin/md5sum $<)"' \
+               -I $(shell $(CC) -print-file-name=include) \
+                $(shell pkg-config --cflags $(PACKAGES)) \
+                $< -o $@
+
+minicomp-exprs.o: minicomp-exprs.c minicomp.h |GNUmakefile
+	$(CC)  -c $(CFLAGS) -DGITID='"$(GIT_ID)"' \
+	       -DMD5SUM='"$(shell /bin/md5sum $<)"' \
+               -I $(shell $(CC) -print-file-name=include) \
+                $(shell pkg-config --cflags $(PACKAGES)) \
+                $< -o $@
 
 clean:
 	$(RM) *.o minicomp-gccjit
+	$(RM) *~
+
+indent: |GNUmakefile
+	$(INDENT) minicomp.h
+	$(INDENT) minicomp-gccjit.c
+	$(INDENT) minicomp-exprs.c
+	$(INDENT) minicomp-stmts.c
+	$(INDENT) minicomp-types.c
