@@ -120,10 +120,40 @@ minicomp_expr_of_json (json_t *jexpr, int rk)
 gcc_jit_rvalue *
 minicomp_expr_of_object_json (json_t *jexpr, int rk)
 {
-  gcc_jit_rvalue* res = NULL;
-  assert(json_is_object(jexpr));
+  gcc_jit_rvalue *res = NULL;
+  assert (json_is_object (jexpr));
+  ///
+  /// {"string": <stringjson> }
+  {
+    json_t *jstring = json_object_get (jexpr, "string");
+    if (json_is_string (jstring))
+      return gcc_jit_context_new_string_literal (minicomp_jitctx,
+						 json_string_value (jstring));
+  }
+  ///
+  /// {"int": <intjson> }
+  {
+    json_t *jint = json_object_get (jexpr, "int");
+    if (json_is_integer (jint))
+      return gcc_jit_context_new_rvalue_from_int (minicomp_jitctx,
+						  gcc_jit_context_get_type
+						  (minicomp_jitctx,
+						   GCC_JIT_TYPE_INT),
+						  (int)
+						  json_integer_value (jint));
+  }
+  ///
+  /// {"long": <longjson> }
+  {
+    json_t *jlong = json_object_get (jexpr, "long");
+    if (json_is_integer (jlong))
+      return gcc_jit_context_new_rvalue_from_long
+	(minicomp_jitctx,
+	 gcc_jit_context_get_type (minicomp_jitctx,
+				   GCC_JIT_TYPE_LONG),
+	 (long) json_integer_value (jlong));
+  }
   gcc_jit_location *jitloc = minicomp_jitloc (jexpr);
-
 #warning unimplemented minicomp_expr_of_object_json
   MINICOMP_FATAL ("minicomp_expr_of_object_json incomplete rk#%d jexpr %s",
 		  rk, json_dumps (jexpr, JSON_INDENT (1) | JSON_SORT_KEYS));
