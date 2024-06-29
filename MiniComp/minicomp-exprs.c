@@ -120,9 +120,15 @@ minicomp_expr_of_json (json_t *jexpr, int rk)
 gcc_jit_rvalue *
 minicomp_expr_of_object_json (json_t *jexpr, int rk)
 {
+  gcc_jit_rvalue* res = NULL;
+  assert(json_is_object(jexpr));
+  gcc_jit_location *jitloc = minicomp_jitloc (jexpr);
+
 #warning unimplemented minicomp_expr_of_object_json
   MINICOMP_FATAL ("minicomp_expr_of_object_json incomplete rk#%d jexpr %s",
 		  rk, json_dumps (jexpr, JSON_INDENT (1) | JSON_SORT_KEYS));
+  ///
+  return res;
 }				/* end minicomp_expr_of_object_json */
 
 /****************

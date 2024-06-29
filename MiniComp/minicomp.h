@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
+
 #include "libgccjit.h"
 #include "jansson.h"
 #include "glib.h"
