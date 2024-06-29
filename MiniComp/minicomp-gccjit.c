@@ -260,9 +260,9 @@ minicomp_handle_arguments (int argc, char **argv)
       const char *curarg = argv[aix];
       if (curarg[0] == '-')
 	{
-	  if (!strcmp(curarg, "--help"))
+	  if (!strcmp (curarg, "--help"))
 	    continue;
-	  if (!strcmp(curarg, "--version"))
+	  if (!strcmp (curarg, "--version"))
 	    continue;
 	  if (curarg[1] == 'O'	//letter upper-case O, for optimization, eg -O2
 	      && (isdigit (curarg[2]) || curarg[2] == 'g'
@@ -350,7 +350,10 @@ main (int argc, char **argv)
       return 0;
     }
   else if (argc > 1 && !strcmp (argv[1], "--help"))
-    minicomp_show_help ();
+    {
+      minicomp_show_help ();
+      return 0;
+    }
   minicomp_jitctx = gcc_jit_context_acquire ();
   if (!minicomp_jitctx)
     MINICOMP_FATAL ("failed to acquire the GCCJIT context (%s)",
