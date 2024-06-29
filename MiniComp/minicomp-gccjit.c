@@ -340,10 +340,26 @@ minicomp_handle_arguments (int argc, char **argv)
     }
 }				/* end minicomp_handle_arguments */
 
+
+bool minicomp_on_32_bits;
 int
 main (int argc, char **argv)
 {
   minicomp_progname = argv[0];
+  if (sizeof (void *) == 4 && alignof (void *) == 4
+      && sizeof (void *) == sizeof (int))
+    {
+      minicomp_on_32_bits = true;
+    }
+  else if (sizeof (void *) == 8 && alignof (void *) == 8
+	   && sizeof (void *) == sizeof (long))
+    {
+      minicomp_on_32_bits = false;
+    }
+  else
+    MINICOMP_FATAL
+      ("unexpected platform should have 4 or 8 bytes words and pointers of size %d align %d",
+       (int) sizeof (void *), (int) alignof (void *));
   if (argc > 1 && !strcmp (argv[1], "--version"))
     {
       minicomp_show_version ();

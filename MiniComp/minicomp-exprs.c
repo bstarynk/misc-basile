@@ -29,6 +29,66 @@ const char minicomp_exprs_gitid[] = GITID;
 const char minicomp_exprs_md5sum[] = MD5SUM;
 const char minicomp_exprs_timestamp[] = __DATE__ "@" __TIME__;
 
+gcc_jit_rvalue *
+minicomp_expr_of_json (json_t *jexpr, int rk)
+{
+  if (!jexpr)
+    MINICOMP_FATAL ("minicomp_expr_of_json null json_t at rank %d", rk);
+  if (json_is_null (jexpr))
+    {
+      return gcc_jit_context_null (minicomp_jitctx,
+				   gcc_jit_context_get_type (minicomp_jitctx,
+							     GCC_JIT_TYPE_VOID_PTR));
+    }
+  else if (json_is_integer (jexpr))
+    {
+      long expval = json_integer_value (jexpr);
+      if (expval == 0)
+	{
+	  if (minicomp_on_32_bits)
+	    return gcc_jit_context_zero (minicomp_jitctx,
+					 gcc_jit_context_get_type
+					 (minicomp_jitctx, GCC_JIT_TYPE_INT));
+	  else
+	    return gcc_jit_context_zero (minicomp_jitctx,
+					 gcc_jit_context_get_type
+					 (minicomp_jitctx,
+					  GCC_JIT_TYPE_LONG));
+	}
+      else if (expval == 1)
+	{
+	  if (minicomp_on_32_bits)
+	    return gcc_jit_context_one (minicomp_jitctx,
+					gcc_jit_context_get_type
+					(minicomp_jitctx, GCC_JIT_TYPE_INT));
+	  else
+	    return gcc_jit_context_one (minicomp_jitctx,
+					gcc_jit_context_get_type
+					(minicomp_jitctx, GCC_JIT_TYPE_LONG));
+	}
+      else
+	{
+	  if (minicomp_on_32_bits)
+	    return gcc_jit_context_new_rvalue_from_int (minicomp_jitctx,
+							gcc_jit_context_get_type
+							(minicomp_jitctx,
+							 GCC_JIT_TYPE_INT),
+							(int) expval);
+	  else
+	    return gcc_jit_context_new_rvalue_from_long (minicomp_jitctx,
+							 gcc_jit_context_get_type
+							 (minicomp_jitctx,
+							  GCC_JIT_TYPE_LONG),
+							 (int) expval);
+	}
+    }
+#warning minicomp_expr_of_json incomplete
+  MINICOMP_FATAL ("minicomp_expr_of_json incomplete rk#%d jexpr %s",
+		  rk, json_dumps (jexpr, JSON_INDENT (1) | JSON_SORT_KEYS));
+}
+
+
+
 /****************
  **                           for Emacs...
  ** Local Variables: ;;

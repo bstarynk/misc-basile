@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdalign.h>
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
@@ -48,6 +49,8 @@ extern char minicomp_basename[MINICOMP_SIZE_BASENAME];
 
 extern gcc_jit_context *minicomp_jitctx;
 
+extern bool minicomp_on_32_bits;
+
 extern gcc_jit_object **minicomp_jitobvec;
 extern int minicomp_nbjitob;
 extern int minicomp_size_jitobvec;
@@ -71,7 +74,11 @@ extern json_t *minicomp_json_code_array;
 
 #define MINICOMP_FATAL(Fmt,...) MINICOMP_FATAL_AT(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
-/// implemented in minicomp-types.h
+/// implemented in minicomp-gccjit.c
+extern bool minicomp_on_32_bits;
+extern gcc_jit_location *minicomp_jitloc (json_t * jloc);
+
+/// implemented in minicomp-types.c
 extern const char minicomp_types_gitid[];
 extern const char minicomp_types_md5sum[];
 extern const char minicomp_types_timestamp[];
@@ -82,16 +89,16 @@ extern gcc_jit_type *minicomp_add_type (json_t * jtype, const char *kind,
 extern gcc_jit_type *minicomp_type_by_name (const char *tyname);
 extern gcc_jit_type *minicomp_type_of_json (json_t * jtype, int rk);
 
-/// implemented in minicomp-stmts.h
+/// implemented in minicomp-stmts.c
 extern const char minicomp_stmts_gitid[];
 extern const char minicomp_stmts_md5sum[];
 extern const char minicomp_stmts_timestamp[];
 
-/// implemented in minicomp-exprs.h
+/// implemented in minicomp-exprs.c
 extern const char minicomp_exprs_gitid[];
 extern const char minicomp_exprs_md5sum[];
 extern const char minicomp_exprs_timestamp[];
-
+extern gcc_jit_rvalue *minicomp_expr_of_json (json_t * jexpr, int rk);
 
 #endif /*MINICOMP_HEADER_INCLUDED */
 /// end of header file minicomp.h
