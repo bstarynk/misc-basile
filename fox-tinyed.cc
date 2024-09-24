@@ -137,6 +137,8 @@ class TinyApp : public FXApp
 public:
   TinyApp(const char*name, const char*vendor);
   virtual ~TinyApp();
+public:
+  virtual void init(int&argc, char**argv, bool connect=true);
 private:
   TinyApp& operator=(const TinyApp&);
   std::vector<TinyDisplayWindow*> _vec_disp_win;
@@ -380,6 +382,19 @@ TinyApp::TinyApp(const char*name, const char*vendor)
               << "@" << (void*)this);
   _vec_disp_win.reserve(10);
 } // end constructor TinyApp::TinyApp
+
+void
+TinyApp::init(int&argc, char**argv, bool connect)
+{
+  FXApp::init(argc, argv, connect);
+  TINY_DBGOUT("TinyApp init argc=" << argc << " argv:"
+	      << [&](std::ostream&out) {
+		for (int i=0; i<argc; i++) {
+		  out<<' ';
+		  out << argv[i];
+		}
+	      } << std::endl);
+} // end TinyApp::init
 
 TinyApp::~TinyApp()
 {

@@ -27,7 +27,7 @@ GENF_CC=$(CC)
 GENF_CFLAGS= -O2 -g -fPIC -Wall
 
 all: manydl half sync-periodically transpiler-refpersys \
-     logged-compile logged-gcc filipe-shell browserfox onionrefpersys \
+     logged-compile logged-gcc filipe-shell browserfox \
      gtk4serv fox-tinyed q6refpersys  gtkmm-refpersys bwc gtksrc-browser
 
 
@@ -109,6 +109,7 @@ framac-half:
 valgrind-logged-gcc: logged-gcc sync-periodically.c
 	$(VALGRIND) --verbose --leak-check=full ./logged-gcc --debug $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' sync-periodically.c  -o /tmp/sync-periodically
 
+### not built by default in sept 2024
 onionrefpersys: onionrefpersys.c  GNUmakefile
 	$(CC)  $(CFLAGS) -DGITID='"$(GIT_ID)"' $<  -L/usr/local/lib \
            -lonion_static -lsqlite3 -lsystemd -lgcrypt -lgnutls -lgmp -Bdynamic -o $@
