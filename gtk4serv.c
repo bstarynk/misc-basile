@@ -270,7 +270,7 @@ my_create_widgets_without_builder (void)
   // gtk_window_set_position (GTK_WINDOW (my_main_window), GTK_WIN_POS_CENTER);
 #endif
 #warning my_create_widgets_without_builder incomplete
-  gtk_window_present (my_main_window);
+  gtk_window_present (GTK_WINDOW (my_main_window));
   DBGEPRINTF ("my_create_widgets_without_builder end mainwin@%p",
 	      my_main_window);
 }				/* end my_create_widgets_without_builder */
