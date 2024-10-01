@@ -64,7 +64,7 @@ main (int argc, char **argv)
       if (widestcolor < (int)strlen (colorbuf))
 	widestcolor = (int)strlen (colorbuf);
       nbcolors++;
-      printf ("RPS_RGB_COLOR(%3d,%3d,%3d,\"%s\");\n", r, g, b, colorbuf);
+      printf ("RPS_RGB_COLOR(%3d,%3d,%3d,\"%s\")\n", r, g, b, colorbuf);
     }
   while (!feof (rgbf));
   printf ("#define RPS_NB_RGB_COLORS %d\n", nbcolors);
