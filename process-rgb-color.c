@@ -25,38 +25,50 @@
 #include <string.h>
 #include <unistd.h>
 
-char*progname;
-int main(int argc, char**argv)
+char *progname;
+int
+main (int argc, char **argv)
 {
   char linebuf[128];
   char colorbuf[80];
   progname = argv[0];
-  if (argc>1 && !strcmp(argv[1], "--help")) {
-    printf("%s: process the /etc/X11/rgb.txt file and emit on stdout C macro expressions\n"
-	   "RPS_RGB_COLOR(Red,Green,Blue,\"colorname\");\n", progname);
-    return 0;
-  }
-  char* rgbfilename = "/etc/X11/rgb.txt";
-  if (argc>1 && !access(argv[1], R_OK))
+  if (argc > 1 && !strcmp (argv[1], "--help"))
+    {
+      printf
+	("%s: process the /etc/X11/rgb.txt file and emit on stdout C macro expressions\n"
+	 "RPS_RGB_COLOR(Red,Green,Blue,\"colorname\");\n", progname);
+      return 0;
+    }
+  char *rgbfilename = "/etc/X11/rgb.txt";
+  if (argc > 1 && !access (argv[1], R_OK))
     rgbfilename = argv[1];
-  FILE* rgbf = fopen(rgbfilename, "r");
-  if (!rgbf) {
-    fprintf(stderr, "%s: cannot fopen %s - %s\n", progname, rgbfilename, strerror(errno));
-    exit(EXIT_FAILURE);
-  };
-  int nbcolors=0;
-  do {
-    memset(linebuf, 0, sizeof(linebuf));
-    memset (colorbuf, 0, sizeof(colorbuf));
-    if (!fgets(linebuf, sizeof(linebuf)-4, rgbf))
-      break;
-    int r=0, g=0, b=0, i=0;
-    if (sscanf(linebuf, "%d %d %d %64[A-Za-z ]%n", &r, &g, &b, colorbuf, &i) <=3)
-      continue;
-    nbcolors++;
-    printf("RPS_RGB_COLOR(%d,%d,%d,\"%s\");\n", r, g, b, colorbuf);
-  } while (!feof(rgbf));
-  printf("#define RPS_NB_RGB_COLORS %d\n", nbcolors);
-  printf("/// end of colors\n");
+  FILE *rgbf = fopen (rgbfilename, "r");
+  if (!rgbf)
+    {
+      fprintf (stderr, "%s: cannot fopen %s - %s\n", progname, rgbfilename,
+	       strerror (errno));
+      exit (EXIT_FAILURE);
+    };
+  int nbcolors = 0;
+  int widestcol = 0;
+  do
+    {
+      memset (linebuf, 0, sizeof (linebuf));
+      memset (colorbuf, 0, sizeof (colorbuf));
+      if (!fgets (linebuf, sizeof (linebuf) - 4, rgbf))
+	break;
+      int r = 0, g = 0, b = 0, i = 0;
+      if (sscanf (linebuf, "%d %d %d %64[A-Za-z0-9 ]%n",
+		  &r, &g, &b, colorbuf, &i) <= 3)
+	continue;
+      if (widestcolor < strlen (colorbuf))
+	widestcolor = strlen (colorbuf);
+      nbcolors++;
+      printf ("RPS_RGB_COLOR(%3d,%3d,%3d,\"%s\");\n", r, g, b, colorbuf);
+    }
+  while (!feof (rgbf));
+  printf ("#define RPS_NB_RGB_COLORS %d\n", nbcolors);
+  printf ("#define RPS_WIDEST_RGB_COLOR %d /*bytes*/\n", widestcolor);
+  printf ("/// end of colors\n");
   return 0;
 }
