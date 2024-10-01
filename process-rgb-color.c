@@ -44,16 +44,19 @@ int main(int argc, char**argv)
     fprintf(stderr, "%s: cannot fopen %s - %s\n", progname, rgbfilename, strerror(errno));
     exit(EXIT_FAILURE);
   };
+  int nbcolors=0;
   do {
     memset(linebuf, 0, sizeof(linebuf));
     memset (colorbuf, 0, sizeof(colorbuf));
     if (!fgets(linebuf, sizeof(linebuf)-4, rgbf))
       break;
     int r=0, g=0, b=0, i=0;
-    if (sscanf(linebuf, "%d %d %d %64s %n", &r, &g, &b, colorbuf, &i) <=3)
+    if (sscanf(linebuf, "%d %d %d %64[A-Za-z ]%n", &r, &g, &b, colorbuf, &i) <=3)
       continue;
+    nbcolors++;
     printf("RPS_RGB_COLOR(%d,%d,%d,\"%s\");\n", r, g, b, colorbuf);
   } while (!feof(rgbf));
+  printf("#define RPS_NB_RGB_COLORS %d\n", nbcolors);
   printf("/// end of colors\n");
   return 0;
 }
