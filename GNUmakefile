@@ -18,7 +18,7 @@ CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
 CXXFLAGS= -O -g -Wall -Wextra -I /usr/local/include/
 GTK4SERV_PACKAGES= gtk4 glib-2.0 gobject-2.0 gio-2.0
 GTKMMRPS_PACKAGES= gtkmm-4.0 jsoncpp
-Q6REFPERSYS_PACKAGES= Qt6Core Qt6Gui Qt6DBus Qt6UiPlugin Qt6Widgets jsoncpp
+Q6REFPERSYS_PACKAGES= Qt6Core Qt6Gui Qt6DBus Qt6Widgets jsoncpp
 GUILE_CFLAGS:=$(shell pkg-config --cflags guile-3.0)
 GUILE_LIBS:=$(shell  pkg-config --libs guile-3.0)
 
@@ -28,7 +28,8 @@ GENF_CFLAGS= -O2 -g -fPIC -Wall
 
 all: manydl half sync-periodically transpiler-refpersys \
      logged-compile logged-gcc filipe-shell browserfox \
-     gtk4serv fox-tinyed q6refpersys  gtkmm-refpersys bwc gtksrc-browser
+     gtk4serv fox-tinyed q6refpersys  gtkmm-refpersys bwc gtksrc-browser \
+     process-rgb-color
 
 
 clean:

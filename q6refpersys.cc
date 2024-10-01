@@ -135,13 +135,11 @@ extern "C" void myqr_call_jsonrpc_to_refpersys
 
 extern "C" QApplication *myqr_app;
 
-QT_BEGIN_NAMESPACE
-namespace Ui
-{
+extern "C" {
 class MyqrMainWindow;
 class MyqrDisplayWindow;
-}
-QT_END_NAMESPACE
+};
+
 
 
 ////////////////////////////////////////////////////////////////

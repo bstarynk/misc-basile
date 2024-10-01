@@ -542,7 +542,6 @@ void
 TinyMainWindow::show(void)
 {
   TINY_DBGOUT("TinyMainWindow::show start " << *this);
-  FXMainWindow::show();
   if (_main_vertframe)
     {
       _main_vertframe->show();
@@ -563,7 +562,8 @@ TinyMainWindow::show(void)
       _main_quitcmd->show();
       TINY_DBGOUT("TinyMainWindow::show quitcmd @" << (void*)_main_quitcmd);
     };
-  TINY_DBGOUT("TinyMainWindow::show end " << *this);
+  FXMainWindow::show();
+  TINY_DBGOUT("TinyMainWindow::show ending " << *this);
 } // end TinyMainWindow::show
 
 void
