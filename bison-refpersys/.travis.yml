@@ -1,0 +1,575 @@
+version: ~> 1.0
+
+# If the language is set to C or C++, Travis defines and exports CC
+# and CXX *after* we have defined our environment variables via 'env'.
+language: minimal
+
+# Run in two steps:
+# 1. Build the tarball
+#    On a modern distro, with all the needed dependencies, including the whole git history.
+# 2. Check it on various environments.
+#    Less dependencies, and little git content (we would like to have none, but it's not
+#    an option on Travis).
+stages:
+  - dist
+  - check
+
+# The 'check' jobs do not need the repo at all, only the 'dist'
+# does.  Let's save time, bandwith, energy, and polar bears.
+git:
+  clone: false
+
+# matrix.include and jobs.include are aliases
+# (https://docs.travis-ci.com/user/conditional-builds-stages-jobs/).
+jobs:
+  include:
+    - stage: dist
+      name: "Make dist"
+      git:
+        clone: true
+      dist: bionic
+      script:
+        - sudo apt-get install -qq autoconf automake autopoint flex gettext gperf graphviz help2man m4 texinfo
+        - autoconf --version
+        - automake --version
+        - autopoint --version
+        - dot -V
+        - gettext --version
+        - gperf --version
+        - help2man --version
+        - makeinfo --version
+        - m4 --version
+
+        # Travis makes a shallow clone, but we need it in full to build the ChangeLog and apply the fixes in git-log-fix.
+        - git fetch --unshallow || true
+        - git submodule update --init --recursive
+
+        # As of 2021-08, we don't have Autoconf 2.71 on Ubuntu.
+        - sed -i 's/AC_PREREQ(\[2\.71])/AC_PREREQ([2.69])/g' configure.ac
+        - ./bootstrap
+        - ./configure --enable-gcc-warnings || { cat config.log && false; }
+        - make -j2
+        - make -j2 dist-xz
+        # Can help understanding why we get "dirty" tarballs.
+        - git status
+        - git diff
+        - dist=$(echo bison*.xz)
+
+        # Unfortunately we cannot deterministically know the name of the tarball without the full
+        # git history (because git describe --abbrev=4 may use more than 4 characters if there are
+        # conflicts).
+        #
+        # So for the sake of the 'check' jobs (that don't even have the repo at all), also expose this
+        # tarball on a name that only depends on the Travis build number.
+        #
+        # Without -b -, exit status is always 0.
+        #
+        # If we rerun a job that was already uploaded, 'ln -s' will fail: remove beforehand.
+        - sftp -b - bison@sftp.lrde.epita.fr <<< "put $dist"$'\n'"-rm bison-$TRAVIS_BUILD_NUMBER.tar.xz"$'\n'"ln -s $dist bison-$TRAVIS_BUILD_NUMBER.tar.xz"
+
+    ## ------- ##
+    ## First.  ##
+    ## ------- ##
+
+    # Start with three completely different environments, to get errors asap.
+
+    - name: "GCC 11 -O3"
+      stage: check
+      os: linux
+      dist: bionic
+      addons: &gcc11
+        apt:
+          sources:
+            # See https://github.com/travis-ci/apt-source-safelist/issues/410.
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+          packages: g++-11
+      env:
+        - CC=gcc-11
+        - CXX=g++-11
+        - CONFIGUREFLAGS='CPPFLAGS=-DNDEBUG CFLAGS=-O3 CXXFLAGS=-O3'
+
+    # ASAN is time consuming, and we timeout the 50min granted by
+    # Travis if we run all the tests in one go.  Run in two parts.
+    - name: "Clang 11 libc++ and ASAN part 1"
+      stage: check
+      os: linux
+      dist: bionic
+      addons: &clang11
+        apt:
+          sources:
+            # See https://github.com/travis-ci/apt-source-safelist/issues/410.
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - clang-11
+            - libc++-11-dev
+            - libc++abi-11-dev
+      env:
+        # Do not use ASAN with ubuntu's libc++: https://bugs.llvm.org/show_bug.cgi?id=17379
+        - CC='clang-11 -fsanitize=address'
+        - CXX='clang++-11 -fsanitize=address -stdlib=libc++'
+        - PART=1
+
+    - name: "Clang 11 libc++ and ASAN part 2"
+      stage: check
+      os: linux
+      dist: bionic
+      addons: *clang11
+      env:
+        # Do not use ASAN with ubuntu's libc++: https://bugs.llvm.org/show_bug.cgi?id=17379
+        - CC='clang-11 -fsanitize=address'
+        - CXX='clang++-11 -fsanitize=address -stdlib=libc++'
+        - PART=2
+
+    # See https://github.com/simd-everywhere/simde/blob/master/.travis.yml
+    # and https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-intel-oneapi-render-linux/top/configure-your-system.html.
+    - name: "ICC"
+      stage: check
+      os: linux
+      compiler: icc
+      env:
+        - CC=icc
+        - CXX=icpc
+      install:
+        - source /opt/intel/oneapi/compiler/latest/env/vars.sh
+      addons:
+        apt:
+          sources:
+          - sourceline: 'deb https://apt.repos.intel.com/oneapi all main'
+            key_url: 'https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB'
+          packages:
+          - intel-oneapi-icc
+
+    - name: "ARM64: GCC 11 -O2 part 1"
+      stage: check
+      os: linux
+      arch: arm64
+      dist: bionic
+      addons: *gcc11
+      env:
+        - CC=gcc-11
+        - CXX=g++-11
+        - CONFIGUREFLAGS='CPPFLAGS=-DNDEBUG CFLAGS=-O2 CXXFLAGS=-O2'
+        - PART=1
+
+    - name: "PPC64le: GCC 11 -O2 part 1"
+      stage: check
+      os: linux
+      arch: ppc64le
+      dist: bionic
+      addons:
+        apt:
+          sources:
+            # See https://github.com/travis-ci/apt-source-safelist/issues/410.
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+          packages: g++-11
+      env:
+        - CC=gcc-11
+        - CXX=g++-11
+        - CONFIGUREFLAGS='CFLAGS=-O2 CXXFLAGS=-O2'
+        - PART=1
+
+    - name: "s390x: GCC 11 -O2 part 1"
+      stage: check
+      os: linux
+      arch: s390x
+      dist: bionic
+      addons: *gcc11
+      env:
+        - CC=gcc-11
+        - CXX=g++-11
+        - CONFIGUREFLAGS='CFLAGS=-O2 CXXFLAGS=-O2'
+        - PART=1
+
+    ## ----- ##
+    ## GCC.  ##
+    ## ----- ##
+
+    - name: "GCC 10 with sanitizers part 1"
+      stage: check
+      os: linux
+      dist: bionic
+      addons:
+        apt:
+          sources:
+            # See https://github.com/travis-ci/apt-source-safelist/issues/410.
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+          packages: g++-10
+      env:
+        - CC='gcc-10 -fsanitize=undefined,address -fno-omit-frame-pointer'
+        - CXX='g++-10 -fsanitize=undefined,address -fno-omit-frame-pointer'
+        - CONFIGUREFLAGS='CFLAGS=-O1 CXXFLAGS=-O1'
+        - PART=1
+
+    # With glr2.cc, we run out of time with the full test suite.
+    - name: "GCC 9 part 1"
+      stage: check
+      os: linux
+      dist: bionic
+      addons:
+        apt:
+          sources:
+            # See https://github.com/travis-ci/apt-source-safelist/issues/410.
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+          packages: g++-9
+      env:
+        - CC=gcc-9
+        - CXX=g++-9
+        - PART=1
+
+    # With glr2.cc, we run out of time with the full test suite.
+    - name: "GCC 8 part 1"
+      stage: check
+      os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages: g++-8
+      env:
+        - CC=gcc-8
+        - CXX=g++-8
+        - PART=1
+
+    - name: "GCC 7"
+      stage: check
+      os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages: g++-7
+      env:
+        - CC=gcc-7
+        - CXX=g++-7
+
+    - name: "GCC 6"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-6
+      env:
+        - CC=gcc-6
+        - CXX=g++-6
+
+    - name: "GCC 5"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-5
+      env:
+         - CC=gcc-5
+         - CXX=g++-5
+
+    - name: "GCC 4.9"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-4.9
+      env:
+         - CC=gcc-4.9
+         - CXX=g++-4.9
+
+    - name: "GCC 4.8"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-4.8
+      env:
+         - CC=gcc-4.8
+         - CXX=g++-4.8
+
+    - name: "GCC 4.7"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-4.7
+      env:
+         - CC=gcc-4.7
+         - CXX=g++-4.7
+
+    - name: "GCC 4.6"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-4.6
+      env:
+         - CC=gcc-4.6
+         - CXX=g++-4.6
+
+    ## ------- ##
+    ## Clang.  ##
+    ## ------- ##
+
+    - name: "Clang 10 -O3, libc++, part 1"
+      stage: check
+      os: linux
+      dist: bionic
+      addons:
+        apt:
+          sources:
+            # See https://github.com/travis-ci/apt-source-safelist/issues/410.
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - clang-10
+            - libc++-10-dev
+            - libc++abi-10-dev
+      env:
+        - CC='clang-10'
+        - CXX='clang++-10 -stdlib=libc++'
+        - CONFIGUREFLAGS='CPPFLAGS=-DNDEBUG CFLAGS=-O3 CXXFLAGS=-O3'
+        - PART=1
+
+    - name: "Clang 9 and libc++"
+      stage: check
+      os: linux
+      dist: bionic
+      addons:
+        apt:
+          sources:
+            # See https://github.com/travis-ci/apt-source-safelist/issues/410.
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - clang-9
+            - libc++-9-dev
+            - libc++abi-9-dev
+      env:
+        - CC='clang-9'
+        - CXX='clang++-9 -stdlib=libc++'
+
+    - name: "Clang 8 and libc++"
+      stage: check
+      os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-8
+            - libc++-8-dev
+            - libc++abi-8-dev
+      env:
+        - CC=clang-8
+        - CXX='clang++-8 -stdlib=libc++'
+
+    - name: "Clang 7 and libc++"
+      stage: check
+      os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-7
+            - libc++-7-dev
+            - libc++abi-7-dev
+      env:
+        - CC=clang-7
+        - CXX='clang++-7 -stdlib=libc++'
+
+    - name: "Clang 6 and libc++"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-xenial-6.0
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-6.0
+            - libc++-dev
+      env:
+        - CC=clang-6.0
+        - CXX='clang++-6.0 -stdlib=libc++'
+
+    - name: "Clang 5"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources: llvm-toolchain-xenial-5.0
+          packages:
+            - clang-5.0
+            - libc++-dev
+      env:
+        - CC='clang-5.0'
+        - CXX='clang++-5.0'
+
+    - name: "Clang 4"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources: llvm-toolchain-xenial-4.0
+          packages: clang-4.0
+      env:
+        - CC=clang-4.0
+        - CXX=clang++-4.0
+
+    - name: "Clang 3.9"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources: llvm-toolchain-xenial-3.9
+          packages: clang-3.9
+      env:
+        - CC=clang-3.9
+        - CXX=clang++-3.9
+
+    - name: "Clang 3.8"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.8
+          packages: clang-3.8
+      env:
+        - CC=clang-3.8
+        - CXX=clang++-3.8
+
+    - name: "CLang 3.7"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+          packages: clang-3.7
+      env:
+        - CC=clang-3.7
+        - CXX=clang++-3.7
+
+    - name: "Clang 3.6"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.6
+          packages: clang-3.6
+      env:
+        - CC=clang-3.6
+        - CXX=clang++-3.6
+
+    - name: "Clang 3.5"
+      stage: check
+      os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.5
+          packages: clang-3.5
+      env:
+        - CC=clang-3.5
+        - CXX=clang++-3.5
+
+    - name: "Clang 3.4"
+      stage: check
+      os: linux
+      # Not available on Xenial.
+      dist: trusty
+      addons:
+        apt:
+          packages: clang-3.4
+      env:
+        # No versioned name installed, but beware that Travis installs
+        # a more modern clang earlier in the default PATH.
+        - CC=/usr/bin/clang
+        - CXX=/usr/bin/clang++
+
+    - name: "Clang 3.3"
+      stage: check
+      os: linux
+      # Not available on Xenial.
+      dist: trusty
+      addons:
+        apt:
+          packages: clang-3.3
+      env:
+        # See comment for 3.4.
+        - CC=/usr/bin/clang
+        - CXX=/usr/bin/clang++
+
+## From https://docs.gitlab.com/ce/ci/ssh_keys/#ssh-keys-when-using-the-docker-executor.
+## Applies to Travis too.  Applied to all the 'script's (of all the jobs).
+before_script:
+  - 'which ssh-agent || ( sudo apt-get install openssh-client -y )'
+  - eval "$(ssh-agent -s)"
+  # $SSH_PRIVATE_KEY is multiline.  Use $'...' to register its value: $'-----BEGIN OPENSSH PRIVATE KEY-----\nXXXXX...\n...==\n-----END OPENSSH PRIVATE KEY-----'.
+  - echo "$SSH_PRIVATE_KEY" >/tmp/key.id_rsa
+  - chmod 600 /tmp/key.id_rsa
+  - ssh-add /tmp/key.id_rsa </dev/null
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - echo '|1|bpc51UGxoDZjCPiwRlCStW32trI=|rfh6mLoLZv/vAvOVrpZXI1hTLxg= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIR+ckMoJTNXHvAQLHWSfrRnrNJGW2ZR6kr5pBVDGCkz1v1RcQ5rleq0NAt9kS3v4hgnuLiEVnK7KDRzcEH3ikc=' >>~/.ssh/known_hosts
+  - chmod 600 ~/.ssh/known_hosts
+
+# Applies only to the jobs that don't have a 'script', i.e., applies to all the 'check' jobs, but not the 'dist' one.
+script:
+  # Beware not too leak $SSH_PRIVATE_KEY.
+  # - env
+  - sudo apt-get install -qq doxygen flex m4
+  # Install and activate dmd.
+  - mkdir -p ~/dlang && wget https://dlang.org/install.sh -O ~/dlang/install.sh
+  - source $(source ~/dlang/install.sh dmd -a) || true
+
+  - $CC --version
+  - $CXX --version
+  - dmd --version || true
+  - doxygen --version
+  - flex --version
+  - ld --version
+  - m4 --version
+
+  - if [[ -f ~/.bashrc ]]; then source ~/.bashrc; fi
+  # Unset this variable, otherwise, Java programs' stderr is cluttered
+  # with `Picked up _JAVA_OPTIONS: -Xmx2048m -Xms512m`, which makes
+  # the test suite fail.
+  - unset _JAVA_OPTIONS
+
+  # Fail fast from now on.
+  - set -e
+  - sftp bison@sftp.lrde.epita.fr:bison-$TRAVIS_BUILD_NUMBER.tar.xz
+  - tar xf bison-$TRAVIS_BUILD_NUMBER.tar.xz
+  - dir=$(tar tf bison-$TRAVIS_BUILD_NUMBER.tar.xz | sed 1q)
+  - cd $dir
+  - mkdir _build
+  - cd _build
+  - ../configure --enable-gcc-warnings CC="$CC" CXX="$CXX" $CONFIGUREFLAGS || { cat config.log && false; }
+  - make -j2 $MAKE_ARGS
+  - if test ${PART-1} = 1; then make check                  VERBOSE=1 TESTSUITEFLAGS=-j2 || { cat test-suite.log && cat tests/testsuite.log && false; }; fi
+  - if test ${PART-2} = 2; then make maintainer-check-posix VERBOSE=1 TESTSUITEFLAGS=-j2 || { cat tests/testsuite.log && false; }; fi
+  - if test ${PART-2} = 2; then make maintainer-check-g++   VERBOSE=1 TESTSUITEFLAGS=-j2 || { cat tests/testsuite.log && false; }; fi

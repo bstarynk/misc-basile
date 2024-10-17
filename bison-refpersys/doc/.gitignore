@@ -1,0 +1,35 @@
+# Do not ignore these.  The release procedure (web-manual-update)
+# works in the src tree (even when run from the build tree) and leaves
+# these files around.  Since they take precedence over the files in
+# the build tree, locally built manuals use obsolete auxiliary files.
+#
+# So don't hide them, give the maintainer a chance to clean them.
+#/bison.aux
+#/bison.cp
+#/bison.cps
+#/bison.toc
+
+/*~
+/.dirstamp
+/bison.1
+/bison.dvi
+/bison.help
+/bison.html
+/bison.info
+/bison.info.bak
+/bison.log
+/bison.pdf
+/bison.ps
+/cross-options.texi
+/figs/*.eps
+/figs/*.svg
+/gendocs_template
+/gendocs_template_min
+/gpl-3.0.texi
+/refcard.dvi
+/refcard.log
+/refcard.ps
+/relocatable.texi
+/stamp-vti
+/version.texi
+/yacc.1
