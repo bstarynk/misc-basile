@@ -1,0 +1,1 @@
+../../submodules/autoconf/lib/m4sugar/m4sugar.m4
