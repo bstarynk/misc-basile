@@ -16,11 +16,18 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+   Modified in 2024 by Basile STARYNKEVITCH in France
+   <basile@starynkevitch.net>q
+*/
 
 #ifndef PRINT_H_
 # define PRINT_H_
 
 void print_results (void);
+
+#define PRINT_FROM_COMMENT(Fil) do{fprintf(Fil,"//§ from %s@%s:%d\n", \
+    __FUNC__, __FILE__, __LINE__);} while(0)
 
 #endif /* !PRINT_H_ */
