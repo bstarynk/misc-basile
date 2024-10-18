@@ -16,7 +16,11 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+   Modified by Basile STARYNKEVITCH in France
+   <basile@starynkevitch.net> in 2024
+*/
 
 #include <config.h>
 #include "system.h"
@@ -825,6 +829,7 @@ output_skeleton (void)
     muscles_output (stderr);
   {
     FILE *out = xfdopen (filter_fd[1], "w");
+    PRINT_FROM_COMMENT(out); // added by Basile STARYNKEVITCH
     muscles_output (out);
     xfclose (out);
   }
@@ -916,6 +921,8 @@ output (void)
 {
   obstack_init (&format_obstack);
 
+  OBSTACK_PRINT_FROM_COMMENT(&format_obstack);  /*: <basile@starynkevitch.net> */
+  
   prepare_symbols ();
   prepare_rules ();
   prepare_states ();
@@ -926,6 +933,8 @@ output (void)
 
   /* Process the selected skeleton file.  */
   output_skeleton ();
+  OBSTACK_PRINT_FROM_COMMENT(&format_obstack); /*: <basile@starynkevitch.net> */
+
 
   /* If late errors were generated, destroy the generated source
      files. */

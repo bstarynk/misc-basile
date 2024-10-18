@@ -30,4 +30,8 @@ void print_results (void);
 #define PRINT_FROM_COMMENT(Fil) do{fprintf(Fil,"//§ from %s@%s:%d\n", \
     __FUNC__, __FILE__, __LINE__);} while(0)
 
+#define OBSTACK_PRINT_FROM_COMMENT(Obs) do{obstack_fprintf(Obs,	\
+    "//§ from %s@%s:%d\n",				       \
+    __FUNC__, __FILE__, __LINE__);} while(0)
+
 #endif /* !PRINT_H_ */

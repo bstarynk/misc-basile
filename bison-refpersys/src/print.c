@@ -16,7 +16,12 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+   
+   Modified by Basile STARYNKEVITCH in France
+   <basile@starynkevitch.net> in 2024
+
+*/
 
 #include <config.h>
 
@@ -70,6 +75,7 @@ print_core (FILE *out, const state *s)
 {
   const item_index *sitems = s->items;
   size_t snritems = s->nitems;
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
   /* Output all the items of a state, not only its kernel.  */
   if (report_flag & report_itemsets)
     {
@@ -111,6 +117,7 @@ print_transitions (const state *s, FILE *out, bool display_transitions_p)
   transitions *trans = s->transitions;
   size_t width = 0;
 
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
   /* Compute the width of the lookahead token column.  */
   for (int i = 0; i < trans->num; i++)
     if (!TRANSITION_IS_DISABLED (trans, i)
@@ -157,6 +164,7 @@ print_errs (FILE *out, const state *s)
   errs *errp = s->errs;
   size_t width = 0;
 
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
   /* Compute the width of the lookahead token column.  */
   for (int i = 0; i < errp->num; ++i)
     if (errp->symbols[i])
@@ -193,6 +201,7 @@ print_reduction (FILE *out, size_t width,
                  const char *lookahead,
                  rule *r, bool enabled)
 {
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
   fprintf (out, "    %s", lookahead);
   for (int j = width - mbswidth (lookahead, 0); j > 0; --j)
     fputc (' ', out);
@@ -219,6 +228,7 @@ print_reductions (FILE *out, const state *s)
   reductions *reds = s->reductions;
   if (reds->num == 0)
     return;
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
 
   rule *default_reduction = NULL;
   if (yydefact[s->number] != 0)
@@ -332,12 +342,14 @@ print_reductions (FILE *out, const state *s)
 static void
 print_actions (FILE *out, const state *s)
 {
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
   /* Print shifts.  */
   print_transitions (s, out, true);
   print_errs (out, s);
   print_reductions (out, s);
   /* Print gotos.  */
   print_transitions (s, out, false);
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
 }
 
 
@@ -348,6 +360,7 @@ print_actions (FILE *out, const state *s)
 static void
 print_state (FILE *out, const state *s)
 {
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
   fputs ("\n\n", out);
   fprintf (out, _("State %d"), s->number);
   fputc ('\n', out);
@@ -375,6 +388,7 @@ static void
 print_terminal_symbols (FILE *out)
 {
   /* TERMINAL (type #) : rule #s terminal is on RHS */
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
   fprintf (out, "%s\n\n", _("Terminals, with rules where they appear"));
   for (int i = 0; i < max_code + 1; ++i)
     if (token_translations[i] != undeftoken->content->number)
@@ -402,6 +416,7 @@ print_terminal_symbols (FILE *out)
 static void
 print_nonterminal_symbols (FILE *out)
 {
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
   fprintf (out, "%s\n\n", _("Nonterminals, with rules where they appear"));
   for (symbol_number i = ntokens; i < nsyms; i++)
     {
@@ -454,6 +469,7 @@ print_results (void)
   /* We used to use just .out if SPEC_NAME_PREFIX (-p) was used, but
      that conflicts with Posix.  */
   FILE *out = xfopen (spec_verbose_file, "w");
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
 
   reduce_output (out);
   grammar_rules_partial_print (out,
@@ -470,6 +486,7 @@ print_results (void)
   for (state_number i = 0; i < nstates; i++)
     print_state (out, states[i]);
   bitset_free (no_reduce_set);
+  PRINT_FROM_COMMENT(out);	/* added by <basile@starynkevitch.net> */
 
   xfclose (out);
 }
