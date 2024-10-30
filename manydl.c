@@ -70,18 +70,18 @@ const char manydl_git[] = MANYDL_GIT;
 // €Français: nombre de fichiers C et greffons générés. Tous les
 // fichiers C générés sont nommés _genf_*.c et sont générés ensemble,
 // et seulement ensuite compilés en des greffons.
-int maxcnt = 100;		/* number of generated plugins */
+int maxcnt = 200;		/* number of generated plugins */
 
 #define MINIMAL_COUNT 10
 // €Français: la taille détermine à peut près linéairement le nombre
 // de lignes de code générés (à un facteur 5 ou 10 près).
-int meansize = 300;		/* mean size of generated C file */
+int meansize = 400;		/* mean size of generated C file */
 #define MINIMAL_SIZE 15
 
 // €Français: les greffons sont compilés en parallèle par make, par
 // défaut 4 compilations en parallèle.
-int makenbjobs = 4;
-#define MINIMAL_NBJOBS 3
+int makenbjobs = 5;
+#define MINIMAL_NBJOBS 4
 #define MAXIMAL_NBJOBS 50
 
 // €Français: drapeau pour la verbosité à l'exécution.
