@@ -16,7 +16,7 @@
 ;; TAB offset set to 2
  (setq c-basic-offset 2)
  )
-(load-file "~/.emacs.d/caml-font.el")
+;(load-file "~/.emacs.d/caml-font.el")
 (add-hook 'c-mode-hook 'linux-c-mode)
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
