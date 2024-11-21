@@ -107,14 +107,14 @@ extern "C" void myqr_call_jsonrpc_to_refpersys
  const Json::Value& args,
  const std::function<void(const Json::Value&res)>& resfun);
 
-#define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {	\
-    std::ostringstream outs##Lin;		\
-    outs##Lin << Out << std::flush;		\
-    qFatal("%s:%d: %s\n[git %s@%s] on %s",	\
-	   Fil, Lin, outs##Lin.str().c_str(),   \
-	   myqr_git_id, __DATE__" " __TIME__,	\
-	   myqr_host_name);			\
-    abort();					\
+#define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {  \
+    std::ostringstream outs##Lin;   \
+    outs##Lin << Out << std::flush;   \
+    qFatal("%s:%d: %s\n[git %s@%s] on %s",  \
+     Fil, Lin, outs##Lin.str().c_str(),   \
+     myqr_git_id, __DATE__" " __TIME__, \
+     myqr_host_name);     \
+    abort();          \
   } while(0)
 
 #define MYQR_FATALOUT_AT(Fil,Lin,Out) \
@@ -122,10 +122,10 @@ extern "C" void myqr_call_jsonrpc_to_refpersys
 
 #define MYQR_FATALOUT(Out) MYQR_FATALOUT_AT(__FILE__,__LINE__,Out)
 
-#define MYQR_DEBUGOUT_AT_BIS(Fil,Lin,Out) do {	\
-    if (myqr_debug)				\
-      std::clog << Fil << ":" << Lin << " "	\
-		<< Out << std::endl;		\
+#define MYQR_DEBUGOUT_AT_BIS(Fil,Lin,Out) do {  \
+    if (myqr_debug)       \
+      std::clog << Fil << ":" << Lin << " " \
+    << Out << std::endl;    \
   } while(0)
 
 #define MYQR_DEBUGOUT_AT(Fil,Lin,Out) \
@@ -136,8 +136,8 @@ extern "C" void myqr_call_jsonrpc_to_refpersys
 extern "C" QApplication *myqr_app;
 
 extern "C" {
-class MyqrMainWindow;
-class MyqrDisplayWindow;
+  class MyqrMainWindow;
+  class MyqrDisplayWindow;
 };
 
 
@@ -170,7 +170,7 @@ public:
   static constexpr int minimal_height = 128;
   static constexpr int maximal_width = 2048;
   static constexpr int maximal_height = 1024;
-};				// end MyqrMainWindow
+};        // end MyqrMainWindow
 MyqrMainWindow*MyqrMainWindow::the_instance;
 
 
@@ -186,7 +186,7 @@ private slots:
 public:
   explicit MyqrDisplayWindow(QWidget*parent = nullptr);
   virtual ~MyqrDisplayWindow();
-};				// end MyqrDisplayWindow
+};        // end MyqrDisplayWindow
 
 ////////////////////////////////////////////////////////////////
 extern "C" QProcess*myqr_refpersys_process;
