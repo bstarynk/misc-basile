@@ -61,8 +61,8 @@ main (int argc, char **argv)
       if (sscanf (linebuf, "%d %d %d %64[A-Za-z0-9 ]%n",
 		  &r, &g, &b, colorbuf, &i) <= 3)
 	continue;
-      if (widestcolor < (int)strlen (colorbuf))
-	widestcolor = (int)strlen (colorbuf);
+      if (widestcolor < (int) strlen (colorbuf))
+	widestcolor = (int) strlen (colorbuf);
       nbcolors++;
       printf ("RPS_RGB_COLOR(%3d,%3d,%3d,\"%s\")\n", r, g, b, colorbuf);
     }
