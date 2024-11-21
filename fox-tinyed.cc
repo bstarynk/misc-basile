@@ -388,12 +388,14 @@ TinyApp::init(int&argc, char**argv, bool connect)
 {
   FXApp::init(argc, argv, connect);
   TINY_DBGOUT("TinyApp init argc=" << argc << " argv:"
-	      << [&](std::ostream&out) {
-		for (int i=0; i<argc; i++) {
-		  out<<' ';
-		  out << argv[i];
-		}
-	      } << std::endl);
+              << [&](std::ostream&out)
+  {
+    for (int i=0; i<argc; i++)
+      {
+        out<<' ';
+        out << argv[i];
+      }
+  } << std::endl);
 } // end TinyApp::init
 
 TinyApp::~TinyApp()
