@@ -198,24 +198,28 @@ synper_syslog_begin (void)
       memset (parentprocx, 0, sizeof (parentprocx));
       snprintf (parentprocx, sizeof (parentprocx), "/proc/%d/exe",
 		(int) parentpid);
-      if (readlink (parentprocx, parentexe, sizeof (parentexe) - 1) < 0)
-	SYNPER_FATAL ("failed to readlink from %s", parentprocx);
+      if (readlink (parentprocx, parentexe, sizeof (parentexe) - 1) < 0) {
+	syslog (LOG_WARNING, "%s failed to readlink from %s (%s)",
+		synper_progname, parentprocx, strerror(errno));
+      };
     }
-  else
+  else /// according to man page getppid(2) never fails
     SYNPER_FATAL ("failed to getppid");
   if (synper_name)
     syslog (LOG_INFO,
-	    "start of %s named %s git %s build %s with sync period %d seconds"
-	    " and log period %d seconds"
-	    " at %s, pid %d, parentpid %d running %s\n",
+	    "start of %s named %s git %s build %s\n"
+	    "... with sync period %d seconds"
+	    " and log period %d seconds\n"
+	    "... at %s, pid %d, parentpid %d running %s\n",
 	    synper_progname, synper_name, SYNPER_STRINGIFY (SYNPER_GITID),
 	    __DATE__, synper_period, synper_logperiod, nowbuf,
 	    (int) getpid (), (int) parentpid, parentexe);
   else
     syslog (LOG_INFO,
-	    "start of %s git %s build %s with sync period %d seconds"
-	    " and log period %d seconds"
-	    " at %s, pid %d, parentpid %d running %s\n",
+	    "start of %s git %s build %s\n"
+	    "... with sync period %d seconds"
+	    " and log period %d seconds\n"
+	    "... at %s, pid %d, parentpid %d running %s\n",
 	    synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), __DATE__,
 	    synper_period, synper_logperiod, nowbuf,
 	    (int) getpid (), (int) parentpid, parentexe);
