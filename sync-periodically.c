@@ -45,14 +45,16 @@ char *synper_name;
 char synper_selfexe[256];
 char synper_host[128];
 
+#define SYNPER_MIN_PERIOD 2	/*minimal sync period, in seconds */
+#define SYNPER_MAX_PERIOD 30	/*maximal sync period, in seconds */
+
 /// see http://man7.org/linux/man-pages/man2/sync.2.html
-int synper_period;		// period for sync(2) in seconds
+// period for sync(2) in seconds
+int synper_period =
+  (SYNPER_MAX_PERIOD - SYNPER_MIN_PERIOD) / 4 + SYNPER_MIN_PERIOD;
 int synper_logperiod = 2000;	// period for syslog(3) in seconds;,
 volatile atomic_bool synper_stop;
 bool synper_daemonized;
-
-#define SYNPER_MIN_PERIOD 2	/*minimal sync period, in seconds */
-#define SYNPER_MAX_PERIOD 30	/*maximal sync period, in seconds */
 
 #define SYNPER_MIN_LOGPERIOD 100	/*minimal log period, in seconds */
 #define SYNPER_MAX_LOGPERIOD 7200	/*maximal log period, in seconds */
@@ -224,6 +226,13 @@ synper_syslog_begin (void)
 }				/* end synper_syslog_begin */
 
 
+void
+synper_syslog_final (void)
+{
+  syslog (LOG_INFO, "%s git %s ending pid %ld",
+	  synper_progname, SYNPER_STRINGIFY (SYNPER_GITID), (long) getpid ());
+}				/* end synper_syslog_final */
+
 int
 main (int argc, char **argv)
 {
@@ -261,6 +270,7 @@ main (int argc, char **argv)
   };
   argp_parse (&argp, argc, argv, 0, 0, NULL);	// could run daemon(3)
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
+  atexit (synper_syslog_final);
   time_t nowt = 0;
   char timbuf[48];
   memset (timbuf, 0, sizeof (timbuf));
