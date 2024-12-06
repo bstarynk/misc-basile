@@ -1,4 +1,17 @@
 ;; file misc-basile/.emacs
+;; SPDX-License-Identifier: GPL-3.0-or-later
+;;
+;;  © Copyright 2017 - 2024 Basile Starynkevitch (France)
+;;   <basile@starynkevitch.net>
+;;
+;; 
+;;
+;; License: GPLv3+ (file COPYING-GPLv3)
+;;    This software is free software: you can redistribute it and/or modify
+;;    it under the terms of the GNU General Public License as published by
+;;    the Free Software Foundation, either version 3 of the License, or
+;;    (at your option) any later version.
+
 (global-set-key (kbd "<f12>") 'recompile)
 (global-set-key (kbd "<f6>") 'goto-line)
 (global-set-key (kbd "<f7>") 'next-error)
@@ -42,6 +55,7 @@
  '(global-display-line-numbers-mode t)
  '(line-number-mode nil)
  '(package-selected-packages '(caml))
+ '(compile-command "nice make -j4")
  '(size-indication-mode t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -49,3 +63,4 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+(put 'scroll-left 'disabled nil)
