@@ -58,3 +58,4 @@ gtkmm-refpersys
 transpiler-refpersys
 minicomp-gccjit
 process-rgb-color
+build-with-guile
