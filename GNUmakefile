@@ -37,6 +37,7 @@ clean:
 	$(RM) fltk-mini-edit
 	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
 	$(RM) transpiler-refpersys
+	$(RM) build-with-guile
 	$(RM) _genf*.c
 	$(RM) _logged-gcc_*
 	$(RM) _q6refpersys*
@@ -72,6 +73,9 @@ half: half.c
 
 bwc: bwc.c
 	$(CC) $(CFLAGS) -DBWC_GIT='"$(GIT_ID)"' $^  -o $@
+
+build-with-guile: build-with-guile.c
+	$(CC) $(CFLAGS) -O -g -Wall -DBUILDWITHGUILE_GIT='"$(GIT_ID)"' $(GUILE_CFLAGS) -rdynamic $^ $(GUILE_LIBS) -lm -ldl -o $@
 
 sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
