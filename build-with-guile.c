@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <syslog.h>
+#include <assert.h>
 #include <gc/gc.h>
 #include <stdarg.h>
 
@@ -69,7 +70,8 @@ struct bwg_todo_with_guile_st
   intptr_t todo_argint1;
   intptr_t todo_argint2;
 };
-#warning should declare and handle a vector of struct bwg_todo_with_guile_st
+#warning should declare and handle a (zero terminated) vector of struct bwg_todo_with_guile_st
+struct bwg_todo_with_guile_st *bwg_todo_vect;
 
 /// allocation routine - wrapping GC_malloc
 extern void *bwg_alloc_at (size_t nbytes, const char *file, int lineno,
@@ -242,6 +244,26 @@ bwg_handle_program_arguments (int argc, char **argv)
   while (gor >= 0);
 }				/* end bwg_handle_program_arguments */
 
+SCM
+bwg_my_hostname (void)
+{
+  static char hn[64];
+  if (!hn[0])
+    {
+      if (gethostname (hn, sizeof (hn) - 1))
+	BWG_FATAL ("failed to gethostname %s", strerror (errno));
+    }
+  return scm_from_locale_string (hn);
+}				/* end bwg_my_hostname */
+
+void
+bwg_inner_main (void *data, int argc, char **argv)
+{
+  scm_c_define_gsubr ("bwg-hostname", 0, 0, 0, bwg_my_hostname);
+  assert (data == bwg_todo_vect);
+  scm_shell (argc, argv);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -250,6 +272,7 @@ main (int argc, char **argv)
   bwg_argvec = argv;
   GC_INIT ();
   bwg_handle_program_arguments (argc, argv);
+  scm_boot_guile (argc, argv, bwg_inner_main, bwg_todo_vect);
   atexit (bwg_atexit);
 }				/* end main */
 
