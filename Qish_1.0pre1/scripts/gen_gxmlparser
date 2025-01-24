@@ -1,0 +1,16 @@
+#! /usr/bin/env ruby
+# -*- ruby -*- 
+# emacs Time-stamp: <Jun 10 2002 21:57:44 Basile STARYNKEVITCH hector.lesours>
+# prcsid $Id: gen_gxmlparser 1.2 Sat, 22 Jun 2002 22:36:59 +0200 basile $
+def process(inputfile, outstartfile, outendfile) 
+  htbat = { }
+  htbstart = { }
+  htbend = { }
+  IO.foreach(inputfile) do |line|
+    ## at_foo is XML attribute foo
+    line.gsub(/\bat_([a-z_]+[0-9]*)\b/) do |nam|
+      atnam= $1
+      htbat[atnam] = atnam
+    end
+  end
+end
