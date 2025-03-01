@@ -163,18 +163,31 @@ public:
 
 class TokKeyword : public Tok
 {
+#warning check this TokKeyword class
+public:
+  TokKeyword(const std::string&s) : Tok(Tkty_keyword, s) {};
+  TokKeyword(const char*s) : TokKeyword(std::string(s)) {};
+  virtual ~TokKeyword() {};
 };				// end TokKeyword
 
 class TokName : public Tok
 {
+#warning incomplete class TokName
+  virtual ~TokName() {};
 };				// end TokName
 
 class TokChunk : public Tok
 {
+#warning incomplete class TokChunk
+  virtual ~TokChunk() {};
 };				// end TokChunk
 
 
-
+class TokOid : public Tok
+{
+#warning incomplete class TokOid
+  virtual ~TokOid() {};
+};				// end TokOid
 
 /****************
  **                           for Emacs...
