@@ -5,7 +5,7 @@ CARBURETTA= /usr/local/bin/carburetta
 CARBURETTA_VERSION:=$(shell $(CARBURETTA) --version | /bin/tr -d '()')
 GITID=$(shell git log --format=oneline -q -1 | cut -c1-10)
 CXX= g++
-CXXFLAGS= -O -g -Wall -Wextra -std=gnu++14 -DGITID=\"$(GITID)\" '-DCARBURETTA_VERSION="$(CARBURETTA_VERSION)"'
+CXXFLAGS= -O -g -Wall -Wextra -std=gnu++17 -DGITID=\"$(GITID)\" '-DCARBURETTA_VERSION="$(CARBURETTA_VERSION)"'
 ASTYLE?= /usr/bin/astyle
 PRINTF?= /usr/bin/printf
 ASTYLEFLAGS= --verbose   --style=gnu  --indent=spaces=2

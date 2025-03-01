@@ -29,6 +29,16 @@
 extern "C" const char*carbex_progname;
 extern "C" const char*carbex_filename;
 extern "C" int carbex_curline, carbex_curcol;
+extern "C" bool carbex_verbose;
+
+#define CARB_LOG_AT2(Fil,Lin,Log) do {				\
+if (carbex_verbose)						\
+  std::cout << Fil << ":" << Lin << ":" << Log << std::endl;	\
+} while(0)
+
+#define CARB_LOG_AT(Fil,Lin,Log) CARB_LOG_AT2(Fil,Lin,Log)
+
+#define CARB_LOG(Log) CARB_LOG_AT(__FILE__,__LINE__,Log)
 
 /// forward declarations
 class Tok;

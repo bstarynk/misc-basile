@@ -1,6 +1,6 @@
 // file misc-basile/CarburEx/main.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
-// © Copyright by Basile Starynkevitch 2023 - 2024
+// © Copyright by Basile Starynkevitch 2023 - 2025
 // program released under GNU General Public License v3+
 //
 // this is free software; you can redistribute it and/or modify it under
@@ -20,6 +20,7 @@
 const char*carbex_progname;
 const char*carbex_filename;
 int carbex_lineno, carbex_colno;
+bool carbex_verbose;
 
 Tok::~Tok()
 {
@@ -144,9 +145,11 @@ show_version(void)
 void
 show_help(void)
 {
-  std::cout << carbex_progname << "usage:" << std::endl;
-  std::cout << "\t --version # show version" << std::endl;
-  std::cout << "\t --help    # show this help" << std::endl;
+  std::cout << carbex_progname << " usage:" << std::endl;
+  std::cout << "\t --version    # show version" << std::endl;
+  std::cout << "\t --help       # show this help" << std::endl;
+  std::cout << "\t --verbose    # verbose run" << std::endl;
+  std::cout << "\t FILES...     # files to parse" << std::endl;
   std::cout << "no warranty, since GPLv3+ licensed" << std::endl
             << "see CarburEx under github.com/bstarynk/misc-basile"
             << std::endl;
@@ -163,6 +166,10 @@ main(int argc, char**argv)
   for (int aix=1; aix<argc; aix++)
     {
       const char*curarg = argv[aix];
+      if (!strcmp(curarg, "-v") || !strcmp(curarg, "--verbose"))
+        {
+          carbex_verbose = true;
+        }
       if (curarg[0] != '-'
           && (isalnum(curarg[0]) || curarg[0]=='_'
               || curarg[0]=='/' || curarg[0]=='.'))
@@ -170,9 +177,9 @@ main(int argc, char**argv)
           FILE* curfil = fopen(curarg, "r");
           if (!curfil)
             err(EXIT_FAILURE, "cannot open file %s", curarg);
-	  carbex_lineno = 1;
-	  carbex_colno = 1;
-	  carbex_filename = curarg;
+          carbex_lineno = 1;
+          carbex_colno = 1;
+          carbex_filename = curarg;
 #warning missing code to parse curarg
         }
     }
