@@ -35,7 +35,7 @@ Tok::~Tok()
       tk_double=0.0;
       break;
     case Tkty_string:
-      tk_string.empty();
+      tk_string.clear();
       tk_string.~Tk_stdstring_t();
       break;
     case Tkty_name:
@@ -46,6 +46,9 @@ Tok::~Tok()
       break;
     case Tkty_chunk:
       tk_chunk=nullptr;
+      break;
+    case Tkty_oid:
+      tk_oid = nullptr;
       break;
     };
   tk_type = Tkty_none;
@@ -87,6 +90,10 @@ Tok::Tok(const Tok& ts) : // copy constructor
       tk_type = Tkty_chunk;
       tk_chunk = ts.tk_chunk;
       break;
+    case Tkty_oid:
+      tk_type = Tkty_oid;
+      tk_oid = ts.tk_oid;
+      break;
     }
 } /// end of Tok::Tok(const Tok& ts) copy constructor
 
@@ -126,6 +133,10 @@ Tok::Tok(Tok&&ts) : // move constructor
     case Tkty_chunk:
       tk_type = Tkty_chunk;
       tk_chunk = ts.tk_chunk;
+      break;
+    case Tkty_oid:
+      tk_type = Tkty_oid;
+      tk_oid = ts.tk_oid;
       break;
     }
 } // end Tok::Tok(Tok&&ts) move constructor

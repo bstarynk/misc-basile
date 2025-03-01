@@ -1,6 +1,6 @@
 // file misc-basile/CarburEx/carbex.hh
 // SPDX-License-Identifier: GPL-3.0-or-later
-// © Copyright by Basile Starynkevitch 2023 - 2024
+// © Copyright by Basile Starynkevitch 2023 - 2025
 // program released under GNU General Public License v3+
 //
 // this is free software; you can redistribute it and/or modify it under
@@ -49,6 +49,7 @@ class TokString;
 class TokName;
 class TokKeyword;
 class TokChunk;
+class TokOid;
 
 enum TokType
 {
@@ -58,6 +59,7 @@ enum TokType
   Tkty_string,
   Tkty_chunk,
   Tkty_name,
+  Tkty_oid,
   Tkty_keyword
 };
 
@@ -83,6 +85,7 @@ class Tok
     TokName* tk_name;
     TokKeyword* tk_keyword;
     TokChunk* tk_chunk;
+    TokOid* tk_oid;
   };
 protected:
   Tok(nullptr_t)
@@ -125,7 +128,7 @@ public:
   {
     return tk_lineno;
   };
-};
+};				// end class Tok
 
 using Tk_stdstring_t = std::string;
 
@@ -133,18 +136,21 @@ class TokNull : public Tok
 {
 public:
   TokNull() : Tok(nullptr) {};
-};
+  virtual ~TokNull() {};
+};				// end TokNull
 
 class TokInt : public Tok
 {
 public:
   TokInt(intptr_t n) : Tok(Tkty_int, n) {};
+  virtual ~TokInt() {};
 };
 
 class TokDouble : public Tok
 {
 public:
   TokDouble(double d) : Tok(Tkty_double, d, nullptr) {};
+  virtual ~TokDouble() {};
 };
 
 class TokString : public Tok
@@ -152,6 +158,7 @@ class TokString : public Tok
 public:
   TokString(const std::string&s) : Tok(Tkty_string, s) {};
   TokString(const char*s) : TokString(std::string(s)) {};
+  virtual ~TokString() {};
 };				// end TokString
 
 class TokKeyword : public Tok

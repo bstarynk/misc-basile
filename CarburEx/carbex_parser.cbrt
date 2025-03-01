@@ -28,19 +28,24 @@ extern "C"  int carbex_colno;
 }
 
 PAR_OPEN: \( {
-  //printf("open paren L%dC%d '%s'\n", carbex_lineno, carbex_colno, $text);
   CARB_LOG("open paren " << carbex_filename << ":"
-  << carbex_lineno << ":" << carbex_colno << " " << $text);
+           << carbex_lineno << ":" << carbex_colno << " " << $text);
 }
 PAR_CLOSE: \) {
-  printf("close paren L%dC%d '%s'\n", carbex_lineno, carbex_colno, $text);
+  CARB_LOG("close paren " << carbex_filename << ":"
+           << carbex_lineno << ":" << carbex_colno << " " << $text);
 }
 
 NAME: [a-z][a-zA-Z_]* {
-  printf("name '%s' L%dC%d\n", $text, carbex_lineno, carbex_colno);
+  CARB_LOG("name " << carbex_filename << ":"
+           << carbex_lineno << ":" << carbex_colno << " " << $text);
 }
+OID: _[0-9a-zA-Z]* {
+  CARB_LOG("oid " << carbex_filename << ":"
+           << carbex_lineno << ":" << carbex_colno << " " << $text);
+}
+%token PAR_OPEN PAR_CLOSE NAME OID
 
-%token PAR_OPEN PAR_CLOSE NAME
 %grammar%
 /* this is the grammar section of the parser file carbex_parser.cbrt */
 %%
