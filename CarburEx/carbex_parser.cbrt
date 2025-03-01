@@ -28,7 +28,9 @@ extern "C"  int carbex_colno;
 }
 
 PAR_OPEN: \( {
-  printf("open paren L%dC%d '%s'\n", carbex_lineno, carbex_colno, $text);
+  //printf("open paren L%dC%d '%s'\n", carbex_lineno, carbex_colno, $text);
+  CARB_LOG("open paren " << carbex_filename << ":"
+  << carbex_lineno << ":" << carbex_colno << " " << $text);
 }
 PAR_CLOSE: \) {
   printf("close paren L%dC%d '%s'\n", carbex_lineno, carbex_colno, $text);
@@ -41,10 +43,9 @@ NAME: [a-z][a-zA-Z_]* {
 %token PAR_OPEN PAR_CLOSE NAME
 %grammar%
 /* this is the grammar section of the parser file carbex_parser.cbrt */
-
 %%
 /* this is the epilogue part of the parser file carbex_parser.cbrt */
-
+#warning epilog section of carbex_parser.cbrt
 
 /****************
  **                           for Emacs...
