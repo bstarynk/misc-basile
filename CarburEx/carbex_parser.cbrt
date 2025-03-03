@@ -32,7 +32,8 @@ extern "C"  int carbex_colno;
 
 %token PAR_OPEN PAR_CLOSE
 %token NAME OID KW_BEGIN KW_END
-
+%token_type class Tok*
+%constructor $$ = nullptr;
 PAR_OPEN: \( {
   CARB_LOG("open paren " << carbex_filename << ":"
            << carbex_lineno << ":" << carbex_colno << " " << $text);
@@ -45,7 +46,7 @@ PAR_CLOSE: \) {
 KW_BEGIN: \\begin {
   CARB_LOG("begin keyword " << carbex_filename << ":"
            << carbex_lineno << ":" << carbex_colno << " " << $text);
-  //$$ = carbex_make_keyword_begin();
+  $$ = carbex_make_keyword_begin();
 }
 
 KW_END: \\end {

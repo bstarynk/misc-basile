@@ -170,6 +170,12 @@ class TokKeyword* carbex_make_keyword__NONE(void) {
   return nullptr;
 } // end carbex_make_keyword__NONE
 
+// TODO: use clever xmacro trick
+class TokKeyword* carbex_make_keyword_begin(void) {
+#warning carbex_make_keyword_begin is temporary here
+  return new TokKeyword("begin",keyw_begin);
+} // end carbex_make_keyword_begin
+
 int
 main(int argc, char**argv)
 {
