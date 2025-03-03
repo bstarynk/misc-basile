@@ -28,6 +28,9 @@ Tok::~Tok()
     {
     case Tkty_none:
       return;
+    case Tkty_delim:
+      tk_delim = delim__NONE;
+      break;
     case Tkty_int:
       tk_int=0;
       break;
@@ -66,6 +69,10 @@ Tok::Tok(const Tok& ts) : // copy constructor
     case Tkty_none:
       tk_ptr = nullptr;
       return;
+    case Tkty_delim:
+      tk_type = Tkty_delim;
+      tk_delim = ts.tk_delim;
+      break;
     case Tkty_int:
       tk_type = Tkty_int;
       tk_int = ts.tk_int;
@@ -110,6 +117,10 @@ Tok::Tok(Tok&&ts) : // move constructor
       tk_ptr = nullptr;
       tk_type = Tkty_none;
       return;
+    case Tkty_delim:
+      tk_type = Tkty_delim;
+      tk_delim = ts.tk_delim;
+      break;
     case Tkty_int:
       tk_type = Tkty_int;
       tk_int = ts.tk_int;

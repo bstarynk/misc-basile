@@ -71,7 +71,7 @@ enum TokType
 
 
 /// a cross-macro for every delimiter
-#define CARBEX_DELIMITERS(Kmacro,DelStr,DelName)	\
+#define CARBEX_DELIMITERS(Kmacro)	\
   Kmacro("",_NONE)					\
   Kmacro("(",PAR_OPEN)					\
   Kmacro(")",PAR_CLOSE)
@@ -84,6 +84,15 @@ enum CarbKeyword
   CARBEX_KEYWORDS(CARBEX_DECLARE_KEYWORD)
 #undef CARBEX_DECLARE_KEYWORD
 };
+
+
+enum CarbDelim
+{
+#define CARBEX_DECLARE_DELIM(DelStr,DelName) delim_##DelName,
+  CARBEX_DELIMITERS(CARBEX_DECLARE_DELIM)
+#undef CARBEX_DECLARE_DELIM
+};
+
 /// In simple cases, we could just use std::variant, but this code is
 /// an exercise for the rule of five. See
 /// https://en.cppreference.com/w/cpp/language/rule_of_three and
@@ -100,6 +109,7 @@ class Tok
     intptr_t tk_int;
     double tk_double;
     std::string tk_string;
+    enum CarbDelim tk_delim;
     TokName* tk_name;
     TokKeyword* tk_keyword;
     TokChunk* tk_chunk;
