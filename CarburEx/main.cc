@@ -166,6 +166,10 @@ show_help(void)
             << std::endl;
 } // end show_help
 
+class TokKeyword* carbex_make_keyword__NONE(void) {
+  return nullptr;
+} // end carbex_make_keyword__NONE
+
 int
 main(int argc, char**argv)
 {
