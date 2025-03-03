@@ -62,9 +62,18 @@ enum TokType
   Tkty_oid,
   Tkty_keyword
 };
+/// a cross-macro for every keyword
+#define CARBEX_KEYWORDS(Kmacro) \
+  Kmacro(_NONE) \
+  Kmacro(begin)
+
+
 
 enum CarbKeyword
 {
+#define CARBEX_DECLARE_KEYWORD(Kmacro) keyw_##Kmacro,
+  CARBEX_KEYWORDS(CARBEX_DECLARE_KEYWORD)
+#undef CARBEX_DECLARE_KEYWORD
 };
 /// In simple cases, we could just use std::variant, but this code is
 /// an exercise for the rule of five. See
@@ -119,6 +128,10 @@ public:
   {
     if (tk_lineno==0) tk_lineno=ln;
   };
+  Tok& put_lineno(int ln) {
+    set_lineno(ln);
+    return *this;
+  };
 #warning should follow the rule of five
   Tok(const Tok&);		// copy constructor
   Tok(Tok&&);			// move constructor
@@ -148,30 +161,51 @@ public:
 
 class TokDouble : public Tok
 {
+  double _dbl;
 public:
-  TokDouble(double d) : Tok(Tkty_double, d, nullptr) {};
+  TokDouble(double d) : Tok(Tkty_double, d, nullptr), _dbl(d) {};
   virtual ~TokDouble() {};
 };
 
 class TokString : public Tok
 {
+  std::string _str;
 public:
-  TokString(const std::string&s) : Tok(Tkty_string, s) {};
+  const std::string string() const { return _str; };
+  TokString(const std::string&s) : Tok(Tkty_string, s), _str(s) {};
   TokString(const char*s) : TokString(std::string(s)) {};
-  virtual ~TokString() {};
+  virtual ~TokString() {_str.clear();};
 };				// end TokString
+
+class TokKeyword;
+#define CARBEX_KEYWORD_DECLARE_PTRFUN(Kmacro) \
+  extern "C" class TokKeyword* carbex_make_keyword_##Kmacro();
+CARBEX_KEYWORDS(CARBEX_KEYWORD_DECLARE_PTRFUN)
+#undef CARBEX_KEYWORD_DECLARE_PTRFUN
 
 class TokKeyword : public Tok
 {
-#warning check this TokKeyword class
+  std::string _keystr;
+  enum CarbKeyword _keyword;
+#define CARBEX_KEYWORD_DECLARE_FRIEND(Kmacro) \
+  friend class TokKeyword* carbex_make_keyword_##Kmacro(void);
+  CARBEX_KEYWORDS(CARBEX_KEYWORD_DECLARE_FRIEND)
+#undef CARBEX_KEYWORD_DECLARE_FRIEND
 public:
-  TokKeyword(const std::string&s) : Tok(Tkty_keyword, s) {};
-  TokKeyword(const char*s) : TokKeyword(std::string(s)) {};
-  virtual ~TokKeyword() {};
+  const std::string keyword_string() const { return _keystr; };
+  enum CarbKeyword keyword_value() const { return _keyword; };
+  TokKeyword(const std::string&s, enum CarbKeyword kw) : Tok(Tkty_keyword, s), _keystr(s), _keyword(kw) {};
+  TokKeyword(const char*s, enum CarbKeyword kw) : TokKeyword(std::string(s),kw) {};
+  virtual ~TokKeyword() {_keystr.clear();};
 };				// end TokKeyword
 
 class TokName : public Tok
 {
+  std::string _namstr;
+public:
+  const std::string name_string() const { return _namstr; };
+  TokName(const std::string&s) : Tok(Tkty_name, s), _namstr(s) {};
+  TokName(const char*s) : TokName(std::string(s)) {};
 #warning incomplete class TokName
   virtual ~TokName() {};
 };				// end TokName
