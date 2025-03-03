@@ -31,9 +31,9 @@ extern "C" const char*carbex_filename;
 extern "C" int carbex_curline, carbex_curcol;
 extern "C" bool carbex_verbose;
 
-#define CARB_LOG_AT2(Fil,Lin,Log) do {				\
-if (carbex_verbose)						\
-  std::cout << Fil << ":" << Lin << ":" << Log << std::endl;	\
+#define CARB_LOG_AT2(Fil,Lin,Log) do {        \
+if (carbex_verbose)           \
+  std::cout << Fil << ":" << Lin << ":" << Log << std::endl;  \
 } while(0)
 
 #define CARB_LOG_AT(Fil,Lin,Log) CARB_LOG_AT2(Fil,Lin,Log)
@@ -71,9 +71,9 @@ enum TokType
 
 
 /// a cross-macro for every delimiter
-#define CARBEX_DELIMITERS(Kmacro)	\
-  Kmacro("",_NONE)					\
-  Kmacro("(",PAR_OPEN)					\
+#define CARBEX_DELIMITERS(Kmacro) \
+  Kmacro("",_NONE)          \
+  Kmacro("(",PAR_OPEN)          \
   Kmacro(")",PAR_CLOSE)
 
 
@@ -147,20 +147,21 @@ public:
   {
     if (tk_lineno==0) tk_lineno=ln;
   };
-  Tok& put_lineno(int ln) {
+  Tok& put_lineno(int ln)
+  {
     set_lineno(ln);
     return *this;
   };
 #warning should follow the rule of five
-  Tok(const Tok&);		// copy constructor
-  Tok(Tok&&);			// move constructor
+  Tok(const Tok&);    // copy constructor
+  Tok(Tok&&);     // move constructor
   Tok& operator = (const Tok&); // copy assignment
-  Tok& operator = (Tok&&r); 	// move assignment
+  Tok& operator = (Tok&&r);   // move assignment
   int lineno(void) const
   {
     return tk_lineno;
   };
-};				// end class Tok
+};        // end class Tok
 
 using Tk_stdstring_t = std::string;
 
@@ -169,14 +170,22 @@ class TokNull : public Tok
 public:
   TokNull() : Tok(nullptr) {};
   virtual ~TokNull() {};
-};				// end TokNull
+};        // end class TokNull
 
 class TokInt : public Tok
 {
 public:
   TokInt(intptr_t n) : Tok(Tkty_int, n) {};
   virtual ~TokInt() {};
-};
+};        // end class TokInt
+
+class TokDelim : public Tok
+{
+  enum CarbDelim _delim;
+public:
+  TokDelim(enum CarbDelim del): Tok(Tkty_delim, del) {};
+  virtual ~TokDelim();
+};        // end class TokDelim
 
 class TokDouble : public Tok
 {
@@ -184,17 +193,23 @@ class TokDouble : public Tok
 public:
   TokDouble(double d) : Tok(Tkty_double, d, nullptr), _dbl(d) {};
   virtual ~TokDouble() {};
-};
+};        // end class TokDouble
 
 class TokString : public Tok
 {
   std::string _str;
 public:
-  const std::string string() const { return _str; };
+  const std::string string() const
+  {
+    return _str;
+  };
   TokString(const std::string&s) : Tok(Tkty_string, s), _str(s) {};
   TokString(const char*s) : TokString(std::string(s)) {};
-  virtual ~TokString() {_str.clear();};
-};				// end TokString
+  virtual ~TokString()
+  {
+    _str.clear();
+  };
+};        // end class TokString
 
 class TokKeyword;
 #define CARBEX_KEYWORD_DECLARE_PTRFUN(Kmacro) \
@@ -211,36 +226,48 @@ class TokKeyword : public Tok
   CARBEX_KEYWORDS(CARBEX_KEYWORD_DECLARE_FRIEND)
 #undef CARBEX_KEYWORD_DECLARE_FRIEND
 public:
-  const std::string keyword_string() const { return _keystr; };
-  enum CarbKeyword keyword_value() const { return _keyword; };
+  const std::string keyword_string() const
+  {
+    return _keystr;
+  };
+  enum CarbKeyword keyword_value() const
+  {
+    return _keyword;
+  };
   TokKeyword(const std::string&s, enum CarbKeyword kw) : Tok(Tkty_keyword, s), _keystr(s), _keyword(kw) {};
   TokKeyword(const char*s, enum CarbKeyword kw) : TokKeyword(std::string(s),kw) {};
-  virtual ~TokKeyword() {_keystr.clear();};
-};				// end TokKeyword
+  virtual ~TokKeyword()
+  {
+    _keystr.clear();
+  };
+};        // end class TokKeyword
 
 class TokName : public Tok
 {
   std::string _namstr;
 public:
-  const std::string name_string() const { return _namstr; };
+  const std::string name_string() const
+  {
+    return _namstr;
+  };
   TokName(const std::string&s) : Tok(Tkty_name, s), _namstr(s) {};
   TokName(const char*s) : TokName(std::string(s)) {};
 #warning incomplete class TokName
   virtual ~TokName() {};
-};				// end TokName
+};        // end class TokName
 
 class TokChunk : public Tok
 {
 #warning incomplete class TokChunk
   virtual ~TokChunk() {};
-};				// end TokChunk
+};        // end class TokChunk
 
 
 class TokOid : public Tok
 {
 #warning incomplete class TokOid
   virtual ~TokOid() {};
-};				// end TokOid
+};        // end class TokOid
 
 /****************
  **                           for Emacs...
