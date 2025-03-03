@@ -45,6 +45,7 @@ class Tok;
 class TokNull;
 class TokInt;
 class TokDouble;
+class TokDelim;
 class TokString;
 class TokName;
 class TokKeyword;
@@ -54,6 +55,7 @@ class TokOid;
 enum TokType
 {
   Tkty_none,
+  Tkty_delim,
   Tkty_int,
   Tkty_double,
   Tkty_string,
@@ -66,6 +68,13 @@ enum TokType
 #define CARBEX_KEYWORDS(Kmacro) \
   Kmacro(_NONE) \
   Kmacro(begin)
+
+
+/// a cross-macro for every delimiter
+#define CARBEX_DELIMITERS(Kmacro,DelStr,DelName)	\
+  Kmacro("",_NONE)					\
+  Kmacro("(",PAR_OPEN)					\
+  Kmacro(")",PAR_CLOSE)
 
 
 
