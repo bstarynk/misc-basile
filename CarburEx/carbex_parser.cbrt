@@ -37,6 +37,7 @@ extern "C"  int carbex_colno;
 PAR_OPEN: \( {
   CARB_LOG("open paren " << carbex_filename << ":"
            << carbex_lineno << ":" << carbex_colno << " " << $text);
+  //$$ = carbex_make_delim(CARBEX_PAR_OPEN);
 }
 PAR_CLOSE: \) {
   CARB_LOG("close paren " << carbex_filename << ":"
@@ -52,6 +53,7 @@ KW_BEGIN: \\begin {
 KW_END: \\end {
   CARB_LOG("end keyword " << carbex_filename << ":"
            << carbex_lineno << ":" << carbex_colno << " " << $text);
+  $$ = carbex_make_keyword_end();
 }
 
 NAME: [a-z][a-zA-Z_]* {

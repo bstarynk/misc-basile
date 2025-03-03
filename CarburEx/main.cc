@@ -177,15 +177,16 @@ show_help(void)
             << std::endl;
 } // end show_help
 
-class TokKeyword* carbex_make_keyword__NONE(void) {
-  return nullptr;
-} // end carbex_make_keyword__NONE
 
-// TODO: use clever xmacro trick
-class TokKeyword* carbex_make_keyword_begin(void) {
-#warning carbex_make_keyword_begin is temporary here
-  return new TokKeyword("begin",keyw_begin);
-} // end carbex_make_keyword_begin
+#define CARBEX_MACRO_FOR_MAKE_KEYWORD(Name)		\
+  class TokKeyword* carbex_make_keyword_##Name(void) {	\
+    if (isalpha(#Name[0]))				\
+      return new TokKeyword(#Name,keyw_##Name);		\
+    return nullptr; }
+
+CARBEX_KEYWORDS(CARBEX_MACRO_FOR_MAKE_KEYWORD)
+#undef CARBEX_MACRO_FOR_MAKE_KEYWORD
+
 
 int
 main(int argc, char**argv)
