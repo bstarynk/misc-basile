@@ -1,5 +1,8 @@
-// file carbex_parser.cbrt
-
+// file misc-basile/CarburEx/carbex.hh
+// SPDX-License-Identifier: GPL-3.0-or-later
+// © Copyright by Basile Starynkevitch 2023 - 2025
+// program released under GNU General Public License v3+
+// on https://github.com/bstarynk/misc-basile/CarburEx
 
 /// Carburetta is a C++ parser generator on https://carburetta.com/
 // this is the prologue of the parser file carbex_parser.cbrt for Carburetta
@@ -27,12 +30,26 @@ extern "C"  int carbex_colno;
   carbex_colno = 1;
 }
 
+%token PAR_OPEN PAR_CLOSE
+%token NAME OID KW_BEGIN KW_END
+
 PAR_OPEN: \( {
   CARB_LOG("open paren " << carbex_filename << ":"
            << carbex_lineno << ":" << carbex_colno << " " << $text);
 }
 PAR_CLOSE: \) {
   CARB_LOG("close paren " << carbex_filename << ":"
+           << carbex_lineno << ":" << carbex_colno << " " << $text);
+}
+
+KW_BEGIN: \\begin {
+  CARB_LOG("begin keyword " << carbex_filename << ":"
+           << carbex_lineno << ":" << carbex_colno << " " << $text);
+  //$$ = carbex_make_keyword_begin();
+}
+
+KW_END: \\end {
+  CARB_LOG("end keyword " << carbex_filename << ":"
            << carbex_lineno << ":" << carbex_colno << " " << $text);
 }
 
@@ -44,7 +61,6 @@ OID: _[0-9a-zA-Z]* {
   CARB_LOG("oid " << carbex_filename << ":"
            << carbex_lineno << ":" << carbex_colno << " " << $text);
 }
-%token PAR_OPEN PAR_CLOSE NAME OID
 
 %grammar%
 /* this is the grammar section of the parser file carbex_parser.cbrt */
