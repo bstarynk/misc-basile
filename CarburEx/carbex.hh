@@ -67,13 +67,14 @@ enum TokType
 /// a cross-macro for every keyword
 #define CARBEX_KEYWORDS(Kmacro) \
   Kmacro(_NONE) \
-  Kmacro(begin)
+  Kmacro(begin) \
+  Kmacro(end)
 
 
 /// a cross-macro for every delimiter
 #define CARBEX_DELIMITERS(Kmacro) \
-  Kmacro("",_NONE)          \
-  Kmacro("(",PAR_OPEN)          \
+  Kmacro("",_NONE)                \
+  Kmacro("(",PAR_OPEN)            \
   Kmacro(")",PAR_CLOSE)
 
 
