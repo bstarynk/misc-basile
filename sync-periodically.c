@@ -1,6 +1,6 @@
 // file sync-periodically.c in github.com/bstarynk/misc-basile/
 
-/* Copyright 2020 - 2022 Basile Starynkevitch
+/* Copyright 2020 - 2025 Basile Starynkevitch
    <basile@starynkevitch.net>
 
 This sync-periodically program is free software for Linux; you can
@@ -64,9 +64,17 @@ void synper_set_signal_handlers (void);
 
 void synper_fatal_at (const char *file, int lin) __attribute__((noreturn));
 
-#define SYNPER_FATAL_AT_BIS(Fil,Lin,Fmt,...) do {			\
-    syslog(LOG_CRIT, "SYNPER FATAL:%s:%d: <%s>\n " Fmt "- %m\n\n",	\
-            Fil, Lin, __func__, ##__VA_ARGS__);				\
+#define SYNPER_FATAL_AT_BIS(Fil,Lin,Fmt,...) do {                       \
+    int err##Lin = errno;                                               \
+    char msgbuf##Lin[384];                                              \
+    memset(msgbuf##Lin, 0, sizeof(msgbuf##Lin));                        \
+    snprintf(msgbuf##Lin, sizeof(msgbuf##Lin)-1, Fmt, ##__VA_ARGS__);   \
+    if (isatty(STDERR_FILENO))                                          \
+      fprintf(stderr,  "SYNPER FATAL:%s:%d: <%s> %s - %s\n\n",		\
+              Fil, Lin, __func__, msgbuf##Lin, strerror(err##Lin));     \
+    fflush(NULL);                                                       \
+    syslog(LOG_CRIT|LOG_CONS, "SYNPER FATAL:%s:%d: <%s> %s- %s\n\n",    \
+           Fil, Lin, __func__, msgbuf##Lin, strerror(err##Lin));        \
     synper_fatal_at(Fil,Lin); } while(0)
 
 #define SYNPER_FATAL_AT(Fil,Lin,Fmt,...)  SYNPER_FATAL_AT_BIS(Fil,Lin,Fmt,##__VA_ARGS__)
@@ -86,6 +94,7 @@ struct argp_option synper_options[] = {
   {"log-period", 'L', "LOG-PERIOD", 0,
    "do a syslog(3) every LOG-PERIOD seconds", 0},
   {"daemon", 'd', NULL, 0, "run as a daemon(3)", 0},
+  {"chdir", 'C', "NEWDIR", 0, "change directory to NEWDIR", 0},
   {"version", 'V', NULL, 0, "show version info", 0},
   {NULL, 0, NULL, 0, NULL, 0}
 };
@@ -105,9 +114,9 @@ synper_signal_handler (int signum __attribute__((unused)))
 void
 synper_fatal_at (const char *file, int lin)
 {
-  syslog (LOG_CRIT, "SYNPER FATAL %s:%d", file, lin);
+  syslog (LOG_CRIT | LOG_CONS, "SYNPER FATAL %s:%d", file, lin);
   fflush (NULL);
-  abort ();
+  exit (EXIT_FAILURE);
 }				/* end synper_fatal_at */
 
 error_t
@@ -142,12 +151,32 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
       return 0;
     case 'N':			// --name
       {
-	synper_name = arg;;
+	synper_name = arg;
       }
       return 0;
     case 'L':			// --log-period
       {
 	synper_logperiod = atoi (arg ? : "");
+      }
+      return 0;
+    case 'C':
+      {
+	char newpath[384];
+	memset (newpath, 0, sizeof (newpath));
+	if (chdir (arg))
+	  {
+	    SYNPER_FATAL ("failed to chdir(2) to %s", arg);
+	  }
+	char *newdir = getcwd (newpath, sizeof (newpath) - 1);
+	if (newdir)
+	  {
+	    if (isatty (STDOUT_FILENO))
+	      printf ("%s changed directory to %s pid %d\n",
+		      synper_progname, newdir, (int) getpid ());
+	    syslog (LOG_INFO | LOG_CONS, "%s changed directory to %s pid %d",
+		    synper_progname, newdir, (int) getpid ());
+	    fflush (NULL);
+	  }
       }
       return 0;
     case 'V':			// --version
@@ -275,6 +304,7 @@ main (int argc, char **argv)
   };
   argp_parse (&argp, argc, argv, 0, 0, NULL);	// could run daemon(3)
   openlog ("synper", LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
+  synper_syslog_begin ();
   atexit (synper_syslog_final);
   time_t nowt = 0;
   char timbuf[48];
@@ -359,7 +389,6 @@ main (int argc, char **argv)
     synper_logperiod = 3 * synper_period;
   if (synper_logperiod > SYNPER_MAX_LOGPERIOD)
     synper_logperiod = SYNPER_MAX_LOGPERIOD;
-  synper_syslog_begin ();
   if (synper_pidfile)
     {
       syslog (LOG_INFO, "%s wrote pid-file %s as uid#%d on %s",
