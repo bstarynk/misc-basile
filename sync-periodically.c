@@ -171,8 +171,9 @@ synper_parse_opt (int key, char *arg, struct argp_state *state)
 	if (newdir)
 	  {
 	    if (isatty (STDOUT_FILENO))
-	      printf ("%s changed directory to %s pid %d\n",
-		      synper_progname, newdir, (int) getpid ());
+	      printf ("%s changed directory to %s pid %d git %s\n",
+		      synper_progname, newdir, (int) getpid (),
+		      SYNPER_STRINGIFY (SYNPER_GITID));
 	    syslog (LOG_INFO | LOG_CONS, "%s changed directory to %s pid %d",
 		    synper_progname, newdir, (int) getpid ());
 	    fflush (NULL);
