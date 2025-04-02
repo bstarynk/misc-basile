@@ -1,0 +1,33 @@
+# Basile STARYNKEVITCH ~/.zshrc file
+source /etc/zsh/zshrc
+limit coredumpsize 4900m
+export REFPERSYS_TOPDIR=$HOME/RefPerSys
+export PATH=$HOME/bin:$HOME/scripts:/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
+
+### indent $1 using astyle for RefPerSys source code in C++ or C
+function rpsastyle() {
+    /usr/bin/astyle --verbose --style=gnu  --indent=spaces=2  --convert-tabs $1
+}
+
+
+### list the C++ public names defined in ELF file $1
+function rpspubsym() {
+    /usr/bin/nm --demangle  --extern-only  --dynamic    --defined-only  $1 | /bin/grep -i rps
+}
+
+
+### list the C++ external names defined in ELF file $1
+function rpsextsym()  {
+    /usr/bin/nm --demangle  --extern-only  --dynamic    --undefined-only  $1 | /bin/grep -i rps
+}
+
+
+[[ -d ~/misc-basile ]] && /bin/cp -a ~/.zshrc ~/misc-basile/zshrc-basile
+
+# BEGIN opam configuration
+# This is useful if you're using opam as it adds:
+#   - the correct directories to the PATH
+#   - auto-completion for the opam binary
+# This section can be safely removed at any time if needed.
+[[ ! -r '/home/basile/.opam/opam-init/init.zsh' ]] || source '/home/basile/.opam/opam-init/init.zsh' > /dev/null 2> /dev/null
+# END opam configuration
