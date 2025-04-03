@@ -9,16 +9,16 @@ function rpsastyle() {
     /usr/bin/astyle --verbose --style=gnu  --indent=spaces=2  --convert-tabs $1
 }
 
-
-### list the C++ public names defined in ELF file $1
+### related to refpersys.org
+### list the C++ public names defined in ELF files
 function rpspubsym() {
-    /usr/bin/nm --demangle  --extern-only  --dynamic    --defined-only  $1 | /bin/grep -i rps
+    /usr/bin/nm --demangle  --extern-only    --defined-only  $* | /bin/grep -i rps
 }
 
 
-### list the C++ external names defined in ELF file $1
+### list the C++ external names defined in ELF files
 function rpsextsym()  {
-    /usr/bin/nm --demangle  --extern-only  --dynamic    --undefined-only  $1 | /bin/grep -i rps
+    /usr/bin/nm --demangle  --extern-only   --undefined-only  $* | /bin/grep -i rps
 }
 
 
