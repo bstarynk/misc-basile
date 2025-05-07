@@ -1,2 +1,7 @@
-_*.mkdep
+minirefpersys
 *.o
+*.so
+*.sqlite
+*~
+*.orig
+_*.mkdep
