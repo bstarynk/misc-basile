@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <time.h>
+#include <dlfcn.h>
 #include <gtk/gtk.h>
+#include <backtrace.h>
+#include <lightning.h>
 
-#endif /*MINREFPERSYS_INCLUDED*/
+#endif /*MINREFPERSYS_INCLUDED */
