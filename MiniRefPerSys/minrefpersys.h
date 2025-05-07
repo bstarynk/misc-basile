@@ -9,5 +9,9 @@
 #include <gtk/gtk.h>
 #include <backtrace.h>
 #include <lightning.h>
+#include <sqlite3.h>
+
+extern sqlite3 *mrps_sqlite;
+extern const char *mrps_progname;
 
 #endif /*MINREFPERSYS_INCLUDED */

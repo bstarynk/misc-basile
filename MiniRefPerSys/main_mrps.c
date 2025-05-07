@@ -11,6 +11,10 @@ const char mrps_main_shortgitid[] = MRPS_SHORTGITID;
 
 #include "minrefpersys.h"
 
+sqlite3 *mrps_sqlite;
+const char *mrps_progname;
+
+
 static void
 activate (GtkApplication *app, gpointer user_data)
 {
@@ -27,13 +31,21 @@ main (int argc, char **argv)
 {
   GtkApplication *app = NULL;
   int status = 0;
+  mrps_progname = argv[0];
   init_jit (argv[0]);
+  if (SQLITE_OK != sqlite3_open (MRPS_SQLITEDB, &mrps_sqlite))
+    {
+      fprintf (stderr, "%s failed to sqlite3_open %s : %s\n",
+	       mrps_progname, MRPS_SQLITEDB,
+	       sqlite3_errmsg (mrps_sqlite) ? : strerror (errno));
+      exit (EXIT_FAILURE);
+    };
   app = gtk_application_new ("org.refpersys.minirefpers",
 			     G_APPLICATION_DEFAULT_FLAGS);
   g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
   status = g_application_run (G_APPLICATION (app), argc, argv);
   g_object_unref (app);
-
+  sqlite3_close (mrps_sqlite);
   return status;
 }
 

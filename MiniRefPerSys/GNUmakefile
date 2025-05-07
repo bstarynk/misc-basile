@@ -23,7 +23,7 @@ MRPS_ARCH := $(shell /bin/uname -m)
 MRPS_OPERSYS := $(shell /bin/uname -o | /bin/sed 1s/[^a-zA-Z0-9_]/_/g )
 MRPS_ATSHARP := $(shell printf '@#')
 MRPS_HOMETMP := $(shell echo '$$HOME/tmp')
-MRPS_SQLITEDB := $(wildcard *.sqlite)
+MRPS_SQLITEDB := mini-refpersys.sqlite
 MRPS_PACKAGES= gtk4 sqlite3 lightning
 #MRPS_OPTIMFLAGS:= -Og
 
