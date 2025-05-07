@@ -1,7 +1,7 @@
-;; file misc-basile/.emacs
+;; file misc-basile/.emacs  -*- lexical-binding: t; -*-
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;;
-;;  © Copyright 2017 - 2024 Basile Starynkevitch (France)
+;;  © Copyright 2017 - 2025 Basile Starynkevitch (92340 Bourg-la-Reine, France)
 ;;   <basile@starynkevitch.net>
 ;;
 ;; 
