@@ -5,7 +5,7 @@ export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-15)
 HANDWRITTEN_SOURCES:=$(wildcard [a-z]*mrps.c)
 GENERATED_SOURCES:=$(wildcard _*.c)
 GENERATED_HEADERS=$(wildcard _*.h)
-.PHONY: all clean gencfiles load dump
+.PHONY: all clean gencfiles load dump indent
 
 all: gencfiles minirefpersys
 
@@ -51,7 +51,7 @@ minirefpersys: $(patsubst %.c,%.o,$(HANDWRITTEN_SOURCES)) \
                $(patsubst %.c,%.o,$(GENERATED_SOURCES)) | GNUmakefile $(MRPS_SQLITEDB)
 	$(LINK.c) $<  \
                 $(shell  pkg-config --libs $(MRPS_PACKAGES)) \
-	        -o $@ 
+	        -lbacktrace -ldl -o $@ 
 
 clean:
 	$(RM) *.o *.so minirefpersys *~ *.orig
@@ -59,5 +59,10 @@ clean:
 dump:
 	[ $f $(basename $(MRPS_SQLITEDB)).sql ] || /bin/mv $(basename $(MRPS_SQLITEDB)).sql $(basename $(MRPS_SQLITEDB)).sql~
 	$(MRPS_SQLITE) -batch -cmd .dump $(MRPS_SQLITEDB) < /dev/null > $(basename $(MRPS_SQLITEDB)).sql
+
+indent:
+	for f in $(HANDWRITTEN_SOURCES) minrefpersys.h ; do \
+	    $(MRPS_INDENT_COMMAND) $$f ; \
+	done
 
 gencfiles: $(MRPS_SQLITEDB)
