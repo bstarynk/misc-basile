@@ -1,11 +1,11 @@
 #!/bin/bash
 #% SPDX-License-Identifier: GPL-3.0-or-later
-# RefPerSys file do-generate-gitid.sh - see refpersys.org
+# MiniRefPerSys file do-generate-gitid.sh - see refpersys.org
 ###
 # it just emits a string with the full git commit id, appending + if
 # the git status is not clean.
 #%
-#%      © Copyright 2020-2022 The Reflective Persistent System Team
+#%      © Copyright 2020-2025 The Reflective Persistent System Team
 #%      <http://refpersys.org>
 #%
 #% Description:

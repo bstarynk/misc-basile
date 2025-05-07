@@ -2,8 +2,6 @@
 //  SPDX-License-Identifier: GPL-3.0-or-later
 // 
 
-extern const char mrps_main_gitid[];
-const char mrps_main_gitid[]= MRPS_GITID;
 
 extern const char mrps_main_date[];
 const char mrps_main_date[]= __DATE__;

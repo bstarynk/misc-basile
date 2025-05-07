@@ -1,4 +1,4 @@
-# Basile STARYNKEVITCH ~/.zshenv file for the ZSH shell from zsh.org
+# Basile STARYNKEVITCH ~/.zshenvfile
 source /etc/zsh/zshenv
 export REFERSYS_HOME=$HOME/RefPerSys
 export RPS_TOPDIR=$HOME/RefPerSys
