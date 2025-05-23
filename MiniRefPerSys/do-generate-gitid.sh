@@ -5,7 +5,7 @@
 # it just emits a string with the full git commit id, appending + if
 # the git status is not clean.
 #%
-#%      © Copyright 2020-2025 The Reflective Persistent System Team
+#%      © Copyright (C) 2020-2025 The Reflective Persistent System Team
 #%      <http://refpersys.org>
 #%
 #% Description:

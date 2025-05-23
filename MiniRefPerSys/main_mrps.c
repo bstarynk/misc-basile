@@ -1,7 +1,8 @@
 // file main_mrps.c
 //  SPDX-License-Identifier: GPL-3.0-or-later
 // 
-
+// © Copyright (C) 2025 Basile Starynkevitch
+// under GNU Public License v3+
 
 extern const char mrps_main_date[];
 const char mrps_main_date[] = __DATE__;
@@ -13,7 +14,7 @@ const char mrps_main_shortgitid[] = MRPS_SHORTGITID;
 
 sqlite3 *mrps_sqlite;
 const char *mrps_progname;
-
+lua_State*mrps_luastate;
 
 static void
 activate (GtkApplication *app, gpointer user_data)
@@ -33,6 +34,8 @@ main (int argc, char **argv)
   int status = 0;
   mrps_progname = argv[0];
   init_jit (argv[0]);
+  mrps_luastate = luaL_newstate();
+  luaL_openlibs(mrps_luastate);
   if (SQLITE_OK != sqlite3_open (MRPS_SQLITEDB, &mrps_sqlite))
     {
       fprintf (stderr, "%s failed to sqlite3_open %s : %s\n",
