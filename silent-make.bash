@@ -13,4 +13,4 @@
 # see https://www.gnu.org/licenses/#GPL
 # so NO WARRANTY
 make "$@" >& $HOME/tmp/_silent-make.out
-#### end of silent-make script
+#### end of silent-make.bash script
