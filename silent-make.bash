@@ -12,5 +12,9 @@
 # script licensed under GNU public licence v3+
 # see https://www.gnu.org/licenses/#GPL
 # so NO WARRANTY
+declare -i ex
 make "$@" >& $HOME/tmp/_silent-make.out
+ex=$?
+printf "silent-make %s -> %d\n" "$*" $ex
+exit $ex
 #### end of silent-make.bash script
