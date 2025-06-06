@@ -20,9 +20,17 @@
 (global-auto-revert-mode t)
 ; (global-linum-mode t)
 (mouse-wheel-mode 1)
+
+;;; lists.gnu.org/archive/html/help-gnu-emacs/2025-06/msg00063.html
+(prefer-coding-system 'utf-8)
+
+
+;;
 ;; BASILE: ninja-mode from github.com/ninja-build/ninja/blob/master/misc/ninja-mode.el
 ;; for http://ninja-build.org/ tool
 (load-file "~/.emacs.d/ninja-mode.el")
+
+
 (defun linux-c-mode()
 ;; set gnu style.
  (c-set-style "gnu")
