@@ -192,6 +192,7 @@ int
 main(int argc, char**argv)
 {
   carbex_progname = argv[0];
+  GC_INIT();
   if (argc>1 && !strcmp(argv[1], "--version"))
     show_version();
   else if (argc>1 && !strcmp(argv[1], "--help"))
@@ -213,8 +214,17 @@ main(int argc, char**argv)
           carbex_lineno = 1;
           carbex_colno = 1;
           carbex_filename = curarg;
-#warning missing code to parse curarg
+#warning missing code to parse file
         }
+      else if (curarg[0] == '|' || curarg[0]=='!') {
+          FILE* curfil = popen(curarg+1, "r");
+          if (!curfil)
+            err(EXIT_FAILURE, "cannot open pipe %s", curarg);
+          carbex_lineno = 1;
+          carbex_colno = 1;
+          carbex_filename = curarg;
+#warning missing code to parse pipe
+      }
     }
   return 0;
 } // end main

@@ -25,15 +25,19 @@
 #include <iostream>
 #include <cstring>
 
+/// Boehm conservative garbage collector https://www.hboehm.info/gc/
+#include <gc_cpp.h>
 
 extern "C" const char*carbex_progname;
 extern "C" const char*carbex_filename;
 extern "C" int carbex_curline, carbex_curcol;
 extern "C" bool carbex_verbose;
+extern "C" void carbex_parse_file(FILE*);
 
 #define CARB_LOG_AT2(Fil,Lin,Log) do {        \
-if (carbex_verbose)           \
-  std::cout << Fil << ":" << Lin << ":" << Log << std::endl;  \
+    if (carbex_verbose)			      \
+      std::cout << Fil << ":" << Lin << ":"   \
+		<< Log << std::endl;	      \
 } while(0)
 
 #define CARB_LOG_AT(Fil,Lin,Log) CARB_LOG_AT2(Fil,Lin,Log)
@@ -156,8 +160,8 @@ public:
 #warning should follow the rule of five
   Tok(const Tok&);    // copy constructor
   Tok(Tok&&);     // move constructor
-  Tok& operator = (const Tok&); // copy assignment
-  Tok& operator = (Tok&&r);   // move assignment
+  Tok& operator = (const Tok&) = default; // copy assignment
+  Tok& operator = (Tok&&r) = default;   // move assignment
   int lineno(void) const
   {
     return tk_lineno;
@@ -259,7 +263,21 @@ public:
 
 class TokChunk : public Tok
 {
+  std::vector<Tok> _vectok;
 #warning incomplete class TokChunk
+public:
+  TokChunk(const std::vector<Tok>& vec): Tok(Tkty_chunk,*this) {
+    _vectok.reserve(_vectok.size());
+    for (Tok cmp: vec) _vectok.push_back(cmp);
+  };
+  size_t chunk_size() const { return _vectok.size(); };
+  const Tok* chunk_nth(int rk) const {
+    size_t sz = chunk_size();
+    if (rk<0) rk += sz;
+    if (rk>=0 && rk<(int)sz)
+      return &_vectok.at(rk);
+    return nullptr;
+  };
   virtual ~TokChunk() {};
 };        // end class TokChunk
 
