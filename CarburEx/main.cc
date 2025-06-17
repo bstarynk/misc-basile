@@ -152,6 +152,30 @@ Tok::Tok(Tok&&ts) : // move constructor
     }
 } // end Tok::Tok(Tok&&ts) move constructor
 
+TokOid::TokOid(const char*idstr)  : Tok(Tkty_oid, _oid) {
+  if (!idstr) {
+    std::clog << "no idstr given" << std::endl;
+    abort();
+  };
+  if (idstr[0] != '_') {
+    std::clog << "oid should start with underline" << std::endl;
+    abort();
+  }
+  int l = (int) strlen(idstr);
+  if (l > (int)OID_SIZE) {
+    std::clog << "too long idstr: " << idstr << std::endl;
+    abort();
+  }
+  for (const char* pc= idstr+1; *pc; pc++) {
+    if (!isalnum(*pc)) {
+      std::clog << "invalid idstr: " << idstr << std::endl;
+      abort();
+    }
+  }
+  memcpy(_oid, idstr, l);
+}
+
+
 void
 show_version(void)
 {

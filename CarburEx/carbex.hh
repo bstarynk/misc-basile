@@ -82,6 +82,7 @@ enum TokType
   Kmacro(")",PAR_CLOSE)
 
 
+constexpr unsigned OID_SIZE=20;
 
 enum CarbKeyword
 {
@@ -284,6 +285,10 @@ public:
 
 class TokOid : public Tok
 {
+  char _oid[OID_SIZE+4];
+public:
+  TokOid(const char*idstr);
+  const char*oid() { return _oid; };
 #warning incomplete class TokOid
   virtual ~TokOid() {};
 };        // end class TokOid
