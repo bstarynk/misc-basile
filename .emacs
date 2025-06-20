@@ -16,6 +16,9 @@
 (global-set-key (kbd "<f6>") 'goto-line)
 (global-set-key (kbd "<f7>") 'next-error)
 (global-set-key (kbd "S-<f7>") 'previous-error)
+(global-set-key (kbd "<f1>") 'activate-transient-input-method)
+
+;;https://lists.gnu.org/archive/html/help-gnu-emacs/2025-05/msg00209.html
 ;(global-set-key [shift f10] 'flymake-goto-next-error)
 (global-auto-revert-mode t)
 ; (global-linum-mode t)
