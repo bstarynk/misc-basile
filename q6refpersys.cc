@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 /***
-    © Copyright 2024 by Basile Starynkevitch
+    © Copyright 2024 - 2025 by Basile Starynkevitch
    program released under GNU General Public License v3+
 
    This is free software; you can redistribute it and/or modify it under
@@ -77,7 +77,7 @@ extern "C" char myqr_host_name[];
 extern "C" char* myqr_progname;
 extern "C" bool myqr_debug;
 extern "C" std::string myqr_jsonrpc; // the FIFO prefix
-
+extern "C" std::string myqr_refpersys_topdir;
 extern "C" int myqr_jsonrpc_cmd_fd; /// written by RefPerSys, read by q6refpersys
 extern "C" QSocketNotifier* myqr_notifier_jsonrpc_cmd;
 extern "C" std::recursive_mutex myqr_mtx_jsonrpc_cmd;
@@ -377,7 +377,7 @@ myqr_create_windows(const QString& geom)
 #warning incomplete myqr_create_windows
 } // end myqr_create_windows
 
-
+std::string myqr_refpersystop;
 
 /// This function gets called when some bytes could be read on the
 /// file descriptor (FIFO) from refpersys to GUI.
@@ -727,6 +727,27 @@ int
 main(int argc, char **argv)
 {
   myqr_progname = argv[0];
+  {
+    char*rfpt = getenv("REFPERSYS_TOPDIR");
+    if (rfpt)
+      {
+        if (access(rfpt, R_OK))
+          {
+            int e=errno;
+            std::clog << myqr_progname << " has bad REFPERSYS_TOPDIR="
+                      << rfpt << ":" << strerror(e) << std::endl;
+            exit(EXIT_FAILURE);
+          }
+        else
+          myqr_refpersys_topdir = std::string(rfpt);
+      }
+    else
+      {
+        std::clog << myqr_progname << " needs a REFPERSYS_TOPDIR from environment"
+                  << std::endl;
+        exit(EXIT_FAILURE);
+      };
+  };
   for (int i=1; i<argc; i++)
     {
       if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug"))
@@ -828,6 +849,7 @@ main(int argc, char **argv)
 const char myqr_git_id[] = GITID;
 char* myqr_progname;
 char myqr_host_name[sizeof(myqr_host_name)];
+std::string myqr_refpersys_topdir;
 QApplication *myqr_app;
 bool myqr_debug;
 std::string myqr_jsonrpc;
