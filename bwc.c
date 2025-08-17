@@ -102,10 +102,13 @@ count_lines (FILE *f, char *name)
       printf ("%s has %d large lines:\n", name, largcnt);
       for (int i = 0; i < largcnt; i++) {
 	if ((i+1) % 8 == 0)
-	  puts("\n ...");
+	  fputs("\n ...", stdout);
 	printf (" %d", largarr[i]);
       }
-      fputc ('\n', stdout);
+      if (largcnt > 40)
+	printf(" # large in %s\n", name);
+      else
+	fputc ('\n', stdout);
       fflush (NULL);
     };
   free (linbuf);
