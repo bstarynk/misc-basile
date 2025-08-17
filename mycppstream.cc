@@ -27,7 +27,7 @@ int main(void)
   std::cout << __FILE__ << ":" << __LINE__ << std::endl;
   std::ofstream myout("/dev/stdout");
   myout << " myout of size " << sizeof(myout)
-	<< " align " << alignof(myout) << " " <<  __FILE__ << ":" << __LINE__ << std::endl;
+        << " align " << alignof(myout) << " " <<  __FILE__ << ":" << __LINE__ << std::endl;
   return 0;
 }
 

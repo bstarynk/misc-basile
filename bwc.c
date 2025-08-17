@@ -29,14 +29,14 @@
 
 const char *progname = NULL;
 
-int linlargelimit = 80; /// above that line width limit in bytes large lines are noticed
+int linlargelimit = 80;		/// above that line width limit in bytes large lines are noticed
 void
 count_lines (FILE *f, char *name)
 {
   size_t linsiz = 256;
   int largdim = 32;
   int largcnt = 0;
-  int* largarr = calloc(largdim, sizeof(int));
+  int *largarr = calloc (largdim, sizeof (int));
   clock_t stc = clock ();
   char *linbuf = malloc (linsiz);
   long lincnt = 0;
@@ -49,7 +49,7 @@ count_lines (FILE *f, char *name)
     };
   if (!largarr)
     {
-      perror("calloc largarr");
+      perror ("calloc largarr");
       exit (EXIT_FAILURE);
     };
   memset (linbuf, 0, linsiz);
@@ -69,23 +69,27 @@ count_lines (FILE *f, char *name)
 		   name, lincnt, linwidth);
 	  exit (EXIT_FAILURE);
 	};
-      if (linlargelimit>0 && linlen>linlargelimit) {
-	if (largcnt > largdim) {
-	  int newdim = ((largdim+largdim/4+4)|0xf)+1;
-	  int *newarr =  calloc(newdim, sizeof(int));
-	  if (!newarr) {
-	    fprintf(stderr, "%s: calloc newarr (newdim=%d) failed - %s\n",
-		    progname, newdim, strerror(errno));
-	    exit (EXIT_FAILURE);
-	  }
-	  memcpy (newarr, largarr, sizeof(int)*largcnt);
-	  int *oldarr = largarr;
-	  largarr = newarr;
-	  free (oldarr);
-	  largdim = newdim;
+      if (linlargelimit > 0 && linlen > linlargelimit)
+	{
+	  if (largcnt > largdim)
+	    {
+	      int newdim = ((largdim + largdim / 4 + 4) | 0xf) + 1;
+	      int *newarr = calloc (newdim, sizeof (int));
+	      if (!newarr)
+		{
+		  fprintf (stderr,
+			   "%s: calloc newarr (newdim=%d) failed - %s\n",
+			   progname, newdim, strerror (errno));
+		  exit (EXIT_FAILURE);
+		}
+	      memcpy (newarr, largarr, sizeof (int) * largcnt);
+	      int *oldarr = largarr;
+	      largarr = newarr;
+	      free (oldarr);
+	      largdim = newdim;
+	    };
+	  largarr[largcnt++] = lincnt;
 	};
-	largarr[largcnt++] = lincnt;
-      };
     }
   while (!feof (f));
   clock_t stf = clock ();
@@ -93,13 +97,14 @@ count_lines (FILE *f, char *name)
   printf
     ("%s: %ld lines, maxwidth %ld, %ld bytes in %.5f cpu sec, %.3f µs/l\n",
      name, lincnt, linwidth, off, cput, (cput * 1.0e6) / lincnt);
-  if (largcnt>0) {
-    printf("%s large lines at", name);
-    for (int i=0; i<largcnt; i++)
-      printf(" %d", largarr[i]);
-    fputc('\n', stdout);
-    fflush(NULL);
-  };
+  if (largcnt > 0)
+    {
+      printf ("%s large lines at", name);
+      for (int i = 0; i < largcnt; i++)
+	printf (" %d", largarr[i]);
+      fputc ('\n', stdout);
+      fflush (NULL);
+    };
   free (linbuf);
   free (largarr);
 }				/* end count_lines */
@@ -111,12 +116,21 @@ main (int argc, char **argv)
   bool withmmap = false;
   if (argc < 2 || !strcmp (argv[1], "-h") || !strcmp (argv[1], "--help"))
     {
-      fprintf (stderr, "usage: %s [ -m # mmap | -p # plain ] [ -l limit ] files... \n",
-	       argv[0]);
+      fprintf (stderr,
+	       "usage: %s [ -m # mmap | -p # plain ] [ -l limit ] files... \n",
+	       progname);
       fprintf (stderr, "\t with -m use mmap(2); with -p dont\n");
-            fprintf (stderr, "\t -l 80 is the default line line length limit\n");
+      fprintf (stderr, "\t -l 80 is the default line line length limit\n");
+      fprintf (stderr, "\t also with --version and --help\n");
       exit (EXIT_SUCCESS);
     };
+  if (argc < 2 || !strcmp (argv[1], "-V") || !strcmp (argv[1], "--version"))
+    {
+      printf ("%s version %s built %s\n",
+	      progname, BWC_GIT, __DATE__ "@" __TIME__);
+      fflush (NULL);
+      exit (EXIT_SUCCESS);
+    }
   for (int ix = 1; ix < argc; ix++)
     {
       if (!strcmp (argv[ix], "-m"))
@@ -129,11 +143,12 @@ main (int argc, char **argv)
 	  withmmap = false;
 	  continue;
 	};
-      if (!strcmp (argv[ix], "-l")) {
-	if (ix < argc+1)
-	  linlargelimit = atoi(argv[ix+1]);
-	continue;
-      };
+      if (!strcmp (argv[ix], "-l"))
+	{
+	  if (ix < argc + 1)
+	    linlargelimit = atoi (argv[ix + 1]);
+	  continue;
+	};
       FILE *f = fopen (argv[ix], withmmap ? "rm" : "r");
       if (!f)
 	{
