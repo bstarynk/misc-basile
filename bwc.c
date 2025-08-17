@@ -101,7 +101,7 @@ count_lines (FILE *f, char *name)
     {
       printf ("%s has %d large lines:\n", name, largcnt);
       for (int i = 0; i < largcnt; i++) {
-	if ((i+1) % 8 == 0)
+	if ((i+1) % 9 == 0)
 	  fputs("\n ...", stdout);
 	printf (" %d", largarr[i]);
       }
