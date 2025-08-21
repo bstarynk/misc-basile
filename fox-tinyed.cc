@@ -1,6 +1,6 @@
 // file misc-basile/fox-tinyed.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
-//  © Copyright 2022 - 2024 Basile Starynkevitch (&Jeroen van der Zijp)
+//  © Copyright 2022 - 2025 Basile Starynkevitch (&Jeroen van der Zijp)
 //    and the RefPerSys team on http://refpersys.org/
 //  some code taken from fox-toolkit.org Adie
 
@@ -29,8 +29,22 @@ extern "C" char tiny_hostname[80];
 extern "C" char*tiny_progname;
 
 extern "C" const char tiny_buildtimestamp[];
+extern "C" const char tiny_gitid[];
+extern "C" const char tiny_gxx[];
 
 const char tiny_buildtimestamp[]=__DATE__ "@" __TIME__;
+
+#ifndef GIT_ID
+#error GIT_ID should be defined in compilation command
+#endif
+
+const char tiny_gitid[]= GIT_ID;
+
+#ifndef GXX_COMPILER
+#error GXX_COMPILER should be defined in compilation command as the C++ GCC compiler string
+#endif
+
+const char tiny_gxx[] = GXX_COMPILER;
 
 #define TINY_DGBOUT_AT(Fil,Lin,Out) do {	\
   if (tiny_debug)				\
@@ -659,7 +673,7 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
   : FXMainWindow(theapp, /*name:*/"tiny-mainwin-fox",
                  /*closedicon:*/nullptr, /*mainicon:*/nullptr,
                  /*opt:*/DECOR_ALL,
-                 /*x,y,w,h:*/20, 20, 450, 333),
+                 /*x,y,w,h:*/20, 20, 800, 600),
     _main_vertframe(nullptr),
     _main_menubar(nullptr),
     _main_filemenu(nullptr),
@@ -674,13 +688,18 @@ TinyMainWindow::TinyMainWindow(FXApp* theapp)
   _main_vertframe = new TinyVerticalFrame(this, LAYOUT_SIDE_TOP|FRAME_NONE //
                                           |LAYOUT_FILL_X|LAYOUT_FILL_Y|PACK_UNIFORM_WIDTH,
                                           2, 2, // x,y
-                                          448, 330 //w,h
+                                          getWidth()-4, getHeight()-4 //w,h
                                          );
   _main_menubar = new FXMenuBar(_main_vertframe,
                                 LAYOUT_SIDE_TOP|LAYOUT_FILL_X);
   _main_filemenu = new FXMenuPane(_main_menubar);
   _main_quitcmd = new FXMenuCommand(_main_filemenu,"&Quit",nullptr,getApp(),FXApp::ID_QUIT);
+  _main_vertframe->show();
+  _main_menubar->show();
+  _main_filemenu->show();
+  _main_quitcmd->show();
   tiny_app->_main_win = this;
+  show();
   TINY_DBGOUT("end TinyMainWindow @" << (void*)this
               << " main_menubar@" << _main_menubar
               << " main_filemenu@" << _main_filemenu
@@ -719,6 +738,7 @@ tiny_version(void)
   std::cout << tiny_progname << " version:" << std::endl;
   std::cout << "git " << GIT_ID << " built " << tiny_buildtimestamp
             << std::endl;
+  std::cout << "\t see github.com/bstarynk/misc-basile/fox-tinyed.cc" << std::endl;
   std::cout << "fox-toolkit " << (int)fxversion[0] << '.'
             << (int)fxversion[1] << '.'
             << (int)fxversion[2] << std::endl;
