@@ -1,7 +1,7 @@
 ## file misc-basile/MiniComp/GNUmakefile
 ## on https://github.com/bstarynk/
 ## SPDX-License-Identifier: GPLv3+
-##  © Copyright Basile Starynkevitch  2024
+##  © Copyright Basile Starynkevitch  2024 - 2025
 
 ## Permission is hereby granted, free of charge, to any person
 ## obtaining a copy of this software and associated documentation
