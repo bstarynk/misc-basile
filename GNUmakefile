@@ -1,7 +1,9 @@
 ## file misc-basile/GNUmakefile
 ## on https://github.com/bstarynk/
 
-.PHONY: all clean indent manydl-plugins analyze-framac framac-bwc framac-sync-periodically framac-manydl framac-half clever-framac valgrind-logged-gcc minicomp
+.PHONY: all clean indent manydl-plugins analyze-framac framac-bwc \
+        framac-sync-periodically framac-manydl framac-half clever-framac \
+        valgrind-logged-gcc minicomp install
 
 FRAMAC=/usr/bin/frama-c
 FRAMALIBC=/usr/share/frama-c/libc/

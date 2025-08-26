@@ -1,6 +1,6 @@
 // file misc-basile/browserfox.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
-// © 2022 - 2024 copyright CEA & Basile Starynkevitch
+// © 2022 - 2025 copyright CEA & Basile Starynkevitch
 
 /****
 * This program is free software: you can redistribute it and/or modify
