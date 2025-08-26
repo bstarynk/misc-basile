@@ -27,7 +27,7 @@
 ## sequence of JSON files into a shared object using the libgccjit
 ## provided by GNU gcc
 ##
-CC=/usr/bin/gcc
+CC=gcc
 INDENT=/usr/bin/indent
 RM=/bin/rm -vf
 export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-15)
