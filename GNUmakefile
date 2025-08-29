@@ -68,7 +68,7 @@ indent:
 	for f in $(wildcard *.hh) ; do $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
 
 manydl: manydl.c
-	$(CC) $(CFLAGS) -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -lm -ldl -o $@
+	$(CC) $(CFLAGS) -DMANYDL_GCC='"$(CC)"' -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -lm -ldl -o $@
 
 half: half.c
 	$(CC) $(CFLAGS) -DHALF_GIT='"$(GIT_ID)"' $^  -o $@
