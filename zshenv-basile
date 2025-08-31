@@ -1,7 +1,7 @@
-# Basile STARYNKEVITCH ~/.zshenvfile
+# Basile STARYNKEVITCH ~/.zshenv file
 source /etc/zsh/zshenv
-export REFERSYS_HOME=$HOME/RefPerSys
-export RPS_TOPDIR=$HOME/RefPerSys
+export REFPERSYS_HOME=$HOME/RefPerSys
+export REFPERSYS_TOPDIR=$HOME/RefPerSys
 export PATH=$HOME/bin:$HOME/scripts:/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
 export PS1="%m %3~ %T %# "
 
