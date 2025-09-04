@@ -21,7 +21,7 @@ const char trp_git_id[] = GIT_ID;
 
 char* trp_prog_name;
 
-
+extern "C" void trp_initialize_primitives(void);
 
 ////////////////////////////////////////////////////////////////
 
@@ -462,12 +462,28 @@ trp_parse_program_options(int &argc, char**argv)
   TRP_WARNING("unimplemented trp_parse_program_options argc=%d", argc);
 } // end trp_parse_program_options
 
+
+/* Return a Scheme string containing the transpiler gitid.  */
+
+SCM
+trpfun_git_id(void)
+{
+  return scm_from_utf8_string (trp_git_id);
+} // end trpfun_git_id
+
+void
+trp_initialize_primitives(void)
+{
+#warning missing code to initialize "trp:gitid" from trpfun_git_id
+} // end trp_initialize_primitives
+
 int
 main(int argc, char**argv)
 {
   trp_prog_name = argv[0];
   GC_INIT();
   scm_init_guile();
+  trp_initialize_primitives();
   if (argc == 2)
     {
       if (!strcmp(argv[1], "--version"))
