@@ -115,7 +115,7 @@ public:
     return _inp_path;
   };
   virtual ~Trp_InputFile();
-};				// end Trp_InputFile
+};        // end Trp_InputFile
 
 class Trp_SymbolicName : public gc_cleanup
 {
@@ -126,6 +126,15 @@ public:
   static Trp_SymbolicName* find(const std::string n);
 };        // end Trp_SymbolicName
 
+enum Trp_TokenKind
+{
+  Tokd__None=0,
+  Tokd_Int,
+  Tokd_Double,
+  Tokd_String,
+  Tokd_Name,
+};
+
 class Trp_Token : public gc_cleanup
 {
 private:
@@ -133,12 +142,26 @@ private:
   int tok_lin, tok_col;
 protected:
   Trp_Token(Trp_InputFile*src, int lin, int col);
-  Trp_Token(Trp_InputFile*src, int col);
+  Trp_Token(Trp_InputFile*src, /*lineno taken from src*/ int col);
   virtual ~Trp_Token();
+public:
+  virtual Trp_TokenKind token_kind() const
+  {
+    return Tokd__None;
+  };
 };        // end class Trp_Token
 
 class Trp_NameToken : public Trp_Token
 {
+  Trp_SymbolicName*_tok_symb_name;
+  virtual Trp_TokenKind token_kind() const
+  {
+    return Tokd_Name;
+  };
+public:
+  Trp_NameToken(const std::string namstr, Trp_InputFile*src, int lin, int col);
+  Trp_NameToken(const std::string namstr, Trp_InputFile*src, /*line from src*/ int col);
+  virtual ~Trp_NameToken();
 };        // end class Trp_NameToken
 
 #endif //TRANSPILER_REFPERSYS_INCLUDED

@@ -9,8 +9,8 @@ FRAMAC=/usr/bin/frama-c
 FRAMALIBC=/usr/share/frama-c/libc/
 INDENT=/usr/bin/indent
 VALGRIND=/usr/bin/valgrind
-CC=/usr/bin/gcc
-CXX=/usr/bin/g++
+CC=gcc
+CXX=g++
 ASTYLE=/usr/bin/astyle
 ASTYLEFLAGS= --style=gnu -s2
 RM=/bin/rm -vf
@@ -83,7 +83,7 @@ sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
 
 transpiler-refpersys: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
-	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $(GUILE_CFLAGS) $< -o $@ -lgccpp -lunistring $(GUILE_LIBS) -lgc  -ldl
+	$(CXX) $(CXXFLAGS) -v -DGIT_ID='"$(GIT_ID)"' $(GUILE_CFLAGS) $< -o $@ -lgccpp -lunistring $(GUILE_LIBS) -lgc  -ldl
 transpiler-refpersys.ii: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
 	$(CXX) $(CXXFLAGS) -DGIT_ID='"$(GIT_ID)"' $(GUILE_CFLAGS) -C -E $< -o - | /bin/sed -e 's:^#://#:' > $@
 

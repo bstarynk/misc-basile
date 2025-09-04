@@ -327,6 +327,7 @@ Trp_InputFile::next_token(void)
   ucs4_t ch = peek_utf8(&goodch);
   if (!goodch)
     return nullptr;
+  bool ascii = ch > 0 && ch <= 0x7f;
 } // end trp_token::next_token
 
 ////////////////////////////////////////////////////////////////
@@ -346,6 +347,30 @@ Trp_Token::~Trp_Token()
   tok_lin=0;
   tok_col=0;
 } // end Trp_Token::~Trp_Token
+
+
+
+Trp_NameToken::Trp_NameToken(const std::string namstr, Trp_InputFile*src, int lin, int col)
+  : Trp_Token(src, lin, col),
+    _tok_symb_name(nullptr)
+{
+#warning unimplemented Trp_NameToken::Trp_NameToken
+  TRP_ERROR("unimplemented Trp_NameToken nam=%s src=%s lin#%d col#%d",
+            namstr.c_str(), src->path().c_str(), lin, col);
+} // end Trp_NameToken::Trp_NameToken
+Trp_NameToken::Trp_NameToken(const std::string namstr, Trp_InputFile*src, /*lin from src*/ int col)
+  : Trp_Token(src, col),
+    _tok_symb_name(nullptr)
+{
+#warning unimplemented Trp_NameToken::Trp_NameToken
+  TRP_ERROR("unimplemented Trp_NameToken nam=%s src=%s col#%d",
+            namstr.c_str(), src->path().c_str(),  col);
+} // end Trp_NameToken::Trp_NameToken
+
+Trp_NameToken::~Trp_NameToken()
+{
+#warning unimplemented Trp_NameToken::~Trp_NameToken
+} // end Trp_NameToken::~Trp_NameToken
 
 ////////////////////////////////////////////////////////////////
 
