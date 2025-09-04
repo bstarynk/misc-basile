@@ -44,6 +44,7 @@
 #include "unistr.h"
 
 // https://github.com/vimpunk/mio/tree/master/single_include/mio
+// a simple C++ library for memory mapped files
 #include "mio.hpp"
 
 #define TRP_WARNING_AT_BIS(Fil,Lin,Fmt,...) do {  \
