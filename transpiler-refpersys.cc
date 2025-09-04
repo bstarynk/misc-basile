@@ -426,27 +426,34 @@ trp_position_equal_option(const char*prefix, const char*progarg)
 void
 trp_parse_program_options(int &argc, char**argv)
 {
-  for (int ix=0; ix<argc; ix++) {
-    char*curarg = argv[ix];
-    int curguilepos= trp_position_equal_option("--guile", curarg);
-    if (curguilepos>0) {
-      const char*restguile = curarg+curguilepos;
-      if (!access(restguile, R_OK)) {
-	printf("loading GUILE file %s\n", restguile);
-	fflush(nullptr);
-	scm_c_primitive_load(restguile);
-      }
-      else if (restguile[0]=='(') {
-	printf("evaluating GUILE expression %s\n", restguile);
-	fflush(nullptr);
-	SCM val = scm_c_eval_string(restguile);
-	if (scm_is_false(val)) {
-	  TRP_ERROR("GUILE expression %s was evaluated to false", restguile);
-	  exit(EXIT_FAILURE);
-	};
-      }
-    };
-  }
+  for (int ix=0; ix<argc; ix++)
+    {
+      char*curarg = argv[ix];
+      int curguilepos= trp_position_equal_option("--guile", curarg);
+      if (curguilepos>0)
+        {
+          const char*restguile = curarg+curguilepos;
+          if (!access(restguile, R_OK))
+            {
+              printf("loading GUILE file %s\n", restguile);
+              fflush(nullptr);
+              scm_c_primitive_load(restguile);
+            }
+          else if (restguile[0]=='(')
+            {
+              printf("evaluating GUILE expression %s\n", restguile);
+              fflush(nullptr);
+              SCM val = scm_c_eval_string(restguile);
+              if (scm_is_false(val))
+                {
+                  TRP_ERROR("GUILE expression %s was evaluated to false", restguile);
+                  exit(EXIT_FAILURE);
+                }
+              else if (scm_is_null_or_nil(val))
+                TRP_WARNING("GUILE expression %s evaluated to null-like", restguile);
+            }
+        };
+    }
 #warning trp_parse_program_options unimplemented
   TRP_WARNING("unimplemented trp_parse_program_options argc=%d", argc);
 } // end trp_parse_program_options
