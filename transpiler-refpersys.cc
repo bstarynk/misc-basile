@@ -1,7 +1,7 @@
 // file misc-basile/transpiler-refpersys.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
 /***
- *   ©  Copyright Basile Starynkevitch 2024
+ *   ©  Copyright Basile Starynkevitch 2024 - 2025
  *  program released under GNU General Public License
  *
  *  this is free software; you can redistribute it and/or modify it under
@@ -381,10 +381,14 @@ static void
 trp_show_version(void)
 {
   GC_word gv = GC_get_version();
+  SCM ver = scm_effective_version();
   std::clog << trp_prog_name << " version git " <<  trp_git_id
             << " using Boehm GC " << (gv >> 16) << "."
             << ((gv & 0xffff) >> 8) << "." << (gv & 0xff) << std::endl
+	    << " Guile version " << scm_to_utf8_string (ver) << std::endl
             << " built " << __DATE__ "@" << __TIME__ << std::endl;
+  std::clog << "(no warranty since GPL licensed, see code on github.com/bstarynk/misc-basile for "
+	    << __FILE__ ")" << std::endl;
 } // end trp_show_version
 
 static void
@@ -463,6 +467,7 @@ main(int argc, char**argv)
 {
   trp_prog_name = argv[0];
   GC_INIT();
+  scm_init_guile();
   if (argc == 2)
     {
       if (!strcmp(argv[1], "--version"))
@@ -476,7 +481,6 @@ main(int argc, char**argv)
           return 0;
         }
     };
-  scm_init_guile();
   trp_parse_program_options(argc, argv);
 } // end of main
 
