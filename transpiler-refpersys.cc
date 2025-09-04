@@ -440,7 +440,10 @@ trp_parse_program_options(int &argc, char**argv)
 	printf("evaluating GUILE expression %s\n", restguile);
 	fflush(nullptr);
 	SCM val = scm_c_eval_string(restguile);
-#warning should test if val is non-false after scm_c_eval_string
+	if (scm_is_false(val)) {
+	  TRP_ERROR("GUILE expression %s was evaluated to false", restguile);
+	  exit(EXIT_FAILURE);
+	};
       }
     };
   }
