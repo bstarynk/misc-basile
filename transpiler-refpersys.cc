@@ -328,7 +328,9 @@ Trp_InputFile::next_token(void)
   if (!goodch)
     return nullptr;
   bool ascii = ch > 0 && ch <= 0x7f;
-} // end trp_token::next_token
+#warning incomplete Trp_Token::next_token
+  TRP_ERROR("incomplete Trp_Token::next_token this@%p", (void*)this);
+} // end Trp_Token::next_token
 
 ////////////////////////////////////////////////////////////////
 Trp_Token::Trp_Token(Trp_InputFile*src, int lin, int col)
@@ -385,10 +387,10 @@ trp_show_version(void)
   std::clog << trp_prog_name << " version git " <<  trp_git_id
             << " using Boehm GC " << (gv >> 16) << "."
             << ((gv & 0xffff) >> 8) << "." << (gv & 0xff) << std::endl
-	    << " Guile version " << scm_to_utf8_string (ver) << std::endl
+            << " Guile version " << scm_to_utf8_string (ver) << std::endl
             << " built " << __DATE__ "@" << __TIME__ << std::endl;
   std::clog << "(no warranty since GPL licensed, see code on github.com/bstarynk/misc-basile for "
-	    << __FILE__ ")" << std::endl;
+            << __FILE__ ")" << std::endl;
 } // end trp_show_version
 
 static void
@@ -474,6 +476,13 @@ trpfun_git_id(void)
 void
 trp_initialize_primitives(void)
 {
+  /* See www.gnu.org/software/guile/manual/html_node/Primitive-Procedures.html */
+  // SCM scm_c_define_gsubr (const char *name, int req, int opt, int rst, fcn)
+  (void) scm_c_define_gsubr("trp:git_id",
+                            /*requested:*/0,
+                            /*optional:*/0,
+                            /*rest?*/0,
+                            (scm_t_subr)trpfun_git_id);
 #warning missing code to initialize "trp:gitid" from trpfun_git_id
 } // end trp_initialize_primitives
 
