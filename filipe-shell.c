@@ -56,8 +56,9 @@
 const char filipe_gitid[] = FILIPE_GIT;
 
 ///// checked allocation, malloc like, by Basile STARYNKEVITCH
+///// the allocated zone is cleared
 void *
-fi_alloc_at (size_t sz, int line)
+fi_alloc_at (size_t sz, int line)	/* used by FI_ALLOC */
 {
   if (sz == 0)
     return NULL;
@@ -83,8 +84,9 @@ fi_alloc_at (size_t sz, int line)
 #define FI_ALLOC(Sz) fi_alloc_at((Sz),__LINE__)
 
 
+///// checked allocation, calloc like, by Basile STARYNKEVITCH
 void *
-fi_calloc_at (size_t nmemb, size_t elsize, int lin)
+fi_calloc_at (size_t nmemb, size_t elsize, int lin)	/*used by FI_CALLOC */
 {
   if (nmemb == 0 || elsize == 0)
     return NULL;
@@ -184,7 +186,7 @@ set_cmd_line_command (cmd_line_t *cmd_line, char *command)
   if (cmd_line->command != NULL)	//if cmd_line already have a command string buffer
     free (cmd_line->command);	//destroy it
 
-  cmd_line->command = calloc (strlen (command), sizeof (char));	//create a new buffer to 'command' in cmd_line
+  cmd_line->command = FI_ALLOC (strlen (command));	//create a new buffer to 'command' in cmd_line
   assert (cmd_line->command != NULL);
 
   strcpy (cmd_line->command, command);	//copy text from 'command' to 'cmd_line->command'
@@ -204,7 +206,7 @@ init_cmd_line_args (cmd_line_t *cmd_line, size_t nargs)
   if (cmd_line->args != NULL)	//if cmd_line already have an 'args' buffer
     free (cmd_line->args);	//destroy it
 
-  cmd_line->args = calloc (nargs, sizeof (char *));	//create a new buffer to 'cmd_line->args'
+  cmd_line->args = FI_CALLOC (nargs, sizeof (char *));	//create a new buffer to 'cmd_line->args'
   assert (cmd_line->args != NULL);
 
   cmd_line->nargs = nargs;
@@ -226,7 +228,7 @@ set_cmd_line_arg (cmd_line_t *cmd_line, char *arg, size_t argi)
   if (cmd_line->args[argi] != NULL)	//if 'args[argi]' already have a buffer
     free (cmd_line->args[argi]);	//destroy it
 
-  cmd_line->args[argi] = calloc (strlen (arg), sizeof (char));	//create a new buffer to the arg
+  cmd_line->args[argi] = FI_ALLOC (strlen (arg));	//create a new buffer to the arg
   assert (cmd_line->args[argi] != NULL);
 
   strcpy (cmd_line->args[argi], arg);	//copy text from 'arg' to the buffer
@@ -573,7 +575,7 @@ insert_token_in_tree (alphabetical_tree_header_t *h, char *token,
       if (text != NULL)
 	{
 	  //Copy text for the node
-	  iterator->text = (char *) calloc (strlen (text), sizeof (char));
+	  iterator->text = (char *) FI_CALLOC (strlen (text), sizeof (char));
 	  strcpy (iterator->text, text);
 	}
     }
@@ -876,7 +878,8 @@ exec_command (cmd_line_t *cmd_line)
   if (my_pid == 0)		//if this is the child process
     {
       //build the argv array
-      char **argv = (char **) calloc (cmd_line->nargs + 1, sizeof (char *));
+      char **argv =
+	(char **) FI_CALLOC (cmd_line->nargs + 1, sizeof (char *));
 
       for (int i = 0; i < (int) cmd_line->nargs; i++)
 	argv[i] = cmd_line->args[i];
