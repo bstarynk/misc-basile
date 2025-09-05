@@ -186,7 +186,7 @@ set_cmd_line_command (cmd_line_t *cmd_line, char *command)
   if (cmd_line->command != NULL)	//if cmd_line already have a command string buffer
     free (cmd_line->command);	//destroy it
 
-  cmd_line->command = FI_ALLOC (strlen (command));	//create a new buffer to 'command' in cmd_line
+  cmd_line->command = FI_ALLOC (1+strlen (command));	//create a new buffer to 'command' in cmd_line
   assert (cmd_line->command != NULL);
 
   strcpy (cmd_line->command, command);	//copy text from 'command' to 'cmd_line->command'
@@ -317,10 +317,12 @@ read_token (char *str)
 
   size_t token_len = 0;
 
-  while (c[0] != '\n' && c[0] != ' ' && c[0] != '\t')	//the token ends with '\n' or space or tab
+  while (c[0] != '\n' && c[0] != ' ' && c[0] != '\t'
+	 && token_len < MAX_TOKEN_LEN-1)	//the token ends with '\n' or space or tab
     {
+      assert (str != NULL);
       strcat (str, c);		//append the last obtained char to string
-      token_len += 1;		//increment the token lenght
+      token_len += 1;		//increment the token length
       c[0] = getchar ();	//read the next char in stdin
     }
 
@@ -1202,7 +1204,8 @@ main ()
       cmd_line = create_cmd_line ();	//new command line buffer
 
       printf (">>> ");
-
+      fflush (NULL);
+      
       read_cmd_line (cmd_line);	//read command line
 
       if (strlen (cmd_line->command) == 0)
