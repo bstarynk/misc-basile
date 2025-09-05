@@ -1136,7 +1136,7 @@ main ()
   printf ("Small Linux Shell\n"
 	  "By Filipe Chagas\n"
 	  "\t( filipe.ferraz0@gmail.com )\n"
-	  "\t( github.com/bstarynk/misc-basile/ )\n"
+	  "\t( github.com/bstarynk/misc-basile/ " __FILE__ " )\n"
 	  "\t( improved by Basile Starynkevitch )\n"
 	  "\t gitid %s, build %s\n"
 	  "Type 'help' to see the list of commands\n\n",
