@@ -1,8 +1,15 @@
 /****
- * Original source code (MIT licensed) on from 
+ * Original source code (MIT licensed) on from
  *       https://github.com/FilipeChagasDev/small-linux-shell
- * 
- * some simple fixes by Basile Starynkevitch <basile@starynkevitch.net>
+ *
+ * some simple fixes by
+ *     Basile STARYNKEVITCH <basile@starynkevitch.net>
+ *     8 rue de la Faïencerie
+ *     92340 Bourg-la-Reine
+ *     France
+ *
+ *     His webpage could be on starynkevitch.net/Basile/
+ *     He is looking for contributors to refpersys.org (GPL licensed)
  *
  * SMALL LINUX SHELL
  * Author: Filipe Chagas
@@ -11,7 +18,8 @@
  *
  * 28 July 2020
  *
- * NOTE: This source code has not been separated into multiple files to facilitate the compilation process.
+ * NOTE: This source code has not been separated into multiple
+ *       files to facilitate the compilation process.
  *
  * This code file is organized into sections:
  *
@@ -22,7 +30,7 @@
  *      5 - Main function
  */
 
-/*** 
+/***
  * Basile note: in git commit bdceaecbc6 this has only warnings like
  *    comparison of unsigned expression in ‘>= 0’ is always true
  * using  GCC 12.2 on Linux/x86-64
@@ -47,28 +55,80 @@
 
 const char filipe_gitid[] = FILIPE_GIT;
 
-void*
-fi_alloc_at(size_t sz, int line)
+///// checked allocation, malloc like, by Basile STARYNKEVITCH
+void *
+fi_alloc_at (size_t sz, int line)
 {
-  if (sz==0)
+  if (sz == 0)
     return NULL;
-  if (sz > 1024*1024*1024) {
-    fprintf(stderr, "fi_alloc_at L%d huge (%zd)\n",
-	    line, sz);
-    fflush(NULL);
-    abort();
-  };
-  void* z = malloc(sz);
-  if (!z) {
-    fprintf(stderr, "fi_alloc_at L%d failed (%zd bytes) - %s\n",
-	    line, sz, strerror(errno));
-    fflush(NULL);
-    abort();
-  };
+  if (sz > 512 * 1024 * 1024)
+    {
+      fprintf (stderr, "fi_alloc_at L%d huge (%zd)\n", line, sz);
+      fflush (NULL);
+      abort ();
+    };
+  void *z = malloc (sz);
+  if (!z)
+    {
+      fprintf (stderr, "fi_alloc_at L%d failed (%zd bytes) - %s\n",
+	       line, sz, strerror (errno));
+      fflush (NULL);
+      abort ();
+      return NULL;
+    };
+  memset (z, 0, sz);
   return z;
-} /* end fi_alloc_at */
+}				/* end fi_alloc_at */
 
 #define FI_ALLOC(Sz) fi_alloc_at((Sz),__LINE__)
+
+
+void *
+fi_calloc_at (size_t nmemb, size_t elsize, int lin)
+{
+  if (nmemb == 0 || elsize == 0)
+    return NULL;
+  if (nmemb > 1024 * 1024)
+    {
+      fprintf (stderr,
+	       "fi_calloc_at L%d with too many members %zd (elsiz=%zd)\n",
+	       lin, nmemb, elsize);
+      fflush (NULL);
+      abort ();
+      return NULL;
+    };
+  if (elsize > 512 * 1024)
+    {
+      fprintf (stderr,
+	       "fi_calloc_at L%d with too big element size %zd (nmemb=%zd)\n",
+	       lin, elsize, nmemb);
+      fflush (NULL);
+      abort ();
+      return NULL;
+    };
+  if (((int64_t) nmemb * (int64_t) elsize) > 512 * 1024 * 1024)
+    {
+      fprintf (stderr,
+	       "fi_calloc_at L%d huge: element size %zd, members nb %zd\n",
+	       lin, elsize, nmemb);
+      fflush (NULL);
+      abort ();
+      return NULL;
+    };
+  void *p = calloc (nmemb, elsize);
+  if (!p)
+    {
+      fprintf (stderr,
+	       "fi_calloc_at L%d failed element size %zd, members nb %zd - %s\n",
+	       lin, elsize, nmemb, strerror (errno));
+      fflush (NULL);
+      abort ();
+      return NULL;
+    };
+  return p;
+}				/* end fi_calloc_at */
+
+#define FI_CALLOC(Nb,Sz) fi_calloc_at((Nb),(Sz),__LINE__)
 
 // ==========================================================
 // =============== CMD_LINE_T OBJECT FEATURES ===============
