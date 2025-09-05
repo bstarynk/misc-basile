@@ -47,6 +47,29 @@
 
 const char filipe_gitid[] = FILIPE_GIT;
 
+void*
+fi_alloc_at(size_t sz, int line)
+{
+  if (sz==0)
+    return NULL;
+  if (sz > 1024*1024*1024) {
+    fprintf(stderr, "fi_alloc_at L%d huge (%zd)\n",
+	    line, sz);
+    fflush(NULL);
+    abort();
+  };
+  void* z = malloc(sz);
+  if (!z) {
+    fprintf(stderr, "fi_alloc_at L%d failed (%zd bytes) - %s\n",
+	    line, sz, strerror(errno));
+    fflush(NULL);
+    abort();
+  };
+  return z;
+} /* end fi_alloc_at */
+
+#define FI_ALLOC(Sz) fi_alloc_at((Sz),__LINE__)
+
 // ==========================================================
 // =============== CMD_LINE_T OBJECT FEATURES ===============
 // ==========================================================
@@ -72,7 +95,7 @@ typedef struct
 cmd_line_t *
 create_cmd_line ()
 {
-  cmd_line_t *my_cmd_line = (cmd_line_t *) malloc (sizeof (cmd_line_t));
+  cmd_line_t *my_cmd_line = (cmd_line_t *) FI_ALLOC (sizeof (cmd_line_t));
   assert (my_cmd_line != NULL);
 
   //set command
@@ -390,7 +413,7 @@ alphabetical_tree_node_t *
 create_alphabetical_tree_node ()
 {
   alphabetical_tree_node_t *node =
-    (alphabetical_tree_node_t *) malloc (sizeof (alphabetical_tree_node_t));
+    (alphabetical_tree_node_t *) FI_ALLOC (sizeof (alphabetical_tree_node_t));
   assert (node != NULL);
 
   node->cmd_callback = NULL;
@@ -411,7 +434,7 @@ create_alphabetical_tree ()
 {
   alphabetical_tree_header_t *h =
     (alphabetical_tree_header_t *)
-    malloc (sizeof (alphabetical_tree_header_t));
+    FI_ALLOC (sizeof (alphabetical_tree_header_t));
   assert (h != NULL);
 
   for (int i = 0; i < ALPHABETICAL_TREE_ENTRIES; i++)
@@ -752,7 +775,7 @@ ls_command (cmd_line_t *cmd_line)
 
   // STEP 3 - GET DIRECTORY ENTRIES FROM THE DESCRIPTOR AND PRINT ITS INFORMATIONS
 
-  void *buffer = malloc (DENTS_BUFFER_SIZE);	//buffer to dir entries
+  void *buffer = FI_ALLOC (DENTS_BUFFER_SIZE);	//buffer to dir entries
 
   long n_read = syscall (SYS_getdents, fd, buffer, DENTS_BUFFER_SIZE);	//getdents syscall to get dir entries
 
