@@ -40,6 +40,13 @@
 #include <wait.h>		//contains 'wait'
 #include <errno.h>
 
+
+#ifndef FILIPE_GIT
+#error FILIPE_GIT should be defined by compilation command
+#endif
+
+const char filipe_gitid[] = FILIPE_GIT;
+
 // ==========================================================
 // =============== CMD_LINE_T OBJECT FEATURES ===============
 // ==========================================================
@@ -1117,3 +1124,10 @@ main ()
 
   return 0;
 }
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "make filipe-shell" ;;
+ ** End: ;;
+ ****************/
