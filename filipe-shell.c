@@ -636,7 +636,10 @@ run_command (alphabetical_tree_header_t *h, cmd_line_t *cmd_line)
 
   if (!alphabetical_string (cmd_line->command))
     {
-      printf ("ERROR: Commands do not have non-alphabetic characters\n");
+      fprintf (stderr,
+	       "ERROR: Bad '%s' command: with non-alphabetic characters\n",
+	       cmd_line->command);
+      fflush (stderr);
       return;
     }
 
@@ -1130,12 +1133,14 @@ help_command (cmd_line_t *cmd_line)
 int
 main ()
 {
-
   printf ("Small Linux Shell\n"
 	  "By Filipe Chagas\n"
 	  "\t( filipe.ferraz0@gmail.com )\n"
-	  "\t( github.com/filipechagasdev )\n"
-	  "Type 'help' to see the list of commands\n\n");
+	  "\t( github.com/bstarynk/misc-basile/ )\n"
+	  "\t( improved by Basile Starynkevitch )\n"
+	  "\t gitid %s, build %s\n"
+	  "Type 'help' to see the list of commands\n\n",
+	  filipe_gitid, __DATE__ "@" __TIME__);
 
   //Building variables tree
   variables = create_alphabetical_tree ();
