@@ -31,7 +31,7 @@ GENF_CFLAGS= -O2 -g -fPIC -Wall
 all: manydl half sync-periodically transpiler-refpersys \
      logged-compile logged-gcc filipe-shell browserfox \
      gtk4serv fox-tinyed q6refpersys  gtkmm-refpersys bwc gtksrc-browser \
-     process-rgb-color
+     process-rgb-color example1-sdl
 
 
 clean:
@@ -40,6 +40,7 @@ clean:
 	$(RM) browserfox fox-tinyed logged-g++ half logged-gcc execicar gtksrc-browser winpersist
 	$(RM) transpiler-refpersys
 	$(RM) build-with-guile
+	$(RM) example1-sdl
 	$(RM) _genf*.c
 	$(RM) _logged-gcc_*
 	$(RM) _q6refpersys*
@@ -89,6 +90,9 @@ transpiler-refpersys.ii: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmak
 
 filipe-shell: filipe-shell.c
 	$(CC) $(CFLAGS) -DFILIPE_GIT='"$(GIT_ID)"' $^  -o $@
+
+example1-sdl: example1-sdl.c
+	$(CC) $(CFLAGS) -DMY_GIT='"$(GIT_ID)"' -DMY_CC='"$(CC)"' $(shell pkg-config --cflags sdl3)  $^ $(shell pkg-config --libs sdl3) -o $@ 
 
 logged-gcc: logged-gcc.cc compile-logged-gcc.sh
 	./compile-logged-gcc.sh
