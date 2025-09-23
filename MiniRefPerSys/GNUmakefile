@@ -1,5 +1,7 @@
 ## file misc-basile/MiniRefPerSys/GNUmakefile
-CC=/usr/bin/gcc
+## in my $PATH gcc is a symlink to a recent snapshot
+## (so gcc-16 in sept.2025)
+CC=gcc
 RM=/bin/rm -vf
 export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-15)
 HANDWRITTEN_SOURCES:=$(wildcard [a-z]*mrps.c)
