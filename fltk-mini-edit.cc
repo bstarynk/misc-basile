@@ -8,6 +8,8 @@
 // This program is inspired by Chapter 4 of the FLTK Programmer's Guide.
 /****
    © Copyright  1998-2024 by Bill Spitzak and Basile Starynkevitch and CEA
+   © Copyright  2025 by Basile Starynkevitch (France,
+                                              <basile@starynkevitch.net>)
    program released under GNU general public license
 
    this is free software; you can redistribute it and/or modify it under
@@ -503,6 +505,8 @@ extern "C" const int last_shared_line = __LINE__; ///°°°°°°°°°°°°°�
 
 #if FLTK_ABI_VERSION >= 10300 && FLTK_ABI_VERSION < 10400
 #pragma message "FLTK 1.3.x"
+#elif  FLTK_ABI_VERSION > 10500
+#pragma  message "FLTK 1.5.x"
 #elif  FLTK_ABI_VERSION > 10400
 #pragma  message "FLTK 1.4.x"
 #else
