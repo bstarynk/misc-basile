@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // file misc-basile/gtksrc-browser.c
 /***
-    © Copyright  1998-2024 by unknown and Basile Starynkevitch and CEA
+    © Copyright  1998-2025 by unknown and Basile Starynkevitch and CEA
    program released under GNU General Public License v3+
 
    this is free software; you can redistribute it and/or modify it under
@@ -46,6 +46,12 @@
 #warning missing GIT_ID in compilation command
 #define GIT_ID "???????"
 #endif
+
+#ifndef MY_SOURCE
+#error MY_SOURCE should be defined at compilation command
+#endif
+
+const char my_source_code_path[] = MY_SOURCE;
 
 #define UNUSED __attribute__((unused))
 static char *prog_name;
@@ -270,7 +276,7 @@ main (int argc, char *argv[])
   gtk_container_add (GTK_CONTAINER (mainWindow), pScrollWin);
   gtk_widget_show_all (pScrollWin);
   /* Finally load our own file to see how it works */
-  open_file (sBuf, __FILE__);
+  open_file (sBuf, my_source_code_path);
   gtk_widget_show (mainWindow);
   gtk_main ();
   return 0;
