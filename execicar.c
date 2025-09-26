@@ -1,14 +1,16 @@
 // file execicar.c
+// SPDX-License-Identifier: GPL-3.0-or-later
 // in https://github.com/bstarynk/misc-basile/
 
-//   Copyright © 2005-2015 Basile STARYNKEVITCH
+//   Copyright © 2005-2025 Basile STARYNKEVITCH
 //
 // This Software is licensed under the GPL licensed Version 2, 
 // please read http://www.gnu.org/copyleft/gpl.html
 
 /* you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software
- * Foundation; either version 2 of the License.
+ * Foundation; version 3 of the License.
+ * see https://www.gnu.org/licenses/gpl-3.0.html
  *
  * This software is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -134,6 +136,13 @@ main (int argc, char **argv)
   str = getenv ("SHELL");
   if (str)
     shell = str;
+  if (access(shell, X_OK))
+    {
+      fprintf (stderr, "%s has bad shell %s - %s\n",
+	       progname, shell, strerror(errno));
+      exit (EXIT_FAILURE);
+    };
+      
   while ((getoptix = getopt_long (argc, argv, "i:o:s:n:hlq",
 				  options, &longoptindex)) > 0)
     {
