@@ -83,6 +83,9 @@ build-with-guile: build-with-guile.c
 sync-periodically: sync-periodically.c
 	$(CC) $(CFLAGS) -DSYNPER_GITID='"$(GIT_ID)"' $^  -o $@
 
+execicar: execicar.c
+	$(CC) $(CFLAGS) -DEXECICAR_GITID='"$(GIT_ID)"' $^  -o $@
+
 transpiler-refpersys: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile
 	$(CXX) $(CXXFLAGS) -v -DGIT_ID='"$(GIT_ID)"' $(GUILE_CFLAGS) $< -o $@ -lgccpp -lunistring $(GUILE_LIBS) -lgc  -ldl
 transpiler-refpersys.ii: transpiler-refpersys.cc transpiler-refpersys.hh |GNUmakefile

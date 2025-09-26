@@ -45,8 +45,15 @@
 
 const char execicar_ident[] = __FILE__ ":" __DATE__ "@" __TIME__;
 
+#ifndef EXECICAR_GITID
+#error compilation command should define EXECICAR_GITID
+#endif
+
+const char execicar_gitid[] = EXECICAR_GITID;
+
 static const struct option options[] = {
   {"help", no_argument, (int *) 0, 'h'},
+  {"version", no_argument, (int *) 0, 'V'},
   {"quiet", no_argument, (int *) 0, 'q'},
   {"syslog", no_argument, (int *) 0, 'l'},
   {"incmd", required_argument, (int *) 0, 'i'},
@@ -67,8 +74,8 @@ char *shell = "/bin/sh";
 
 int devnull = -1;
 
-#define PROCNAMELEN 40
-#define PROCNAMEFMT "%39[A-Za-z0-9_.]"
+#define PROCNAMELEN 48
+#define PROCNAMEFMT "%40[A-Za-z0-9_.]"
 struct proctab_st
 {
   char procname[PROCNAMELEN];
@@ -95,8 +102,8 @@ usage (char *progname)
 	   "   [--shell|s progpath] ## used shell - default to $SHELL or else /bin/sh\n"
 	   "   [--syslog|l] ## syslog\n"
 	   "   [--quiet|q] ## quiet\n", progname);
-  fprintf (stderr, "version %s compiled on " __DATE__ "@" __TIME__ "\n",
-	   execicar_ident);
+  fprintf (stderr, "version %s git %s\n",
+	   execicar_ident, execicar_gitid);
   fflush (stderr);
 }
 
@@ -109,6 +116,7 @@ static volatile sig_atomic_t got_sigchild;
 static void
 sigchld_handler (int signnum)
 {
+  assert(signnum > 0);
   got_sigchild = 1;
 }
 
@@ -326,7 +334,7 @@ process_line (const char *linebuf)
   const char *arg = NULL;
   int ix;
   int endpos = 0;
-  char pnam[PROCNAMELEN + 2];
+  char pnam[PROCNAMELEN];
   memset (pnam, 0, sizeof (pnam));
   if (linebuf[0] == 0 || linebuf[0] == '#')
     (void) 0;
@@ -426,7 +434,7 @@ process_line (const char *linebuf)
 		  break;
 	      assert (ix < proctablen);
 	      proctabcnt++;
-	      strncpy (proctab[ix].procname, pnam, PROCNAMELEN);
+	      strncpy (proctab[ix].procname, pnam, PROCNAMELEN-1);
 	      proctab[ix].procpid = pid;
 	      gettimeofday (&proctab[ix].procstart, 0);
 	      fflush (frep);
@@ -571,7 +579,7 @@ main_loop (void)
 	      if (curp > buffer)
 		{
 		  int curlen = endp - curp;
-		  assert (curlen >= 0 && curlen < sizeof (buffer));
+		  assert (curlen >= 0 && curlen < (int) sizeof (buffer));
 		  memmove (buffer, curp, curlen);
 		  curp = buffer + curlen;
 		  *curp = 0;
@@ -601,3 +609,11 @@ main_loop (void)
 
 
 /* eof execicar.c */
+
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "make execicar" ;;
+ ** End: ;;
+ ****************/
