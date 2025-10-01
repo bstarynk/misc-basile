@@ -12,6 +12,7 @@
 ;;    the Free Software Foundation, either version 3 of the License, or
 ;;    (at your option) any later version.
 
+(global-set-key (kbd "<f5>") 'recompile)
 (global-set-key (kbd "<f12>") 'recompile)
 (global-set-key (kbd "<f6>") 'goto-line)
 (global-set-key (kbd "<f7>") 'next-error)
