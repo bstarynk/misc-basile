@@ -37,8 +37,9 @@ cours-linux-Starynkevitch.pdf:  clinux.tex \
 	$(LUALATEX) $(LATEXOPTIONS)  clinux
 	$(LUALATEX) $(LATEXOPTIONS)  clinux
 
-gener-macro.tex:
+gener-macro.tex: | GNUmakefile
 	if [ -f "$@" ]; then $(MV) $@ $@~ ; fi
 	echo "% fichier genéré gener-macro.tex" > $@
+	echo '% gitid' "$(GIT_ID)" >> $@
 	$(DATE) +"\\newcommand{cldate}{%c}" >> $@
-	$(PRINTF) "\\newcommand{clgitid}{%s}\n" "$(GITID)" >> $@
+	$(PRINTF) "\\\\newcommand{clgitid}{%s}\n" "$(GIT_ID)" >> $@
