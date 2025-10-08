@@ -1,4 +1,7 @@
 ### fichier CoursLinux/.gitignore
 *~
 *%
+*.aux
+*.fls
+*.log
 gener*tex
