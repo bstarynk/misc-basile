@@ -28,7 +28,7 @@ PRINTF ?= /usr/bin/printf
 all: cours-linux-Starynkevitch.pdf
 
 clean:
-	$(RM) *.log *.aux *~ gener*.tex
+	$(RM) *.log *.aux *.fls *~ gener*.tex
 
 cours-linux-Starynkevitch.pdf:  clinux.tex \
    $(LATEXGENERES) $(LATEXINCLUS) clinux-biblio.bib
