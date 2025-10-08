@@ -1,0 +1,4 @@
+### fichier CoursLinux/.gitignore
+*~
+*%
+gener*tex
