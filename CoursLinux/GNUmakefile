@@ -5,7 +5,7 @@
 ## 
 # https://tex.stackexchange.com/a/527167
 .PHONY: all clean
-export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-15)
+export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-13)
 
 ## fichiers générés - generated LaTeX files
 LATEXGENERES= gener-macro.tex
@@ -24,17 +24,17 @@ BIBTEXOPTIONS ?=
 DATE ?= /usr/bin/date
 PRINTF ?= /usr/bin/printf
 
-all: cours-linux-Starynkevitch.pdf
+all: cours-linux-Starynkevitch.pdf | GNUmakefile
 	/usr/bin/evince --preview $^
 
 clean:
 	$(RM) *.log *.aux *.fls *~ gener*.tex *.pdf *~
 
-cours-linux-Starynkevitch.pdf: clinux.pdf
+cours-linux-Starynkevitch.pdf: clinux.pdf | GNUmakefile
 	/bin/cp --verbose  --backup $^ $@
 
 
-clinux.pdf: clinux.tex gener-macro.tex \
+clinux.pdf: clinux.tex gener-macro.tex | GNUmakefile \
    $(LATEXGENERES) $(LATEXINCLUS) #clinux-biblio.bib 
 	$(LUALATEX) $(LATEXOPTIONS)  clinux
 	$(LUALATEX) $(LATEXOPTIONS)  clinux
@@ -43,5 +43,5 @@ gener-macro.tex: | GNUmakefile
 	if [ -f "$@" ]; then $(MV) $@ $@~ ; fi
 	echo "% fichier genéré gener-macro.tex" > $@
 	echo '% gitid' "$(GIT_ID)" >> $@
-	$(DATE) +"\\newcommand{clbdate}{%c}" >> $@
-	$(PRINTF) "\\\\newcommand{clbgitid}{%s}\n" "$(GIT_ID)" >> $@
+	$(DATE) +"\\newcommand{\\clbdate}{%c}" >> $@
+	$(PRINTF) "\\\\newcommand{%sclbgitid}{%s}\n" "\\" "$(GIT_ID)" >> $@

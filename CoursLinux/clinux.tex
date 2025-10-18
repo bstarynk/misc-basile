@@ -57,7 +57,7 @@
 %\usepackage[a4paper, margin=2cm]{geometry}
 %\usepackage{hyperref}
 
-\newcommand{\clbemail}[1]{{\href{mailto:#1}{\texttt{\textbf{#1}}}}}
+\newcommand{\clbemail}[1]{{\href{mailto:#1}{\texttt{\textbf{\textcolor{Navy}{#1}}}}}}
 \newcommand{\clburl}[1]{{\href{#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}
 
 
@@ -80,12 +80,21 @@
 % U+00B5 MICRO SIGN
 %\newunicodechar{µ}{$\mu$}
 
-%\include{gener-macro}
+\include{gener-macro}
 
 \begin{document}
 
 \begin{frame}{Un cours sur Linux}
-  Transparents sur Linux
+
+  par Basile STARYNKEVITCH \\
+  8, rue de la Faïencerie \\
+  92340 Bourg-la-Reine \\
+  courriel: \clbemail{basile@starynkevitch.net}
+
+  \bigskip
+  
+  généré: \textit{\clbdate} \\
+  git \texttt{\clbgitid}
 \end{frame}
 
 \end{document}
