@@ -143,6 +143,90 @@
   \end{frame}
 
 %%%%
+\begin{frame}\frametitle{Code source et code binaire}
+
+Le matériel informatique\footnote{Une carte mère actuelle contient en
+2025 des millions d'octets de code binaire, son ``firmware'' ou
+``micrologiciel''} ne comprend que (ou ``exécute'') du \textbf{code
+  binaire} ou \textbf{code machine}.
+
+\medskip
+
+Le dévelopeur informaticien ne comprend que du \textbf{code source}
+qui est tapé au clavier\footnote{Un dévelopeur utilise aussi une
+souris d'ordinateur, qui contient, comme son clavier, du code
+binaire. Certains dévelopeurs sont aveugles.\\} et lu à
+l'écran. Empiriquement \textbf{\textcolor{red}{un dévelopeur}} à temps
+plein \textbf{produit} \textbf{\textcolor{red}{quelques dizaines de
+    milliers de lignes de code source par an}}.
+
+\medskip
+
+Dans le détail c'est très compliqué, et \textbf{il existe} des codes binaires
+ou \textbf{des logiciels qui manipulent, analysent, modifient} voire
+améliorent \textbf{du code source ou du code binaire}.
+
+
+\medskip
+
+Le code source est la forme préférée par le programmeur, et la plus chère.
+\end{frame}
+
+%%%%
+\begin{frame}\frametitle{Variété des logiciels et des projets}
+  Certains logiciels sont critiques:
+  \begin{itemize}
+  \item logiciel (et matériel) de pilotage d'un métro automatique
+  \item logiciel d'un respirateur Covid (projet
+    \href{https://github.com/Recovid/}{\textcolor{Navy}{Recovid}}).
+  \end{itemize}
+  D'autres le sont moins, mais on d'autres contraintes:
+  \begin{itemize}
+  \item logiciel de jeu  {\relsize{-1}{(doit être fini pour avant Noël)}}
+  \item logiciel de comptabilité {\relsize{-1}{(doit suivre les contraintes et les normes légales)}}
+  \item logiciel de bureautique (projet \clburl{libreoffice.org})
+  \item logiciel
+    \href{https://fr.wikipedia.org/wiki/Compilateur}{\textcolor{Navy}{\textit{compilateur}}}
+    (traduisant le code source en binaire) dont \clburl{gcc.gnu.org}
+    et \clburl{ocaml.org}
+  \item projet scolaire ou universitaire
+  \end{itemize}
+
+  La
+  \href{https://fr.wikipedia.org/wiki/Souveraineté_numérique}{\textit{\textcolor{Navy}{souveraineté
+        numérique}}} est un argument pour le développement, le
+  financement, et l'amélioration de logiciels libres...
+  
+\end{frame}
+
+
+%%%%
+\begin{frame}\frametitle{Obligations légales et de bon sens}
+
+  Se comporter en \href{https://fr.wikipedia.org/wiki/Bon_père_de_famille}{\textit{\textcolor{Navy}{bon père de famille}}} et en
+  \href{https://fr.wikipedia.org/wiki/Proffessionnel}{\textit{\textcolor{Navy}{professionnel}}}
+
+      \begin{itemize}
+      \item en France: articles 323 et suivants du code pénal.
+      \item ne pas coder volontairement des \href{https://fr.wikipedia.org/wiki/Logiciel_malveillant}{logiciels malveillants}
+        \item
+          \href{https://fr.wikipedia.org/wiki/Loi_de_Murphy_(homonymie)}{loi
+            de Murphy}: les catastrophes arrivent au mauvais moment.
+        \item définir les données et les codes qui vous sont chers.
+          \item sauvegarder ceux ci (notamment le code source qui vous
+            co-dévelopez) periodiquement (3 fois par semaine),
+            peut-être à distance.
+            \item nettoyez préventivement plusieurs fois par ans vos
+              ordinateurs (ils prennent la poussière et brûlent).
+      \end{itemize}
+
+      Savoir que \textbf{tout logiciel est bogué}, donc \textbf{il
+        faut documenter votre travail}.
+\end{frame}
+
+
+
+%%%%
 \begin{frame}\frametitle{Distributions Linux}
 
   Elles contiennent un grand nombre de \textcolor{red}{\textbf{paquets\footnote{plusieurs milliers de
@@ -157,11 +241,13 @@
   \medskip
   
   Beaucoup de
-  \href{https://fr.wikipedia.org/wiki/Distribution_Linux}{\textit{distributions}}
+  \href{https://fr.wikipedia.org/wiki/Distribution_Linux}{\textcolor{Navy}{\textit{distributions}}}
   GNU/Linux sont facilement téléchargeables et redistribuables:
     \begin{itemize}
     \item \textbf{Debian} sur \clburl{debian.org}
-    \item \textbf{Ubuntu} sur \clburl{ubuntu.com}
+    \item \textbf{Ubuntu} sur \clburl{ubuntu.com}, dérivée de Debian,
+      et sa variante
+      \href{https://fr.wikipedia.org/wiki/GendBuntu}{\textcolor{Navy}{GEndBuntu}}
     \item \textbf{Mageia} sur \clburl{mageia.org}
     \item \textbf{RedHat} sur \clburl{redhat.com}
     \end{itemize}
@@ -180,15 +266,16 @@ Dans le monde des distributions Linux on peut distinguer:
 
 \begin{relsize}{-0.6}
 \begin{itemize}
-\item les \textbf{distributions \textcolor{red}{binaires}} (\clburl{ubuntu.com} comme
-  \clburl{linuxmint.com} et beaucoup d'autres, souvent dérivées de
-  \clburl{debian.org}, et \clburl{redhat.com}) qui existent sous
-  plusieurs versions de stabilité et nouveauté variées. Elles sont
-  recommandées pour les débutants (ou ceux sont pressés d'avoir un
-  ordinateur utilisable sous Linux). Plusieurs distributions
-  facilitent\footnote{En pratique, à chaque redémarrage, on choisit au
-  clavier quel système va démarrer.\medskip} la cohabitation sur un ordinateur
-  de Linux avec Windows.
+\item les \textbf{distributions \textcolor{red}{binaires}}
+  (\clburl{ubuntu.com} comme \clburl{linuxmint.com} et beaucoup
+  d'autres, souvent dérivées de \clburl{debian.org}, et
+  \clburl{redhat.com}) qui existent sous plusieurs versions de
+  stabilité et nouveauté variées. Elles sont recommandées pour les
+  débutants (ou ceux sont pressés d'avoir un ordinateur utilisable
+  sous Linux). Plusieurs distributions facilitent\footnote{En
+  pratique, à chaque redémarrage, on choisit au clavier quel système
+  va démarrer.\medskip} la cohabitation sur un ordinateur de Linux
+  avec Windows.
 
 \item les \textbf{distributions \textcolor{red}{sources}}
   (\clburl{gentoo.org} et \clburl{archlinux.org} parmi d'autres) qui
@@ -228,5 +315,48 @@ La GPL est ma licence logicielle préférée, et permet:
   \href{https://fr.wikipedia.org/wiki/Copyleft}{\textcolor{red}{copyleft}}!} la
   communauté}} des versions modifiées.
 \end{itemize}
+
+\smallskip
+
+\begin{relsize}{-1}
+  Un logiciel propriétaire a sa licence et ses obligations légales. Sa
+  redistribution est souvent interdite, son exécution, sa
+  modification, son analyse est limitée par contrat.
+\end{relsize}
 \end{frame}
+
+%%%%
+\begin{frame}\frametitle{Économie du logiciel libre}
+Ils ne sont \textbf{pas gratuits}
+
+\medskip
+
+C'est un
+\href{https://fr.wikipedia.org/wiki/Bien_commun}{\textcolor{Navy}{bien
+    commun}} (cf livres et publications de
+\href{https://fr.wikipedia.org/wiki/Jean_Tirole}{\textcolor{Navy}{Jean
+    Tirole}}).
+
+\medskip
+
+La difficulté est d'organiser et de faire vivre une \href{https://fr.wikipedia.org/wiki/Communauté_du_logiciel_libre}{\textcolor{Navy}{communauté}}. 
+
+\medskip
+
+Il peut exister des financements institutionnels
+\href{https://fr.wikipedia.org/wiki/Horizon_Europe}{\textcolor{Navy}{Horizon
+    Europe}} ou
+\href{https://fr.wikipedia.org/wiki/Agence_nationale_de_la_recherchee}{\textcolor{Navy}{ANR}}
+ou \clburl{itea4.org} et il faut les favoriser
+
+\medskip
+
+Voir le moteur d'inférences libre
+\href{https://github.com/RefPerSys/RefPerSys/}{\textcolor{Navy}{RefPerSys}}
+(``reflexive persistent system'') et les livres (et logiciels) de
+\href{https://fr.wikipedia.org/wiki/Jacques_Pitrat}{\textcolor{Navy}{Jacques
+    Pitrat}}
+
+\end{frame}
+
 \end{document}
