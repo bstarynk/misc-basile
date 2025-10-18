@@ -372,15 +372,84 @@ Voir le moteur d'inférences libre
   pas l'expliquer en détail.} (portable ou fixe), où une distribution
   Linux a déjà été installée il y a plusieurs mois.
 
+  \begin{relsize}{-0.5}
   \begin{enumerate}
   \item le micrologiciel
-    %(de nos jours,
-    %\href{https://fr.wikipedia.org/wiki/UEFI}{\textclolor{Navy}{UEFI}})
+    (de nos jours,
+    \href{https://fr.wikipedia.org/wiki/UEFI}{\textcolor{Navy}{\textit{UEFI}}}
+    et autrefois le BIOS)
     de la carte mère démarre et initialise le matériel. Une
     \href{https://fr.wikipedia.org/wiki/Mémoire_flash}{\textcolor{Navy}{mémoire
         flash}} contient le paramétrage pour ça.
     \item un chargeur (``boot-loader'', un code binaire de quelques kilo-octets) est
       chargé dans la mémoire vive; c'est le logiciel libre \clburl{www.gnu.org/software/grub} codé en assembleur et C.
+      \item ce logiciel chargeur met en mémoire plusieurs zones (ou
+        ``fichiers''?) de code binaire, dont le
+        \href{https://fr.wikipedia.org/wiki/Noyau_Linux}{\textcolor{Navy}{noyau Linux}} et plusieurs modules
+        \href{https://fr.wikipedia.org/wiki/Linux_Security_Module}{\textcolor{Navy}{de sécurité}}
+     \item le noyau peut démarrer le processus initial dont le binaire
+       est dans le fichier \texttt{/sbin/init}
   \end{enumerate}
+  \end{relsize}
 \end{frame}
+
+%%%%
+\begin{frame}\frametitle{Fichiers, processus, appels système (notions)}
+%  
+Un \textbf{\textcolor{red}{fichier}} (``file'') générique (Linux) est
+\textbf{\textcolor{red}{une séquence d'octets} avec des méta-données}
+la décrivant. Il existe plusieurs sortes de fichiers\footnote{La
+majorité des fichiers demeurent sur le[s] disque[s] de l'ordinateur
+même quand il est éteint, mais il y a des exceptions!} : certains sont
+des répertoires faisant référence à d'autres fichiers, d'autres sont
+des liens symboliques pointant par un nom vers un fichiers, et
+d'autres (soquettes) permettent la communication entre
+processus. Certains fichiers contiennent du code binaire exécutable
+organisés en segments.
+
+\medskip
+
+Un \textbf{\textcolor{red}{processus}} (``process'') Linux
+\textbf{\textcolor{red}{est un programme en train de s'exécuter}}. Le
+noyau gère les fichiers nécessaires à l'exécution de ce programme. Un
+ordinateur éteint n'a pas de processus.
+
+\medskip
+
+Un \textbf{\textcolor{red}{appel système}} (``system call'') est une
+opération ``atomique'' exécutée par un processus dans le code binaire
+d'un fichier programme qui est exécutée par le noyau. La plupart des
+appels systèmes s'exécutent en quelques dizaines de µs. Il y a environ
+300 appels systèmes possibles.
+
+\end{frame}
+%%%%
+\begin{frame}\frametitle{Modes noyau et utilisateur d'un processeur}
+
+  Chaque c{\oe}ur de processeur\footnote{Selon son coût et son modèle,
+  un processeur a 4 à 128 c{\oe}urs qui fonctionnent simultanément,
+  chacun exécutant un code -ou un processus- différent.\\} peut
+  fonctionner dans l'un des deux modes suivants:
+
+  \begin{relsize}{-0.6}
+  \begin{itemize}
+    \item le \textbf{mode noyau} (ou privilégié) permet l'exécution de
+      toutes les instructions machine, y compris les plus dangereuses
+      qui écrivent sur les disques, affichent à l'écran, ou éteignent
+      l'ordinateur. Seul le noyau Linux (et UEFI) utilise ce mode.
+
+      \item le \textbf{mode utilisateur} interdit les instructions machine
+        dangereuses, mais permet les operations sûres (addition
+        entière, accès contrôlé à \textit{certaines} zones
+        mémoire). Le code binaire dans les segments des fichiers
+        exécutables s'exécute fan ce mode.
+  \end{itemize}
+  \end{relsize}
+  
+  Une instruction machine particulière \texttt{SYSCALL}\footnote{Je
+  simplifie, il y en a plusieurs} permet de passer du mode utilisateur
+  au mode noyau. Une autre \texttt{SYSRETURN} passe de manière
+  contrôlée du mode noyau au mode utilisateur.
+\end{frame}
+
 \end{document}
