@@ -187,8 +187,8 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
   \item logiciel de bureautique (projet \clburl{libreoffice.org})
   \item logiciel
     \href{https://fr.wikipedia.org/wiki/Compilateur}{\textcolor{Navy}{\textit{compilateur}}}
-    (traduisant le code source en binaire) dont \clburl{gcc.gnu.org}
-    et \clburl{ocaml.org}
+    {\relsize{-1}{(traduisant le code source en binaire)}} dont \clburl{gcc.gnu.org}
+    et \clburl{ocaml.org}  {\relsize{-1}{(doit suivre les usages et les standards)}}
   \item projet scolaire ou universitaire
   \end{itemize}
 
@@ -359,4 +359,28 @@ Voir le moteur d'inférences libre
 
 \end{frame}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Démarrage d'un système Linux} % How Linux starts
+\label{sec:start-linux}
+%%%%
+\begin{frame}\frametitle{Démarrage d'un système Linux déjà installé}
+
+  Comment démarre à froid un ordinateur Linux\footnote{Le démarrage
+  rarissime d'un supercalculateur est très complexe et je ne pourrais
+  pas l'expliquer en détail.} (portable ou fixe), où une distribution
+  Linux a déjà été installée il y a plusieurs mois.
+
+  \begin{enumerate}
+  \item le micrologiciel
+    %(de nos jours,
+    %\href{https://fr.wikipedia.org/wiki/UEFI}{\textclolor{Navy}{UEFI}})
+    de la carte mère démarre et initialise le matériel. Une
+    \href{https://fr.wikipedia.org/wiki/Mémoire_flash}{\textcolor{Navy}{mémoire
+        flash}} contient le paramétrage pour ça.
+    \item un chargeur (``boot-loader'', un code binaire de quelques kilo-octets) est
+      chargé dans la mémoire vive; c'est le logiciel libre \clburl{www.gnu.org/software/grub} codé en assembleur et C.
+  \end{enumerate}
+\end{frame}
 \end{document}
