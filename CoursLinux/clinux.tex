@@ -8,7 +8,9 @@
 % cf https://www.unilim.fr/pages_perso/stephane.vinatier/LaTeX/guide-lualatex.pdf
 % cf https://fr.overleaf.com/gallery/tagged/beamer
 % cf https://tex.stackexchange.com/a/527167
-\documentclass[lualatex,11pt,a4paper,svgnames]{beamer}
+\documentclass[lualatex,11pt,a4paper,svgnames,french]{beamer}
+%https://deic.uab.cat/~iblanes/beamer_gallery/
+\usetheme{AnnArbor}
 %\usepackage[T1]{fontenc}
 % inputenc is not needed with lualatex
 % \usepackage[utf8x]{inputenc}
@@ -55,11 +57,13 @@
 % https://tex.stackexchange.com/a/413066/42406
 %\usepackage{apptools}
 %\usepackage[a4paper, margin=2cm]{geometry}
-%\usepackage{hyperref}
+\usepackage{hyperref}
 
 \newcommand{\clbemail}[1]{{\href{mailto:#1}{\texttt{\textbf{\textcolor{Navy}{#1}}}}}}
 \newcommand{\clburl}[1]{{\href{#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}
-
+\title{Cours sur Linux} 
+\author{Basile \textsc{Starynkevitch}}
+\date{automne 2025}
 
 % see also http://www.sascha-frank.com/Arrow/latex-arrows.html
 % and http://tug.ctan.org/info/symbols/comprehensive/symbols-a4.pdf
@@ -84,17 +88,53 @@
 
 \begin{document}
 
+\begin{frame}
+\titlepage
+\end{frame}
+
 \begin{frame}{Un cours sur Linux}
 
-  par Basile STARYNKEVITCH \\
+  par
+
+  \begin{center}Basile STARYNKEVITCH \\
   8, rue de la Faïencerie \\
   92340 Bourg-la-Reine \\
   courriel: \clbemail{basile@starynkevitch.net}
+  \end{center}
+  \bigskip
+  
+  généré: \textit{\clbdate} 
 
   \bigskip
   
-  généré: \textit{\clbdate} \\
-  git \texttt{\clbgitid}
+  git: \texttt{\clbgitid}
 \end{frame}
 
+\begin{frame}{Plan}
+  \tableofcontents
+\end{frame}
+
+\section{Pourquoi j'apprécie Linux} 
+\begin{frame}\frametitle{Pourquoi j'apprécie Linux}
+
+  \begin{itemize}
+  \item Par habitude
+  \item Linux est largement utilisé: des tablettes (ou RaspBerryPi) ou
+    téléphones, à l'affichage des gares et des bus, la plupart des
+    serveurs Web, aux superordinateurs\footnote{Tous les
+    superordinateurs listés sur \url{top500.org} tournent sous Linux}
+  \item Linux est composé de \textcolor{red}{logiciels libres}\footnote{Mais beaucoup
+  d'entreprises vendent des logiciels propriétaires ou des services commerciaux sur
+  Linux}, voir aussi \url{linuxfoundation.org}, \url{april.org}, \url{aful.org}
+  \item les distributions GNU/Linux sont facilement téléchargeables et redistribuables:
+    \begin{itemize}
+    \item \textbf{Debian} sur \url{debian.org}
+    \item \textbf{Ubuntu} sur \url{ubuntu.com}
+    \item \textbf{Mageia} sur \url{mageia.org}
+    \item \textbf{RedHat} sur \url{redhat.com}
+    \item etc.... etc.... 
+    \end{itemize}
+  \end{itemize}
+  
+\end{frame}
 \end{document}
