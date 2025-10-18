@@ -30,8 +30,8 @@ all: cours-linux-Starynkevitch.pdf
 clean:
 	$(RM) *.log *.aux *.fls *~ gener*.tex
 
-cours-linux-Starynkevitch.pdf:  clinux.tex \
-   $(LATEXGENERES) $(LATEXINCLUS) clinux-biblio.bib
+cours-linux-Starynkevitch.pdf:  clinux.tex gener-macro.tex \
+   $(LATEXGENERES) $(LATEXINCLUS) clinux-biblio.bib 
 	$(LUALATEX) $(LATEXOPTIONS)  clinux
 	$(BIBTEX)   $(BIBTEXOPTIONS)  clinux
 	$(LUALATEX) $(LATEXOPTIONS)  clinux
@@ -41,5 +41,5 @@ gener-macro.tex: | GNUmakefile
 	if [ -f "$@" ]; then $(MV) $@ $@~ ; fi
 	echo "% fichier genéré gener-macro.tex" > $@
 	echo '% gitid' "$(GIT_ID)" >> $@
-	$(DATE) +"\\newcommand{cldate}{%c}" >> $@
-	$(PRINTF) "\\\\newcommand{clgitid}{%s}\n" "$(GIT_ID)" >> $@
+	$(DATE) +"\\newcommand{clbdate}{%c}" >> $@
+	$(PRINTF) "\\\\newcommand{clbgitid}{%s}\n" "$(GIT_ID)" >> $@
