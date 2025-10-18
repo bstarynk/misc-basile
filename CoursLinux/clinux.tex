@@ -114,29 +114,35 @@
   \tableofcontents
 \end{frame}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Pourquoi j'apprécie Linux} % why I like Linux
 \label{sec:like-linux}
-
+%%%%
 \begin{frame}\frametitle{Pourquoi j'apprécie Linux}
 
   \begin{itemize}
   \item Par habitude
-  \item Linux est largement utilisé: des tablettes (ou RaspBerryPi) ou
+  \item Linux est largement utilisé: des tablettes (ou
+    \href{https://www.raspberrypi.org/}{RaspBerryPi}) ou
     téléphones\footnote{Android est une variante de Linux, et les
     FairPhones tournent sous une variante plus libre nommée
     \texttt{/e/OS}}, à l'affichage des gares et des bus, probablement
-    dans beaucoup de voitures automobile, la plupart des serveurs Web,
-    aux superordinateurs\footnote{Tous les superordinateurs listés sur
-    \url{https://top500.org} tournent sous Linux}
+    dans beaucoup de voitures automobiles\footnote{Pour les fonctions
+    non-critiques telles que le GPS ou la radio!}, la plupart des
+    serveurs Web, aux superordinateurs\footnote{Tous les
+    superordinateurs listés sur \clburl{top500.org} tournent sous
+    Linux mais valent des millions d'€ et consomment parfois des MW
+    électriques.}
   \item Linux est composé de \textcolor{red}{logiciels libres}\footnote{Mais beaucoup
   d'entreprises vendent des logiciels propriétaires ou des services commerciaux sur
-  Linux}, voir aussi \href{https://linuxfoundation.org}{\texttt{linuxfoundation.org}},
-    \href{https://april.org}{\texttt{april.org}}, \href{https://aful.org}{\texttt{aful.org}}, \href{https://fsfe.org}{\texttt{fsfe.org}}
+  Linux}, voir aussi \clburl{linuxfoundation.org},
+    \clburl{april.org}, \clburl{aful.org}, \clburl{fsfe.org}
 
   \end{itemize}
   \end{frame}
 
-  
+%%%%
 \begin{frame}\frametitle{Distributions Linux}
 
   Elles contiennent un grand nombre de \textcolor{red}{\textbf{paquets\footnote{plusieurs milliers de
@@ -150,13 +156,75 @@
 
   \medskip
   
-  Beaucoup de distributions GNU/Linux sont facilement téléchargeables
-  et redistribuables:
+  Beaucoup de
+  \href{https://fr.wikipedia.org/wiki/Distribution_Linux}{\textit{distributions}}
+  GNU/Linux sont facilement téléchargeables et redistribuables:
     \begin{itemize}
     \item \textbf{Debian} sur \clburl{debian.org}
     \item \textbf{Ubuntu} sur \clburl{ubuntu.com}
     \item \textbf{Mageia} sur \clburl{mageia.org}
     \item \textbf{RedHat} sur \clburl{redhat.com}
     \end{itemize}
+\end{frame}
+%%%%
+\begin{frame}\frametitle{Variété des distributions}
+
+Il existe des distributions non linuxiennes mais plus ou moins libres:
+\clburl{freebsd.org}, \clburl{openbsd.org}, \clburl{hurd.gnu.org},
+\clburl{tunes.org}, \href{https://sources.vsta.org:7100/}{VSTa},
+\clburl{templeos.org}, \clburl{illumos.org} etc...
+
+\medskip
+
+Dans le monde des distributions Linux on peut distinguer:
+
+\begin{relsize}{-0.6}
+\begin{itemize}
+\item les \textbf{distributions \textcolor{red}{binaires}} (\clburl{ubuntu.com} comme
+  \clburl{linuxmint.com} et beaucoup d'autres, souvent dérivées de
+  \clburl{debian.org}, et \clburl{redhat.com}) qui existent sous
+  plusieurs versions de stabilité et nouveauté variées. Elles sont
+  recommandées pour les débutants (ou ceux sont pressés d'avoir un
+  ordinateur utilisable sous Linux). Plusieurs distributions
+  facilitent\footnote{En pratique, à chaque redémarrage, on choisit au
+  clavier quel système va démarrer.\medskip} la cohabitation sur un ordinateur
+  de Linux avec Windows.
+
+\item les \textbf{distributions \textcolor{red}{sources}}
+  (\clburl{gentoo.org} et \clburl{archlinux.org} parmi d'autres) qui
+  compilent les paquets logiciels à leur installation. Elles
+  s'adressent à des experts, et leur installation prendra du temps
+  mais peut être optimale.
+\end{itemize}
+\end{relsize}
+\end{frame}
+
+
+
+%%%%
+\begin{frame}\frametitle{Libertés du du logiciel libre}
+
+Elles sont définies dans différentes licences logicielles,
+principalement La
+\href{https://fr.wikipedia.org/wiki/Licence_publique_générale_GNU}{licence
+  publique GNU} GPL
+\href{https://www.gnu.org/licenses/gpl-3.0.html}{3.0} (en
+\clburl{www.gnu.org/licenses/}), la licence LGPL, les licences
+\clburl{cecill.info} ou \clburl{eupl.eu}, et d'autres.
+
+La GPL est ma licence logicielle préférée, et permet:
+\begin{itemize}
+\item {\relsize{-1}{(liberté 0)}} la liberté d'exécuter le logiciel
+  pour n'importe quel usage;
+\item {\relsize{-1}{(liberté 1)}} la liberté d'étudier le
+  fonctionnement d'un programme et de l'adapter à ses besoins, ce qui
+  passe par l'accès aux codes sources;
+\item {\relsize{-1}{(liberté 2)}} la liberté de redistribuer des
+  copies du logiciel;
+\item {\relsize{-1}{(liberté 3)}} la liberté de faire
+  bénéficier\footnote{Il y a alors l'obligation morale voire légale de
+  redistribuer le code source du logiciel amélioré} la communauté des
+  versions modifiées.
+\end{itemize}
 \end{frame}
 \end{document}
