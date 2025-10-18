@@ -5,9 +5,10 @@
 %
 % need debian package texlive-latex-extra & texlive-bibtex-extra &
 % texlive-full
+% cf https://www.unilim.fr/pages_perso/stephane.vinatier/LaTeX/guide-lualatex.pdf
 %
-\documentclass[11pt,a4paper,svgnames]{beamer}
-\usepackage[T1]{fontenc}
+\documentclass[lualatex,11pt,a4paper,svgnames]{beamer}
+%\usepackage[T1]{fontenc}
 % inputenc is not needed with lualatex
 % \usepackage[utf8x]{inputenc}
 \usepackage{alltt}
@@ -19,7 +20,7 @@
 %\usepackage{fancyhdr}
 %\usepackage{fancybox}
 % https://tex.stackexchange.com/a/226497/42406
-\usepackage[title]{appendix}
+%\usepackage[title]{appendix}
 % libertine, see https://tex.stackexchange.com/a/9868/42406
 %\usepackage{libertine}
 %\usepackage{epsfig}
@@ -82,6 +83,8 @@
 
 \begin{document}
 
-Un cours sur Linux
+\begin{frame}{Un cours sur Linux}
+  Transparents sur Linux
+\end{frame}
 
 \end{document}
