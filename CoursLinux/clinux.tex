@@ -6,7 +6,8 @@
 % need debian package texlive-latex-extra & texlive-bibtex-extra &
 % texlive-full
 % cf https://www.unilim.fr/pages_perso/stephane.vinatier/LaTeX/guide-lualatex.pdf
-%
+% cf https://fr.overleaf.com/gallery/tagged/beamer
+% cf https://tex.stackexchange.com/a/527167
 \documentclass[lualatex,11pt,a4paper,svgnames]{beamer}
 %\usepackage[T1]{fontenc}
 % inputenc is not needed with lualatex
@@ -53,8 +54,8 @@
 %\usepackage{times}
 % https://tex.stackexchange.com/a/413066/42406
 %\usepackage{apptools}
-\usepackage[a4paper, margin=2cm]{geometry}
-\usepackage{hyperref}
+%\usepackage[a4paper, margin=2cm]{geometry}
+%\usepackage{hyperref}
 
 \newcommand{\clbemail}[1]{{\href{mailto:#1}{\texttt{\textbf{#1}}}}}
 \newcommand{\clburl}[1]{{\href{#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}

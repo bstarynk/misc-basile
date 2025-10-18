@@ -5,3 +5,10 @@
 *.fls
 *.log
 gener*tex
+clinux.bbl
+clinux.blg
+clinux.nav
+clinux.pdf
+clinux.snm
+clinux.toc
+cours-linux-Starynkevitch.pdf
