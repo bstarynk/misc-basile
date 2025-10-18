@@ -40,7 +40,7 @@
 %\usepackage{inconsolata}
 %\usepackage{hevea}
 %\usepackage{listings}
-%\usepackage{relsize}
+\usepackage{relsize}
 %\usepackage{verbatimbox}
 %\usepackage{verbatim}
 %\usepackage{filecontents}
@@ -60,7 +60,7 @@
 \usepackage{hyperref}
 
 \newcommand{\clbemail}[1]{{\href{mailto:#1}{\texttt{\textbf{\textcolor{Navy}{#1}}}}}}
-\newcommand{\clburl}[1]{{\href{#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}
+\newcommand{\clburl}[1]{{\href{https://#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}
 \title{Cours sur Linux} 
 \author{Basile \textsc{Starynkevitch}}
 \date{automne 2025}
@@ -114,7 +114,7 @@
   \tableofcontents
 \end{frame}
 
-\section{Pourquoi j'apprécie Linux} 
+\section[sec:like-linux]{Pourquoi j'apprécie Linux} % why I like Linux
 \begin{frame}\frametitle{Pourquoi j'apprécie Linux}
 
   \begin{itemize}
@@ -122,18 +122,21 @@
   \item Linux est largement utilisé: des tablettes (ou RaspBerryPi) ou
     téléphones, à l'affichage des gares et des bus, la plupart des
     serveurs Web, aux superordinateurs\footnote{Tous les
-    superordinateurs listés sur \url{top500.org} tournent sous Linux}
+    superordinateurs listés sur \url{https://top500.org} tournent sous Linux}
   \item Linux est composé de \textcolor{red}{logiciels libres}\footnote{Mais beaucoup
   d'entreprises vendent des logiciels propriétaires ou des services commerciaux sur
-  Linux}, voir aussi \url{linuxfoundation.org}, \url{april.org}, \url{aful.org}
+  Linux}, voir aussi \href{https://linuxfoundation.org}{\texttt{linuxfoundation.org}},
+    \href{https://april.org}{\texttt{april.org}}, \href{https://aful.org}{\texttt{aful.org}}, \href{https://fsfe.org}{\texttt{fsfe.org}}
   \item les distributions GNU/Linux sont facilement téléchargeables et redistribuables:
+    \begin{relsize}{-1}
     \begin{itemize}
-    \item \textbf{Debian} sur \url{debian.org}
-    \item \textbf{Ubuntu} sur \url{ubuntu.com}
-    \item \textbf{Mageia} sur \url{mageia.org}
-    \item \textbf{RedHat} sur \url{redhat.com}
+    \item \textbf{Debian} sur \url{https://debian.org}
+    \item \textbf{Ubuntu} sur \url{https://ubuntu.com}
+    \item \textbf{Mageia} sur \url{https://mageia.org}
+    \item \textbf{RedHat} sur \url{https://redhat.com}
     \item etc.... etc.... 
     \end{itemize}
+    \end{relsize}
   \end{itemize}
   
 \end{frame}
