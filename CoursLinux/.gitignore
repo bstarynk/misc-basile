@@ -4,6 +4,7 @@
 *.aux
 *.fls
 *.log
+*.png
 gener*tex
 clinux.bbl
 clinux.blg

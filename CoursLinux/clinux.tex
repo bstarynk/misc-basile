@@ -286,8 +286,8 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
   \begin{tabular}{l|l}
     \includegraphics[scale=0.4]{base-unpriv-reg-state} &
     \begin{tabular}{c}
-      \includegraphics[scale=0.4]{riscv-op-int} \\
-      opération arithmétique entière sur 3 registres \\
+      \includegraphics[scale=0.42]{riscv-op-int} \\
+      {\relsize{-1}{opération arithmétique entière sur 3 registres}} \\
       \texttt{RD := RS1 \textit{op} RS2} \\
       \hline \\
       \includegraphics[scale=0.4]{riscv-opint-u} \\
@@ -469,7 +469,9 @@ Voir le moteur d'inférences libre
 
 %%%%
 \begin{frame}\frametitle{Fichiers, processus, appels système (notions)}
-%  
+  %
+
+  \begin{relsize}{-0.5}
 Un \textbf{\textcolor{red}{fichier}} (``file'') générique (Linux) est
 \textbf{\textcolor{red}{une séquence d'octets} avec des méta-données}
 la décrivant. Il existe plusieurs sortes de fichiers\footnote{La
@@ -493,19 +495,21 @@ ordinateur éteint n'a pas de processus.
 Un \textbf{\textcolor{red}{appel système}} (``system call'') est une
 opération ``atomique'' exécutée par un processus dans le code binaire
 d'un fichier programme qui est exécutée par le noyau. La plupart des
-appels systèmes s'exécutent en quelques dizaines de µs. Il y a environ
-300 appels systèmes possibles.
-
+\href{https://fr.wikipedia.org/wiki/Appel_système}{\textcolor{Navy}{appels
+    systèmes}} s'exécutent en quelques dizaines de µs. Il y a environ
+380 appels systèmes possibles (cf \href{https://man7.org/linux/man-pages/man2/syscalls.2.html}{\textcolor{Navy}{\texttt{syscalls(2)}}}).
+\smallskip
+  \end{relsize}
 \end{frame}
 %%%%
 \begin{frame}\frametitle{Modes noyau et utilisateur d'un processeur}
 
-  Chaque c{\oe}ur de processeur\footnote{Selon son coût et son modèle,
-  un processeur a 4 à 128 c{\oe}urs qui fonctionnent simultanément,
-  chacun exécutant un code -ou un processus- différent.\\} peut
-  fonctionner dans l'un des deux modes suivants:
 
   \begin{relsize}{-0.6}
+  Chaque c{\oe}ur de processeur\footnote{Selon son modèle,
+  un processeur a 4 à 128 c{\oe}urs qui fonctionnent simultanément,
+  chacun exécutant un code souvent différent. Je suppose ici un processeur
+  \href{https://fr.wikipedia.org/wiki/X64}{\textcolor{Navy}{\textit{x86-64}}} ...\\} fonctionne dans l'un des deux modes suivants:
   \begin{itemize}
     \item le \textbf{mode noyau} (ou privilégié) permet l'exécution de
       toutes les instructions machine, y compris les plus dangereuses
@@ -518,12 +522,12 @@ appels systèmes s'exécutent en quelques dizaines de µs. Il y a environ
         mémoire). Le code binaire dans les segments des fichiers
         exécutables s'exécute fan ce mode.
   \end{itemize}
-  \end{relsize}
   
   Une instruction machine particulière \texttt{SYSCALL}\footnote{Je
-  simplifie, il y en a plusieurs} permet de passer du mode utilisateur
+  simplifie, il y en a plusieurs!} permet de passer du mode utilisateur
   au mode noyau. Une autre \texttt{SYSRETURN} passe de manière
   contrôlée du mode noyau au mode utilisateur.
+  \end{relsize}
 \end{frame}
 
 \end{document}
