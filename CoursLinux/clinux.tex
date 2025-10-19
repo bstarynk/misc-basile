@@ -117,8 +117,8 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Pourquoi j'apprécie Linux} % why I like Linux
-\label{sec:like-linux}
+\section{Introduction et terminologie}
+\label{sec:intro}
 %%%%
 \begin{frame}\frametitle{Pourquoi j'apprécie Linux}
 
@@ -279,22 +279,103 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
 \end{frame}
 %%%%
 \begin{frame}\frametitle{exemple d'architecture: \clburl{riscv.org} (Von Neumann)}
-  {\relsize{-1}{$\mathrm{XLEN} \in \{32, 64\}$}}
+  {\relsize{-1}{$\mathrm{XLEN} \in \{32, 64\}$}}   (exemples, en réalité centaines de pages)
 
   \smallskip
 
+
+  %% cf https://tex.stackexchange.com/a/116524/42406
   \begin{tabular}{l|l}
     \includegraphics[scale=0.4]{base-unpriv-reg-state} &
+    \raisebox{4cm}{
     \begin{tabular}{c}
       \includegraphics[scale=0.42]{riscv-op-int} \\
       {\relsize{-1}{opération arithmétique entière sur 3 registres}} \\
       \texttt{RD := RS1 \textit{op} RS2} \\
       \hline \\
-      \includegraphics[scale=0.4]{riscv-opint-u} \\
-      
+      \includegraphics[scale=0.42]{riscv-opint-u} \\
+      {\relsize{-1}{opération arithmétique entière sur constante immédiate}} \\
+        \texttt{RD := RD \textit{op} IMM} \\
     \end{tabular}
+      }
   \end{tabular}
 \end{frame}
+%%%%
+\begin{frame}\frametitle{Modes noyau et utilisateur d'un processeur}
+
+
+  \begin{relsize}{-0.6}
+  Chaque c{\oe}ur de processeur\footnote{Selon son modèle,
+  un processeur a 4 à 128 c{\oe}urs qui fonctionnent simultanément,
+  chacun exécutant un code souvent différent. Je suppose ici un processeur
+  \href{https://fr.wikipedia.org/wiki/X64}{\textcolor{Navy}{\textit{x86-64}}} ...\\} fonctionne dans l'un des deux modes suivants:
+  \begin{itemize}
+    \item le \textbf{mode noyau} (ou privilégié) permet l'exécution de
+      toutes les instructions machine, y compris les plus dangereuses
+      qui écrivent sur les disques, affichent à l'écran, ou éteignent
+      l'ordinateur. Seul le noyau Linux (et UEFI) utilise ce mode.
+
+      \item le \textbf{mode utilisateur} interdit les instructions machine
+        dangereuses, mais permet les operations sûres (addition
+        entière, accès contrôlé à \textit{certaines} zones
+        mémoire). Le code binaire dans les segments des fichiers
+        exécutables s'exécute fan ce mode.
+  \end{itemize}
+  
+  Une instruction machine particulière \texttt{SYSCALL}\footnote{Je
+  simplifie, il y en a plusieurs!} permet de passer du mode utilisateur
+  au mode noyau. Une autre \texttt{SYSRETURN} passe de manière
+  contrôlée du mode noyau au mode utilisateur.
+  \end{relsize}
+\end{frame}
+%%%%
+\begin{frame}\frametitle{les interruptions}
+
+  Tout processeur accepte des  \href{https://fr.wikipedia.org/wiki/Interruption_(informatique)}{\textcolor{Navy}{interruptions}} sur des évènements tels que :
+
+  \begin{relsize}{-0.5}
+  \begin{itemize}
+  \item instruction machine interdite ou inexistante
+  \item évènement ou incident matériel 
+  \item réception ou fin d'émission d'un paquet de données (vers un
+    disque, un port USB ou Ethernet)
+  \item temporisation atteinte
+  \item adresse de donnée ou de code illicite
+  \item division par 0
+  \end{itemize}
+  \end{relsize}
+  
+  Le processeur sauvegarde alors son état\footnote{L'état sauvegardé par le
+  matériel peut être partiel, à charge pour le code du noyau de
+  sauvegarder explicitement le reste de l'état} et passe le contrôle à
+  du code machine spécifique en mode noyau.
+\end{frame}
+
+%%%%
+\begin{frame}\frametitle{Rôles du noyau Linux}
+
+  \begin{itemize}
+  \item gérer et abstraire le matériel spécifique
+  \item offrir aux logiciels applicatifs\footnote{Les applications et
+  logiciels serveurs Linux tournent en mode utilisateur et utilisent
+  le noyau Linux par des appels systèmes} via les appels systèmes une
+    abstraction de plus haut niveau:
+    \begin{itemize}
+    \item les fichiers
+    \item les protocoles réseaux (TCP)
+    \item les processus
+    \end{itemize}
+    \item cette interface normalisée permet la portabilité du code
+      source (quand le dévelopeur y travaille) et dans des cas
+      particulier de certains fichiers binaires exécutables.
+    \item Linux est
+      \href{https://fr.wikipedia.org/wiki/Multitâche}{\textbf{\textcolor{Navy}{multitâches}}}
+      et \href{https://fr.wikipedia.org/wiki/Multi-utilisateur}{\textbf{\textcolor{Navy}{multi-utilisateurs}}}
+      \item Conformité aux normes \href{https://fr.wikipedia.org/wiki/POSIX}{\textbf{\textcolor{Navy}{POSIX}}}  et \href{https://fr.wikipedia.org/wiki/Single_UNIX_Specification}{\textbf{\textcolor{Navy}{Single UNIX specification}}}
+  \end{itemize}
+\end{frame}
+
+
 %%%%
 \begin{frame}\frametitle{Distributions Linux}
 
@@ -499,34 +580,6 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
     systèmes}} s'exécutent en quelques dizaines de µs. Il y a environ
 380 appels systèmes possibles (cf \href{https://man7.org/linux/man-pages/man2/syscalls.2.html}{\textcolor{Navy}{\texttt{syscalls(2)}}}).
 \smallskip
-  \end{relsize}
-\end{frame}
-%%%%
-\begin{frame}\frametitle{Modes noyau et utilisateur d'un processeur}
-
-
-  \begin{relsize}{-0.6}
-  Chaque c{\oe}ur de processeur\footnote{Selon son modèle,
-  un processeur a 4 à 128 c{\oe}urs qui fonctionnent simultanément,
-  chacun exécutant un code souvent différent. Je suppose ici un processeur
-  \href{https://fr.wikipedia.org/wiki/X64}{\textcolor{Navy}{\textit{x86-64}}} ...\\} fonctionne dans l'un des deux modes suivants:
-  \begin{itemize}
-    \item le \textbf{mode noyau} (ou privilégié) permet l'exécution de
-      toutes les instructions machine, y compris les plus dangereuses
-      qui écrivent sur les disques, affichent à l'écran, ou éteignent
-      l'ordinateur. Seul le noyau Linux (et UEFI) utilise ce mode.
-
-      \item le \textbf{mode utilisateur} interdit les instructions machine
-        dangereuses, mais permet les operations sûres (addition
-        entière, accès contrôlé à \textit{certaines} zones
-        mémoire). Le code binaire dans les segments des fichiers
-        exécutables s'exécute fan ce mode.
-  \end{itemize}
-  
-  Une instruction machine particulière \texttt{SYSCALL}\footnote{Je
-  simplifie, il y en a plusieurs!} permet de passer du mode utilisateur
-  au mode noyau. Une autre \texttt{SYSRETURN} passe de manière
-  contrôlée du mode noyau au mode utilisateur.
   \end{relsize}
 \end{frame}
 
