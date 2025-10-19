@@ -61,6 +61,7 @@
 
 \newcommand{\clbemail}[1]{{\href{mailto:#1}{\texttt{\textbf{\textcolor{Navy}{#1}}}}}}
 \newcommand{\clburl}[1]{{\href{https://#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}
+\newcommand{\clbrougras}[1]{{\textcolor{Red}{\textbf{#1}}}}
 \title{Cours sur Linux} 
 \author{Basile \textsc{Starynkevitch}}
 \date{automne 2025}
@@ -134,7 +135,7 @@
     superordinateurs listés sur \clburl{top500.org} tournent sous
     Linux mais valent des millions d'€ et consomment parfois des MW
     électriques.}
-  \item Linux est composé de \textcolor{red}{logiciels libres}\footnote{Mais beaucoup
+  \item Linux est composé de \clbrougras{logiciels libres}\footnote{Mais beaucoup
   d'entreprises vendent des logiciels propriétaires ou des services commerciaux sur
   Linux}, voir aussi \clburl{linuxfoundation.org},
     \clburl{april.org}, \clburl{aful.org}, \clburl{fsfe.org}
@@ -155,10 +156,10 @@ Le matériel informatique\footnote{Une carte mère actuelle contient en
 Le dévelopeur informaticien ne comprend que du \textbf{code source}
 qui est tapé au clavier\footnote{Un dévelopeur utilise aussi une
 souris d'ordinateur, qui contient, comme son clavier, du code
-binaire. Certains dévelopeurs sont aveugles.\\} et lu à
-l'écran. Empiriquement \textbf{\textcolor{red}{un dévelopeur}} à temps
-plein \textbf{produit} \textbf{\textcolor{red}{quelques dizaines de
-    milliers de lignes de code source par an}}.
+binaire.\\} et lu à
+l'écran. Empiriquement \clbrougras{un dévelopeur} à temps
+plein \textbf{produit} \clbrougras{quelques dizaines de
+    milliers de lignes de code source par an}.
 
 \medskip
 
@@ -192,10 +193,6 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
   \item projet scolaire ou universitaire
   \end{itemize}
 
-  La
-  \href{https://fr.wikipedia.org/wiki/Souveraineté_numérique}{\textit{\textcolor{Navy}{souveraineté
-        numérique}}} est un argument pour le développement, le
-  financement, et l'amélioration de logiciels libres...
   
 \end{frame}
 
@@ -211,21 +208,93 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
       \item ne pas coder volontairement des \href{https://fr.wikipedia.org/wiki/Logiciel_malveillant}{logiciels malveillants}
         \item
           \href{https://fr.wikipedia.org/wiki/Loi_de_Murphy_(homonymie)}{loi
-            de Murphy}: les catastrophes arrivent au mauvais moment.
-        \item définir les données et les codes qui vous sont chers.
-          \item sauvegarder ceux ci (notamment le code source qui vous
-            co-dévelopez) periodiquement (3 fois par semaine),
-            peut-être à distance.
+            de Murphy}: \textbf{les catastrophes arrivent au plus mauvais moment}.
+        \item \clbrougras{définir les données et les codes qui vous sont chers}.
+          \item \clbrougras{sauvegarder} ceux ci
+            {\relsize{-0.5}{(notamment le code source qui vous
+                co-dévelopez)}} \clbrougras{périodiquement}
+            {\relsize{-0.5}{(3 fois par semaine)}}, peut-être à
+            distance.
             \item nettoyez préventivement plusieurs fois par ans vos
-              ordinateurs (ils prennent la poussière et brûlent).
+              ordinateurs {\relsize{-0.5}{(ils prennent la poussière et brûlent)}}.
       \end{itemize}
 
       Savoir que \textbf{tout logiciel est bogué}, donc \textbf{il
-        faut documenter votre travail}.
+        faut \clbrougras{documenter} votre travail}.
 \end{frame}
 
+%%%%
+\begin{frame}\frametitle{Architecture d'ordinateurs}
 
+  \clbrougras{Document écrit spécifiant une famille d'ordinateurs}
+  \medskip
+  
 
+  Ce document fait souvent \textbf{des milliers de pages} et donne:
+  \begin{itemize}
+  \item la définition des instructions machines : \clbrougras{le jeu d'instructions} ``instruction set architecture'' (ISA)
+  \item le comportement de chaque instruction machine
+  \item la définition de la connectique  {\relsize{-0.5}{(ports USB, HDMI, Ethernet, ...)}}
+  \item souvent des spécifications électriques ou physiques
+  \item parfois des spécifications temporelles; {\relsize{-0.5}{par exemple dans tel
+    cas l'addition de deux entiers de 32 bits prendra 5 ns.}}
+  \end{itemize}
+
+  \bigskip
+  Un ordinateur a \textbf{plusieurs sortes de mémoire}: registres,
+  caches, mémoire principale (RAM), disques ou SSD.
+\end{frame}
+
+%%%%
+\begin{frame}\frametitle{Architectures Von Neumann et Harvard}
+
+  \begin{itemize}
+    \item
+      \href{https://fr.wikipedia.org/wiki/Architecture_de_von_Neumann}{\textcolor{Navy}{\textit{architecture
+            de Von Neumann}}}: \clbrougras{les données et le code
+        binaire sont dans une mémoire commune}; un logiciel pourrait
+      donc modifier son propre code binaire\footnote{Certains codes
+      dont le micrologiciel UEFI demeurent en mémoire ``morte'' ou à
+      lecture seule.} (ou un autre).
+    \item
+      \href{https://fr.wikipedia.org/wiki/Architecture_de_type_Harvard}{\textcolor{Navy}{\textit{architecture
+            de Harvard}}}: les données et le code mémoire ont chacun
+        leur mémoire; l' auto-modification du code binaire est impossible.
+  \end{itemize}
+
+  \bigskip
+
+  \begin{relsize}{-0.5}
+  Architecture de von Neumann: tous les ordinateurs portables ou fixes sous Linux.
+
+  \medskip
+  
+  Architecture Harvard: les microcontrôleurs dans les souris,
+  claviers, certains contrôleurs d'écran.
+  \end{relsize}
+  
+  \medskip
+
+  \href{https://fr.wikipedia.org/wiki/Microarchitecture}{\textcolor{Navy}{microarchitecture}}: détails techniques sur les circuits dans un processeur
+\end{frame}
+%%%%
+\begin{frame}\frametitle{exemple d'architecture: \clburl{riscv.org} (Von Neumann)}
+  {\relsize{-1}{$\mathrm{XLEN} \in \{32, 64\}$}}
+
+  \smallskip
+
+  \begin{tabular}{l|l}
+    \includegraphics[scale=0.4]{base-unpriv-reg-state} &
+    \begin{tabular}{c}
+      \includegraphics[scale=0.4]{riscv-op-int} \\
+      opération arithmétique entière sur 3 registres \\
+      \texttt{RD := RS1 \textit{op} RS2} \\
+      \hline \\
+      \includegraphics[scale=0.4]{riscv-opint-u} \\
+      
+    \end{tabular}
+  \end{tabular}
+\end{frame}
 %%%%
 \begin{frame}\frametitle{Distributions Linux}
 
@@ -357,6 +426,11 @@ Voir le moteur d'inférences libre
 \href{https://fr.wikipedia.org/wiki/Jacques_Pitrat}{\textcolor{Navy}{Jacques
     Pitrat}}
 
+\smallskip
+  La
+  \href{https://fr.wikipedia.org/wiki/Souveraineté_numérique}{\textit{\textcolor{Navy}{souveraineté
+        numérique}}} est un argument pour le développement, le
+  financement, et l'amélioration de logiciels libres...
 \end{frame}
 
 
