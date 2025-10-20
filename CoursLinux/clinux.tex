@@ -673,7 +673,7 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
 
   Chaque processus a un
   \href{https://fr.wikipedia.org/wiki/Identifiant_de_processus}{\textcolor{Navy}{numéro
-      identifiant}} \clbrougras{unique}, son \texttt{\textit{pid}} (cf
+      identifiant}} \clbrougras{unique}, son \texttt{\textit{pid\_t}} (cf
   \href{https://man7.org/linux/man-pages/man2/getpid.2.html}{\textcolor{Navy}{\texttt{getpid(2)}}}). Celui
   du processus initial est 1.
 \end{frame}
@@ -711,11 +711,47 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
     \href{https://fr.wikipedia.org/wiki/Répertoire_(informatique)}{\textcolor{Navy}{\textit{répertoires}}} courant (cf
     \href{https://man7.org/linux/man-pages/man2/getcwd.2.html}{\texttt{\textcolor{Navy}{getcwd(2)}}}) et racine (cf
     \href{https://man7.org/linux/man-pages/man2/chroot.2.html}{\texttt{\textcolor{Navy}{chroot(2)}}}).
+    \item les \href{https://fr.wikipedia.org/wiki/Signal_(informatique)}{\textcolor{Navy}{\textit{signaux}}} (cf
+      \href{https://man7.org/linux/man-pages/man2/sigaction.2.html}{\texttt{\textcolor{Navy}{sigaction(2)}}}
+      et
+      \href{https://man7.org/linux/man-pages/man7/signal.7.html}{\texttt{\textcolor{Navy}{signal(7)}}}
+      )
   \end{itemize}
   \end{relsize}
 \end{frame}
 %%%%
 \begin{frame}\frametitle{Création d'un processus}
+  Tout
+  {\href{https://largo.lip6.fr/~cassagnea/docs/epu/main3_sys/cm/cm4-processus.pdf}{\textcolor{Navy}{\textit{processus}}}}
+  non initial est le plus souvent créé par
+  {\href{https://man7.org/linux/man-pages/man2/fork.2.html}{\texttt{\textcolor{Navy}{fork(2)}}}}
+  et plus rarement par
+  {\href{https://man7.org/linux/man-pages/man2/clone.2.html}{\texttt{\textcolor{Navy}{clone(2)}}}}
+  \footnote{En pratique, l'appel système \texttt{clone} est
+  principalement utilisé pour créer des filaments, donc pour réaliser
+  \href{https://man7.org/linux/man-pages/man3/pthread_create.3.html}{\texttt{\textcolor{Navy}{pthread\_create(3)}}}.
+  Les appels système \texttt{fork} et \texttt{clone} peuvent échouer et sont lourds et lents (millisecondes).\smallskip\\}.
+  Pour \clbrougras{dupliquer le processus courant}:
+  \begin{quote}
+    \begin{alltt}
+      pid\_t np = fork();
+    \end{alltt}
+  \end{quote}
+  Après quoi  \clbrougras{on a deux processus quasi-identiques} qui tournent \textbf{simultanément}, sauf:
+  \begin{relsize}{-1}
+  \begin{itemize}
+  \item dans le processus appelant (le \clbrougras{père}) \texttt{np} est non-nul
+  \item dans le processus créé (le \clbrougras{fils}) \texttt{np} est
+    nul, et \textbf{il a un seul filament d'exécution}.
+  \end{itemize}
+  \end{relsize}
+  Ordinairement le fils fait des traitements courts\footnote{Par exemple, il ferme par
+  {\href{https://man7.org/linux/man-pages/man2/close.2.html}{\texttt{\textcolor{Navy}{close(2)}}}}
+  les descripteurs de fichiers inutiles.\medskip\\} puis démarre avec
+  {\href{https://man7.org/linux/man-pages/man2/execve.2.html}{\texttt{\textcolor{Navy}{execve(2)}}}}
+  un nouveau programme exécutable. Le père va plus tard attendre avec
+  {\href{https://man7.org/linux/man-pages/man2/waitpid.2.html}{\texttt{\textcolor{Navy}{waitpid(2)}}}}
+  la terminaison du processus fils.
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
