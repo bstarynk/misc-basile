@@ -621,23 +621,33 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
     (``directory'') sous Linux est un fichier particulier associant
     des noms à d'autres fichiers.
 
-%  Un
-%  {\href{https://fr.wikipedia.org/wiki/Système_de_fichiers}{\textcolor{Navy}{système
-%        de fichiers}}} (``file system'') organise sur une partition du
-%  disque\footnote{Certains systèmes de fichiers sont sur des machines distantes:
-%  {\href{https://fr.wikipedia.org/wiki/Network_File_System}{\textcolor{Navy}{NFS}.}
-%    et dans le noyau un ensemble de fichiers.
-%
-% Un
-% {\href{https://fr.wikipedia.org/wiki/Point_de_montage}{\textcolor{Navy}{point
-%       de montage}}} est un répertoire sur lequel le noyau accède à un
-% système de fichiers.
-%
-% Un fichier sous Linux peut avoir aucun\footnote{Un fichier sans
-% chemin d'accès est temporaire.}, un ou plusieurs noms (ou
-% {\href{https://fr.wikipedia.org/wiki/Chemin_d'accès}{\textcolor{Navy}{chemins
-%       d'accès}}}.
-  
+    \medskip
+    
+  Un
+  {\href{https://fr.wikipedia.org/wiki/Système_de_fichiers}{\textcolor{Navy}{système
+        de fichiers}}} (ou ``file system'') organise sur une partition
+  du disque
+  \footnote{Certains systèmes de fichiers sont sur des machines distantes:
+  {\href{https://fr.wikipedia.org/wiki/Network_File_System}{\textcolor{Navy}{NFS}.\smallskip}}}
+   et dans le noyau une arborescence de fichiers et de répertoires.
+
+   \medskip
+
+ Un
+ {\href{https://fr.wikipedia.org/wiki/Point_de_montage}{\textcolor{Navy}{point
+       de montage}}} est un répertoire sur lequel les applications accèdent à un
+ système de fichiers.
+
+ \medskip
+ 
+Un fichier sous Linux peut avoir aucun\footnote{Un fichier sans
+chemin d'accès est temporaire.}, un ou plusieurs noms (ou
+{\href{https://fr.wikipedia.org/wiki/Chemin_d'accès}{\textcolor{Navy}{chemins
+      d'accès}}} - ``file path'')
+\medskip
+
+Au démarrage le noyau monte le système de fichier racine.
+
 \end{frame}
 
   %
@@ -695,7 +705,9 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
   \clbrougras{Ce processus initial} (executable \texttt{/sbin/init} ou
   \href{https://fr.wikipedia.org/wiki/Systemd}{\textcolor{Navy}{systemd}})
   \clbrougras{ne doit pas s'arrêter} (sauf arrêt de l'ordinateur) donc
-  a des contraintes et propriétés particulières.
+  a des contraintes et propriétés particulières. Il monte avec
+  \href{https://man7.org/linux/man-pages/man2/mount.2.html}{\texttt{\textcolor{Navy}{mount(2)}}}
+   des systèmes de fichiers et en démonte.
 
   \bigskip
 
@@ -703,7 +715,7 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
   \href{https://fr.wikipedia.org/wiki/Identifiant_de_processus}{\textcolor{Navy}{numéro
       identifiant}} \clbrougras{unique}, son \texttt{\textit{pid\_t}} (cf
   \href{https://man7.org/linux/man-pages/man2/getpid.2.html}{\textcolor{Navy}{\texttt{getpid(2)}}}). Celui
-  du processus initial est 1.
+  du processus initial est $1$.
 \end{frame}
 %%%%
 \begin{frame}\frametitle{Gestion des processus par le noyau}
@@ -727,9 +739,11 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
     \href{https://man7.org/linux/man-pages/man2/getppid.2.html}{\texttt{\textcolor{Navy}{getppid(2)}}}
     \item les filaments ou 
       ``{\href{https://fr.wikipedia.org/wiki/Thread_(informatique)}{\textit{\textcolor{Navy}{thread}}s}}''
-    \item les
+    et leur
       {\href{https://fr.wikipedia.org/wiki/Pile_d'exécution}{\textit{\textcolor{Navy}{pile
               d'exécution}}}} ou ``call stack''
+  \item l'identifiant d'utilisateur
+      {\href{https://fr.wikipedia.org/wiki/User_identifier}{\textit{\textcolor{Navy}{uid}}}} et de groupe, etc.
   \item la table des
     \href{https://fr.wikipedia.org/wiki/Descripteur_de_fichier}{\textcolor{Navy}{descripteurs
         de fichiers}} (``file descriptors'') ouverts (entiers)
@@ -781,6 +795,75 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
   {\href{https://man7.org/linux/man-pages/man2/waitpid.2.html}{\texttt{\textcolor{Navy}{waitpid(2)}}}}
   la terminaison du processus fils.
 \end{frame}
+%%%%%
+
+\begin{frame}\frametitle{Terminaison d'un processus}
+  Il peut se terminer:
+  \begin{itemize}
+    \item de lui-même, par l'appel système 
+  {\href{https://man7.org/linux/man-pages/man2/_exit.2.html}{\texttt{\textcolor{Navy}{\_exit(2)}}}} souvent appelé indirectement (e.g. par 
+  {\href{https://man7.org/linux/man-pages/man3/exit.3.html}{\texttt{\textcolor{Navy}{exit(3)}}}})
+  \item par réception d'un signal explicite. Celui-ci est envoyé par un processus utilisant l'appel système
+  {\href{https://man7.org/linux/man-pages/man2/kill.2.html}{\texttt{\textcolor{Navy}{kill(2)}}}}
+  \item par emission d'un signal sur faute, généré par le noyau
+    (adresse illicite, instruction machine privilégiée, limite
+    dépassée, temporisation atteinte \ldots)
+  \end{itemize}
+
+  NB: le signal \texttt{SIGKILL} n'est pas traitable dans un
+  programme. Conventionnellement envoyer \texttt{SIGTERM} avant.
+\end{frame}
+\begin{frame}\frametitle{Permissions d'un processus}
+
+  Linux est multi-utilisateur, donc chaque processus a son:
+
+  \begin{itemize}
+  \item répertoire courant et racine
+  \item numéro d'utilisateur \clbrougras{uid} (``user id'')
+  \item numéro de groupe \clbrougras{gid} (``group id'')
+  \end{itemize}
+
+  Quand le uid est non nul, le noyau vérifie les permissions.
+
+\medskip
+Ainsi un
+processus 1234 d'uid 456 ne peut terminer par
+{\href{https://man7.org/linux/man-pages/man2/kill.2.html}{\texttt{\textcolor{Navy}{kill(2)}}}}
+  un processus 6789 d'uid 567.  Il pourra lire les fichiers d'uid 456
+  mais pas tous les autres.
+
+  \medskip
+
+  Les processus d'uid 0 sont privilégiés.
+
+\medskip
+  Lire attentivement
+  {\href{https://man7.org/linux/man-pages/man2/setuid.2.html}{\texttt{\textcolor{Navy}{setuid(2)}}}}
+  et la wikipage sur les exécutables 
+{\href{https://fr.wikipedia.org/wiki/Setuid}{\textbf{\textcolor{Navy}{setuid}}}}.
+  
+\end{frame}
+\begin{frame}\frametitle{Exécution d'un programme}
+  Elle se fait par l'appel système (lourd)
+  {\href{https://man7.org/linux/man-pages/man2/execve.2.html}{\texttt{\textcolor{Navy}{execve(2)}}}}
+  qui modifie en totalité l'espace d'adressage d'un processus, le remplaçant par des segments indiqués dans le fichier exécuté.
+
+  \begin{relsize}{-0.5}
+  \begin{quote}
+    \begin{alltt}
+      char argv[] = \{ "ls", "/etc/", NULL \};\\
+      char env[] = \{ "HOME=/home/titi", "PWD=/home/basile/tmp/",\\
+      "PATH=/usr/sbin:/usr/bin:/sbin:/bin", "SHELL=/bin/zsh", \\   NULL \};\\
+      int bad = \clbrougras{execve}("/bin/ls", argv, env);
+    \end{alltt}
+  \end{quote}
+  \end{relsize}
+
+  \clbrougras{L'espace d'adressage est écrasé} par les segments indiqués dans le fichier exécuté \texttt{"/bin/ls"}.
+
+  La variable \texttt{bad} n'est modifiée (en $-1$) qu'en cas d'échec. Elle a disparue autrement.
+\end{frame}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{fichiers sur Linux}
@@ -788,6 +871,28 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
 %%%%
 \begin{frame}\frametitle{§ \ref{sec:file}}
 {\Large \clbrougras{fichiers sur Linux}}
+\end{frame}
+%%%%
+\begin{frame}\frametitle{Chemins de fichier}
+  Ils prennent sens dans un processus effectuant certains appels systèmes, dont 
+  {\href{https://man7.org/linux/man-pages/man2/open.2.html}{\texttt{\textcolor{Navy}{open(2)}}}} et 
+  {\href{https://man7.org/linux/man-pages/man2/stat.2.html}{\texttt{\textcolor{Navy}{stat(2)}}}}
+
+  \medskip
+
+  Exemples:
+  \begin{itemize}
+  \item le fichier textuel
+    \texttt{/etc/passwd}\footnote{Historiquement ce fichier contenait
+    aussi des mots de passe chiffrés.} associe des uid-s à des
+    informations sur les utilisateurs. À partir de la rachine
+    \texttt{/} on traite son répertoire \texttt{etc} pour y trouver
+    l'entrée correspondant à \texttt{passwd}.
+  \end{itemize}
+\end{frame}
+%%%%
+\begin{frame}\frametitle{Sortes de fichier}
+  Elles sont gérées par le noyau pour les applications.
 \end{frame}
 %%%
 \begin{frame}\frametitle{...}
