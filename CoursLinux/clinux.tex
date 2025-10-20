@@ -377,6 +377,20 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
 
 
 %%%%
+\begin{frame}\frametitle{espace d'adressage et mémoire virtuelle}
+  \begin{tabular}{l|p{5cm}}
+    \includegraphics[height=0.6\textheight]{memoire-virtuelle-wikip}
+    &
+    \raisebox{3.5cm}{
+      \parbox{5cm}{ Le noyau gère des segments\footnote{Il y a des milliers de segments pour des centaines de processus. Certaines pages de ces segments sont chargés à la demande (sur interruption) par le noyau.\smallskip\\} de mémoire (code,
+        données) dont certains sont en lecture seule et d'autres
+        seulement sur le disque. Ces segments sont des multiples de
+        pages {\relsize{-1}{(4Ko ou 1Mo)}}.
+    }}
+  \end{tabular}
+\end{frame}
+
+%%%%
 \begin{frame}\frametitle{distributions Linux}
 
   Elles contiennent un grand nombre de \textcolor{red}{\textbf{paquets\footnote{plusieurs milliers de
