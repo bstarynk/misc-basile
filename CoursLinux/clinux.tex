@@ -127,6 +127,10 @@
 \section{Introduction et terminologie}
 \label{sec:intro}
 %%%%
+\begin{frame}\frametitle{§ \ref{sec:intro}}
+{\Large \clbrougras{introduction et terminologie}}
+\end{frame}
+%%%%
 \begin{frame}\frametitle{Pourquoi j'apprécie Linux}
 
   \begin{itemize}
@@ -541,6 +545,11 @@ Voir le moteur d'inférences libre
 \section{Démarrage d'un système Linux} % How Linux starts
 \label{sec:start-linux}
 %%%%
+%%%%
+\begin{frame}\frametitle{§ \ref{sec:start-linux}}
+{\Large \clbrougras{Démarrage d'un système Linux}}
+\end{frame}
+%%%
 \begin{frame}\frametitle{Démarrage d'un système Linux déjà installé}
 
   Comment démarre à froid un ordinateur Linux\footnote{Le démarrage
@@ -634,4 +643,105 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
 
   \smallskip
 \end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{processus Linux}
+\label{sec:process}
+%%%%
+\begin{frame}\frametitle{§ \ref{sec:process}}
+{\Large \clbrougras{processus dans Linux}}
+\end{frame}
+%%%%%%%%%
+
+\begin{frame}\frametitle{Le processus initial}
+  \clbrougras{C'est le seul processus qui n'est pas démarré par un
+    autre processus}, mais par le noyau\footnote{On peut paramétrer le
+  chargeur GRUB pour que le noyau démarre avec un autre processus
+  initial.\\ Certains systèmes Linux faisaient démarrer par le noyau
+  certains processus sur des évènements extérieurs, par exemple
+  l'insertion d'une clef USB.\\} au démarrage de Linux.
+
+  \bigskip
+  
+  \clbrougras{Ce processus initial} (executable \texttt{/sbin/init} ou
+  \href{https://fr.wikipedia.org/wiki/Systemd}{\textcolor{Navy}{systemd}})
+  \clbrougras{ne doit pas s'arrêter} (sauf arrêt de l'ordinateur) donc
+  a des contraintes et propriétés particulières.
+
+  \bigskip
+
+  Chaque processus a un
+  \href{https://fr.wikipedia.org/wiki/Identifiant_de_processus}{\textcolor{Navy}{numéro
+      identifiant}} \clbrougras{unique}, son \texttt{\textit{pid}} (cf
+  \href{https://man7.org/linux/man-pages/man2/getpid.2.html}{\textcolor{Navy}{\texttt{getpid(2)}}}). Celui
+  du processus initial est 1.
+\end{frame}
+%%%%
+\begin{frame}\frametitle{Gestion des processus par le noyau}
+  \begin{relsize}{-0.5}
+  Tous les processus sont gérés (et connus) par le noyau et
+  beaucoup\footnote{Il y a plusieurs centaines de processus, mais la
+  plupart attendent un événement extérieur. Voir
+  \href{https://man7.org/linux/man-pages/man2/poll.2.html}{\texttt{\textcolor{Navy}{poll(2)}}}
+  et
+  \href{https://man7.org/linux/man-pages/man2/wait.2.html}{\texttt{\textcolor{Navy}{wait(2)}}}. Un
+  ordinateur portable peut avoir 1 ou 2 processus actifs et 300
+  inactifs.}  sont inactifs. Le noyau connait et modifie
+  périodiquement le processus courant sur chaque c{\oe}ur de
+  processeur, et gère pour chaque processus (cf 
+  \href{https://man7.org/linux/man-pages/man7/credentials.7.html}{\texttt{\textcolor{Navy}{credentials(7)}}}):
+  \end{relsize}
+
+  \begin{relsize}{-1}
+  \begin{itemize}
+  \item l'espace d'adressage, le \textit{pid} et celui du père
+    \href{https://man7.org/linux/man-pages/man2/getppid.2.html}{\texttt{\textcolor{Navy}{getppid(2)}}}
+    \item les filaments ou 
+      ``{\href{https://fr.wikipedia.org/wiki/Thread_(informatique)}{\textit{\textcolor{Navy}{thread}}s}}''
+    \item les
+      {\href{https://fr.wikipedia.org/wiki/Pile_d'exécution}{\textit{\textcolor{Navy}{pile
+              d'exécution}}}} ou ``call stack''
+  \item la table des
+    \href{https://fr.wikipedia.org/wiki/Descripteur_de_fichier}{\textcolor{Navy}{descripteurs
+        de fichiers}} (``file descriptors'') ouverts (entiers)
+  \item des limites de resources (taille maximale de fichier, de l'espace d'adressage, etc... cf
+    \href{https://man7.org/linux/man-pages/man2/getrlimit.2.html}{\texttt{\textcolor{Navy}{getrlimit(2)}}})
+    \item les 
+    \href{https://fr.wikipedia.org/wiki/Répertoire_(informatique)}{\textcolor{Navy}{\textit{répertoires}}} courant (cf
+    \href{https://man7.org/linux/man-pages/man2/getcwd.2.html}{\texttt{\textcolor{Navy}{getcwd(2)}}}) et racine (cf
+    \href{https://man7.org/linux/man-pages/man2/chroot.2.html}{\texttt{\textcolor{Navy}{chroot(2)}}}).
+  \end{itemize}
+  \end{relsize}
+\end{frame}
+%%%%
+\begin{frame}\frametitle{Création d'un processus}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{fichiers sur Linux}
+\label{sec:file}
+%%%%
+\begin{frame}\frametitle{§ \ref{sec:file}}
+{\Large \clbrougras{fichiers sur Linux}}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{commandes sur Linux}
+\label{sec:commands}
+%%%%
+\begin{frame}\frametitle{§ \ref{sec:commands}}
+{\Large \clbrougras{commandes sur Linux}}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{bibliothèques et développement sur Linux}
+\label{sec:libr-devel}
+%%%%
+\begin{frame}\frametitle{§ \ref{sec:libr-devel}}
+{\Large \clbrougras{bibliothèques et développement sur Linux}}
+\end{frame}
+
 \end{document}
