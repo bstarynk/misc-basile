@@ -109,6 +109,13 @@
   \bigskip
   
   git: \texttt{\clbgitid}
+
+  \begin{center}
+    Ce cours contient des références
+    \href{https://fr.wikipedia.org/wiki/Raisonnement_circulaireq}{\textcolor{Navy}{circulaires}}
+    et des
+    \href{https://fr.wikipedia.org/wiki/Hyperlien}{\textcolor{Navy}{hyperliens}}
+  \end{center}
 \end{frame}
 
 \begin{frame}{Plan}
@@ -135,7 +142,7 @@
     superordinateurs listés sur \clburl{top500.org} tournent sous
     Linux mais valent des millions d'€ et consomment parfois des MW
     électriques.}
-  \item Linux est composé de \clbrougras{logiciels libres}\footnote{Mais beaucoup
+  \item Linux est majoritairement composé de \clbrougras{logiciels libres}\footnote{Mais beaucoup
   d'entreprises vendent des logiciels propriétaires ou des services commerciaux sur
   Linux}, voir aussi \clburl{linuxfoundation.org},
     \clburl{april.org}, \clburl{aful.org}, \clburl{fsfe.org}
@@ -382,7 +389,7 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
     \includegraphics[height=0.6\textheight]{memoire-virtuelle-wikip}
     &
     \raisebox{3.5cm}{
-      \parbox{5cm}{ Le noyau gère des segments\footnote{Il y a des milliers de segments pour des centaines de processus. Certaines pages de ces segments sont chargés à la demande (sur interruption) par le noyau.\smallskip\\} de mémoire (code,
+      \parbox{5cm}{ Le noyau gère des segments\footnote{Il y a des milliers de segments pour des centaines de processus. Certaines pages de ces segments sont chargés à la demande (sur interruption) par le noyau.\medskip\\} de mémoire (code,
         données) dont certains sont en lecture seule et d'autres
         seulement sur le disque. Ces segments sont des multiples de
         pages {\relsize{-1}{(4Ko ou 1Mo)}}.
@@ -598,8 +605,33 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
 \end{frame}
 
 %%%%
-\begin{frame}\frametitle{protocole d'appel système}
-  Un appel système transmet entre 0 et 7 arguments fixes (entiers ou
-  pointeurs) passés dans des registres. Il peut échouer.
+\begin{frame}\frametitle{protocole et exemple d'appel système}
+  Un appel système transmet entre 0 et 7 arguments fixes \footnote{Un
+  argument d'un appel système est un entier ou un pointeur vers une
+  donnée de l'espace d'adressage du processus faisant l'appel.\\} passés
+  dans des registres. Il peut échouer.
+
+  Exemple:
+  \href{https://man7.org/linux/man-pages/man2/munmap.2.html}{\textcolor{Navy}{\texttt{munmap(2)}}}
+  pour ôter un segment dans l'espace d'adressage du processus courant.
+
+  \begin{quote}
+  \begin{alltt}
+    void* ad = \clbrougras{\textrm{\textit{une adresse}}};\\
+    size\_t sz = \clbrougras{\textrm{\textit{une longueur}}};\\
+    int ech = munmap(ad, sz);
+  \end{alltt}
+  \end{quote}
+  
+  \smallskip
+  
+  Si l'appel échoue, \texttt{ech} vaut -1 et
+  \href{https://man7.org/linux/man-pages/man3/errno.3.html}{\textcolor{Navy}{\texttt{errno(3)}}}
+  contient un code d'erreur\footnote{Ici ça pourrait être
+  \texttt{EINVAL} donc 22 (argument incorrect, par exemple si
+  \texttt{ad} n'est pas aligné à une page) ou \texttt{EINTR} donc 4 si
+  l'appel système a été interrompu.\medskip\\}.
+
+  \smallskip
 \end{frame}
 \end{document}
