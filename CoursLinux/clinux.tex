@@ -61,7 +61,7 @@
 
 \newcommand{\clbemail}[1]{{\href{mailto:#1}{\texttt{\textbf{\textcolor{Navy}{#1}}}}}}
 \newcommand{\clbhref}[2]{{\href{https:#1}{{\textcolor{Navy}{#2}}}}}
-\newcommand{\clbman}[2]{{\href{https://https://man7.org/linux/man-pages/#1.html}{{\textcolor{Navy}{\texttt{#2}}}}}}
+\newcommand{\clbman}[2]{{\href{https://man7.org/linux/man-pages/#1.html}{{\textcolor{Navy}{\texttt{#2}}}}}}
 \newcommand{\clburl}[1]{{\href{https://#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}
 \newcommand{\clbrougras}[1]{{\textcolor{Red}{\textbf{#1}}}}
 \title{Cours sur Linux} 
@@ -680,10 +680,12 @@ d'un fichier programme qui est exécutée par le noyau. La plupart des
 
  \medskip
  
-Un fichier sous Linux peut avoir aucun\footnote{Un fichier sans
-chemin d'accès est temporaire.}, un ou plusieurs noms (ou
-{\href{https://fr.wikipedia.org/wiki/Chemin_d'accès}{\textcolor{Navy}{chemins
-      d'accès}}} - ``file path'')
+\textbf{Un fichier} sous Linux \textbf{peut avoir}
+\clbrougras{aucun}\footnote{Un fichier sans chemin d'accès est
+temporaire.}, \textbf{un} ou \textbf{plusieurs} \clbrougras{``noms''}
+(ou
+           {\href{https://fr.wikipedia.org/wiki/Chemin_d'accès}{\textcolor{Navy}{chemins
+                 d'accès}}} - ``file path'')
 \medskip
 
 Au démarrage le noyau monte le système de fichier racine.
@@ -862,10 +864,10 @@ Il peut être nécessaire de synchroniser ces fils par des
 \clbhref{https://fr.wikipedia.org/wiki/Verrou\_(informatique)}{verrous}
 ou des
 \clbhref{https://fr.wikipedia.org/wiki/Barrière\_de\_syncrhonisation}{barrières}: 
-%\clbman{man3/pthread_mutex_lock.3}{pthread\_lock(3)} et 
-%\clbman{man3/pthread_mutex_unlock.3}{pthread\_unlock(3)}
-%réalisant une
-%\clbhref{https://fr.wikipedia.org/wiki/Exclusion\_mutuelle}{exclusion mutuelle}.
+\clbman{man3/pthread_mutex_lock.3}{pthread\_mutex\_lock(3)} et
+\clbman{man3/pthread_mutex_unlock.3}{pthread\_mutex\_unlock(3)}
+réalisant une
+\clbhref{https://fr.wikipedia.org/wiki/Exclusion\_mutuelle}{exclusion mutuelle}. Attention aux \clbhref{https://fr.wikipedia.org/wiki/Interblocage}{interblocage} (``deadlock'').
 
 \end{frame}
 
