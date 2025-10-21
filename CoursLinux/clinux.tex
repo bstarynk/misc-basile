@@ -997,14 +997,15 @@ processus 1234 d'uid 456 ne peut terminer par
 \end{frame}
 %%%%
 \begin{frame}\frametitle{Sortes de fichier}
-  Elles sont gérées par le noyau pour les applications.
+  Elles sont \textbf{gérées par le noyau} pour les applications.
+  Cf appel système \clbman{man2/stat.2}{stat(2)}.
   \begin{itemize}
-  \item fichier simple (``regular file''): séquence d'octets (exemple: executable ELF, fichier textuel de configuration).
-  \item periphérique de bloc (``block device''): disque ou partition
-  \item periphérique d'octets (``character device''): port série, \ldots
-    \item lien symbolique (``symbolic link''): contient un nom (chemin d'accès indirect)
-  \item tube (``named pipe'' ou FIFO): permet la communication entre processus
-    \item socquette (``socket''): permet la communication distante
+  \item \clbrougras{fichier simple} (``regular file''): séquence d'octets (exemple: executable ELF, fichier textuel de configuration).
+  \item \clbrougras{periphérique de bloc} (``block device''): disque ou partition
+  \item \clbrougras{periphérique d'octets} (``character device''): port série, \ldots
+    \item \clbrougras{lien symbolique} (``symbolic link''): contient un nom (chemin d'accès indirect)
+  \item \clbrougras{tube} (``named pipe'' ou FIFO): permet la communication entre processus
+    \item \clbrougras{soquette} (``socket''): permet la communication distante
       (réseau Ethernet ou virtuel)
   \end{itemize}
 \end{frame}
@@ -1016,7 +1017,9 @@ processus 1234 d'uid 456 ne peut terminer par
   applicatif d'un fichier, en y lisant des octets.
 
   \smallskip
-  Par convention le suffixe du nom d'un fichier est significatif:
+
+  Par \clbrougras{convention} le suffixe du nom d'un fichier est
+  significatif:
   \begin{relsize}{-1}
   \begin{itemize}
   \item \texttt{.h} fichier d'entêtes en C ou C++
@@ -1029,6 +1032,27 @@ processus 1234 d'uid 456 ne peut terminer par
     \item \clbrougras{etc}
   \end{itemize}
   \end{relsize}
+\end{frame}
+%%%
+\begin{frame}\frametitle{Conventions recommandées sur les noms de fichiers}
+
+  Elles ne sont pas obligatoires \footnote{Mes recommandations valent probablement sur d'autres systèmes.\\} mais faciliteront votre vie
+
+  \begin{itemize}
+  \item \clbrougras{éviter les espaces et caractères non-imprimables}
+    dans les noms et chemins de fichiers.
+  \item s'inspirer (et prendre conseil) de la pratique voisine (forum
+    \clbhref{//lists.debian.org/debian-user-french/}{
+      \textbf{\texttt{debian-user-french}}}, etc....)
+    \item lire 
+      \clbhref{fr.wikipedia.org/wiki/Filesystem_Hierarchy_Standard}{FHS}
+      et suivre \clbman{man7/hier.7}{hier(7)} (ou s'en inspirer)
+  \item \textbf{suivre l'usage de votre distribution Linux}.
+  \item \clbrougras{documenter} explicitement \textbf{vos habitudes}.
+  \item pour certains projets, définir et documenter \footnote{Par
+  exemple, certains projets génèrent du code C dans des fichiers
+  \texttt{generated/*.c}, d'autres décident que les fichiers générés commencent par \texttt{\_}.... \medskip\\} des conventions propres.
+  \end{itemize}
 \end{frame}
 %%%
 \begin{frame}\frametitle{...}
