@@ -60,6 +60,8 @@
 \usepackage{hyperref}
 
 \newcommand{\clbemail}[1]{{\href{mailto:#1}{\texttt{\textbf{\textcolor{Navy}{#1}}}}}}
+\newcommand{\clbhref}[2]{{\href{https:#1}{{\textcolor{Navy}{#2}}}}}
+\newcommand{\clbman}[2]{{\href{https://https://man7.org/linux/man-pages/#1.html}{{\textcolor{Navy}{\texttt{#2}}}}}}
 \newcommand{\clburl}[1]{{\href{https://#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}
 \newcommand{\clbrougras}[1]{{\textcolor{Red}{\textbf{#1}}}}
 \title{Cours sur Linux} 
@@ -401,6 +403,21 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
   \end{tabular}
 \end{frame}
 
+%%%%
+\begin{frame}\frametitle{terminal et émulateur}
+  Autrefois les ordinateurs avaient des \clbhref{https://fr.wikipedia.org/wiki/Terminal_(informatique)}{terminaux} (wikipedia):
+  \begin{center}
+  \includegraphics[height=0.33\textheight]{Terminal-dec-vt100}
+  \end{center}
+  \bigskip
+  
+  Aujourd'hui un PC Linux sert de terminal à un superordinateur, on y
+  lance des logiciels
+  \clbhref{https://fr.wikipedia.org/wiki/émulateur_de_terminal}{émulateurs
+    de terminaux} dans une
+  \clbhref{https://fr.wikipedia.org/wiki/Interface_graphique}{interface
+    graphique}. On utilise donc des \clbhref{https://fr.wikipedia.org/wiki/Commandes_Unix}{commandes} par exemple \texttt{ls -lt *.[ch] | head}
+\end{frame}
 %%%%
 \begin{frame}\frametitle{distributions Linux}
 
@@ -766,7 +783,8 @@ Au démarrage le noyau monte le système de fichier racine.
   Tout
   {\href{https://largo.lip6.fr/~cassagnea/docs/epu/main3_sys/cm/cm4-processus.pdf}{\textcolor{Navy}{\textit{processus}}}}
   non initial est le plus souvent créé par
-  {\href{https://man7.org/linux/man-pages/man2/fork.2.html}{\texttt{\textcolor{Navy}{fork(2)}}}}
+  % {\href{https://man7.org/linux/man-pages/man2/fork.2.html}{\texttt{\textcolor{Navy}{fork(2)}}}}
+  \clbman{man2/fork.2}{fork(2)}
   et plus rarement par
   {\href{https://man7.org/linux/man-pages/man2/clone.2.html}{\texttt{\textcolor{Navy}{clone(2)}}}}
   \footnote{En pratique, l'appel système \texttt{clone} est
@@ -843,10 +861,12 @@ processus 1234 d'uid 456 ne peut terminer par
 {\href{https://fr.wikipedia.org/wiki/Setuid}{\textbf{\textcolor{Navy}{setuid}}}}.
   
 \end{frame}
+
+%%%%%%
 \begin{frame}\frametitle{Exécution d'un programme}
-  Elle se fait par l'appel système (lourd)
-  {\href{https://man7.org/linux/man-pages/man2/execve.2.html}{\texttt{\textcolor{Navy}{execve(2)}}}}
-  qui modifie en totalité l'espace d'adressage d'un processus, le remplaçant par des segments indiqués dans le fichier exécuté.
+  Elle se fait par l'\textbf{appel système} (lourd)
+  {\href{https://man7.org/linux/man-pages/man2/execve.2.html}{\texttt{\textcolor{Navy}{\textbf{execve(2)}}}}}
+  qui \clbrougras{modifie en totalité} \textbf{l'espace d'adressage du processus} appelant, le remplaçant par des segments indiqués dans le fichier exécuté.
 
   \begin{relsize}{-0.5}
   \begin{quote}
@@ -864,6 +884,35 @@ processus 1234 d'uid 456 ne peut terminer par
   La variable \texttt{bad} n'est modifiée (en $-1$) qu'en cas d'échec. Elle a disparue autrement.
 \end{frame}
 
+%%%%%%
+\begin{frame}{fichiers lancés par \texttt{execve(2)}}
+  Ils peuvent être de l'une des deux sortes:
+  \begin{itemize}
+  \item \clbrougras{fichier binaire} au format
+    \clbhref{fr.wikipedia.org/wiki/Executable_and_Linkable_Format}{ELF}
+    (``executable and linkable format''\footnote{Ce format ELF est
+    aussi utilisé pour les bibliothèques partagées (``shared
+    libraries'') et les fichiers 
+    \clbhref{fr.wikipedia.org/wiki/Fichier_objet}{objets}.\\})
+    commençant par les quatre
+    octets ``magiques'' \textit{0x7F}, \texttt{'E'}, \texttt{'L'}, \texttt{'F'}
+  \item \clbrougras{fichier script} textuel commençant par les deux
+    octets \texttt{'\#'}, \texttt{'\!'}
+  \end{itemize}
+
+  \bigskip
+  
+  La commande
+  \clbman{man1/ls.1}{ls(1)} utilisant l'appel système
+  \clbman{man2/stat.2}{stat(2)}  permet (avec \texttt{-l}) de lister les permissions; c'est pourquoi \texttt{ls -l /bin/cp} donne:
+  \begin{quote}
+  \begin{alltt}      
+-rwxr-xr-x 1 root root 149960 Jun  4 17:14 /bin/cp
+  \end{alltt}
+  \end{quote}
+  où le \texttt{-} initial indique un fichier ordinaire, et \texttt{rwx} donne les permissions pour le propriétaire du fichier.
+  
+\end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{fichiers sur Linux}
