@@ -175,6 +175,7 @@
     \end{enumerate}
   \item code source du noyau sur \clburl{kernel.org}, du compilateur GCC sur \clburl{gcc.gnu.org}
   \item logiciels libres sur  \clburl{www.gnu.org/software} et \clburl{github.com} et \clburl{gitlab.com}
+     et ailleurs.
   \end{itemize}
 \end{frame}
 %%%%
@@ -426,7 +427,7 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
 
 %%%%
 \begin{frame}\frametitle{terminal et émulateur}
-  Autrefois les ordinateurs avaient des \clbhref{https://fr.wikipedia.org/wiki/Terminal_(informatique)}{terminaux} (wikipedia):
+  Autrefois les ordinateurs avaient des \clbhref{//fr.wikipedia.org/wiki/Terminal_(informatique)}{terminaux} (wikipedia):
   \begin{center}
   \includegraphics[height=0.3\textheight]{Terminal-dec-vt100}
   \end{center}
@@ -836,6 +837,37 @@ Au démarrage le noyau monte le système de fichier racine.
   la terminaison du processus fils.
 \end{frame}
 %%%%%
+%%%%%
+
+\begin{frame}\frametitle{Processus multi-fil - POSIX threads}
+  Un processus peut lancer des
+  \clbhref{//fr.wikipedia.org/wiki/Thread\_(informatique)}{``thread''s}
+  ou \clbrougras{fil} (cf
+  \clbhref{//fr.wikipedia.org/wiki/Fibre\_(informatique)}{fibres}).
+
+  \smallskip
+  
+Ceux-ci peuvent tourner simultanément sur des c{\oe}urs d'un
+processeur et partagent l'epace d'adressage, les descripteurs de
+fichiers, etc..
+
+% \smallskip
+%
+% Ils sont créés avec 
+% \clbman{man3/pthread_create.3}{pthread\_create(3)} et sont attendus par 
+% \clbman{man3/pthread_join.3}{pthread\_join(3)}.
+%   
+% \smallskip
+% Il est nécessaire de synchroniser ces fils par des
+% \clburl{//fr.wikipedia.org/wiki/Verrou_(informatique)}{verrous}
+%ou des
+%\clburl{//fr.wikipedia.org/wiki/Barrière_de_syncrhonisation}{barrières}: 
+%\clbman{man3/pthread_mutex_lock.3}{pthread\_lock(3)} et 
+%\clbman{man3/pthread_mutex_unlock.3}{pthread\_unlock(3)}
+%réalisant une
+%\clbhref{https://fr.wikipedia.org/wiki/Exclusion\_mutuelle}{exclusion mutuelle}.
+
+\end{frame}
 
 \begin{frame}\frametitle{Terminaison d'un processus}
   Il peut se terminer:
