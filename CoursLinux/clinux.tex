@@ -114,7 +114,7 @@
 
   \begin{center}
     Ce cours contient des références
-    \href{https://fr.wikipedia.org/wiki/Raisonnement_circulaireq}{\textcolor{Navy}{circulaires}}
+    \href{https://fr.wikipedia.org/wiki/Raisonnement_circulaire}{\textcolor{Navy}{circulaires}}
     et des
     \href{https://fr.wikipedia.org/wiki/Hyperlien}{\textcolor{Navy}{hyperliens}}
   \end{center}
@@ -156,6 +156,27 @@
   \end{itemize}
   \end{frame}
 
+%%%%
+\begin{frame}\frametitle{Documentation et information en ligne}
+  \begin{itemize}
+  \item documentation de référence en anglais sur \clburl{man7.org} organisée en sections:
+    \begin{enumerate}
+    \item les \textbf{commandes utilisateurs} \clbman{man1/intro.1}{intro(1)}
+    \item les \textbf{appels systèmes} fourni par le noyau \clbman{man2/intro.2}{intro(2)}
+    \item les \textbf{fonctions} (en C) \textbf{de bibliothèques standards} \clbman{man3/intro.3}{intro(3)}
+    \item les \textbf{pilotes} logiciels et fichiers spéciaux \clbman{man4/intro.4}{intro(4)}
+    \item le \textbf{format des fichiers} (notamment de configuration)  \clbman{man5/intro.5}{intro(5)}
+    \item les \textbf{jeux} et leur utilitaires  \clbman{man6/intro.6}{intro(6)}
+    \item des \textbf{résumés} divers {\relsize{-1}{(gestion du temps
+      \clbman{man7/time.7}{time(7)}, chemin des fichiers
+      \clbman{man7/path\_resolution.7}{path\_resolution(7)} etc...)}}
+      \clbman{man7/intro.7}{intro(7)}
+    \item les \textbf{commandes d'administration} \clbman{man8/intro.8}{intro(8)}
+    \end{enumerate}
+  \item code source du noyau sur \clburl{kernel.org}, du compilateur GCC sur \clburl{gcc.gnu.org}
+  \item logiciels libres sur  \clburl{www.gnu.org/software} et \clburl{github.com} et \clburl{gitlab.com}
+  \end{itemize}
+\end{frame}
 %%%%
 \begin{frame}\frametitle{Code source et code binaire}
 
@@ -407,7 +428,7 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
 \begin{frame}\frametitle{terminal et émulateur}
   Autrefois les ordinateurs avaient des \clbhref{https://fr.wikipedia.org/wiki/Terminal_(informatique)}{terminaux} (wikipedia):
   \begin{center}
-  \includegraphics[height=0.33\textheight]{Terminal-dec-vt100}
+  \includegraphics[height=0.3\textheight]{Terminal-dec-vt100}
   \end{center}
   \bigskip
   
@@ -417,6 +438,7 @@ Le code source est la forme préférée par le programmeur, et la plus chère.
     de terminaux} dans une
   \clbhref{https://fr.wikipedia.org/wiki/Interface_graphique}{interface
     graphique}. On utilise donc des \clbhref{https://fr.wikipedia.org/wiki/Commandes_Unix}{commandes} par exemple \texttt{ls -lt *.[ch] | head}
+  qui lance en parallèle deux programmes \clbman{man1/ls.1}{ls(1)} et \clbman{man1/head.1}{head(1)}
 \end{frame}
 %%%%
 \begin{frame}\frametitle{distributions Linux}
