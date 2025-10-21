@@ -998,6 +998,37 @@ processus 1234 d'uid 456 ne peut terminer par
 %%%%
 \begin{frame}\frametitle{Sortes de fichier}
   Elles sont gérées par le noyau pour les applications.
+  \begin{itemize}
+  \item fichier simple (``regular file''): séquence d'octets (exemple: executable ELF, fichier textuel de configuration).
+  \item periphérique de bloc (``block device''): disque ou partition
+  \item periphérique d'octets (``character device''): port série, \ldots
+    \item lien symbolique (``symbolic link''): contient un nom (chemin d'accès indirect)
+  \item tube (``named pipe'' ou FIFO): permet la communication entre processus
+    \item socquette (``socket''): permet la communication distante
+      (réseau Ethernet ou virtuel)
+  \end{itemize}
+\end{frame}
+%%%
+\begin{frame}\frametitle{Type applicatif de fichier ordinaire}
+  Un fichier ordinaire (suite d'octets) est traité par des applications ou des commandes.
+  \bigskip
+  La commande \clbman{man1/file.1}{file(1)} ``devine'' le type
+  applicatif d'un fichier, en y lisant des octets.
+
+  \smallskip
+  Par convention le suffixe du nom d'un fichier est significatif:
+  \begin{relsize}{-1}
+  \begin{itemize}
+  \item \texttt{.h} fichier d'entêtes en C ou C++
+  \item \texttt{.o} fichier objet pouvant être relié par\clbman{man1/ld.1}{ld(1)}
+  \item \texttt{.c} fichier source en C
+  \item \texttt{.sh} fichier de commande pour  \clbman{man1/bash.1}{bash(1)}
+  \item \texttt{.html} fichier hypertexte pour le navigateur
+  \item \texttt{.svg} fichier image vectorielle
+  \item \texttt{.jpeg} fichier image numérique
+    \item \clbrougras{etc}
+  \end{itemize}
+  \end{relsize}
 \end{frame}
 %%%
 \begin{frame}\frametitle{...}
