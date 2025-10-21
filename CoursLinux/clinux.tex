@@ -64,6 +64,7 @@
 \newcommand{\clbman}[2]{{\href{https://man7.org/linux/man-pages/#1.html}{{\textcolor{Navy}{\texttt{#2}}}}}}
 \newcommand{\clburl}[1]{{\href{https://#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}
 \newcommand{\clbrougras}[1]{{\textcolor{Red}{\textbf{#1}}}}
+\newcommand{\clbshell}[1]{{\textcolor{DarkGreen}{\texttt{#1}}}}
 \title{Cours sur Linux} 
 \author{Basile \textsc{Starynkevitch}}
 \date{automne 2025}
@@ -1149,25 +1150,45 @@ processus 1234 d'uid 456 ne peut terminer par
 \end{frame}
 %%%%
 \begin{frame}\frametitle{principes des shells}
-  Une commande tient conceptuellement sur une longue ligne
+  Une \clbhref{//doc.ubuntu-fr.org/tutoriel/console_ligne_de_commande}{commande} tient conceptuellement sur une longue ligne
   logique\footnote{On peut l'écrire sur plusieurs lignes physiques
   terminés par des backslashs \texttt{\textbackslash} sauf la
   dernière.\\}.
   \bigskip
-  Le shell fait des expansions des ``mots'' de cette commande.
+  
+  Le shell fait des \clbrougras{expansions} des ``mots'' de cette
+  commande, quand le mot est un patron (``pattern''). Un tel mot peut
+  être remplacé par plusieurs mots. Ainsi \texttt{*.c} est remplacé
+  par les noms des fichiers se terminant par \texttt{.c},
+  \texttt{[A-Z]*.[ch]} est remplacé par les noms de fichiers
+  commençant par une majuscule et de suffixe \texttt{.c} ou
+  \texttt{.h}, et \texttt{*.\{o,jpeg\}} est remplacé par les noms des
+  fichiers se terminant par \texttt{.o} ou par \texttt{.jpeg}.
+  \bigskip
+  
+  Il y a plusieurs expansions consécutives.
+  \bigskip
+
+  Au final, la commande expansée est interprétée soit dans le shell
+  pour les commandes internes (exemple \clbshell{cd ..}) et le plus
+  souvent en lançant des processus (exemple \clbshell{ls -lt
+    {\textbar} less})
 \end{frame}
 
 %%%%
 \begin{frame}\frametitle{caractères spécifiques}
   \begin{itemize}
-  \item \texttt{\$} déréference une variable du shell, par exemple
-    \textcolor{DarkGreen}{\texttt{echo \$PWD}}
+  \item \texttt{*},
+    \texttt{[}, \texttt{]}, \texttt{\{}, \texttt{\}}
+    sont utilisés dans les patrons.
+  \item \texttt{\$} déreference\footnote{Il y a d'autres usages} une
+    variable du shell, par exemple \clbshell{echo \$PWD}
   \item \texttt{;} sépare deux commandes exécutées en séquence :
-     \textcolor{DarkGreen}{\texttt{pwd; ls}}
+     \clbshell{pwd; ls}
    \item \texttt{\textbar} pour coder un tube (cf
      \clbman{man2/pipe.2}{pipe(2)}): la sortie de la commande de gauche est
      l'entrée de la commande de droite :
-     \textcolor{DarkGreen}{\texttt{ls {\textbar} wc -l}}
+     \clbshell{ls {\textbar} wc -l}
   \end{itemize}
 \end{frame}
 %%%
