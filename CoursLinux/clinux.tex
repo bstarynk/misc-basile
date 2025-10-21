@@ -863,33 +863,39 @@ Ils sont créés avec
 Il peut être nécessaire de synchroniser ces fils par des
 \clbhref{https://fr.wikipedia.org/wiki/Verrou\_(informatique)}{verrous}
 ou des
-\clbhref{https://fr.wikipedia.org/wiki/Barrière\_de\_syncrhonisation}{barrières}: 
+\clbhref{https://fr.wikipedia.org/wiki/Barrière\_de\_syncrhonisation}{barrières}:
 \clbman{man3/pthread_mutex_lock.3}{pthread\_mutex\_lock(3)} et
 \clbman{man3/pthread_mutex_unlock.3}{pthread\_mutex\_unlock(3)}
 réalisant une
-\clbhref{https://fr.wikipedia.org/wiki/Exclusion\_mutuelle}{exclusion mutuelle}. Attention aux \clbhref{https://fr.wikipedia.org/wiki/Interblocage}{interblocage} (``deadlock'').
+\clbhref{https://fr.wikipedia.org/wiki/Exclusion\_mutuelle}{exclusion
+  mutuelle}. Attention aux
+\clbhref{https://fr.wikipedia.org/wiki/Interblocage}{interblocages}
+(``deadlock'').
 
 \end{frame}
 
 \begin{frame}\frametitle{Terminaison d'un processus}
   Il peut se terminer:
   \begin{itemize}
-    \item de lui-même, par l'appel système 
+    \item  \clbrougras{de lui-même}, par l'appel système 
   {\href{https://man7.org/linux/man-pages/man2/_exit.2.html}{\texttt{\textcolor{Navy}{\_exit(2)}}}} souvent appelé indirectement (e.g. par 
   {\href{https://man7.org/linux/man-pages/man3/exit.3.html}{\texttt{\textcolor{Navy}{exit(3)}}}})
-  \item par réception d'un signal explicite. Celui-ci est envoyé par un processus utilisant l'appel système
+  \item par  \clbrougras{réception d'un signal explicite}. Celui-ci est envoyé par un processus utilisant l'appel système
   {\href{https://man7.org/linux/man-pages/man2/kill.2.html}{\texttt{\textcolor{Navy}{kill(2)}}}}
-  \item par emission d'un signal sur faute, généré par le noyau
-    (adresse illicite, instruction machine privilégiée, limite
-    dépassée, temporisation atteinte \ldots)
+  \item par \clbrougras{émission d'un signal sur faute}, généré par le noyau
+    {\relsize{-1}{(adresse illicite, instruction machine privilégiée, limite
+    dépassée, temporisation atteinte \ldots)}}
   \end{itemize}
+  
+  \bigskip
 
   NB: le signal \texttt{SIGKILL} n'est pas traitable dans un
   programme. Conventionnellement envoyer \texttt{SIGTERM} avant.
 \end{frame}
 \begin{frame}\frametitle{Permissions d'un processus}
 
-  Linux est multi-utilisateur, donc chaque processus a son:
+  Linux est \clbrougras{multi-utilisateur}, donc \textbf{chaque
+    processus a} son:
 
   \begin{itemize}
   \item répertoire courant et racine
@@ -897,6 +903,8 @@ réalisant une
   \item numéro de groupe \clbrougras{gid} (``group id'')
   \end{itemize}
 
+  \smallskip
+  
   Quand le uid est non nul, le noyau vérifie les permissions.
 
 \medskip
@@ -922,7 +930,12 @@ processus 1234 d'uid 456 ne peut terminer par
 \begin{frame}\frametitle{Exécution d'un programme}
   Elle se fait par l'\textbf{appel système} (lourd)
   {\href{https://man7.org/linux/man-pages/man2/execve.2.html}{\texttt{\textcolor{Navy}{\textbf{execve(2)}}}}}
-  qui \clbrougras{modifie en totalité} \textbf{l'espace d'adressage du processus} appelant, le remplaçant par des segments indiqués dans le fichier exécuté.
+  qui \clbrougras{modifie en totalité} \textbf{l'espace d'adressage du
+    processus} appelant, le remplaçant par des segments indiqués dans
+  le fichier exécuté, par exemple\footnote{C'est simpliste. En réalité
+  \texttt{env} définit des dizaines de variables d'environnement. Cf
+  \clbman{man7/environ.7}{environ(7)}. Essayez la commande
+  \clbman{man1/printenv.1}{printenv(1)}.\medskip\\} :
 
   \begin{relsize}{-0.5}
   \begin{quote}
@@ -953,7 +966,7 @@ processus 1234 d'uid 456 ne peut terminer par
     commençant par les quatre
     octets ``magiques'' \textit{0x7F}, \texttt{'E'}, \texttt{'L'}, \texttt{'F'}
   \item \clbrougras{fichier script} textuel commençant par les deux
-    octets \texttt{'\#'}, \texttt{'\!'}
+    octets \texttt{'\#'}, \texttt{'!'}
   \end{itemize}
 
   \bigskip
@@ -966,7 +979,15 @@ processus 1234 d'uid 456 ne peut terminer par
 -rwxr-xr-x 1 root root 149960 Jun  4 17:14 /bin/cp
   \end{alltt}
   \end{quote}
-  où le \texttt{-} initial indique un fichier ordinaire, et \texttt{rwx} donne les permissions pour le propriétaire du fichier.
+
+  \smallskip
+  
+  \begin{relsize}{-0.5}
+  où le \texttt{-} initial indique un fichier ordinaire, et
+  \texttt{rwx} donne les permissions (lire \& écrire \& exécuter) pour
+  le propriétaire du fichier. Le premier \texttt{r-x} permet de lire \&
+  exécuter pour le groupe, le deuxième pour les autres.
+  \end{relsize}
   
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
