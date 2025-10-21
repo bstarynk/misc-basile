@@ -851,17 +851,17 @@ Ceux-ci peuvent tourner simultanément sur des c{\oe}urs d'un
 processeur et partagent l'epace d'adressage, les descripteurs de
 fichiers, etc..
 
-% \smallskip
+\smallskip
 %
-% Ils sont créés avec 
-% \clbman{man3/pthread_create.3}{pthread\_create(3)} et sont attendus par 
-% \clbman{man3/pthread_join.3}{pthread\_join(3)}.
+Ils sont créés avec
+\clbman{man3/pthread_create.3}{pthread\_create(3)} et sont attendus par
+\clbman{man3/pthread_join.3}{pthread\_join(3)} (dans le même processus).
 %   
-% \smallskip
-% Il est nécessaire de synchroniser ces fils par des
-% \clburl{//fr.wikipedia.org/wiki/Verrou_(informatique)}{verrous}
-%ou des
-%\clburl{//fr.wikipedia.org/wiki/Barrière_de_syncrhonisation}{barrières}: 
+\smallskip
+Il peut être nécessaire de synchroniser ces fils par des
+\clbhref{https://fr.wikipedia.org/wiki/Verrou\_(informatique)}{verrous}
+ou des
+\clbhref{https://fr.wikipedia.org/wiki/Barrière\_de\_syncrhonisation}{barrières}: 
 %\clbman{man3/pthread_mutex_lock.3}{pthread\_lock(3)} et 
 %\clbman{man3/pthread_mutex_unlock.3}{pthread\_unlock(3)}
 %réalisant une
