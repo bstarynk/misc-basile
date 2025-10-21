@@ -1109,6 +1109,67 @@ processus 1234 d'uid 456 ne peut terminer par
   \texttt{man --help} ou \texttt{emacs --help} ou \texttt{bash
     --version}.
 \end{frame}
+%%%%
+\begin{frame}\frametitle{interprètes de commande}
+
+  C'est le programme exécutable
+  (\clbhref{https://fr.wikipedia.org/wiki/Shell_Unix}{``shell''}) qui
+  lit le terminal ou traite le fichier contenant des commandes.
+
+  \begin{itemize}
+  \item standard
+    \clbhref{https://pubs.opengroup.org/onlinepubs/9799919799/}{POSIX}
+  \item petit interprète \clbhref{github.com/multishell/sash}{sash} libre
+  \item le shell fréquent est le GNU bash en \clburl{www.gnu.org/software/bash}
+  \item
+    \clbhref{https://fr.wikipedia.org/wiki/Debian_Almquist_shell}{dash}
+    est plus rapide.
+  \item mon préféré est \clburl{zsh.org}, libre et codé en C
+  \item \clburl{fishshell.com}, libre codé en C++
+  \end{itemize}
+
+  Il y en beaucoup d'autres
+  \clbhref{//fr.wikipedia.org/wiki/Korn_shell}{Korn},
+  \clbhref{//wryun.github.io/es-shell/}{Es},
+  \clbhref{//www.debian-fr.org/t/a-la-decouverte-du-shell-rc/89054}{Rc}
+  etc.
+
+  \smallskip
+  Cf
+  \clbhref{//www.formatux.fr/formatux-bash/module-010-niveau1/index.html}{scripts
+    shell} {\relsize{-0.5}{(à mon avis, \textbf{évitez d'écrire un
+        gros script}\footnote{On peut générer des scripts shell, comme
+      le fait
+      \clbhref{//fr.wikipedia.org/wiki/Autoconf}{autoconf}.\medskip} de
+      mille lignes)}}.
+
+  \smallskip
+  Étendre ou améliorer un shell libre est un \textbf{exercice
+    intéressant}.
+\end{frame}
+%%%%
+\begin{frame}\frametitle{principes des shells}
+  Une commande tient conceptuellement sur une longue ligne
+  logique\footnote{On peut l'écrire sur plusieurs lignes physiques
+  terminés par des backslashs \texttt{\textbackslash} sauf la
+  dernière.\\}.
+  \bigskip
+  Le shell fait des expansions des ``mots'' de cette commande.
+\end{frame}
+
+%%%%
+\begin{frame}\frametitle{caractères spécifiques}
+  \begin{itemize}
+  \item \texttt{\$} déréference une variable du shell, par exemple
+    \textcolor{DarkGreen}{\texttt{echo \$PWD}}
+  \item \texttt{;} sépare deux commandes exécutées en séquence :
+     \textcolor{DarkGreen}{\texttt{pwd; ls}}
+   \item \texttt{\textbar} pour coder un tube (cf
+     \clbman{man2/pipe.2}{pipe(2)}): la sortie de la commande de gauche est
+     l'entrée de la commande de droite :
+     \textcolor{DarkGreen}{\texttt{ls {\textbar} wc -l}}
+  \end{itemize}
+\end{frame}
 %%%
 \begin{frame}\frametitle{...}
   {\relsize{+10}{INCOMPLET}}
