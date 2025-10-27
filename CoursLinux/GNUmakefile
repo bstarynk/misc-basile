@@ -29,13 +29,15 @@ BIBTEXOPTIONS ?=
 DATE ?= /usr/bin/date
 PRINTF ?= /usr/bin/printf
 
-all: cours-linux-Starynkevitch.pdf | GNUmakefile
-	/usr/bin/evince $^
+all: cours-linux-Starynkevitch.pdf cours-shell-Starynkevitch.pdf | GNUmakefile
 
 clean:
 	$(RM) *.log *.aux *.fls *~ gener*.tex *.pdf *~ $(FICHIERS_PNG)
 
 cours-linux-Starynkevitch.pdf: clinux.pdf | GNUmakefile
+	/bin/cp --verbose  --backup $^ $@
+
+cours-shell-Starynkevitch.pdf: cshell.pdf | GNUmakefile
 	/bin/cp --verbose  --backup $^ $@
 
 %.png: %.svg
@@ -45,6 +47,17 @@ clinux.pdf: clinux.tex gener-macro.tex $(FICHIERS_PNG) | GNUmakefile \
    $(LATEXGENERES) $(LATEXINCLUS) #clinux-biblio.bib 
 	$(LUALATEX) $(LATEXOPTIONS)  clinux
 	$(LUALATEX) $(LATEXOPTIONS)  clinux
+
+
+cshell.pdf: cshell.tex gener-macro.tex $(FICHIERS_PNG) | GNUmakefile \
+   $(LATEXGENERES) $(LATEXINCLUS) #clinux-biblio.bib 
+	$(LUALATEX) $(LATEXOPTIONS)  cshell
+	$(LUALATEX) $(LATEXOPTIONS)  cshell
+
+%.png: %.svg
+	$(CONVERT) $^ $@
+
+
 
 gener-macro.tex: | GNUmakefile
 	if [ -f "$@" ]; then $(MV) $@ $@~ ; fi

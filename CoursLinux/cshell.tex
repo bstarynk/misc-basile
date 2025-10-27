@@ -1,0 +1,156 @@
+% fichier cshell.tex
+% sous  github.../bstarynk/misc-basile/CoursLinux
+% licence CC-BY-SA
+% Copyright 2025 Basile STARYNKEVITCH, 92340 Bourg-la-Reine
+%
+% need debian package texlive-latex-extra & texlive-bibtex-extra &
+% texlive-full
+% cf https://www.unilim.fr/pages_perso/stephane.vinatier/LaTeX/guide-lualatex.pdf
+% cf https://fr.overleaf.com/gallery/tagged/beamer
+% cf https://tex.stackexchange.com/a/527167
+\documentclass[lualatex,11pt,a4paper,svgnames,french]{beamer}
+%https://deic.uab.cat/~iblanes/beamer_gallery/
+\usetheme{AnnArbor}
+%\usepackage[T1]{fontenc}
+% inputenc is not needed with lualatex
+% \usepackage[utf8x]{inputenc}
+\usepackage{alltt}
+% https://tex.stackexchange.com/a/342804/42406
+% IMPORTANT! see also: https://tex.stackexchange.com/a/500963/42406
+%\usepackage{textcomp}
+%\usepackage{moreverb}
+%\usepackage{fancyvrb}
+%\usepackage{fancyhdr}
+%\usepackage{fancybox}
+% https://tex.stackexchange.com/a/226497/42406
+%\usepackage[title]{appendix}
+% libertine, see https://tex.stackexchange.com/a/9868/42406
+%\usepackage{libertine}
+%\usepackage{epsfig}
+%\usepackage{graphicx}
+%\usepackage{float}
+%\usepackage{xcolor}
+%\usepackage{moreverb}
+%\usepackage{multirow}
+%\usepackage{boxedminipage}
+%\usepackage[square]{natbib}
+% https://tex.stackexchange.com/a/16992/42406
+%\usepackage{mathabx}
+%\usepackage{charter}
+%\usepackage{inconsolata}
+%\usepackage{hevea}
+%\usepackage{listings}
+\usepackage{relsize}
+%\usepackage{verbatimbox}
+%\usepackage{verbatim}
+%\usepackage{filecontents}
+%\usepackage{catchfile}
+%\usepackage{lastpage}
+%\usepackage{stmaryrd}
+%\usepackage{ucs}
+%\usepackage{stix}
+%\usepackage{newunicodechar}
+% bigfoot enables \verb in footnotes
+%\usepackage{bigfoot}
+%\usepackage{makeidx}
+%\usepackage{times}
+% https://tex.stackexchange.com/a/413066/42406
+%\usepackage{apptools}
+%\usepackage[a4paper, margin=2cm]{geometry}
+\usepackage{hyperref}
+
+\newcommand{\clbemail}[1]{{\href{mailto:#1}{\texttt{\textbf{\textcolor{Navy}{#1}}}}}}
+\newcommand{\clbhref}[2]{{\href{https:#1}{{\textcolor{Navy}{#2}}}}}
+\newcommand{\clbman}[2]{{\href{https://man7.org/linux/man-pages/#1.html}{{\textcolor{Navy}{\texttt{#2}}}}}}
+\newcommand{\clburl}[1]{{\href{https://#1}{\texttt{\relsize{-1}{\textbf{#1}}}}}}
+\newcommand{\clbrougras}[1]{{\textcolor{Red}{\textbf{#1}}}}
+\newcommand{\clbshell}[1]{{\textcolor{DarkGreen}{\texttt{#1}}}}
+\title{Cours sur le shell de Linux} 
+\author{Basile \textsc{Starynkevitch}}
+\date{automne 2025}
+
+% see also http://www.sascha-frank.com/Arrow/latex-arrows.html
+% and http://tug.ctan.org/info/symbols/comprehensive/symbols-a4.pdf
+% and https://ctan.math.illinois.edu/macros/latex/contrib/newunicodechar/newunicodechar.pdf
+%%%% keep in order
+%U+21A6 RIGHTWARDS ARROW FROM BAR
+%\newunicodechar{↦}{$\mapsto$}
+%U+21B3 DOWNWARDS ARROW WITH TIP RIGHTWARDS
+%\newunicodechar{↳}{\rotatebox[origin=c]{180}{$\Lsh$}}
+%U+2208 ELEMENT OF
+%\newunicodechar{∈}{$\in$}
+% U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+%\newunicodechar{«}{\guillemotleft}
+% U+00BB RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+%\newunicodechar{»}{\guillemotright}
+% U+00B1 PLUS-MINUS SIGN
+%\newunicodechar{±}{$\pm$}
+% U+00B5 MICRO SIGN
+%\newunicodechar{µ}{$\mu$}
+
+\include{gener-macro}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}{Un cours sur le shell Linux}
+
+  par
+
+  \begin{center}Basile STARYNKEVITCH \\
+  8, rue de la Faïencerie \\
+  92340 Bourg-la-Reine \\
+  courriel: \clbemail{basile@starynkevitch.net}
+  \end{center}
+  \bigskip
+  
+  généré: \textit{\clbdate} 
+
+  \bigskip
+  
+  git: \texttt{\clbgitid}
+
+  \begin{center}
+    Ce cours contient des références
+    \href{https://fr.wikipedia.org/wiki/Raisonnement_circulaire}{\textcolor{Navy}{circulaires}}
+    et des
+    \href{https://fr.wikipedia.org/wiki/Hyperlien}{\textcolor{Navy}{hyperliens}}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Plan}
+  \tableofcontents
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{role-shell}
+\label{sec:role-shell}
+%%%%
+\begin{frame}\frametitle{§ \ref{sec:role-shell}}
+{\Large \clbrougras{Rôles du shell}}
+\end{frame}
+%%%%
+\begin{frame}\frametitle{Les rôles du shell}
+
+  \begin{itemize}
+  \item Le \clbhref{//fr.wikipedia.org/wiki/Shell_Unix}{shell} (ou interface de commande) permet d'utiliser un ordinateur Linux ``sans souris''.
+  \item c'est notamment l'interface principale des supercalculateurs (cf \clburl{top500.org}
+  \item Le shell sert aussi à lancer des commandes distantes ou différées dans le temps (dans une heure ou tous les vendredis matin)
+  \item Le shell est en pratique utilisable par tout programme Linux
+  \item Le shell est \clbrougras{un programme Linux comme un autre}
+  \item Il a plusieurs shells \clburl{zsh.org} \clbhref{www.gnu.org/software/bash/}{GNU bash}
+    \item Il existe une norme POSIX pour le shell
+  \end{itemize}
+  \end{frame}
+
+%%%
+\begin{frame}\frametitle{...}
+  {\relsize{+10}{INCOMPLET}}
+\end{frame}
+
+
+\end{document}
