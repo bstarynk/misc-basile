@@ -127,11 +127,11 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{role-shell}
+\section{Les rôles du Shell}
 \label{sec:role-shell}
 %%%%
 \begin{frame}\frametitle{§ \ref{sec:role-shell}}
-{\Large \clbrougras{Rôles du shell}}
+{\Large \clbrougras{Les rôles du shell}}
 \end{frame}
 %%%%
 \begin{frame}\frametitle{Les rôles du shell}
@@ -142,15 +142,77 @@
   \item Le shell sert aussi à lancer des commandes distantes ou différées dans le temps (dans une heure ou tous les vendredis matin)
   \item Le shell est en pratique utilisable par tout programme Linux
   \item Le shell est \clbrougras{un programme Linux comme un autre}
-  \item Il a plusieurs shells \clburl{zsh.org} \clbhref{www.gnu.org/software/bash/}{GNU bash}
-    \item Il existe une norme POSIX pour le shell
+  \item Il a plusieurs shells \clburl{zsh.org},
+    \clbhref{www.gnu.org/software/bash/}{GNU bash},
+    \clbhref{//members.tip.net.au/~dbell/programs/sash-3.8.tar.gz}{sash},
+    \clbhref{//fr.wikipedia.org/wiki/Debian_Almquist_shell}{dash},
+    \clbhref{//fishshell.com/}{fish} \ldots
+  \item Il existe une \clbhref{//pubs.opengroup.org/onlinepubs/9799919799/}{norme POSIX} pour le shell
+  \item La plupart des shells ne la suivent pas totalement
+  \item \clbhref{https://www.irif.fr/_media/rencontres/pps2018/regis-gianas.pdf}{vérifier} automatiquement un script shell est ``infernal''
   \end{itemize}
   \end{frame}
 
+\begin{frame}\frametitle{ambigüités du shell}
+  D'après Y.Régis-Gianas, \clbrougras{un exemple caricatural à proscrire!}
+%  \begin{quote}
+\begin{alltt}
+  for do in for do in echo done; do echo \textdollar{do}; done
+\end{alltt}
+    \begin{itemize}
+    \item le premier \clbshell{for} est un \clbrougras{mot-clé}
+    \item les premiers et seconds \texttt{do} sont des noms
+      (identificateurs), le troisième \clbshell{do} est un
+      \clbrougras{mot-clé}, le quatrième \texttt{\textdollar{do}} est
+      une variable de shell
+    \item le premier \clbshell{in} est un \clbrougras{mot-clé}, le second est un mot
+    \end{itemize}
+    \bigskip
+    Cf \clburl{https://github.com/colis-anr/morbig}
+ % \end{quote}
+\end{frame}
 %%%
-\begin{frame}\frametitle{...}
+\begin{frame}\frametitle{règles de bon sens}
+  \begin{itemize}
+  \item \clbrougras{éviter les noms de fichiers mal nommés}
+    {\relsize{-0.5}{(avec espace ou \texttt{*}, ou \texttt{\#} \ldots)}} et suivez \textbf{des conventions de nommage}.
+  \item \textbf{éviter les gros scripts shells} écrits à la main\footnote{au delà d'un script de cent ou deux cents lignes, \textbf{envisager la réécriture} dans un autre langage.\\}
+  \item \clbrougras{soigner la lisibilité}; une ligne commençant par \texttt{\#} est un \clbrougras{commentaire}
+  \item \textbf{dans certains cas,} \clbrougras{envisager la
+    génération de script shells} par d'autres outils, en particulier \clbhref{//fr.wikipedia.org/wiki/Autoconf}{GNU autoconf}
+    \item les interprètes shells et leurs scripts sont
+      lents\footnote{Car chaque commande externe démarre un
+      processus.\\}
+  \end{itemize}
+\end{frame}
+\begin{frame}\frametitle{Les commandes internes de shell}
+  Elles commencent par un \clbrougras{mot-clef}:
+  \begin{itemize}
+  \item \clbshell{cd} pour changer de répertoire, par exemple
+    \texttt{cd ../src/} ou \texttt{cd \$HOME} ou \texttt{cd ~}
+    \item \clbshell{pushd}\footnote{Dans la plupart des shells} pour
+      empiler le répertoire courant et en changer; le dépilement se
+      fait par \clbshell{popd}; ainsi \texttt{pushd \$HOME/Soft; make;
+        popd} exécute la commande \texttt{make} dans le répertoire
+      \texttt{\$HOME/Soft}
+  \item \clbshell{if} \textit{condition}
+  \end{itemize}
+  
+  {\relsize{+10}{INCOMPLET}}
+\end{frame}
+\begin{frame}\frametitle{??Les processus de shell}
+
+  
   {\relsize{+10}{INCOMPLET}}
 \end{frame}
 
 
 \end{document}
+
+%% *************
+%%                           for Emacs...
+%% Local Variables: ;;
+%% compile-command: "make cours-shell-Starynkevitch.pdf" ;;
+%% End: ;;
+%% *************/
+
