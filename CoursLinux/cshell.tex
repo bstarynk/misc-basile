@@ -182,11 +182,11 @@
     génération de script shells} par d'autres outils, en particulier \clbhref{//fr.wikipedia.org/wiki/Autoconf}{GNU autoconf}
     \item les interprètes shells et leurs scripts sont
       lents\footnote{Car chaque commande externe démarre un
-      processus.\\}
+      processus. Celui-ci a réussi si et seulement si il \clbhref{//man7.org/linux/man-pages/man2/_exit.2.html}{\_exit(2)} le code 0.\\}
   \end{itemize}
 \end{frame}
 \begin{frame}\frametitle{Les commandes internes de shell}
-  Elles commencent par un \clbrougras{mot-clef}:
+  Elles commencent par un \clbrougras{mot-clef} (et peuvent échouer):
   \begin{itemize}
   \item \clbshell{cd} pour changer de répertoire, par exemple
     \texttt{cd ../src/} ou \texttt{cd \$HOME} ou \texttt{cd ~}
@@ -195,13 +195,23 @@
       fait par \clbshell{popd}; ainsi \texttt{pushd \$HOME/Soft; make;
         popd} exécute la commande \texttt{make} dans le répertoire
       \texttt{\$HOME/Soft}
-  \item \clbshell{if} \textit{condition}
+  \item \clbshell{if} \textit{commandes-condition} \clbshell{;}
+    \clbshell{then} \textit{commande-conséquents} \clbshell{;}
+    \clbshell{fi} avec des variantes plus compliquées.
   \end{itemize}
   
   {\relsize{+10}{INCOMPLET}}
 \end{frame}
 \begin{frame}\frametitle{??Les processus de shell}
 
+  
+  {\relsize{+10}{INCOMPLET}}
+\end{frame}
+\begin{frame}\frametitle{??commandes condition}
+
+  \clbhref{//developpement-informatique.com/article/479/structures-conditionnelles-if-et-case-dans-shell}{exemples ici}
+  %reprendre
+  %https://developpement-informatique.com/article/479/structures-conditionnelles-if-et-case-dans-shell
   
   {\relsize{+10}{INCOMPLET}}
 \end{frame}
