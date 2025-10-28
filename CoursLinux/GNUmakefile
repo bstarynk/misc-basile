@@ -33,6 +33,7 @@ all: cours-linux-Starynkevitch.pdf cours-shell-Starynkevitch.pdf | GNUmakefile
 
 clean:
 	$(RM) *.log *.aux *.fls *~ gener*.tex *.pdf *~ $(FICHIERS_PNG)
+	$(RM) -f *.nav *.out *.snm *.toc
 
 cours-linux-Starynkevitch.pdf: clinux.pdf | GNUmakefile
 	/bin/cp --verbose  --backup $^ $@
