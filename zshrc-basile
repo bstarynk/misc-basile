@@ -22,22 +22,6 @@ function rpsextsym()  {
 }
 
 
-
-## duplicate my laptop screen on HDMI
-function duplicate_hdmi() {
-	echo "running xrandr --output HDMI-1 --auto --same-as eDP-1"
-	sleep 2
-	/usr/bin/xrandr  --output HDMI-1 --auto --same-as eDP-1
-}
-
-## HDMI right of my laptop screen
-function right_hdmi() {
-	echo "running xrandr --output HDMI-1 --auto --right-of eDP-1"
-	sleep 2
-	 /usr/bin/xrandr --output HDMI-1 --auto --right-of eDP-1
-
-}
-
 [[ -d ~/misc-basile ]] && /bin/cp -a ~/.zshrc ~/misc-basile/zshrc-basile
 
 # BEGIN opam configuration
