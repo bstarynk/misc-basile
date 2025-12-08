@@ -1,8 +1,12 @@
-# Basile STARYNKEVITCH ~/.zshenvfile
+# Basile STARYNKEVITCH ~/.zshenv file
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# it is on github.com/misc-basile/zshenv-basile
+# © Copyright (C) 2024 - 2025 Basile Starynkevitch, France   <basile@starynkevitch.net>
 source /etc/zsh/zshenv
 export REFERSYS_HOME=$HOME/RefPerSys
-export RPS_TOPDIR=$HOME/RefPerSys
+export REFPERSYS_TOPDIR=$HOME/RefPerSys
 export PATH=$HOME/bin:$HOME/scripts:/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
 export PS1="%m %3~ %T %# "
 
 [[ -d ~/misc-basile ]] && /bin/cp -a ~/.zshenv ~/misc-basile/zshenv-basile
+. "$HOME/.cargo/env"
