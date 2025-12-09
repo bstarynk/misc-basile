@@ -1,6 +1,4 @@
 # Basile STARYNKEVITCH ~/.zshrc file
-# SPDX-License-Identifier: LGPL-3.0-or-later
-#  © Copyright (C) 2025 Basile STARYNKEVITCH, France
 source /etc/zsh/zshrc
 limit coredumpsize 4900m
 export REFPERSYS_TOPDIR=$HOME/RefPerSys
