@@ -4,6 +4,13 @@ limit coredumpsize 4900m
 export REFPERSYS_TOPDIR=$HOME/RefPerSys
 export PATH=$HOME/bin:$HOME/scripts:/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
 
+
+### start xosview with a fping to several distant servers
+function fpingxosview() {
+    /usr/bin/fping --period=6500 --loop --stats ftp.lip6.fr ftp.gnu.org ftp.cea.fr websupport.se > $HOME/tmp/fping.out &
+    /usr/bin/xosview &
+}
+
 ### indent $1 using astyle for RefPerSys source code in C++ or C
 function rpsastyle() {
     /usr/bin/astyle --verbose --style=gnu  --indent=spaces=2  --convert-tabs $1
