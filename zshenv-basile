@@ -4,6 +4,8 @@ export REFERSYS_HOME=$HOME/RefPerSys
 export REFPERSYS_TOPDIR=$HOME/RefPerSys
 export PATH=$HOME/bin:$HOME/scripts:/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
 export PS1="%m %3~ %T %# "
-export CDPATH=$HOME:/usr/src:/usr/local:$CDPATH:.:..
+export CDPATH=.:$HOME:/usr/src:/usr/local
+
+
 [[ -d ~/misc-basile ]] && /bin/cp -a ~/.zshenv ~/misc-basile/zshenv-basile
 . "$HOME/.cargo/env"
