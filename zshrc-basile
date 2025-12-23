@@ -1,4 +1,5 @@
 # Basile STARYNKEVITCH ~/.zshrc file
+
 source /etc/zsh/zshrc
 limit coredumpsize 4900m
 export REFPERSYS_TOPDIR=$HOME/RefPerSys
@@ -22,7 +23,12 @@ function rpsextsym()  {
 }
 
 
-[[ -d ~/misc-basile ]] && /bin/cp -fa ~/.zshrc ~/misc-basile/zshrc-basile
+if [ -d ~/misc-basile -a !  ~/.zshrc -ef  ~/misc-basile/zshrc-basile ] 
+then
+    /bin/cp -vb .zshrc tmp/zshrc
+    /bin/cp -vfa ~/misc-basile/zshrc-basile .zshrc
+fi
+
 
 # BEGIN opam configuration
 # This is useful if you're using opam as it adds:
