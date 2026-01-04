@@ -1,9 +1,11 @@
 ;; file misc-basile/.emacs  -*- lexical-binding: t; -*-
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;;
-;;  © Copyright 2017 - 2025 Basile Starynkevitch (92340 Bourg-la-Reine, France)
+;;  © Copyright (C) 2017 - 2026 Basile Starynkevitch
 ;;   <basile@starynkevitch.net>
-;;
+;;   8 rue de la Faïencerie
+;;   92340 Bourg-la-Reine
+;;   France
 ;; 
 ;;
 ;; License: GPLv3+ (file COPYING-GPLv3)
@@ -13,11 +15,22 @@
 ;;    (at your option) any later version.
 
 (global-set-key (kbd "<f5>") 'recompile)
-(global-set-key (kbd "<f12>") 'recompile)
-(global-set-key (kbd "<f6>") 'goto-line)
-(global-set-key (kbd "<f7>") 'next-error)
-(global-set-key (kbd "S-<f7>") 'previous-error)
-(global-set-key (kbd "<f1>") 'activate-transient-input-method)
+(defun basile-recompile-sequentially ()
+  "recompile the code using sequential make"
+  (interactive)
+  (let ( (oldcmd compile-command)
+	 )
+    (set compile-command "nice make")
+    (recompile)
+    (set compile-command oldcmd)
+    )
+  )
+(keymap-global-set "S-<f5>" 'basile-recompile-sequentially)
+(keymap-global-set "<f12>" 'recompile)
+(keymap-global-set "<f6>" 'goto-line)
+(keymap-global-set "<f7>" 'next-error)
+(keymap-global-set "S-<f7>" 'previous-error)
+(keymap-global-set "<f1>" 'activate-transient-input-method)
 
 ;;https://lists.gnu.org/archive/html/help-gnu-emacs/2025-05/msg00209.html
 ;(global-set-key [shift f10] 'flymake-goto-next-error)
@@ -64,7 +77,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(column-number-mode t)
- '(compile-command "nice make -j4")
+ '(compile-command "nice make -j7")
  '(global-display-line-numbers-mode t)
  '(package-selected-packages '(caml))
  '(size-indication-mode t))
