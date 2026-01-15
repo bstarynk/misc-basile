@@ -1,0 +1,4 @@
+#!/bin/bash
+bgcol=$(printf '#%02x%02x%02x' $[200 + $RANDOM % 50] $[210 + $RANDOM % 45] $[180 + $RANDOM % 75])
+/usr/bin/xfce4-terminal --title=alea-$(/bin/hostname)-$(/bin/basename $(/bin/tty)) --zoom=1.03 \
+               --color-text=navy --color-bg=$bgcol &
