@@ -41,7 +41,7 @@ my_test_dladdr_at (int lin, void *ad)
 	printf (" no dli_fbase\n");
       ///
       if (inf.dli_sname)
-	printf (" dli_sname=%s\n", inf.dli_fname);
+	printf (" dli_sname=%s\n", inf.dli_sname);
       else
 	printf (" no dli_sname\n");
       ///
@@ -58,7 +58,7 @@ my_test_dladdr_at (int lin, void *ad)
 }
 
 #define MY_TEST_DLADDR(A) do {			\
-   puts("MY_TEST_DLADDR(" #A ")::");		\
+   puts("\nMY_TEST_DLADDR(" #A ")::");		\
    my_test_dladdr_at(__LINE__, (void*)(A));	\
 } while(0)
 
