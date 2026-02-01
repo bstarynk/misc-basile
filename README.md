@@ -87,6 +87,9 @@ and we wrote
 
 * `fox-tinyed.cc` is for learning the [FOX](https://fox-toolkit.org/) toolkit - a tiny editor (perhaps incomplete).
 
+* `test-dladdr.c` is GPL licensed and testing
+[dladdr(3)](https://man7.org/linux/man-pages/man3/dladdr.3.html)
+  
 * `fltk-mini-edit.cc` is for learning the
   [FLTK](https://fltk-toolkit.org/) toolkit - a tiny editor (perhaps
   incomplete). It accepts some
