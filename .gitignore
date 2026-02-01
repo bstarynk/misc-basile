@@ -62,3 +62,4 @@ build-with-guile
 mycppstream
 example1-sdl
 execicar
+test-dladdr
