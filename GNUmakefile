@@ -31,7 +31,7 @@ GENF_CFLAGS= -O2 -g -fPIC -Wall
 all: manydl half sync-periodically transpiler-refpersys \
      logged-compile logged-gcc filipe-shell browserfox \
      gtk4serv fox-tinyed q6refpersys  gtkmm-refpersys bwc gtksrc-browser \
-     process-rgb-color example1-sdl
+     process-rgb-color example1-sdl test-dladdr
 
 
 clean:
@@ -70,6 +70,9 @@ indent:
 
 manydl: manydl.c
 	$(CC) $(CFLAGS) -DMANYDL_GCC='"$(CC)"' -DMANYDL_GIT='"$(GIT_ID)"' -rdynamic $^ -lm -ldl -o $@
+
+test-dladdr: test-dladdr.c
+	$(CC) $(CFLAGS) -DMY_GIT='"$(GIT_ID)"' $^  -rdynamic -lm -ldl -o $@
 
 half: half.c
 	$(CC) $(CFLAGS) -DHALF_GIT='"$(GIT_ID)"' $^  -o $@
