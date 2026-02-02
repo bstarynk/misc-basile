@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 /***
-    © Copyright 2024 - 2026 by Basile Starynkevitch
+    © Copyright (C) 2024 - 2026 by Basile Starynkevitch
    program released under GNU General Public License v3+
 
    This is free software; you can redistribute it and/or modify it under
@@ -417,7 +417,10 @@ myqr_readable_jsonrpc_cmd(void)
                 << rdcnt << " bytes in buffer of " << jrbufsize);
   if (rdcnt < 0 && rderr > 0)
     {
-      strerror_r(rderr, errbuf, sizeof(errbuf));
+      strerror_r(rderr, errbuf, sizeof(errbuf)-1);
+      MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd cmdfd#" <<
+		    myqr_readable_jsonrpc_cmd <<
+		    " error " << errbuf);
       assert(errbuf[0] != (char)0);
     };
   MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd got rdcnt=" << rdcnt
