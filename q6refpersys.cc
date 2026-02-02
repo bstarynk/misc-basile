@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 /***
-    © Copyright 2024 - 2025 by Basile Starynkevitch
+    © Copyright 2024 - 2026 by Basile Starynkevitch
    program released under GNU General Public License v3+
 
    This is free software; you can redistribute it and/or modify it under
@@ -299,14 +299,16 @@ MyqrMainWindow::MyqrMainWindow(QWidget*parent)
   setMinimumHeight(minimal_height);
   setMaximumWidth(maximal_width);
   setMaximumHeight(maximal_height);
-  qDebug() << "incomplete MyqrMainWindow constructor "
-           << __FILE__  ":" << (__LINE__-1);
-#warning incomplete MyqrMainWindow constructor
+  MYQR_DEBUGOUT("incomplete MyqrMainWindow constructor "
+                << (void*)the_instance
+                << " parent@" << (void*)parent);
 } // end MyqrMainWindow constructor
 
 MyqrDisplayWindow::MyqrDisplayWindow(QWidget*parent)
   : QMainWindow(parent)
 {
+  MYQR_DEBUGOUT("MyqrDisplayWindow this@" << this
+                << " parent@" << parent);
 } // end MyqrDisplayWindow constructor
 
 void
@@ -317,14 +319,17 @@ MyqrDisplayWindow::about()
 
 MyqrMainWindow::~MyqrMainWindow()
 {
+  MYQR_DEBUGOUT("~MyqrMainWindow this@" << this);
   if (the_instance != this)
-    MYQR_FATALOUT("corruption in MyqrMainWndow the_instance@" << (void*)the_instance
+    MYQR_FATALOUT("corruption in MyqrMainWndow the_instance@"
+                  << (void*)the_instance
                   << " this@" << (void*)this);
   the_instance = nullptr;
 } // end MyqrMainWindow destructor
 
 MyqrDisplayWindow::~MyqrDisplayWindow()
 {
+  MYQR_DEBUGOUT("~MyqrDisplayWindow this@" << this);
 } // end MyqrDisplayWindow destructor
 
 void
