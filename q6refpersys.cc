@@ -23,6 +23,15 @@
    refpersys itself, the q6refpersys process is short lived.
 
 ****/
+
+
+/////////////////////////////
+///////////////////////////// 
+/// these line numbers can be used to copy part of this files to
+/// generated C++ code........................ [MYQR-q6refpersys]
+extern "C" const int myqr_start_line, myqr_end_line;
+const int myqr_start_line = __LINE__ -4;
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
 #endif
@@ -192,7 +201,8 @@ public:
 extern "C" QProcess*myqr_refpersys_process;
 //=============================================================
 
-std::ostream& operator << (std::ostream&out, const QList<QString>&qslist)
+inline std::ostream& operator << (std::ostream&out,
+                                  const QList<QString>&qslist)
 {
   int nbl=0;
   for (const QString&qs: qslist)
@@ -249,8 +259,11 @@ std::ostream& operator << (std::ostream&out, const QList<QString>&qslist)
   return out;
 }// end operator << (std::ostream&out, const QList<QString>&qslist)
 
+/// after this line the C++ code is not copied in generated C++
+const int myqr_end_line = __LINE__+2;
 ////////////////////////////////////////////////////////////////
-
+////////////////////////////
+////////////////////////////
 
 MyqrMainWindow::MyqrMainWindow(QWidget*parent)
   : QMainWindow(parent),
@@ -419,8 +432,8 @@ myqr_readable_jsonrpc_cmd(void)
     {
       strerror_r(rderr, errbuf, sizeof(errbuf)-1);
       MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd cmdfd#" <<
-		    myqr_readable_jsonrpc_cmd <<
-		    " error " << errbuf);
+                    myqr_readable_jsonrpc_cmd <<
+      " error " << errbuf);
       assert(errbuf[0] != (char)0);
     };
   MYQR_DEBUGOUT("myqr_readable_jsonrpc_cmd got rdcnt=" << rdcnt
