@@ -117,13 +117,13 @@ extern "C" void myqr_call_jsonrpc_to_refpersys
  const std::function<void(const Json::Value&res)>& resfun);
 
 #define MYQR_FATALOUT_AT_BIS(Fil,Lin,Out) do {  \
-    std::ostringstream outs##Lin;   \
-    outs##Lin << Out << std::flush;   \
-    qFatal("%s:%d: %s\n[git %s@%s] on %s",  \
-     Fil, Lin, outs##Lin.str().c_str(),   \
-     myqr_git_id, __DATE__" " __TIME__, \
-     myqr_host_name);     \
-    abort();          \
+    std::ostringstream outs##Lin;               \
+    outs##Lin << Out << std::flush;             \
+    qFatal("%s:%d: %s\n[git %s@%s] on %s",      \
+     Fil, Lin, outs##Lin.str().c_str(),         \
+     myqr_git_id, __DATE__" " __TIME__,         \
+     myqr_host_name);                           \
+    abort();                                    \
   } while(0)
 
 #define MYQR_FATALOUT_AT(Fil,Lin,Out) \
@@ -132,9 +132,9 @@ extern "C" void myqr_call_jsonrpc_to_refpersys
 #define MYQR_FATALOUT(Out) MYQR_FATALOUT_AT(__FILE__,__LINE__,Out)
 
 #define MYQR_DEBUGOUT_AT_BIS(Fil,Lin,Out) do {  \
-    if (myqr_debug)       \
-      std::clog << Fil << ":" << Lin << " " \
-    << Out << std::endl;    \
+    if (myqr_debug)                             \
+      std::clog << Fil << ":" << Lin << " "     \
+    << Out << std::endl;                        \
   } while(0)
 
 #define MYQR_DEBUGOUT_AT(Fil,Lin,Out) \
@@ -665,6 +665,9 @@ myqr_process_jsonrpc_from_refpersys(const Json::Value&js)
 {
   MYQR_DEBUGOUT("myqr_process_jsonrpc_from_refpersys got JSON" << std::endl
                 << myqr_json2str(js));
+  Json::ValueType ty = js.type();
+  if (ty != Json::objectValue)
+    MYQR_FATALOUT("bad JSON " << myqr_json2str(js));
 #warning myqr_process_jsonrpc_from_refpersys unimplemented
   MYQR_FATALOUT("unimplemented myqr_process_jsonrpc_from_refpersys"
                 << std::endl
