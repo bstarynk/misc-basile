@@ -1,6 +1,6 @@
 // file misc-basile/fox-tinyed.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
-//  © Copyright 2022 - 2025 Basile Starynkevitch (&Jeroen van der Zijp)
+//  © Copyright 2022 - 2026 Basile Starynkevitch (&Jeroen van der Zijp)
 //    and the RefPerSys team on http://refpersys.org/
 //  some code taken from fox-toolkit.org Adie
 
@@ -625,17 +625,20 @@ TinyMainWindow::create(void)
   if (_main_menubar)
     {
       _main_menubar->create();
-      TINY_DBGOUT("TinyMainWindow::create menubar@" << (void*)_main_menubar);
+      TINY_DBGOUT("TinyMainWindow::create menubar@"
+		  << (void*)_main_menubar);
     };
   if (_main_filemenu)
     {
       _main_filemenu->create();
-      TINY_DBGOUT("TinyMainWindow::create filemenu@" << (void*)_main_filemenu);
+      TINY_DBGOUT("TinyMainWindow::create filemenu@"
+		  << (void*)_main_filemenu);
     };
   if (_main_quitcmd)
     {
       _main_quitcmd->create();
-      TINY_DBGOUT("TinyMainWindow::create quitcmd@" << (void*)_main_quitcmd);
+      TINY_DBGOUT("TinyMainWindow::create quitcmd@"
+		  << (void*)_main_quitcmd);
     }
   TINY_DBGOUT("end TinyMainWindow::create " << *this);
 } // end TinyMainWindow::create
