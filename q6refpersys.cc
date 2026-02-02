@@ -669,6 +669,13 @@ myqr_process_jsonrpc_from_refpersys(const Json::Value&js)
   if (ty != Json::objectValue)
     MYQR_FATALOUT("bad JSON " << myqr_json2str(js));
 #warning myqr_process_jsonrpc_from_refpersys unimplemented
+  /* We need to define and document the JSONRPC protocol; w should
+     accept asynchronous extensions.  See
+     https://www.jsonrpc.org/specification; for some JSON we need to
+     extract the C++ code inside this very C++ file [from
+     myqr_start_line to myqr_end_line] and add some extra C++ code
+     chunks provided by RefPerSys, the compile the generated C++ file
+     into a dlopen-able plugin then dlopen it. */
   MYQR_FATALOUT("unimplemented myqr_process_jsonrpc_from_refpersys"
                 << std::endl
                 << myqr_json2str(js));
@@ -684,6 +691,7 @@ myqr_call_jsonrpc_to_refpersys
  const Json::Value& args,
  const std::function<void(const Json::Value&res)>& resfun)
 {
+  /// See https://www.jsonrpc.org/specification
   Json::Value jresult;
   static int count;
   {
