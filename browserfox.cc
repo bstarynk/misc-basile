@@ -1,6 +1,6 @@
 // file misc-basile/browserfox.cc
 // SPDX-License-Identifier: GPL-3.0-or-later
-// © 2022 - 2025 copyright CEA & Basile Starynkevitch
+// © 2022 - 2026 copyright CEA & Basile Starynkevitch
 
 /****
 * This program is free software: you can redistribute it and/or modify
@@ -159,9 +159,14 @@ FXIMPLEMENT(BfWindow,FXMainWindow,BfWindowMap,ARRAYNUMBER(BfWindowMap));
 
 char bf_hostname[80];
 
+
+/// The bf_aborting symbol could be a breakpoint for GDB...
 void
 bf_abort(void)
 {
+  asm volatile (" nop; nop; nop; nop; nop;\n"
+		"bf_aborting: nop; \n"
+		" nop; nop; nop");
   abort();
 } // end bf_abort
 
@@ -262,16 +267,20 @@ main(int argc, char**argv)
   /// the following call is creating X11 windows.
   application.create();
   win.show(PLACEMENT_SCREEN);
-  BF_DBGOUT("win#" << win.rank() << " is " << (win.shown()?"shown":"hidden"));
+  BF_DBGOUT("win#" << win.rank() << " is "
+	    << (win.shown()?"shown":"hidden"));
   if (dontrun)
     {
       BF_DBGOUT("dont run app " << (void*)&application);
-      BF_FATALOUT("wont run in pid " << (int)getpid() << " on " << bf_hostname
-                  << " git " << bf_gitid << " build " << bf_buildtime << " since --dont-run given");
+      BF_FATALOUT("wont run in pid " << (int)getpid()
+		  << " on " << bf_hostname
+                  << " git " << bf_gitid << " build "
+		  << bf_buildtime << " since --dont-run given");
       return EXIT_FAILURE;
     };
   int runcode = application.run();
-  BF_DBGOUT("after app " << (void*)&application << " in pid " << (int)getpid() << " on " << bf_hostname
+  BF_DBGOUT("after app " << (void*)&application
+	    << " in pid " << (int)getpid() << " on " << bf_hostname
             << " git " << bf_gitid << " runcode " << runcode);
   return runcode;
 } // end main
