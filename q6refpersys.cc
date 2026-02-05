@@ -51,6 +51,7 @@ extern "C" char myqr_host_name[64];
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QMainWindow>
+#include <QMessageBox>
 #include <QMenuBar>
 #include <QGroupBox>
 #include <QVBoxLayout>
@@ -348,7 +349,10 @@ MyqrDisplayWindow::~MyqrDisplayWindow()
 void
 MyqrMainWindow::aboutQt()
 {
-  MYQR_DEBUGOUT("unimplemented MyqrMainWindow::aboutQt");
+  MYQR_DEBUGOUT("untested MyqrMainWindow::aboutQt this=" << this);
+  QMessageBox abw(this);
+  abw.aboutQt(this);
+  MYQR_DEBUGOUT("untested MyqrMainWindow::aboutQt abw@" << &abw);
 #warning unimplemented MyqrMainWindow::aboutQt
 } // end MyqrDisplayWindow::aboutQt
 
