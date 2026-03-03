@@ -31,8 +31,11 @@ function rpsextsym()  {
 
 if [ -d ~/misc-basile -a !  ~/.zshrc -ef  ~/misc-basile/zshrc-basile ] 
 then
-    /bin/cp -vb .zshrc tmp/zshrc
-    /bin/cp -vfa ~/misc-basile/zshrc-basile .zshrc
+	if /bin/cmp --silent ~/misc-basile/zshrc-basile .$HOME/zshrc ; then
+      /bin/cp -vb $HOME/.zshrc $HOME/tmp/zshrc
+      /bin/cp -vfa ~/misc-basile/zshrc-basile $HOME/.zshrc
+      echo updated zshrc
+    fi
 fi
 
 
