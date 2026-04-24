@@ -32,8 +32,8 @@ function rpsextsym()  {
 ### set the RefPerSys relevant environment variables for make config
 ### see file tools/do-configure-refpersys.c of RefPerSys on github
 function rpsbatchconfig() {
-   export CC=$(which gcc)
-   export CXX=$(which g++)
+   export CC=$(realpath $(which gcc))
+   export CXX=$(realpath $(which g++))
    export CXXFLAGS='-O -g -fPIC -Wall'
    export RPS_BUILDER_PERSON=$(awk '/name/{print $3, $4}' ~/.gitconfig)
    export RPS_BUILDER_EMAIL=$(awk '/email/{print $3}' ~/.gitconfig)
