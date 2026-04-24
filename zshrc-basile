@@ -29,6 +29,22 @@ function rpsextsym()  {
 }
 
 
+### set the RefPerSys relevant environment variables for make config
+### see file tools/do-configure-refpersys.c of RefPerSys on github
+function rpsbatchconfig() {
+   export CC=$(which gcc)
+   export CXX=$(which g++)
+   export CXXFLAGS='-O -g -fPIC -Wall'
+   export RPS_BUILDER_PERSON=$(awk '/name/{print $3, $4}' ~/.gitconfig)
+   export RPS_BUILDER_EMAIL=$(awk '/email/{print $3}' ~/.gitconfig)
+   printf "rpsbatchconfig exports CC=%s CXX=%s CXXFLAGS='%s'\n" \
+          $CC $CXX $CXXFLAGS
+   printf "rpsbatchconfig exports RPS_BUILDER_PERSON='%s'\n" \
+          $RPS_BUILDER_PERSON
+   printf "rpsbatchconfig exports RPS_BUILDER_EMAIL='%s'\n" \
+          $RPS_BUILDER_EMAIL
+}
+
 if [ -d ~/misc-basile -a !  ~/.zshrc -ef  ~/misc-basile/zshrc-basile ] 
 then
 	if /bin/cmp --silent ~/misc-basile/zshrc-basile .$HOME/zshrc ; then
