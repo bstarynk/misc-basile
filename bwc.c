@@ -6,7 +6,7 @@
    count lines and their width using getline(3)
    Find large lines
 
-   © Copyright Basile Starynkevitch 2017 - 2025
+   © Copyright (C) Basile Starynkevitch 2017 - 2026
    program released under GNU general public license
 
    this is free software; you can redistribute it and/or modify it under
@@ -26,10 +26,14 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
+#include <unistr.h>
 
 const char *progname = NULL;
+bool emacsout = false;
 
-int linlargelimit = 80;		/// above that line width limit in bytes large lines are noticed
+int linlargelimit = 80;		/// above that line width limit in
+				/// UTF8 glyphs large lines are
+				/// noticed
 void
 count_lines (FILE *f, char *name)
 {
@@ -55,21 +59,30 @@ count_lines (FILE *f, char *name)
   memset (linbuf, 0, linsiz);
   do
     {
+      long oldoff = -1;
       off = ftell (f);
-      ssize_t linlen = getline (&linbuf, &linsiz, f);
-      if (linlen < 0)
+      if (off>=0)
+	oldoff= off;
+      ssize_t linbytes = getline (&linbuf, &linsiz, f);
+      if (linbytes < 0)
 	break;
-      off += linlen;
       lincnt++;
-      if (linwidth < linlen)
-	linwidth = linlen;
-      if (linlen > (1 << 20))
+      off += linbytes;
+      if (!u8_check((const uint8_t*)linbuf, (size_t)linbytes)) {
+	fprintf(stderr,
+		"%s:%ld is malformed UTF8 line (byte offset %ld)\n",
+		name, lincnt, oldoff);
+	continue;
+      }
+      if (linbytes > (1 << 20))
 	{
-	  fprintf (stderr, "in file %s line#%ld is huge: %ld\n",
-		   name, lincnt, linwidth);
+	  fprintf (stderr, "%s:%ld is huge (%ld bytes) at byte offset %ld\n",
+		   name, lincnt, linbytes, oldoff);
 	  exit (EXIT_FAILURE);
 	};
-      if (linlargelimit > 0 && linlen > linlargelimit)
+      size_t linlen =
+	u8_mbsnlen((const uint8_t*)linbuf, (size_t)linbytes);
+      if (linlargelimit > 0 && (int) linlen > linlargelimit)
 	{
 	  if (largcnt > largdim)
 	    {
@@ -95,11 +108,11 @@ count_lines (FILE *f, char *name)
   clock_t stf = clock ();
   double cput = (stf - stc) * 1.0e-6;
   printf
-    ("%s: %ld lines, maxwidth %ld, %ld bytes in %.5f cpu sec, %.3f µs/l\n",
+    ("%s:: (%ld lines, width %ld, %ld bytes in %.5f cpu sec, %.3f µs/l)\n",
      name, lincnt, linwidth, off, cput, (cput * 1.0e6) / lincnt);
   if (largcnt > 0)
     {
-      printf ("%s has %d large lines:\n", name, largcnt);
+      printf ("# %s has %d large lines:\n", name, largcnt);
       for (int i = 0; i < largcnt; i++) {
 	if ((i+1) % 9 == 0)
 	  fputs("\n ...", stdout);
@@ -115,6 +128,21 @@ count_lines (FILE *f, char *name)
   free (largarr);
 }				/* end count_lines */
 
+
+void
+usage(void)
+{
+  printf("usage: %s [ -m # mmap | -p # plain ]\n"
+	 "\t [ -l limit ]\n"
+	 "\t [ -e ]\n"
+	 "\t files... \n",
+	 progname);
+  printf("\t with -m use mmap(2); with -p dont\n");
+  printf("\t -l 80 is the default line length limit\n");
+  printf("\t -e for GNU emacs friendly output <file>:<line>\n");
+  printf("\t also with --version and --help\n");
+} /* end of usage */
+
 int
 main (int argc, char **argv)
 {
@@ -122,12 +150,7 @@ main (int argc, char **argv)
   bool withmmap = false;
   if (argc < 2 || !strcmp (argv[1], "-h") || !strcmp (argv[1], "--help"))
     {
-      fprintf (stderr,
-	       "usage: %s [ -m # mmap | -p # plain ] [ -l limit ] files... \n",
-	       progname);
-      fprintf (stderr, "\t with -m use mmap(2); with -p dont\n");
-      fprintf (stderr, "\t -l 80 is the default line line length limit\n");
-      fprintf (stderr, "\t also with --version and --help\n");
+      usage();
       exit (EXIT_SUCCESS);
     };
   if (argc < 2 || !strcmp (argv[1], "-V") || !strcmp (argv[1], "--version"))
@@ -142,6 +165,11 @@ main (int argc, char **argv)
       if (!strcmp (argv[ix], "-m"))
 	{
 	  withmmap = true;
+	  continue;
+	};
+      if (!strcmp (argv[ix], "-e"))
+	{
+	  emacsout = true;
 	  continue;
 	};
       if (!strcmp (argv[ix], "-p"))
@@ -165,6 +193,13 @@ main (int argc, char **argv)
     }
   return EXIT_SUCCESS;
 }				/* end main */
+
+/****************
+ **                           for Emacs...
+ ** Local Variables: ;;
+ ** compile-command: "make bwc" ;;
+ ** End: ;;
+ ****************/
 
 
 /// end of file misc-basile/bwc.c
