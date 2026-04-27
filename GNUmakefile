@@ -78,7 +78,7 @@ half: half.c
 	$(CC) $(CFLAGS) -DHALF_GIT='"$(GIT_ID)"' $^  -o $@
 
 bwc: bwc.c
-	$(CC) $(CFLAGS) -DBWC_GIT='"$(GIT_ID)"' $^  -o $@
+	$(CC) $(CFLAGS) -DBWC_GIT='"$(GIT_ID)"' $^  -o $@ -lunistring
 
 build-with-guile: build-with-guile.c
 	$(CC) $(CFLAGS) -O -g -Wall -DBUILDWITHGUILE_GIT='"$(GIT_ID)"' $(GUILE_CFLAGS) -rdynamic $^ $(GUILE_LIBS) -lm -ldl -o $@
