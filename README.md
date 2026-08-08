@@ -10,8 +10,8 @@ being in English. My pet free software project is
 [RefPerSys](http://refpersys.org/).
 
 Some of these files are coded at work, so copyrighted by my employer
-[CEA](https://www.cea.fr/). My office email is there (before
-nov. 2023, when I reach retirement)
+[CEA](https://www.cea.fr/). My office email was there (before
+nov. 2023, when I did reach retirement)
 [basile.starynkevitch@cea.fr](mailto:basile.starynkevitch@cea.fr).
 
 Several single source file programs usually for
