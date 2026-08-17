@@ -12,5 +12,11 @@ export EDITOR=gedit
 export PATH=$HOME/bin:$HOME/scripts:/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
 export PS1="%m %3~ %T %# "
 
-[[ -d ~/misc-basile -a ! /bin/cmp --silent ~/.zshenv ~/misc-basile/zshenv-basile ]] && /bin/cp -a ~/.zshenv ~/misc-basile/zshenv-basile
 . "$HOME/.cargo/env"
+
+if [ -d ~/misc-basile ]; then
+    if /bin/cmp --silent ~/.zshenv ~/misc-basile/zshenv-basile ; then
+	/bin/cp -a ~/misc-basile/zshenv-basile ~/.zshenv
+    fi
+fi
+## end of Basile STARYNKEBITCH ~/.zshenv file on https://github.com/bstarynk/misc-basile as zshenv-basile
