@@ -4,6 +4,7 @@ export REFERSYS_HOME=$HOME/RefPerSys
 export REFPERSYS_TOPDIR=$HOME/RefPerSys
 export YAREFPERSYS_DIR=$HOME/yarepersys
 export MISCBASILE_DIR=$HOME/misc-basile
+export EDITOR=gedit
 
 export PATH=$HOME/bin:$HOME/scripts:/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
 export PS1="%m %3~ %T %# "
