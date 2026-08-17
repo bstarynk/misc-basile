@@ -1,4 +1,6 @@
-# Basile STARYNKEVITCH ~/.zshenvfile
+# Basile STARYNKEVITCH ~/.zshenv file
+# SPDX-License-Identifier: GPL-3.0-or-later
+# copyright (C) 2025-2026 Basile Starynkevitch, France <basile@starynkevitch.net>
 source /etc/zsh/zshenv
 export REFERSYS_HOME=$HOME/RefPerSys
 export REFPERSYS_TOPDIR=$HOME/RefPerSys
