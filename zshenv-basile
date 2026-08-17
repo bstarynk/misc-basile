@@ -19,4 +19,4 @@ if [ -d ~/misc-basile ]; then
 	/bin/cp -a ~/misc-basile/zshenv-basile ~/.zshenv
     fi
 fi
-## end of Basile STARYNKEBITCH ~/.zshenv file on https://github.com/bstarynk/misc-basile as zshenv-basile
+## end of Basile STARYNKEVITCH ~/.zshenv file on https://github.com/bstarynk/misc-basile as zshenv-basile
