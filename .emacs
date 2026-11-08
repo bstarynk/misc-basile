@@ -25,7 +25,23 @@
     (set compile-command oldcmd)
     )
   )
+
+(defun basile-clean-compile ()
+  "run: make clean"
+  (interactive)
+  (let ( (oldcmd compile-command)
+	 )
+    (set compile-command "make clean")
+    (recompile)
+    (set compile-command oldcmd)
+    )
+  )
+
+
+
 (keymap-global-set "S-<f5>" 'basile-recompile-sequentially)
+(keymap-global-set "S-<f9>" 'basile-clean-compile)
+
 (keymap-global-set "<f12>" 'recompile)
 (keymap-global-set "<f6>" 'goto-line)
 (keymap-global-set "<f7>" 'next-error)
