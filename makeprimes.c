@@ -16,7 +16,7 @@
 
 /// FIXME: should maybe use https://github.com/kimwalisch/primesieve
 
-/** Copyright (C)  2019  Basile Starynkevitch
+/** Copyright (C)  2019 - 2026 Basile Starynkevitch
     makeprimes is showing some prime numbers, using the BSD primes program
 
     makeprimes is free software; you can redistribute it and/or modify
@@ -57,6 +57,22 @@ sigint_handler (int s)
 int
 main (int argc, char **argv)
 {
+  if (argc > 1 && !strcmp(argv[1], "--version")) {
+#ifdef MY_GIT
+	  printf("%s git %s # github.com/bstarynk/misc-basile makeprimes.c\n", argv[0], MY_GIT);
+#else
+	  printf("%s built %s # github.com/bstarynk/misc-basile makeprimes.c\n", argv[0], __DATE__);
+#endif
+	  fflush(NULL);
+	  exit (EXIT_SUCCESS);
+  };
+  if (argc < 3 || (argc>1 && !strcmp(argv[1], "--help")))
+    {
+      fprintf (stderr, "program to generate primes to be used in C or C++ code (array)\n");
+      fprintf (stderr, "usage: %s LIM FRA [CMD]; see comments in %s\n",
+	       argv[0], __FILE__);
+      exit (EXIT_FAILURE);
+    };
   if (argc < 3)
     {
       fprintf (stderr, "usage: %s LIM FRA [CMD]; see comments in %s\n",
