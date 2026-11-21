@@ -63,6 +63,11 @@
 #ifndef MANYDL_GIT
 #error missing MANYDL_GIT string as preprocessing flag
 #endif /*MANYDL_GIT */
+
+#ifndef SOURCE_DIR
+#error missing SOURCE_DIR in compilation command
+#endif /*SOURCE_DIR*/ 
+
 // €Français: identifiant git
 const char manydl_git[] = MANYDL_GIT;
 
@@ -702,7 +707,7 @@ get_options (int argc, char **argv)
         case 'T':
           terminatingscript = optarg;
           break;
-        case 'c':
+        case 'c':              /* change directory <DIR> */
           {
             char cdbuf[384];
             memset (cdbuf, 0, sizeof(cdbuf));
@@ -842,13 +847,13 @@ generate_all_c_files (void)
 void
 compile_all_plugins (void)
 {
-  char buildcmd[256];
+  char buildcmd[384];
   struct rusage uscompil = { };
   double childcpuclock = 0.0;
   memset (buildcmd, 0, sizeof (buildcmd));
   snprintf (buildcmd, sizeof (buildcmd) - 2,
-            "%s -j%d CC='%s' manydl-plugins",
-            makeprog, makenbjobs, manydl_gcc);
+            "%s -f %s/GNUmakefile -j%d CC='%s' manydl-plugins",
+            makeprog, SOURCE_DIR, makenbjobs, manydl_gcc);
   printf ("%s start compiling %d plugins\n", progname, maxcnt);
   fflush (NULL);
   printf ("%s will do for %d plugins: %s\n", progname, maxcnt, buildcmd);
