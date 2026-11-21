@@ -491,9 +491,9 @@ generate_file (const char *name)
            " ** Local Variables: ;;\n"  //
     );
   fprintf (f,                   //
-           " ** compile-command: \"make %s%s\" ;;\n"    //
+           " ** compile-command: \"%s %s%s\" ;;\n"    //
            " ** End: ;;\n"      //
-           " *******/\n", name, pluginsuffix);
+           " *******/\n", makeprog, name, pluginsuffix);
   fflush (f);
   fclose (f);
   /* run GNU indent on the generated C code */
