@@ -5,7 +5,7 @@
  *  generating lots of C functions, and dynamically compiling and loading them
  *  this is completely useless, except for testing & benchmarking 
  *  
- *  © Copyright Basile Starynkevitch 2004- 2025
+ *  © Copyright (C) Basile Starynkevitch 2004- 2026
  *
  *  This was released up to december 18th 2022 under GPLv3+ license.
  *  On Dec 19, 2022 relicensed under MIT licence
@@ -544,26 +544,28 @@ show_help (void)
 {
   printf ("%s usage (MIT licensed, no warranty)\n", progname);
   printf ("\t a nearly useless program generating many dlopen-ed plugins\n");
-  printf ("\t --version | -V   : shows version information\n");
-  printf ("\t --help | -h      : shows this help\n");
-  printf ("\t -v               : run verbosely\n");
-  printf ("\t -F               : fake run - dont compile or run plugins,\n"
-          "\t                    ... just generate C code.\n");
-  printf ("\t -n <count>  : set number of generated plugins,"
+  printf ("\t --version | -V     : shows version information\n");
+  printf ("\t --help | -h        : shows this help\n");
+  printf ("\t -v                 : run verbosely\n");
+  printf ("\t --chdir | -c <DIR> : chande directory\n");
+  printf ("\t -F                 : fake run - dont compile or run plugins,\n"
+          "\t                      ... just generate C code.\n");
+  printf ("\t -n <count>         : set number of generated plugins,"
           " default is %d\n", maxcnt);
-  printf ("\t -s <mean-size>   : set mean size of generated plugins,"
+  printf ("\t -s <mean-size>     : set mean size of generated plugins,"
           " default is %d\n", meansize);
-  printf ("\t -j <job>         : number of jobs, passed to make,"
+  printf ("\t -j <job>           : number of jobs, passed to make,"
           " default is %d\n", makenbjobs);
-  printf ("\t -m <maker>       : make program, default is %s\n", makeprog);
+  printf ("\t -m <maker>         : make program, default is %s\n", makeprog);
   printf
-    ("\t -R <randomseed>  : seed passed to srand48, default is unique\n");
-  printf ("\t -S <p.suffix>    : plugin suffix, default is %s\n",
+    ("\t -R <randomseed>         : seed passed to srand48, default is unique\n");
+  printf ("\t -S <p.suffix>      : plugin suffix, default is %s\n",
           pluginsuffix);
-  printf ("\t -T <script>      : terminating popen-ed script\n");
-  printf ("\t                    (could be some external analyzer,\n"
+  printf ("\t -T <script>        : terminating popen-ed script\n");
+  printf ("\t                      (could be some external analyzer,\n"
           "\t                       ... getting names of generated C files)\n");
-  printf ("\t -C               : clean up the mess (old _genf_* files)\n");
+  printf ("\t -C                 : clean up the mess (old _genf_* files)\n");
+  fflush (NULL);
 }                               /* end of show_help */
 
 void
@@ -681,7 +683,7 @@ get_options (int argc, char **argv)
 {
   bool seeded = false;
   int opt = 0;
-  while ((opt = getopt (argc, argv, "hVCFvn:s:j:m:S:R:T:")) > 0)
+  while ((opt = getopt (argc, argv, "hVCFvn:s:j:m:S:R:T:c:")) > 0)
     {
       switch (opt)
         {
@@ -699,6 +701,22 @@ get_options (int argc, char **argv)
           break;
         case 'T':
           terminatingscript = optarg;
+          break;
+        case 'c':
+          {
+            char cdbuf[384];
+            memset (cdbuf, 0, sizeof(cdbuf));
+            if (chdir (optarg)) {
+              fprintf (stderr, "%s failed to chdir to %s : %s\n",
+                       progname, optarg, strerror(errno));
+              exit (EXIT_FAILURE);
+            };
+            if (verbose) {
+              printf ("%s changed directory to %s\n",
+                      progname, getcwd(cdbuf, sizeof(cdbuf))?:"./");
+            };
+            fflush (NULL);
+          };
           break;
         case 'C':               /* cleanup - remove all previous plugins
                                    and previously generated genf*.c files */
