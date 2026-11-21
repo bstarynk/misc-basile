@@ -16,7 +16,8 @@ ASTYLEFLAGS= --style=gnu -s2
 RM=/bin/rm -vf
 GENG_CC ?= $(CC)
 export GIT_ID=$(shell git log --format=oneline -q -1 | cut -c1-15)
-CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/
+SOURCE_DIR ?= $(shell realpath .)
+CFLAGS= -O2 -g -Wall -Wextra -I /usr/local/include/ -DGIT_ID=\"$(GIT_ID)\" -DSOURCE_DIR=\"$(SOURCE_DIR)\"
 CXXFLAGS= -O -g -Wall -Wextra -I /usr/local/include/
 GTK4SERV_PACKAGES= gtk4 glib-2.0 gobject-2.0 gio-2.0
 GTKMMRPS_PACKAGES= gtkmm-4.0 jsoncpp
@@ -26,7 +27,7 @@ GUILE_LIBS:=$(shell  pkg-config --libs guile-3.0)
 
 QT6MOC= /usr/lib/qt6/libexec/moc
 GENF_CC=$(CC)
-GENF_CFLAGS= -O2 -g -fPIC -Wall
+GENF_CFLAGS= -O2 -g -fPIC -Wall -DGIT_ID=\"$(GIT_ID)\" -DSOURCE_DIR=\"$(SOURCE_DIR)\"
 
 all: manydl half sync-periodically transpiler-refpersys \
      logged-compile logged-gcc filipe-shell browserfox \
